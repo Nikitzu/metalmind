@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Local testing
+*.bak
+*.bak-*
+test-vault/
+__pycache__/
+*.pyc
+.venv/
+
+# Never commit a filled-in config
+**/serena_config.local.yml
