@@ -88,6 +88,8 @@ describe('forge loader', () => {
     const cacheFile = join(cacheDir, 'g.json');
     expect(existsSync(cacheFile)).toBe(true);
 
+    // Small wait so the second call's cache-age check can't race with repo mtime.
+    await new Promise((r) => setTimeout(r, 10));
     const second = await loadOrBuildMerged('g', group, { cacheDir });
     expect(second.generatedAt).toBe(first.generatedAt);
   });

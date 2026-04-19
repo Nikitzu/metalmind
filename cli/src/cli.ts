@@ -22,7 +22,21 @@ program
   .description('Unified CLI for Obsidian vault, code graph, and cross-repo intelligence.')
   .version('0.0.1');
 
-program.command('init').description('Interactive setup wizard').action(init);
+program
+  .command('init')
+  .description('Interactive setup wizard (accepts flags for scripted installs)')
+  .option('-y, --yes', 'Accept every default (non-interactive)')
+  .option('--vault-path <path>', 'Vault path (default ~/Knowledge)')
+  .option('--flavor <flavor>', '"scadrial" or "classic"')
+  .option('--serena', 'Install Serena')
+  .option('--no-serena', 'Skip Serena install')
+  .option('--graphify', 'Install graphify')
+  .option('--no-graphify', 'Skip graphify install')
+  .option('--teams', 'Enable agent teams')
+  .option('--no-teams', 'Disable agent teams')
+  .option('--memory-routing <mode>', '"vault-only" or "both"')
+  .option('--skip-docker', 'Skip Docker stack setup (useful when stack is already running)')
+  .action((cmdOpts) => init(cmdOpts));
 program
   .command('doctor')
   .description('Diagnose installation state (classic alias for `pulse`)')
