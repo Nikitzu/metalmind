@@ -1,4 +1,7 @@
 ---
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import CommandsTable from '../components/CommandsTable.astro';
 import FlavorToggle from '../components/FlavorToggle.astro';
 import '../styles/global.css';
@@ -6,6 +9,9 @@ import '../styles/global.css';
 const title = 'metalmind — unified CLI for Obsidian vault, code graph, and cross-repo intelligence';
 const description =
   'Token-efficient, privacy-first Claude Code companion. Obsidian vault capture + local semantic recall, Serena LSP navigation, graphify code graphs, and a cross-repo forge — under one themed CLI.';
+
+const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public');
+const hasCast = existsSync(join(publicDir, 'wizard-demo.cast'));
 ---
 
 <!doctype html>
@@ -195,11 +201,16 @@ const description =
           Reversible via <code>metalmind uninstall</code>.
         </p>
         <div class="cast-wrap" aria-label="Install flow demo (asciinema cast)">
-          <div id="cast-placeholder" class="cast-placeholder">
-            <span class="chip">Recording soon</span>
-            <span>Install-flow demo coming. Clone the repo and run <code>metalmind init</code> to try it now.</span>
-          </div>
-          <div id="cast-root" style="width: 100%; height: 100%; display: none"></div>
+          {hasCast ? (
+            <div id="cast-root" style="width: 100%; height: 100%"></div>
+          ) : (
+            <div class="cast-placeholder">
+              <span class="chip">Recording soon</span>
+              <span>
+                Install-flow demo coming. Clone the repo and run <code>metalmind init</code> to try it now.
+              </span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -257,70 +268,59 @@ const description =
       <p style="margin-top:0.25rem;opacity:0.6;">Built on <a href="https://obsidian.md">Obsidian</a>, <a href="https://ollama.com">Ollama</a>, <a href="https://qdrant.tech">Qdrant</a>, <a href="https://github.com/oraios/serena">Serena</a>, <a href="https://pypi.org/project/graphifyy/">graphify</a>.</p>
     </footer>
 
-    <!-- asciinema-player lazy-loaded after first paint, only if the cast exists -->
-    <script>
-      const ASCIINEMA_VERSION = '3.8.1';
-      const castUrl = '/wizard-demo.cast';
+    {hasCast && (
+      <script>
+        const ASCIINEMA_VERSION = '3.8.1';
+        const castUrl = '/wizard-demo.cast';
 
-      const loadPlayer = () => {
-        if (document.getElementById('asciinema-css')) return;
-        const css = document.createElement('link');
-        css.id = 'asciinema-css';
-        css.rel = 'stylesheet';
-        css.href = `https://cdn.jsdelivr.net/npm/asciinema-player@${ASCIINEMA_VERSION}/dist/bundle/asciinema-player.css`;
-        document.head.appendChild(css);
-        const js = document.createElement('script');
-        js.src = `https://cdn.jsdelivr.net/npm/asciinema-player@${ASCIINEMA_VERSION}/dist/bundle/asciinema-player.min.js`;
-        js.onload = () => {
-          // @ts-ignore
-          if (window.AsciinemaPlayer) {
-            const root = document.getElementById('cast-root');
-            const placeholder = document.getElementById('cast-placeholder');
-            if (root) {
-              root.style.display = 'block';
-              if (placeholder) placeholder.style.display = 'none';
-              // @ts-ignore
-              window.AsciinemaPlayer.create(castUrl, root, {
-                theme: 'solarized-dark',
-                fit: 'both',
-                terminalFontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                poster: 'npt:0:04',
-              });
-            }
-          }
-        };
-        document.head.appendChild(js);
-      };
-
-      const maybeLoad = async () => {
-        try {
-          const res = await fetch(castUrl, { method: 'HEAD' });
-          if (res.ok) loadPlayer();
-        } catch {
-          /* keep placeholder */
-        }
-      };
-
-      if ('IntersectionObserver' in window) {
-        const root = document.querySelector('.cast-wrap');
-        if (root) {
-          const io = new IntersectionObserver(
-            (entries) => {
-              for (const entry of entries) {
-                if (entry.isIntersecting) {
-                  maybeLoad();
-                  io.disconnect();
-                  break;
-                }
+        const loadPlayer = () => {
+          if (document.getElementById('asciinema-css')) return;
+          const css = document.createElement('link');
+          css.id = 'asciinema-css';
+          css.rel = 'stylesheet';
+          css.href = `https://cdn.jsdelivr.net/npm/asciinema-player@${ASCIINEMA_VERSION}/dist/bundle/asciinema-player.css`;
+          document.head.appendChild(css);
+          const js = document.createElement('script');
+          js.src = `https://cdn.jsdelivr.net/npm/asciinema-player@${ASCIINEMA_VERSION}/dist/bundle/asciinema-player.min.js`;
+          js.onload = () => {
+            // @ts-ignore
+            if (window.AsciinemaPlayer) {
+              const root = document.getElementById('cast-root');
+              if (root) {
+                // @ts-ignore
+                window.AsciinemaPlayer.create(castUrl, root, {
+                  theme: 'solarized-dark',
+                  fit: 'both',
+                  terminalFontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  poster: 'npt:0:04',
+                });
               }
-            },
-            { rootMargin: '200px' },
-          );
-          io.observe(root);
+            }
+          };
+          document.head.appendChild(js);
+        };
+
+        if ('IntersectionObserver' in window) {
+          const root = document.querySelector('.cast-wrap');
+          if (root) {
+            const io = new IntersectionObserver(
+              (entries) => {
+                for (const entry of entries) {
+                  if (entry.isIntersecting) {
+                    loadPlayer();
+                    io.disconnect();
+                    break;
+                  }
+                }
+              },
+              { rootMargin: '200px' },
+            );
+            io.observe(root);
+          }
+        } else {
+          loadPlayer();
         }
-      } else {
-        maybeLoad();
-      }
-    </script>
+      </script>
+    )}
   </body>
 </html>
