@@ -33,12 +33,15 @@ cli/
 │   └── config.ts              Zod schema for ~/.metalmind/config.json
 ├── templates/                 Bundled at publish time via `files`
 │   ├── metalmind-stack/       compose.yml for Qdrant + Ollama
-│   ├── vault-rag-pkg/         Python package source (installed via uv tool)
+│   ├── vault-rag-pkg/         Populated by scripts/sync-vault-rag-pkg.mjs
+│   │                          from ../../packages/vault-rag/ (gitignored)
 │   ├── vault/                 CLAUDE.md.template for the Obsidian vault
 │   ├── claude/                Global CLAUDE.md + rules + agents + commands
 │   ├── launchd/               macOS plist template
 │   ├── systemd/               Linux .service template
 │   └── zsh/                   aliases.sh
+├── scripts/
+│   └── sync-vault-rag-pkg.mjs Copies packages/vault-rag/ into templates/
 ├── tsup.config.ts             Bundler config (ESM, node20 target)
 └── package.json
 ```
@@ -54,7 +57,7 @@ pnpm typecheck         # tsc --noEmit
 pnpm test              # vitest run (157 tests, ~800ms)
 pnpm test:watch
 pnpm build             # tsup → dist/cli.js (ESM, shebang, node20)
-pnpm test:python       # pytest against templates/vault-rag-pkg/ (requires uv)
+pnpm test:python       # pytest against ../packages/vault-rag/ (requires uv)
 pnpm test:smoke        # end-to-end integration (builds, links, runs cli/test/integration/smoke.sh)
 ```
 
@@ -74,7 +77,7 @@ Each installer has a mirror `*.test.ts` next to it — add tests alongside the c
 | Tier | Runner | Covers | Runtime |
 |---|---|---|---|
 | Unit | `pnpm test` | All TS modules — mocked runCommand, fetch, fs | ~800ms |
-| Python | `pnpm test:python` | vault-rag-pkg: imports, search helpers, HTTP endpoint | ~4s |
+| Python | `pnpm test:python` | packages/vault-rag: imports, search helpers, HTTP endpoint | ~4s |
 | Smoke | `pnpm test:smoke` | Scripted end-to-end: init --yes → stamp → save → uninstall | ~10s |
 
 Smoke test uses a temp `$HOME`, skips Docker/Serena/graphify, and asserts every managed file ends up in the right place. It's the "would a fresh-machine install work?" question answered in 20 assertions.
@@ -89,12 +92,12 @@ Smoke test uses a temp `$HOME`, skips Docker/Serena/graphify, and asserts every 
 
 ## Bundling the Python package
 
-`metalmind-vault-rag` is a standalone Python package at `templates/vault-rag-pkg/`. It ships inside the npm tarball (via `files: ["templates"]`) and installs on the user's machine with `uv tool install --from <bundled-path> metalmind-vault-rag`. Four binaries land on PATH: `metalmind-vault-rag-{server,watcher,indexer,doctor}`.
+`metalmind-vault-rag` is a standalone Python package living at the monorepo root: `packages/vault-rag/`. At build/prepack time, `cli/scripts/sync-vault-rag-pkg.mjs` copies it into `cli/templates/vault-rag-pkg/` (gitignored) so the npm tarball ships it alongside `dist/cli.js`. On a user's machine, the wizard runs `uv tool install --from <bundled-path> metalmind-vault-rag`. Four binaries land on PATH: `metalmind-vault-rag-{server,watcher,indexer,doctor}`.
 
 To iterate on the Python side:
 
 ```bash
-cd cli/templates/vault-rag-pkg
+cd packages/vault-rag
 uv tool install --reinstall --force --from . metalmind-vault-rag
 # reload watcher if running:
 launchctl unload ~/Library/LaunchAgents/com.metalmind.vault-indexer.plist   # macOS

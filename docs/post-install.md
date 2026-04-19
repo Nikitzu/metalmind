@@ -109,7 +109,7 @@ Edit `~/.claude/settings.json` `permissions.allow` to auto-approve additional Se
 
 - Serena: `uv tool install --upgrade serena-agent`
 - graphify: `uv tool install --upgrade graphifyy`
-- vault-rag: `uv tool install --reinstall --force --from <metalmind-cli>/templates/vault-rag-pkg metalmind-vault-rag` (or `metalmind init` again)
+- vault-rag: `uv tool install --reinstall --force --from <metalmind-repo>/packages/vault-rag metalmind-vault-rag` (or `metalmind init` again)
 
 For the Docker stack:
 

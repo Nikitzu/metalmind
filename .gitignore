@@ -23,5 +23,10 @@ coverage/
 *.tsbuildinfo
 .pnpm-store/
 
+# Generated copy of packages/vault-rag (source of truth lives at packages/vault-rag/).
+# Populated by cli/scripts/sync-vault-rag-pkg.mjs at build/prepack time so the
+# npm tarball can bundle the Python package next to dist/cli.js.
+cli/templates/vault-rag-pkg/
+
 # Astro
 .astro/

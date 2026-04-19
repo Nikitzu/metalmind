@@ -16,13 +16,14 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "node scripts/sync-vault-rag-pkg.mjs && tsup",
     "dev": "tsx src/cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:smoke": "pnpm build && pnpm link --global >/dev/null 2>&1 && ./test/integration/smoke.sh",
-    "test:python": "cd templates/vault-rag-pkg && uv run --extra dev pytest tests/",
-    "typecheck": "tsc --noEmit"
+    "test:python": "cd ../packages/vault-rag && uv run --extra dev pytest tests/",
+    "typecheck": "tsc --noEmit",
+    "prepack": "node scripts/sync-vault-rag-pkg.mjs && tsup"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
