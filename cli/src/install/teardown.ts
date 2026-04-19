@@ -1,0 +1,89 @@
+import { existsSync } from 'node:fs';
+import { rm, unlink } from 'node:fs/promises';
+import { join } from 'node:path';
+import { CONFIG_PATH, type Config, readConfig } from '../config.js';
+import { uninstallAliases } from './aliases.js';
+import { uninstallLaunchdWatcher } from './launchd.js';
+import { unregisterMcpServers } from './mcp.js';
+import { uninstallSerena } from './serena.js';
+import { STACK_SUBDIR, stopStack } from './stack.js';
+
+export interface TeardownOptions {
+  config?: Config;
+  removeSerena?: boolean;
+  removeVolumes?: boolean;
+  launchAgentsDir?: string;
+  claudeJsonPath?: string;
+  aliasesPath?: string;
+  zshrcPath?: string;
+  configPath?: string;
+}
+
+export interface TeardownResult {
+  watcher: { removedPlist: boolean; unloaded: boolean };
+  stackStopped: boolean;
+  stackRemoved: boolean;
+  serenaUninstalled: boolean;
+  mcp: { removed: string[]; notPresent: string[] };
+  aliases: { removedAliases: boolean; removedSourceLine: boolean };
+  configRemoved: boolean;
+}
+
+export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResult> {
+  const config = opts.config ?? (await readConfig());
+  const configPath = opts.configPath ?? CONFIG_PATH;
+
+  const result: TeardownResult = {
+    watcher: { removedPlist: false, unloaded: false },
+    stackStopped: false,
+    stackRemoved: false,
+    serenaUninstalled: false,
+    mcp: { removed: [], notPresent: [] },
+    aliases: { removedAliases: false, removedSourceLine: false },
+    configRemoved: false,
+  };
+
+  const watcher = await uninstallLaunchdWatcher({ launchAgentsDir: opts.launchAgentsDir });
+  result.watcher = { removedPlist: watcher.removedPlist, unloaded: watcher.unloaded };
+
+  if (config?.vaultPath) {
+    const stackDir = join(config.vaultPath, STACK_SUBDIR);
+    if (existsSync(join(stackDir, 'compose.yml'))) {
+      try {
+        await stopStack(stackDir, { removeVolumes: opts.removeVolumes });
+        result.stackStopped = true;
+      } catch {
+        // docker may not be running; continue teardown
+      }
+    }
+    if (existsSync(stackDir)) {
+      await rm(stackDir, { recursive: true, force: true });
+      result.stackRemoved = true;
+    }
+  }
+
+  if (opts.removeSerena) {
+    const { uninstalled } = await uninstallSerena();
+    result.serenaUninstalled = uninstalled;
+  }
+
+  const mcp = await unregisterMcpServers({
+    servers: ['vault-rag', 'serena'],
+    claudeJsonPath: opts.claudeJsonPath,
+    clearTeammateMode: true,
+  });
+  result.mcp = { removed: mcp.removed, notPresent: mcp.notPresent };
+
+  const aliases = await uninstallAliases({
+    aliasesPath: opts.aliasesPath,
+    zshrcPath: opts.zshrcPath,
+  });
+  result.aliases = aliases;
+
+  if (existsSync(configPath)) {
+    await unlink(configPath);
+    result.configRemoved = true;
+  }
+
+  return result;
+}

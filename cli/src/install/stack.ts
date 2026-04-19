@@ -47,10 +47,13 @@ export async function startStack(stackDir: string): Promise<void> {
   }
 }
 
-export async function stopStack(stackDir: string): Promise<void> {
-  const res = await runCommand('docker', ['compose', '-f', join(stackDir, 'compose.yml'), 'down'], {
-    timeoutMs: 60_000,
-  });
+export async function stopStack(
+  stackDir: string,
+  opts: { removeVolumes?: boolean } = {},
+): Promise<void> {
+  const args = ['compose', '-f', join(stackDir, 'compose.yml'), 'down'];
+  if (opts.removeVolumes) args.push('-v');
+  const res = await runCommand('docker', args, { timeoutMs: 60_000 });
   if (!res.ok) {
     throw new Error(`docker compose down failed: ${res.stderr || res.stdout}`);
   }
