@@ -43,37 +43,65 @@ export async function checkDocker(): Promise<PrereqResult> {
       };
 }
 
-export async function checkPython(): Promise<PrereqResult> {
-  const { ok, stdout, stderr } = await runCommand('python3', ['--version']);
-  if (!ok) {
-    return {
-      name: 'Python 3.10+',
-      ok: false,
-      detail: stderr || 'python3 not found',
-      remediation: 'Install Python: `brew install python@3.12`',
-    };
-  }
+const PYTHON_CANDIDATES = ['python3', 'python3.13', 'python3.12', 'python3.11', 'python3.10'];
+
+function parsePythonVersion(stdout: string): { major: number; minor: number } | null {
   const match = stdout.match(/Python (\d+)\.(\d+)/);
-  if (!match) {
+  if (!match) return null;
+  return { major: Number(match[1]), minor: Number(match[2]) };
+}
+
+function meetsMinimum(version: { major: number; minor: number }): boolean {
+  return (
+    version.major > MIN_PYTHON_MAJOR ||
+    (version.major === MIN_PYTHON_MAJOR && version.minor >= MIN_PYTHON_MINOR)
+  );
+}
+
+export async function checkPython(): Promise<PrereqResult> {
+  let latestSeen: {
+    cmd: string;
+    stdout: string;
+    version: { major: number; minor: number };
+  } | null = null;
+
+  for (const cmd of PYTHON_CANDIDATES) {
+    const res = await runCommand(cmd, ['--version']);
+    if (!res.ok) continue;
+    const version = parsePythonVersion(res.stdout);
+    if (!version) continue;
+    if (meetsMinimum(version)) {
+      return {
+        name: 'Python 3.10+',
+        ok: true,
+        detail: `${res.stdout} (via \`${cmd}\`)`,
+      };
+    }
+    if (
+      !latestSeen ||
+      version.major > latestSeen.version.major ||
+      version.minor > latestSeen.version.minor
+    ) {
+      latestSeen = { cmd, stdout: res.stdout, version };
+    }
+  }
+
+  if (latestSeen) {
     return {
       name: 'Python 3.10+',
       ok: false,
-      detail: `unparseable version: ${stdout}`,
-      remediation: 'Ensure `python3 --version` returns "Python X.Y.Z"',
+      detail: `found ${latestSeen.stdout} via \`${latestSeen.cmd}\` (need ${MIN_PYTHON_MAJOR}.${MIN_PYTHON_MINOR}+)`,
+      remediation:
+        'Upgrade Python: `brew install python@3.12` — metalmind also probes python3.13 / python3.12 / python3.11 / python3.10 in case your PATH is pinned to an older python3.',
     };
   }
-  const major = Number(match[1]);
-  const minor = Number(match[2]);
-  const meets =
-    major > MIN_PYTHON_MAJOR || (major === MIN_PYTHON_MAJOR && minor >= MIN_PYTHON_MINOR);
-  return meets
-    ? { name: 'Python 3.10+', ok: true, detail: stdout }
-    : {
-        name: 'Python 3.10+',
-        ok: false,
-        detail: `found ${stdout} (need ${MIN_PYTHON_MAJOR}.${MIN_PYTHON_MINOR}+)`,
-        remediation: 'Upgrade Python: `brew install python@3.12`',
-      };
+
+  return {
+    name: 'Python 3.10+',
+    ok: false,
+    detail: 'no python3 variant found on PATH',
+    remediation: 'Install Python: `brew install python@3.12`',
+  };
 }
 
 export async function checkUv(): Promise<PrereqResult> {

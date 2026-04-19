@@ -51,34 +51,42 @@ describe('prereqs', () => {
     expect(r.remediation).toContain('Docker Desktop');
   });
 
-  it('checkPython passes on 3.12', async () => {
+  it('checkPython passes on 3.12 via python3', async () => {
     runCommand.mockResolvedValueOnce(mockResult({ stdout: 'Python 3.12.1' }));
     const { checkPython } = await import('./prereqs.js');
     const r = await checkPython();
     expect(r.ok).toBe(true);
+    expect(r.detail).toContain('python3');
   });
 
-  it('checkPython fails on 3.9', async () => {
-    runCommand.mockResolvedValueOnce(mockResult({ stdout: 'Python 3.9.6' }));
-    const { checkPython } = await import('./prereqs.js');
-    const r = await checkPython();
-    expect(r.ok).toBe(false);
-    expect(r.detail).toContain('3.9.6');
-  });
-
-  it('checkPython passes on 4.0 (future major)', async () => {
-    runCommand.mockResolvedValueOnce(mockResult({ stdout: 'Python 4.0.0' }));
+  it('checkPython falls back to python3.12 when python3 is too old', async () => {
+    runCommand
+      .mockResolvedValueOnce(mockResult({ stdout: 'Python 3.9.6' })) // python3 — old
+      .mockResolvedValueOnce(mockResult({ ok: false })) // python3.13 — missing
+      .mockResolvedValueOnce(mockResult({ stdout: 'Python 3.12.13' })); // python3.12 — accepted
     const { checkPython } = await import('./prereqs.js');
     const r = await checkPython();
     expect(r.ok).toBe(true);
+    expect(r.detail).toContain('3.12.13');
+    expect(r.detail).toContain('python3.12');
   });
 
-  it('checkPython fails on unparseable output', async () => {
-    runCommand.mockResolvedValueOnce(mockResult({ stdout: 'banana' }));
+  it('checkPython fails when every candidate is <3.10, reporting the newest seen', async () => {
+    runCommand.mockResolvedValue(mockResult({ ok: false })); // all five candidates fail by default
+    runCommand.mockResolvedValueOnce(mockResult({ stdout: 'Python 3.9.6' })); // python3
+    runCommand.mockResolvedValueOnce(mockResult({ stdout: 'Python 3.8.0' })); // python3.13 (fake old)
     const { checkPython } = await import('./prereqs.js');
     const r = await checkPython();
     expect(r.ok).toBe(false);
-    expect(r.detail).toContain('unparseable');
+    expect(r.remediation).toContain('brew install python@3.12');
+  });
+
+  it('checkPython fails with a clean message when no python is found at all', async () => {
+    runCommand.mockResolvedValue(mockResult({ ok: false, stderr: 'command not found' }));
+    const { checkPython } = await import('./prereqs.js');
+    const r = await checkPython();
+    expect(r.ok).toBe(false);
+    expect(r.detail).toContain('no python3 variant');
   });
 
   it('detectPrereqs returns all 5 results', async () => {
