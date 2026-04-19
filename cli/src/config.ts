@@ -20,7 +20,7 @@ export const ConfigSchema = z.object({
   vaultPath: z.string(),
   graphifyCmd: z.string().default('graphify'),
   outputStyle: z.object({
-    installed: z.string(),
+    installed: z.string().nullable(),
     priorValue: z.string().nullable(),
   }),
   embeddings: z.object({

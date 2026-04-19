@@ -20,7 +20,7 @@ export interface ClaudeJson {
 
 export interface RegisterMcpOptions {
   vaultPath: string;
-  serenaDir?: string;
+  serena?: boolean;
   enableTeams?: boolean;
   claudeJsonPath?: string;
 }
@@ -66,11 +66,11 @@ function buildVaultRagEntry(vaultPath: string): McpServerEntry {
   };
 }
 
-function buildSerenaEntry(serenaDir: string): McpServerEntry {
+function buildSerenaEntry(): McpServerEntry {
   return {
     type: 'stdio',
-    command: 'uvx',
-    args: ['--from', serenaDir, 'serena', 'start-mcp-server', '--context', 'claude-code'],
+    command: 'serena',
+    args: ['start-mcp-server', '--context', 'claude-code'],
     env: { SERENA_USAGE_REPORTING: 'false' },
   };
 }
@@ -91,11 +91,11 @@ export async function registerMcpServers(opts: RegisterMcpOptions): Promise<Regi
     added.push('vault-rag');
   }
 
-  if (opts.serenaDir) {
+  if (opts.serena) {
     if ('serena' in servers) {
       skipped.push('serena');
     } else {
-      servers.serena = buildSerenaEntry(opts.serenaDir);
+      servers.serena = buildSerenaEntry();
       added.push('serena');
     }
   }

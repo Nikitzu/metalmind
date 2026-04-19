@@ -1,10 +1,12 @@
-import { intro, log, outro } from '@clack/prompts';
+import { log } from '@clack/prompts';
+import { runWizard } from '../install/wizard.js';
 
 export async function init(): Promise<void> {
-  intro('metalmind init');
-  log.warn('Not implemented in slice 1 — scaffold only.');
-  log.info(
-    'Coming in slices 2–10: prereq checks, vault setup, docker stack, launchd, MCP registration.',
-  );
-  outro('Stub.');
+  try {
+    await runWizard();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log.error(`init failed: ${message}`);
+    process.exitCode = 1;
+  }
 }

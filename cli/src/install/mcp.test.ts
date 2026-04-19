@@ -77,17 +77,18 @@ describe('MCP registration', () => {
     expect(data.mcpServers?.['vault-rag']?.command).toBe('custom-uv');
   });
 
-  it('adds serena when serenaDir supplied', async () => {
+  it('adds serena entry pointing at the serena binary on PATH', async () => {
     const result = await registerMcpServers({
       vaultPath: '/v',
-      serenaDir: '/Users/me/.serena/src/serena',
+      serena: true,
       claudeJsonPath,
     });
 
     expect(result.added).toEqual(['vault-rag', 'serena']);
     const data = await readJson(claudeJsonPath);
-    expect(data.mcpServers?.serena?.command).toBe('uvx');
-    expect(data.mcpServers?.serena?.args).toContain('/Users/me/.serena/src/serena');
+    expect(data.mcpServers?.serena?.command).toBe('serena');
+    expect(data.mcpServers?.serena?.args).toEqual(['start-mcp-server', '--context', 'claude-code']);
+    expect(data.mcpServers?.serena?.env?.SERENA_USAGE_REPORTING).toBe('false');
   });
 
   it('sets teammateMode when enableTeams and absent', async () => {
@@ -119,7 +120,7 @@ describe('MCP registration', () => {
   it('unregister removes named servers and preserves others', async () => {
     await registerMcpServers({
       vaultPath: '/v',
-      serenaDir: '/s',
+      serena: true,
       claudeJsonPath,
     });
     await writeFile(
