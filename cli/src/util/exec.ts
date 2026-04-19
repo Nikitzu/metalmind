@@ -14,7 +14,8 @@ export async function runCommand(
 ): Promise<CommandResult> {
   try {
     const result = await execa(cmd, args, {
-      timeout: opts.timeoutMs ?? 5000,
+      // 0 disables execa's timeout; any other falsy falls back to the 5s default.
+      timeout: opts.timeoutMs === 0 ? undefined : opts.timeoutMs ?? 5000,
       reject: false,
       stripFinalNewline: true,
     });

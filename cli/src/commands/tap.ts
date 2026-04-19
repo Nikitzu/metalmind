@@ -6,6 +6,8 @@ export interface TapOptions {
   deep?: boolean;
   expand?: boolean;
   k?: number;
+  json?: boolean;
+  verbose?: boolean;
 }
 
 function resolveTier(opts: TapOptions, defaultTier: RecallTier): RecallTier {
@@ -29,6 +31,7 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
   }
 
   const tier = resolveTier(opts, config.recall.defaultTier);
+  const showMeta = opts.verbose ?? config.verbose;
 
   try {
     const result = await recall({
@@ -37,7 +40,13 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       tier,
       k: opts.k,
     });
-    log.info(`${tier} via ${result.tool}`);
+    if (opts.json) {
+      process.stdout.write(
+        `${JSON.stringify({ tier, query, text: result.text, raw: result.raw }, null, 2)}\n`,
+      );
+      return;
+    }
+    if (showMeta) log.info(`${tier} (${query.length} chars)`);
     process.stdout.write(`${result.text}\n`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

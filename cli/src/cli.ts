@@ -72,7 +72,27 @@ function attachTapFlags<T extends Command>(cmd: T): T {
   return cmd
     .option('--deep', 'Search + related_notes on top hit')
     .option('--expand', 'expand_search: hits + linked context in one call')
-    .option('-k, --k <n>', 'Limit results to top N', (v) => Number.parseInt(v, 10)) as T;
+    .option('-k, --k <n>', 'Limit results to top N', (v) => Number.parseInt(v, 10))
+    .option('--json', 'Emit structured JSON (tier, query, text, raw)')
+    .option('--verbose', 'Include metadata line (overrides config.verbose)') as T;
+}
+
+type TapCliOpts = {
+  deep?: boolean;
+  expand?: boolean;
+  k?: number;
+  json?: boolean;
+  verbose?: boolean;
+};
+
+function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
+  return {
+    deep: cmdOpts.deep,
+    expand: cmdOpts.expand,
+    k: cmdOpts.k,
+    json: cmdOpts.json,
+    verbose: cmdOpts.verbose,
+  };
 }
 
 const tapCmd = program
@@ -82,25 +102,11 @@ attachTapFlags(
   tapCmd
     .command('copper <query>')
     .description('Recall notes from your coppermind (the Obsidian vault)'),
-).action((query: string, cmdOpts: { deep?: boolean; expand?: boolean; k?: number }) => {
-  const opts: TapOptions = {
-    deep: cmdOpts.deep,
-    expand: cmdOpts.expand,
-    k: cmdOpts.k,
-  };
-  return tap(query, opts);
-});
+).action((query: string, cmdOpts: TapCliOpts) => tap(query, normalizeTapOpts(cmdOpts)));
 
 attachTapFlags(
   program.command('recall <query>').description('Classic alias: recall notes from the vault'),
-).action((query: string, cmdOpts: { deep?: boolean; expand?: boolean; k?: number }) => {
-  const opts: TapOptions = {
-    deep: cmdOpts.deep,
-    expand: cmdOpts.expand,
-    k: cmdOpts.k,
-  };
-  return tap(query, opts);
-});
+).action((query: string, cmdOpts: TapCliOpts) => tap(query, normalizeTapOpts(cmdOpts)));
 
 const burnCmd = program
   .command('burn')

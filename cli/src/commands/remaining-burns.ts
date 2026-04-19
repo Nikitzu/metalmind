@@ -41,20 +41,29 @@ export async function renameSymbol(oldName: string, newName: string): Promise<vo
   }
 }
 
-// Zinc — team-debug dispatch (prints the prompt for Claude Code)
+// Zinc — dispatch /team-debug by invoking claude directly.
 export async function burnZinc(bug: string): Promise<void> {
   if (!bug?.trim()) {
     log.error('Usage: metalmind burn zinc "<bug description>"');
     process.exitCode = 1;
     return;
   }
-  const payload =
-    `/team-debug\n\n` +
-    `Bug: ${bug}\n\n` +
-    `Context: run this in Claude Code. Multiple adversary agents ` +
-    `will form competing hypotheses and converge on the true cause.`;
-  log.info('Copy this into Claude Code to spawn a team-debug session:');
-  process.stdout.write(`\n${payload}\n\n`);
+  const { runCommand } = await import('../util/exec.js');
+  const claudeAvailable = await runCommand('claude', ['--version']);
+  if (!claudeAvailable.ok) {
+    log.error('claude CLI not found on PATH. Copy this into Claude Code manually:');
+    process.stdout.write(`\n/team-debug\n\nBug: ${bug}\n\n`);
+    process.exitCode = 1;
+    return;
+  }
+  const res = await runCommand('claude', ['-p', `/team-debug\n\nBug: ${bug}`], {
+    timeoutMs: 0,
+  });
+  if (res.stdout) process.stdout.write(`${res.stdout}\n`);
+  if (!res.ok) {
+    log.error(`claude exited ${res.exitCode}: ${res.stderr}`);
+    process.exitCode = res.exitCode ?? 1;
+  }
 }
 
 // Tin — verbose toggle
