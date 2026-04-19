@@ -30,6 +30,7 @@ export const ConfigSchema = z.object({
   recall: z.object({
     defaultTier: RecallTierSchema,
   }),
+  verbose: z.boolean().default(false),
   mcp: z.object({
     registered: z.array(z.string()),
   }),

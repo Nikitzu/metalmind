@@ -28,6 +28,7 @@ function baseConfig(vaultPath: string): Config {
     outputStyle: { installed: null, priorValue: null },
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast' },
+    verbose: false,
     mcp: { registered: ['vault-rag'] },
     hooks: { claudeCode: false },
     forge: { groups: {} },

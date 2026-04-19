@@ -196,6 +196,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     outputStyle: { installed: styleChoice, priorValue: style.priorValue },
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast' },
+    verbose: false,
     mcp: {
       registered: ['vault-rag', ...(serena ? ['serena'] : []), ...(graphify ? ['graphify'] : [])],
     },

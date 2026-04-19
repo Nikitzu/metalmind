@@ -3,6 +3,13 @@ import { burn } from './commands/burn.js';
 import { doctor } from './commands/doctor.js';
 import { forgeAdd, forgeCreate, forgeDelete, forgeList, forgeRemove } from './commands/forge.js';
 import { init } from './commands/init.js';
+import {
+  aluminumWipe,
+  burnZinc,
+  pewterReindex,
+  renameSymbol,
+  toggleVerbose,
+} from './commands/remaining-burns.js';
 import { type StoreOptions, store } from './commands/store.js';
 import { type TapOptions, tap } from './commands/tap.js';
 import { uninstall } from './commands/uninstall.js';
@@ -143,6 +150,63 @@ attachForgeSubcommands(forgeCmd);
 
 const groupCmd = program.command('group').description('Classic alias: cross-repo graph groups');
 attachForgeSubcommands(groupCmd);
+
+burnCmd
+  .command('steel <old> <new>')
+  .description('Burn Steel — rename a symbol via Serena')
+  .action(renameSymbol);
+
+burnCmd
+  .command('zinc <bug>')
+  .description('Burn Zinc (Rioter) — dispatch team-debug via Claude Code')
+  .action(burnZinc);
+
+burnCmd
+  .command('tin')
+  .description('Burn Tin — toggle verbose output')
+  .option('--on', 'Force verbose on')
+  .option('--off', 'Force verbose off')
+  .action((cmdOpts: { on?: boolean; off?: boolean }) => {
+    const state = cmdOpts.on ? true : cmdOpts.off ? false : undefined;
+    return toggleVerbose(state);
+  });
+
+burnCmd
+  .command('pewter')
+  .description('Burn Pewter — force rebuild the code graph for the current repo')
+  .action(pewterReindex);
+
+burnCmd
+  .command('aluminum')
+  .description('Burn Aluminum — wipe metalmind install (alias for uninstall)')
+  .action(aluminumWipe);
+
+program
+  .command('rename <old> <new>')
+  .description('Classic alias: rename a symbol via Serena')
+  .action(renameSymbol);
+
+program
+  .command('debug <bug>')
+  .description('Classic alias: dispatch team-debug via Claude Code')
+  .action(burnZinc);
+
+program
+  .command('verbose')
+  .description('Classic alias: toggle verbose output')
+  .option('--on', 'Force verbose on')
+  .option('--off', 'Force verbose off')
+  .action((cmdOpts: { on?: boolean; off?: boolean }) => {
+    const state = cmdOpts.on ? true : cmdOpts.off ? false : undefined;
+    return toggleVerbose(state);
+  });
+
+program
+  .command('reindex')
+  .description('Classic alias: rebuild code graph for current repo')
+  .action(pewterReindex);
+
+program.command('wipe').description('Classic alias: uninstall metalmind').action(aluminumWipe);
 
 program.parseAsync(process.argv).catch((err: unknown) => {
   const message = err instanceof Error ? err.message : String(err);

@@ -13,6 +13,7 @@ function baseConfig(): Config {
     outputStyle: { installed: 'marsh', priorValue: null },
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast' },
+    verbose: false,
     mcp: { registered: ['vault-rag'] },
     hooks: { claudeCode: false },
     forge: { groups: {} },
