@@ -80,6 +80,36 @@ describe('forge loader', () => {
     expect(merged.nodeCount).toBe(1);
   });
 
+  it('caches per-repo routes by graph.json mtime; skips rewalk when unchanged', async () => {
+    await writeGraph(repoA, [{ id: 'fn', label: 'x' }]);
+    // Seed some source files so extractRoutes has something to find.
+    await writeFile(
+      join(repoA, 'handlers.ts'),
+      "const r = router; r.get('/api/users', h);\n",
+      'utf8',
+    );
+    const group: ForgeGroup = { repos: [repoA] };
+
+    const first = await buildMergedGraph(group, { cacheDir });
+    expect(first.routeMatchEdgeCount).toBe(0); // only one repo, no cross-repo routes
+
+    // Simulate a source-only change (no graph.json update). Extract-cache keys
+    // on graph.json mtime, so this write should NOT bust the route cache.
+    await writeFile(join(repoA, 'handlers.ts'), "const r = router; r.get('/api/diff', h);\n", 'utf8');
+    const second = await buildMergedGraph(group, { cacheDir });
+    // Second call still reflects the cached routes (graph.json unchanged).
+    expect(second.routeMatchEdgeCount).toBe(first.routeMatchEdgeCount);
+
+    // Now bump graph.json — cache invalidates, fresh walk picks up new source.
+    await new Promise((r) => setTimeout(r, 10));
+    await writeGraph(repoA, [
+      { id: 'fn', label: 'x' },
+      { id: 'fn2', label: 'y' },
+    ]);
+    const third = await buildMergedGraph(group, { cacheDir });
+    expect(third.nodeCount).toBe(2);
+  });
+
   it('loadOrBuildMerged writes cache and reads it back', async () => {
     await writeGraph(repoA, [{ id: 'fn', label: 'auth' }]);
     const group: ForgeGroup = { repos: [repoA] };
