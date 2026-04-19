@@ -6,6 +6,7 @@ import { uninstallAliases } from './aliases.js';
 import { uninstallGraphify } from './graphify.js';
 import { uninstallLaunchdWatcher } from './launchd.js';
 import { unregisterMcpServers } from './mcp.js';
+import { uninstallOutputStyle } from './output-style.js';
 import { uninstallSerena } from './serena.js';
 import { STACK_SUBDIR, stopStack } from './stack.js';
 
@@ -29,6 +30,7 @@ export interface TeardownResult {
   graphifyUninstalled: boolean;
   mcp: { removed: string[]; notPresent: string[] };
   aliases: { removedAliases: boolean; removedSourceLine: boolean };
+  outputStyle: { styleRemoved: boolean; settingsRestored: boolean };
   configRemoved: boolean;
 }
 
@@ -44,6 +46,7 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     graphifyUninstalled: false,
     mcp: { removed: [], notPresent: [] },
     aliases: { removedAliases: false, removedSourceLine: false },
+    outputStyle: { styleRemoved: false, settingsRestored: false },
     configRemoved: false,
   };
 
@@ -88,6 +91,14 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     zshrcPath: opts.zshrcPath,
   });
   result.aliases = aliases;
+
+  if (config?.outputStyle.installed) {
+    const style = await uninstallOutputStyle({
+      styleName: config.outputStyle.installed,
+      priorValue: config.outputStyle.priorValue,
+    });
+    result.outputStyle = style;
+  }
 
   if (existsSync(configPath)) {
     await unlink(configPath);

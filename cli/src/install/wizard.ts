@@ -1,10 +1,11 @@
-import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts';
+import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/prompts';
 import { type Config, writeConfig } from '../config.js';
 import { runCommand } from '../util/exec.js';
 import { installAliases } from './aliases.js';
 import { installGraphify } from './graphify.js';
 import { installLaunchdWatcher } from './launchd.js';
 import { registerMcpServers } from './mcp.js';
+import { type FlavorChoice, installOutputStyle } from './output-style.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
 import { installSerena } from './serena.js';
 import { setupStack } from './stack.js';
@@ -16,6 +17,7 @@ export interface RunWizardOptions {
   serena?: boolean;
   graphify?: boolean;
   enableTeams?: boolean;
+  flavor?: 'scadrial' | 'classic';
   skipDocker?: boolean;
 }
 
@@ -87,6 +89,23 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     checkCancelled(answer, 'graphify prompt');
     graphify = answer;
   }
+
+  let flavor: 'scadrial' | 'classic';
+  if (opts.flavor !== undefined) {
+    flavor = opts.flavor;
+  } else {
+    const answer = await select({
+      message: 'Theme — affects command spelling and help text',
+      initialValue: 'scadrial',
+      options: [
+        { value: 'scadrial', label: 'Scadrial — Mistborn Era 1 verbs (burn bronze, tap copper)' },
+        { value: 'classic', label: 'Classic — neutral verbs (graph, recall)' },
+      ],
+    });
+    checkCancelled(answer, 'theme prompt');
+    flavor = answer as 'scadrial' | 'classic';
+  }
+  const styleChoice: FlavorChoice = flavor === 'scadrial' ? 'marsh' : 'terse';
 
   let enableTeams: boolean;
   if (opts.enableTeams !== undefined) {
@@ -162,12 +181,19 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   if (aliases.appendedSource) log.success(`  ${aliases.aliasesPath} + source line in .zshrc`);
   else if (aliases.zshrcMissing) log.warn('  no ~/.zshrc — add source line manually');
 
+  log.step(`Installing ${styleChoice} output-style`);
+  const style = await installOutputStyle({ choice: styleChoice });
+  if (style.migrated) log.success(`  migrated legacy style → ${style.stylePath}`);
+  else if (style.installed) log.success(`  copied bundled style → ${style.stylePath}`);
+  else log.info(`  ${style.stylePath} already present — kept`);
+  if (style.priorValue) log.info(`  prior settings.json outputStyle: ${style.priorValue}`);
+
   const config: Config = {
     version: 1,
-    flavor: 'scadrial',
+    flavor,
     vaultPath: vault.vaultPath,
     graphifyCmd: 'graphify',
-    outputStyle: { installed: null, priorValue: null },
+    outputStyle: { installed: styleChoice, priorValue: style.priorValue },
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast' },
     mcp: {

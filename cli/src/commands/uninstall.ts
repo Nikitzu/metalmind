@@ -69,6 +69,8 @@ export async function uninstall(): Promise<void> {
       log.success(`MCP entries removed: ${result.mcp.removed.join(', ')}`);
     if (result.aliases.removedAliases) log.success('Aliases file removed');
     if (result.aliases.removedSourceLine) log.success('.zshrc source line removed');
+    if (result.outputStyle.styleRemoved) log.success('Output-style file removed');
+    if (result.outputStyle.settingsRestored) log.success('settings.json outputStyle restored');
     if (result.configRemoved) log.success('~/.metalmind/config.json deleted');
     outro('Uninstall complete. Your vault notes are untouched.');
   } catch (err) {
