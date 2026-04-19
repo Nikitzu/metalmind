@@ -2,28 +2,22 @@
 
 The installer fails fast if anything is missing. Install these first.
 
-## macOS
+## Platforms
 
-Tested on macOS 14+ (Sonoma) on Apple Silicon. Intel Macs should work. Linux is untested — `launchd` is macOS-specific; you'd need a systemd user unit equivalent.
+Tested on macOS 14+ (Apple Silicon; Intel Macs should work) and Ubuntu 22.04+ / Debian 12+ via WSL2 or native. Native Windows is not supported — WSL2 works via the Linux path.
 
-## Obsidian
+## Obsidian (optional but recommended)
 
-Download from [obsidian.md](https://obsidian.md/).
+[obsidian.md](https://obsidian.md/). On first launch, open or create a vault at your chosen path (default `~/Knowledge/`). The installer will add the expected folder structure and a managed block in `CLAUDE.md`.
 
-On first launch, **create an empty vault** at your chosen path (default `~/Knowledge/`). The installer will add the expected folder structure and a `CLAUDE.md` to it.
-
-## Docker Desktop
-
-Download from [docker.com](https://www.docker.com/products/docker-desktop).
+## Docker
 
 The stack uses two small containers:
 
 - `ollama/ollama` — runs the embedding model
 - `qdrant/qdrant` — stores vectors
 
-Resource caps are set in `compose.yml`: 1 GB RAM for Ollama, 512 MB for Qdrant. You can lower these if needed.
-
-Make sure Docker Desktop is **running** before install.
+Resource caps in `compose.yml`: 1 GB RAM for Ollama, 512 MB for Qdrant. Lower if needed. Make sure Docker is **running** before `metalmind init`.
 
 ## uv
 
@@ -37,11 +31,15 @@ Or `brew install uv`.
 
 ## Claude Code CLI
 
-Install via the [official instructions](https://docs.claude.com/en/docs/claude-code/overview). You need to be logged in (`claude` on the command line should work).
+Install via the [official instructions](https://docs.claude.com/en/docs/claude-code/overview). Log in — `claude` on the command line should work. v2.1+ recommended.
+
+## Python 3.11+
+
+Usually present on macOS and modern Linux. `metalmind init` probes `python3`, `python3.13`, `python3.12`, and `python3.11` in that order.
 
 ## Everything else
 
-Usually already present on macOS: `git`, `python3` (≥ 3.11), `zsh`, `curl`.
+`git`, `zsh` or `bash`, `curl`.
 
 ## Quick check
 

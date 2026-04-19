@@ -1,10 +1,13 @@
 # Customization
 
-The stack is meant to be edited. Nothing is sacred — fork, strip, extend.
+The stack is meant to be edited. Nothing is sacred — fork, strip, extend. Two rules:
+
+1. User customizations go **outside** the metalmind sentinel markers in `CLAUDE.md` files. Everything inside `<!-- metalmind:managed:begin -->` … `<!-- metalmind:managed:end -->` gets refreshed on every `metalmind burn brass` / `metalmind stamp`.
+2. Rules, agents, and commands under `~/.claude/` are **metalmind-owned** — they get overwritten on re-stamp. If you want to customize, create a sibling file (e.g. `~/.claude/agents/my-custom.md`) or rename.
 
 ## Adding your own rules
 
-Drop `*.md` files into `~/.claude/rules/`. They're not auto-loaded — reference them from `~/.claude/CLAUDE.md` under "Mandatory reads" to make Claude read them every session, or leave them for on-demand loading.
+Drop `*.md` files into `~/.claude/rules/` with a non-metalmind filename. Reference them from your own text in `~/.claude/CLAUDE.md` (outside the managed block) under "Mandatory reads", or leave them for on-demand loading.
 
 Convention:
 
@@ -19,30 +22,20 @@ Content here.
 
 ## Adding your own agents
 
-Drop `*.md` files into `~/.claude/agents/`. They appear in the `Agent` tool picker on next restart.
+Drop `*.md` files into `~/.claude/agents/` with a non-metalmind filename (don't name it `architect.md` — you'd get overwritten on re-stamp). They appear in the agent picker on next Claude Code restart.
 
-Agent file structure: see any of the 15 bundled files for the format. Key fields in frontmatter: `name`, `description`, `tools`.
+Agent frontmatter: `name`, `description`, `tools` (comma-separated), optional `model` and `color`.
 
 ## Changing the vault path
 
-The whole stack reads `VAULT_PATH` from the environment. Places to update if you move the vault after install:
-
-1. `~/.zshrc` — change the `export VAULT_PATH=...` line (or rely on `~/.metalmind-stack/aliases.sh`)
-2. `~/Library/LaunchAgents/com.metalmind.vault-indexer.plist` — `EnvironmentVariables.VAULT_PATH`
-3. `~/.claude/CLAUDE.md` — the `Storage:` line under "Memory — Obsidian vault"
-
-(The vault-rag MCP entry was retired — recall now runs via the `metalmind` CLI and reads `VAULT_PATH` from the environment directly.)
-
-Then: `launchctl unload <plist> && launchctl load <plist>`, restart Claude Code, `exec zsh`.
+Re-run `metalmind init` and provide the new path. The wizard is idempotent; it will move managed files to the new location and update the config.
 
 ## Changing the embedding model
 
 Default: `nomic-embed-text` (274 MB, 768-dim, fast, good enough for English notes).
 
-To switch models:
-
 1. `docker exec metalmind-ollama ollama pull <new-model>`
-2. Set `VAULT_EMBED_MODEL=<new-model>` in your shell or launchd plist env
+2. Set `VAULT_EMBED_MODEL=<new-model>` in your shell and in the launchd/systemd unit env
 3. If the new model has a different dim, set `VAULT_EMBED_DIM=<n>` to match
 4. `metalmind-vault-rag-indexer` — full re-embed (old vectors are incompatible)
 
@@ -50,24 +43,24 @@ Candidates: `mxbai-embed-large` (1024-dim, better recall, bigger), `snowflake-ar
 
 ## Changing folder structure
 
-Edit `templates/vault/CLAUDE.md` and the default-mkdir line in `install.sh`. Re-run `install.sh` to apply to an existing vault — existing folders are preserved.
+Edit `cli/templates/vault/CLAUDE.md.block.template`, rebuild the CLI (`pnpm build` in `cli/`), then `metalmind burn brass`. Your existing folders are preserved; the sentinel block updates.
 
 ## Tweaking resource caps
 
 `~/Knowledge/.metalmind-stack/compose.yml` — `mem_limit` and `cpus` per service. Re-run `vault-up` to apply.
 
-Defaults target an idle footprint of ~300 MB. The Ollama model unloads after 1 minute idle (`OLLAMA_KEEP_ALIVE=1m`) and reloads in ~2 seconds when queried.
+Idle footprint target: ~300 MB. The Ollama model unloads after 1 minute idle (`OLLAMA_KEEP_ALIVE=1m`) and reloads in ~2 seconds when queried.
 
 ## Changing the Serena context
 
-`~/.serena/serena_config.yml` — `default_modes` controls the modes, and the `--context` flag in `~/.claude.json` mcpServers.serena.args controls the context. Built-in contexts: `claude-code`, `ide`, `agent`, `desktop-app`, etc.
+`~/.serena/serena_config.yml` — `default_modes`. The `--context` flag in `~/.claude.json` `mcpServers.serena.args` controls the context. Built-in contexts: `claude-code`, `ide`, `agent`, `desktop-app`.
 
 ## Bringing your own MCP servers
 
-Add entries to `~/.claude.json` under `mcpServers`. The installer merges but never overwrites — your existing entries are preserved on re-run.
+Add entries to `~/.claude.json` under `mcpServers`. `metalmind init` preserves unrelated entries and only manages `serena` (and strips any stale `vault-rag`). Your own entries are untouched.
 
-## Using this as a base, not a final state
+## This is a starting point
 
-The rules in `~/.claude/rules/principles.md` are a starting point — opinionated, terse. Tweak them as you learn what Claude gets wrong for your workflow. That's the whole point: Claude reads them every session, so small edits compound.
+The rules in `~/.claude/rules/principles.md` are opinionated defaults. Tweak them as you learn what Claude gets wrong for your workflow — your edits outside the managed block survive re-stamp.
 
-The vault is *yours* — anything indexed is searchable. The more decisions you `/save`, the better recall gets. Aim for one `/save` per meaningful session, not per chat.
+Your vault is *yours*. Anything indexed is searchable. The more decisions you `/save`, the better recall gets. Aim for one `/save` per meaningful session, not per chat.
