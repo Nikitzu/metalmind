@@ -15,3 +15,10 @@ __pycache__/
 
 # Never commit a filled-in config
 **/serena_config.local.yml
+
+# Node / pnpm / TS
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.pnpm-store/

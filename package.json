@@ -1,0 +1,23 @@
+{
+  "name": "metalmind-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "metalmind — unified CLI for vault, code graph, and cross-repo intelligence.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "build": "pnpm -r --parallel build",
+    "dev": "pnpm --filter metalmind dev",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.12"
+  }
+}

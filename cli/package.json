@@ -1,0 +1,38 @@
+{
+  "name": "metalmind",
+  "version": "0.0.1",
+  "description": "Unified CLI for Obsidian vault, code graph (graphify), and cross-repo intelligence. Mistborn-themed with a neutral alias set.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "metalmind": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "assets"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "commander": "^12.1.0",
+    "execa": "^9.4.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
