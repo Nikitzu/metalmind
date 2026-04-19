@@ -1,0 +1,47 @@
+---
+interface Row {
+  metal: string;
+  scadrial: string;
+  classic: string;
+  desc: string;
+}
+
+const rows: Row[] = [
+  { metal: 'Copper ↓', scadrial: 'store copper "..."', classic: 'save "..."', desc: 'Deposit an insight to the vault.' },
+  { metal: 'Copper ↑', scadrial: 'tap copper "<q>"', classic: 'recall "<q>"', desc: 'Retrieve semantically (--deep / --expand).' },
+  { metal: 'Bronze', scadrial: 'burn bronze "<q>"', classic: 'graph "<q>"', desc: 'Query the code graph (Seeker).' },
+  { metal: 'Iron', scadrial: 'burn iron "<sym>"', classic: 'symbol "<sym>"', desc: 'Pull a symbol and its neighbors.' },
+  { metal: 'Steel', scadrial: 'burn steel <o> <n>', classic: 'rename <o> <n>', desc: 'Coordinated rename via Serena.' },
+  { metal: 'Tin', scadrial: 'burn tin', classic: 'verbose', desc: 'Enhanced output — verbose toggle.' },
+  { metal: 'Pewter', scadrial: 'burn pewter', classic: 'reindex', desc: 'Force-rebuild the code graph.' },
+  { metal: 'Zinc', scadrial: 'burn zinc "<bug>"', classic: 'debug "<bug>"', desc: 'Rioter — dispatch a team-debug session.' },
+  { metal: 'Aluminum', scadrial: 'burn aluminum', classic: 'wipe', desc: 'Wipe install (reversible uninstall).' },
+  { metal: 'Forge', scadrial: 'forge create <g>', classic: 'group create <g>', desc: 'Define a cross-repo group.' },
+  { metal: 'Forge', scadrial: 'forge add <g> <r>', classic: 'group add <g> <r>', desc: 'Add a repo to the group.' },
+  { metal: 'Forge', scadrial: 'burn bronze "<q>" --forge <g>', classic: 'graph "<q>" --group <g>', desc: 'Query across every repo in the group.' },
+];
+---
+
+<div class="cmd-table-wrap">
+  <table class="cmd-table">
+    <thead>
+      <tr>
+        <th scope="col">Metal</th>
+        <th scope="col">Command</th>
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((row) => (
+        <tr>
+          <td class="metal">{row.metal}</td>
+          <td class="cmd">
+            <span class="scadrial"><span style="opacity:0.5">$</span> metalmind {row.scadrial}</span>
+            <span class="classic"><span style="opacity:0.5">$</span> metalmind {row.classic}</span>
+          </td>
+          <td class="desc">{row.desc}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

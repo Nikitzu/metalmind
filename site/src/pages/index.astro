@@ -1,0 +1,228 @@
+---
+import CommandsTable from '../components/CommandsTable.astro';
+import FlavorToggle from '../components/FlavorToggle.astro';
+import '../styles/global.css';
+
+const title = 'metalmind — unified CLI for Obsidian vault, code graph, and cross-repo intelligence';
+const description =
+  'Token-efficient, privacy-first Claude Code companion. Obsidian vault capture + local semantic recall, Serena LSP navigation, graphify code graphs, and a cross-repo forge — under one themed CLI.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07090c" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content="https://metalmind.mzyx.dev" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="nav-inner">
+        <div class="nav-brand">
+          <span class="nav-brand-accent">∴</span>&nbsp;metalmind
+        </div>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="#commands">commands</a>
+          <a href="#install">install</a>
+          <a href="#how">how</a>
+          <a href="https://github.com/Nikitzu/metalmind">github</a>
+          <a href="https://www.npmjs.com/package/metalmind">npm</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero container" aria-labelledby="hero-title">
+        <div class="hero-eyebrow">Scadrial · Keeper</div>
+        <h1 id="hero-title">metalmind</h1>
+        <p class="hero-tagline">
+          One CLI for your second brain and your codebase. Obsidian vault with local semantic
+          recall, Serena symbol navigation, graphify code graphs, and a cross-repo forge — every
+          metal verb mapped to a neutral classic alias.
+        </p>
+
+        <div id="install">
+          <div class="install-block">
+            <span class="prompt">$</span>
+            <span>npm install -g metalmind</span>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <a class="btn" href="https://github.com/Nikitzu/metalmind">view on GitHub →</a>
+          <a class="btn" href="https://www.npmjs.com/package/metalmind">npm package →</a>
+        </div>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="what-title">
+        <h2 id="what-title">What it does</h2>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-title">store copper / save</div>
+            <div class="feature-body">
+              Drop a decision or insight into your vault. Frontmatter, timestamped slug, Inbox by default.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">tap copper / recall</div>
+            <div class="feature-body">
+              Semantic search over your vault — plus --deep backlink traversal and --expand hybrid retrieval.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">burn bronze / graph</div>
+            <div class="feature-body">
+              Query a per-repo code graph built by graphify. Auto-indexes on first use.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">forge / group</div>
+            <div class="feature-body">
+              Cross-repo queries — name-match + HTTP-route edges, so caller↔handler relationships light up.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container-wide" aria-labelledby="commands-title" id="commands">
+        <h2 id="commands-title">Commands</h2>
+        <FlavorToggle />
+        <CommandsTable />
+        <p style="margin-top:1rem;color:var(--fg-muted);font-size:0.85rem;">
+          Both spellings always work at the CLI. The toggle only changes what you see here.
+        </p>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="demo-title">
+        <h2 id="demo-title">Install flow</h2>
+        <p>
+          A single <code>metalmind init</code> drives the whole install — prereq checks, vault
+          setup, Docker stack start, MCP registration, launchd watcher, output-style migration.
+          Reversible via <code>metalmind uninstall</code>.
+        </p>
+        <div class="cast-wrap" aria-label="Install flow demo (asciinema cast)">
+          <!-- asciinema-player lazy-loaded; cast file dropped in public/ -->
+          <noscript>
+            <p style="padding:2rem;text-align:center;color:var(--fg-muted);">
+              Install demo requires JavaScript. Cast available at /wizard-demo.cast
+            </p>
+          </noscript>
+          <div id="cast-root" style="width:100%;height:100%;"></div>
+        </div>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="how-title" id="how">
+        <h2 id="how-title">How it works</h2>
+        <p>
+          One CLI, many backends. metalmind doesn't reimplement any of its engines — it orchestrates
+          and routes.
+        </p>
+        <div class="diagram">
+          <div class="diagram-node">
+            <div class="diagram-node-title">Vault</div>
+            <div class="diagram-node-body">
+              Obsidian + Qdrant + Ollama (nomic-embed-text). Auto-reindex via launchd watcher.
+            </div>
+          </div>
+          <div class="diagram-node">
+            <div class="diagram-node-title">Serena</div>
+            <div class="diagram-node-body">
+              LSP-backed symbol navigation and coordinated renames. Zero-LLM per query.
+            </div>
+          </div>
+          <div class="diagram-node">
+            <div class="diagram-node-title">graphify</div>
+            <div class="diagram-node-body">
+              Per-repo code graph — clusters, god nodes, call paths. Tree-sitter AST; optional LLM for docs.
+            </div>
+          </div>
+          <div class="diagram-node">
+            <div class="diagram-node-title">Forge</div>
+            <div class="diagram-node-body">
+              Cross-repo merge layer — name-match + HTTP-route edges tagged with INFERRED provenance.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-badges">
+        <a href="https://www.npmjs.com/package/metalmind">
+          <img src="https://img.shields.io/npm/v/metalmind?style=flat-square&color=d4a14a&labelColor=10141b" alt="npm version" />
+        </a>
+        <a href="https://github.com/Nikitzu/metalmind/blob/main/LICENSE">
+          <img src="https://img.shields.io/badge/license-MIT-93b1d0?style=flat-square&labelColor=10141b" alt="MIT license" />
+        </a>
+        <a href="https://github.com/Nikitzu/metalmind">
+          <img src="https://img.shields.io/github/stars/Nikitzu/metalmind?style=flat-square&color=d4a14a&labelColor=10141b" alt="GitHub stars" />
+        </a>
+      </div>
+      <p>Inspired by Brandon Sanderson's Mistborn Era 1 novels. Not affiliated.</p>
+      <p style="margin-top:0.25rem;opacity:0.6;">Built on <a href="https://obsidian.md">Obsidian</a>, <a href="https://ollama.com">Ollama</a>, <a href="https://qdrant.tech">Qdrant</a>, <a href="https://github.com/oraios/serena">Serena</a>, <a href="https://pypi.org/project/graphifyy/">graphify</a>.</p>
+    </footer>
+
+    <!-- asciinema-player lazy-loaded after first paint -->
+    <script>
+      const ASCIINEMA_VERSION = '3.8.1';
+      const castUrl = '/wizard-demo.cast';
+
+      const load = () => {
+        if (document.getElementById('asciinema-css')) return;
+        const css = document.createElement('link');
+        css.id = 'asciinema-css';
+        css.rel = 'stylesheet';
+        css.href = `https://cdn.jsdelivr.net/npm/asciinema-player@${ASCIINEMA_VERSION}/dist/bundle/asciinema-player.css`;
+        document.head.appendChild(css);
+        const js = document.createElement('script');
+        js.src = `https://cdn.jsdelivr.net/npm/asciinema-player@${ASCIINEMA_VERSION}/dist/bundle/asciinema-player.min.js`;
+        js.onload = () => {
+          // @ts-ignore
+          if (window.AsciinemaPlayer) {
+            const root = document.getElementById('cast-root');
+            if (root) {
+              // @ts-ignore
+              window.AsciinemaPlayer.create(castUrl, root, {
+                theme: 'solarized-dark',
+                fit: 'both',
+                terminalFontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                poster: 'npt:0:04',
+              });
+            }
+          }
+        };
+        document.head.appendChild(js);
+      };
+
+      if ('IntersectionObserver' in window) {
+        const root = document.querySelector('.cast-wrap');
+        if (root) {
+          const io = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) { load(); io.disconnect(); break; }
+            }
+          }, { rootMargin: '200px' });
+          io.observe(root);
+        }
+      } else {
+        load();
+      }
+    </script>
+  </body>
+</html>

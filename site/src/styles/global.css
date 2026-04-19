@@ -1,0 +1,474 @@
+/* metalmind — Scadrial (Era 1) atmosphere, dev-tool content */
+
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+:root {
+  /* Ashen surfaces */
+  --bg: #07090c;
+  --surface: #10141b;
+  --surface-elev: #171d26;
+  --border: #232a35;
+  --border-strong: #2e3642;
+
+  /* Metal accents */
+  --copper: #d4a14a;
+  --copper-dim: #b8892f;
+  --copper-glow: rgba(212, 161, 74, 0.3);
+  --steel: #93b1d0;
+  --tin: #e6e6e6;
+
+  /* Text */
+  --fg: #e8e8e6;
+  --fg-strong: #f4f4f0;
+  --fg-muted: #7a7f87;
+
+  /* Type */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Geometry */
+  --prose-max: 720px;
+  --wide-max: 1120px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+
+  /* Page-top copper brazier glow — radial in top-left */
+  background-image:
+    radial-gradient(900px 500px at 10% -10%, rgba(212, 161, 74, 0.06), transparent 60%),
+    radial-gradient(700px 400px at 90% -20%, rgba(147, 177, 208, 0.04), transparent 65%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Ashfall — noise layer, very low opacity */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.83  0 0 0 0 0.78  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 240px 240px;
+  mix-blend-mode: overlay;
+}
+
+main,
+header,
+footer {
+  position: relative;
+  z-index: 1;
+}
+
+a {
+  color: var(--copper);
+  text-decoration: none;
+  transition:
+    color 0.2s,
+    text-shadow 0.2s;
+}
+a:hover {
+  color: #e8b45e;
+  text-shadow: 0 0 24px var(--copper-glow);
+}
+a:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--copper-glow);
+  color: var(--fg-strong);
+}
+
+/* Typography ramp */
+h1,
+h2,
+h3 {
+  margin: 0 0 0.3em;
+  color: var(--fg-strong);
+  letter-spacing: -0.01em;
+}
+h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+h2 {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--copper);
+  margin-top: 4rem;
+  margin-bottom: 1.5rem;
+}
+h3 {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--fg-strong);
+}
+p {
+  margin: 0 0 1rem;
+  color: var(--fg);
+}
+code,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+/* Thin copper rule for sections */
+.metal-rule {
+  border: 0;
+  height: 1px;
+  margin: 0;
+  background: linear-gradient(90deg, transparent, rgba(212, 161, 74, 0.35), transparent);
+}
+
+.container {
+  max-width: var(--prose-max);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+.container-wide {
+  max-width: var(--wide-max);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Nav */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  background: rgba(7, 9, 12, 0.7);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1.5rem;
+}
+.nav-inner {
+  max-width: var(--wide-max);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.nav-brand {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--fg-strong);
+  letter-spacing: 0.02em;
+}
+.nav-brand-accent {
+  color: var(--copper);
+}
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+.nav-links a {
+  color: var(--fg-muted);
+}
+.nav-links a:hover {
+  color: var(--copper);
+}
+
+/* Hero */
+.hero {
+  padding: 7rem 0 5rem;
+  text-align: center;
+}
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin-bottom: 1.25rem;
+  opacity: 0.85;
+}
+.hero-tagline {
+  margin-top: 1.5rem;
+  font-size: 1.25rem;
+  color: var(--fg-muted);
+  max-width: 56ch;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+.hero-actions {
+  margin-top: 2.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Install code block */
+.install-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--fg-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.02),
+    0 1px 0 rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(212, 161, 74, 0.08);
+  margin-top: 2rem;
+}
+.install-block .prompt {
+  color: var(--copper);
+  user-select: none;
+}
+
+/* Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+}
+.btn:hover {
+  border-color: var(--copper-dim);
+  color: var(--copper);
+  text-shadow: 0 0 20px var(--copper-glow);
+}
+
+/* Feature list */
+.features {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.feature {
+  padding: 1.25rem 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.feature-title {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--copper);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
+}
+.feature-body {
+  font-size: 0.95rem;
+  color: var(--fg-muted);
+  line-height: 1.55;
+}
+
+/* Flavor toggle (metal chips) */
+.flavor-toggle {
+  display: inline-flex;
+  gap: 0;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  margin-bottom: 2rem;
+}
+.flavor-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.flavor-toggle label {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  color: var(--fg-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.flavor-toggle label:hover {
+  color: var(--fg);
+}
+.flavor-toggle input:checked + label {
+  background: rgba(212, 161, 74, 0.1);
+  color: var(--copper);
+  border-color: rgba(212, 161, 74, 0.45);
+  box-shadow: 0 0 24px rgba(212, 161, 74, 0.15);
+}
+.flavor-toggle input:focus-visible + label {
+  outline: 2px solid var(--copper);
+  outline-offset: 2px;
+}
+
+/* Commands table — both spellings present, CSS-only reveal */
+.cmd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.cmd-table th,
+.cmd-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.cmd-table th {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fg-muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-strong);
+}
+.cmd-table td.metal {
+  color: var(--copper);
+  font-family: var(--font-mono);
+}
+.cmd-table td.cmd {
+  font-family: var(--font-mono);
+  color: var(--fg-strong);
+}
+.cmd-table td.cmd .classic {
+  display: none;
+}
+.cmd-table td.cmd .scadrial {
+  display: inline;
+}
+.cmd-table td.desc {
+  color: var(--fg-muted);
+}
+
+body:has(#flavor-classic:checked) .cmd-table td.cmd .scadrial {
+  display: none;
+}
+body:has(#flavor-classic:checked) .cmd-table td.cmd .classic {
+  display: inline;
+}
+body:has(#flavor-classic:checked) .cmd-table td.metal {
+  color: var(--steel);
+}
+
+/* How it works diagram */
+.diagram {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-top: 1.5rem;
+}
+.diagram-node {
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+.diagram-node-title {
+  color: var(--copper);
+  margin-bottom: 0.25rem;
+}
+.diagram-node-body {
+  color: var(--fg-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+/* Asciinema — lazy, reserve space to avoid CLS */
+.cast-wrap {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin-top: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Footer */
+footer {
+  margin-top: 6rem;
+  padding: 2.5rem 1.5rem 3rem;
+  border-top: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.footer-badges {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.footer-badges img {
+  height: 20px;
+  vertical-align: middle;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}

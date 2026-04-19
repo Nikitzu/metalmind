@@ -1,0 +1,12 @@
+---
+// CSS-only flavor toggle. Uses hidden radios + body:has() selectors in
+// global.css to show Scadrial or Classic column of the commands table.
+---
+
+<fieldset class="flavor-toggle" aria-label="Command spelling">
+  <legend class="sr-only">Command spelling</legend>
+  <input id="flavor-scadrial" name="flavor" type="radio" checked />
+  <label for="flavor-scadrial">Scadrial</label>
+  <input id="flavor-classic" name="flavor" type="radio" />
+  <label for="flavor-classic">Classic</label>
+</fieldset>
