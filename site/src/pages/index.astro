@@ -31,10 +31,11 @@ const description =
           <span class="nav-brand-accent">∴</span>&nbsp;metalmind
         </div>
         <nav class="nav-links" aria-label="Primary">
+          <a href="#beyond-title">what</a>
+          <a href="#anti-mcp-title">why CLI</a>
           <a href="#commands">commands</a>
-          <a href="#install">install</a>
           <a href="#demo">flow</a>
-          <a href="#how">how</a>
+          <a href="#how">under</a>
           <a href="https://github.com/Nikitzu/metalmind">github</a>
         </nav>
         <div class="nav-flavor">
@@ -50,11 +51,15 @@ const description =
           <span class="classic-only">Knowledge · CLI</span>
         </div>
         <h1 id="hero-title">metalmind</h1>
+        <p class="hero-lead">
+          <span class="scadrial-only">A metalmind for Claude. Store decisions in copper. Tap them when you need them.</span>
+          <span class="classic-only">Persistent memory for Claude. Save decisions. Recall them when you need them.</span>
+        </p>
         <p class="hero-tagline">
-          Not a wrapper — a connecting tissue. Cross-repo caller↔handler edges. A recall ladder
-          that preserves wikilink structure instead of flattening it. A typed installer that
-          replaces 14 KB of bash. One mental model over every backend — with a neutral alias
-          for every themed verb.
+          Every <code>claude</code> invocation is a first meeting. Yesterday's architectural call,
+          the reason you rejected that library, the 40-minute debug you just finished — gone by
+          tomorrow. metalmind is the place Claude stores things, and the way Claude gets them back —
+          without burning context tokens on tool schemas to do it.
         </p>
 
         <div id="install">
@@ -76,56 +81,51 @@ const description =
       <hr class="metal-rule" />
 
       <section class="container" aria-labelledby="beyond-title">
-        <h2 id="beyond-title">Beyond the glue</h2>
+        <h2 id="beyond-title">What it adds</h2>
         <p>
-          metalmind leans on strong open-source engines, but the tissue that connects them is
-          what makes it a tool rather than a README. Four concrete things we built on top.
+          Four things that survive your <code>claude</code> ending, start fresh, and a fifth that
+          lets you take it all back.
         </p>
         <div class="features">
           <div class="feature">
-            <div class="feature-title">
-              <span class="scadrial-only">Cross-repo forge with route-match</span>
-              <span class="classic-only">Cross-repo groups with route-match</span>
-            </div>
+            <div class="feature-title">Persistent memory across sessions</div>
             <div class="feature-body">
-              Name-match edges union the same symbol across repos. A framework-aware HTTP-route
-              matcher (Express / Fastify / Koa / FastAPI / Flask + fetch / axios / got / httpx /
-              requests) links caller→handler <em>across services</em>. Every inferred edge carries
-              provenance (<code>INFERRED_NAME</code> / <code>INFERRED_ROUTE</code>) so Claude can
-              trust-grade what it reads.
+              <code><span class="scadrial-only">store copper "&lt;insight&gt;"</span><span class="classic-only">save "&lt;insight&gt;"</span></code>
+              deposits a decision into your local Obsidian vault. metalmind proposes the path,
+              wikilinks, and frontmatter; you approve; it writes. Tomorrow's session recalls it
+              as if yesterday never ended.
             </div>
           </div>
           <div class="feature">
-            <div class="feature-title">Recall ladder, not a search bar</div>
+            <div class="feature-title">Recall without the MCP token tax</div>
             <div class="feature-body">
-              <code><span class="scadrial-only">tap copper</span><span class="classic-only">recall</span></code>
-              escalates deliberately: semantic-only (fast), then
-              <code>--deep</code> follows backlinks from the top hit, then <code>--expand</code>
-              returns hits with linked context in one call. Recovers the
-              <code>[[wikilink]]</code> graph that raw embeddings flatten away, and lets you pay
-              for depth only when you need it.
+              <code><span class="scadrial-only">tap copper "&lt;query&gt;"</span><span class="classic-only">recall "&lt;query&gt;"</span></code>
+              is a Bash call, not an MCP tool — zero schema bloat per session. Most memory tools
+              silently inject 3–5 tool schemas into every Claude Code session before you've typed
+              a prompt. We stamp the command into your <code>CLAUDE.md</code> so Claude reaches for
+              it naturally. <code>--deep</code> follows backlinks; <code>--expand</code> returns
+              hits plus the surrounding graph.
             </div>
           </div>
           <div class="feature">
-            <div class="feature-title">Typed, reversible installer</div>
+            <div class="feature-title">Sight across repos, not just one</div>
             <div class="feature-body">
-              Replaces 14&nbsp;KB of overnight bash with a typed pipeline: prereq detection with
-              per-failure remediation, atomic JSON writes that preserve your existing MCP servers,
-              and a full <code>uninstall</code> that restores your prior output-style, stops the
-              watcher service (launchd on macOS, systemd on Linux), and never touches your notes.
+              <code><span class="scadrial-only">burn bronze "&lt;query&gt;"</span><span class="classic-only">graph "&lt;query&gt;"</span></code>
+              queries a code graph of every repo in your
+              <code><span class="scadrial-only">forge</span><span class="classic-only">group</span></code>.
+              HTTP-route-match edges connect caller → handler <em>across services</em>. Every
+              inferred edge carries <code>INFERRED_NAME</code> / <code>INFERRED_ROUTE</code>
+              provenance so Claude can trust-grade what it reads.
             </div>
           </div>
           <div class="feature">
-            <div class="feature-title">One mental model, swappable backends</div>
+            <div class="feature-title">Reversible to zero</div>
             <div class="feature-body">
-              <span class="scadrial-only">Every metal verb routes through a single dispatcher — bronze ↔ graphify,
-                steel ↔ Serena rename, copper ↔ vault-rag. Swap a backend later by changing one
-                row in the map; call sites don't move. Every themed command has a neutral classic
-                alias that always works.</span>
-              <span class="classic-only">Every command routes through a single dispatcher — graph ↔ graphify,
-                rename ↔ Serena, recall ↔ vault-rag. Swap a backend later by changing one row in
-                the map; call sites don't move. Every classic command has a themed Mistborn alias
-                for those who want it.</span>
+              <code>metalmind uninstall</code> stops containers, unloads the watcher service
+              (launchd on macOS, systemd on Linux), restores your prior output style, clears the
+              settings we changed, removes shell aliases. <strong>Never touches your notes.</strong>
+              Everything we did is undoable in one command — a design constraint, not an
+              afterthought.
             </div>
           </div>
         </div>
@@ -133,47 +133,20 @@ const description =
 
       <hr class="metal-rule" />
 
-      <section class="container" aria-labelledby="what-title">
-        <h2 id="what-title">At a glance</h2>
-        <div class="features">
-          <div class="feature">
-            <div class="feature-title">
-              <span class="scadrial-only">store copper</span>
-              <span class="classic-only">save</span>
-            </div>
-            <div class="feature-body">
-              Deposit decisions into your vault — frontmatter, timestamped slug, Inbox by default.
-            </div>
-          </div>
-          <div class="feature">
-            <div class="feature-title">
-              <span class="scadrial-only">tap copper</span>
-              <span class="classic-only">recall</span>
-            </div>
-            <div class="feature-body">
-              Semantic search with opt-in <code>--deep</code> backlink traversal and
-              <code>--expand</code> hybrid retrieval.
-            </div>
-          </div>
-          <div class="feature">
-            <div class="feature-title">
-              <span class="scadrial-only">burn bronze</span>
-              <span class="classic-only">graph</span>
-            </div>
-            <div class="feature-body">
-              Per-repo code-graph queries. Auto-indexes on first use; cached across sessions.
-            </div>
-          </div>
-          <div class="feature">
-            <div class="feature-title">
-              <span class="scadrial-only">forge</span>
-              <span class="classic-only">group</span>
-            </div>
-            <div class="feature-body">
-              Group repos together — the merged graph lights up cross-service call paths.
-            </div>
-          </div>
-        </div>
+      <section class="container" aria-labelledby="anti-mcp-title">
+        <h2 id="anti-mcp-title">Why it isn't an MCP server</h2>
+        <p>
+          Most memory tools register themselves as MCP servers. That design injects a handful of
+          tool schemas (<code>search_memory</code>, <code>recall</code>, <code>store</code>, …)
+          into <strong>every</strong> Claude session before you prompt anything. Those schemas eat
+          context tokens you could be using for the actual task.
+        </p>
+        <p>
+          metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the command
+          once from your stamped <code>CLAUDE.md</code>, and every session starts with a clean
+          context. The watcher, indexer, and embedding stack still live locally — they just don't
+          live in Claude's tool registry.
+        </p>
       </section>
 
       <hr class="metal-rule" />
@@ -202,17 +175,22 @@ const description =
       <hr class="metal-rule" />
 
       <section class="container" aria-labelledby="how-title" id="how">
-        <h2 id="how-title">How it works</h2>
+        <h2 id="how-title">
+          <span class="scadrial-only">Under the metalmind</span>
+          <span class="classic-only">Under the hood</span>
+        </h2>
         <p>
-          Three engines do the heavy lifting; a fourth layer is metalmind's own. Each sits
-          behind a typed interface bound to a metal verb — so if an engine gets replaced later,
-          your muscle memory doesn't.
+          One verb, one job. Each engine is swappable — so if a backend gets replaced later, your
+          muscle memory doesn't move. Your notes, embeddings, and code graphs never leave your
+          machine.
         </p>
         <div class="diagram">
           <div class="diagram-node">
             <div class="diagram-node-title">Vault</div>
             <div class="diagram-node-body">
-              Obsidian + Qdrant + Ollama (nomic-embed-text). Auto-reindex via launchd (macOS) or systemd (Linux).
+              Obsidian at <code>~/Knowledge/</code>. Qdrant + Ollama (<code>nomic-embed-text</code>)
+              embed locally. Incremental watcher re-embeds only changed files — no empty-window
+              queries during reindex.
             </div>
           </div>
           <div class="diagram-node">
@@ -224,7 +202,8 @@ const description =
           <div class="diagram-node">
             <div class="diagram-node-title">graphify</div>
             <div class="diagram-node-body">
-              Per-repo code graph — clusters, god nodes, call paths. Tree-sitter AST; optional LLM for docs.
+              Per-repo code graph — clusters, god nodes, call paths. Tree-sitter AST; optional
+              LLM for docs.
             </div>
           </div>
           <div class="diagram-node">
@@ -233,7 +212,8 @@ const description =
               <span class="classic-only">Group</span>
             </div>
             <div class="diagram-node-body">
-              Cross-repo merge layer — name-match + HTTP-route edges tagged with INFERRED provenance.
+              Cross-repo merge layer — name-match + HTTP-route edges tagged with
+              <code>INFERRED_NAME</code> / <code>INFERRED_ROUTE</code> provenance.
             </div>
           </div>
         </div>

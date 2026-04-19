@@ -243,14 +243,25 @@ pre {
   margin-bottom: 1.25rem;
   opacity: 0.85;
 }
-.hero-tagline {
-  margin-top: 1.5rem;
-  font-size: 1.25rem;
-  color: var(--fg-muted);
-  max-width: 56ch;
+.hero-lead {
+  margin-top: 1.25rem;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  color: var(--fg-strong);
+  max-width: 48ch;
   margin-left: auto;
   margin-right: auto;
-  line-height: 1.5;
+  line-height: 1.35;
+  letter-spacing: 0.005em;
+}
+.hero-tagline {
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  color: var(--fg-muted);
+  max-width: 58ch;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
 }
 .hero-actions {
   margin-top: 2.5rem;
