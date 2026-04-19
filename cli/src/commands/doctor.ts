@@ -2,8 +2,8 @@ import { intro, log, outro } from '@clack/prompts';
 import { CONFIG_PATH, readConfig } from '../config.js';
 import { detectPrereqs } from '../install/prereqs.js';
 
-export async function doctor(): Promise<void> {
-  intro('metalmind doctor');
+export async function doctor(invokedAs = 'doctor'): Promise<void> {
+  intro(`metalmind ${invokedAs}`);
 
   log.step('Prerequisites');
   const prereqs = await detectPrereqs();

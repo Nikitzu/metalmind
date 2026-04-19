@@ -25,11 +25,11 @@ program.command('init').description('Interactive setup wizard').action(init);
 program
   .command('doctor')
   .description('Diagnose installation state (classic alias for `pulse`)')
-  .action(doctor);
+  .action(() => doctor('doctor'));
 program
   .command('pulse')
   .description('Pulse-check the install — prereqs, config, MCP state (Seeker)')
-  .action(doctor);
+  .action(() => doctor('pulse'));
 program.command('uninstall').description('Reversible teardown').action(uninstall);
 
 function attachStoreFlags<T extends Command>(cmd: T): T {
