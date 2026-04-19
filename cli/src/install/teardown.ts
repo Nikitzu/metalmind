@@ -3,6 +3,7 @@ import { rm, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
 import { uninstallAliases } from './aliases.js';
+import { uninstallGraphify } from './graphify.js';
 import { uninstallLaunchdWatcher } from './launchd.js';
 import { unregisterMcpServers } from './mcp.js';
 import { uninstallSerena } from './serena.js';
@@ -11,6 +12,7 @@ import { STACK_SUBDIR, stopStack } from './stack.js';
 export interface TeardownOptions {
   config?: Config;
   removeSerena?: boolean;
+  removeGraphify?: boolean;
   removeVolumes?: boolean;
   launchAgentsDir?: string;
   claudeJsonPath?: string;
@@ -24,6 +26,7 @@ export interface TeardownResult {
   stackStopped: boolean;
   stackRemoved: boolean;
   serenaUninstalled: boolean;
+  graphifyUninstalled: boolean;
   mcp: { removed: string[]; notPresent: string[] };
   aliases: { removedAliases: boolean; removedSourceLine: boolean };
   configRemoved: boolean;
@@ -38,6 +41,7 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     stackStopped: false,
     stackRemoved: false,
     serenaUninstalled: false,
+    graphifyUninstalled: false,
     mcp: { removed: [], notPresent: [] },
     aliases: { removedAliases: false, removedSourceLine: false },
     configRemoved: false,
@@ -65,6 +69,11 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
   if (opts.removeSerena) {
     const { uninstalled } = await uninstallSerena();
     result.serenaUninstalled = uninstalled;
+  }
+
+  if (opts.removeGraphify) {
+    const { uninstalled } = await uninstallGraphify();
+    result.graphifyUninstalled = uninstalled;
   }
 
   const mcp = await unregisterMcpServers({

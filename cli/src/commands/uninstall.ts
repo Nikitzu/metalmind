@@ -35,6 +35,15 @@ export async function uninstall(): Promise<void> {
     return;
   }
 
+  const removeGraphify = await confirm({
+    message: 'Also uninstall graphify (uv tool uninstall)?',
+    initialValue: false,
+  });
+  if (isCancel(removeGraphify)) {
+    cancel('aborted');
+    return;
+  }
+
   const removeVolumes = await confirm({
     message: 'Remove Docker volumes (Qdrant data, Ollama models ~274 MB)?',
     initialValue: false,
@@ -48,12 +57,14 @@ export async function uninstall(): Promise<void> {
     const result = await teardown({
       config: config ?? undefined,
       removeSerena,
+      removeGraphify,
       removeVolumes,
     });
     if (result.watcher.removedPlist) log.success('launchd watcher unloaded + plist removed');
     if (result.stackStopped) log.success('Docker stack stopped');
     if (result.stackRemoved) log.success('<vault>/.claude-stack removed');
     if (result.serenaUninstalled) log.success('Serena uninstalled');
+    if (result.graphifyUninstalled) log.success('graphify uninstalled');
     if (result.mcp.removed.length > 0)
       log.success(`MCP entries removed: ${result.mcp.removed.join(', ')}`);
     if (result.aliases.removedAliases) log.success('Aliases file removed');

@@ -2,6 +2,7 @@ import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts';
 import { type Config, writeConfig } from '../config.js';
 import { runCommand } from '../util/exec.js';
 import { installAliases } from './aliases.js';
+import { installGraphify } from './graphify.js';
 import { installLaunchdWatcher } from './launchd.js';
 import { registerMcpServers } from './mcp.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
@@ -13,6 +14,7 @@ import { promptVaultPath, setupVault } from './vault.js';
 export interface RunWizardOptions {
   vaultPath?: string;
   serena?: boolean;
+  graphify?: boolean;
   enableTeams?: boolean;
   skipDocker?: boolean;
 }
@@ -74,6 +76,18 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     serena = answer;
   }
 
+  let graphify: boolean;
+  if (opts.graphify !== undefined) {
+    graphify = opts.graphify;
+  } else {
+    const answer = await confirm({
+      message: 'Install graphify (code graph + cross-repo intelligence)?',
+      initialValue: true,
+    });
+    checkCancelled(answer, 'graphify prompt');
+    graphify = answer;
+  }
+
   let enableTeams: boolean;
   if (opts.enableTeams !== undefined) {
     enableTeams = opts.enableTeams;
@@ -98,6 +112,14 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     if (result.alreadyInstalled) log.info('  serena already on PATH — skipped install');
     if (result.installed) log.success('  uv tool install serena-agent complete');
     if (result.wroteConfig) log.info(`  wrote ${result.configPath}`);
+  }
+
+  if (graphify) {
+    log.step('Installing graphify');
+    const result = await installGraphify();
+    if (result.alreadyInstalled) log.info('  graphify already on PATH — skipped install');
+    if (result.installed) log.success('  uv tool install graphifyy complete');
+    if (result.claudeWired) log.info('  graphify claude install wired MCP + PreToolUse hook');
   }
 
   if (!opts.skipDocker) {
@@ -148,7 +170,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     outputStyle: { installed: null, priorValue: null },
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast' },
-    mcp: { registered: ['vault-rag', ...(serena ? ['serena'] : [])] },
+    mcp: {
+      registered: ['vault-rag', ...(serena ? ['serena'] : []), ...(graphify ? ['graphify'] : [])],
+    },
     hooks: { claudeCode: false },
     forge: { groups: {} },
   };
