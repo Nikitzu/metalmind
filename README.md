@@ -12,7 +12,9 @@ Website: **[metalmind.mzyx.dev](https://metalmind.mzyx.dev)**
 
 - **Persistent memory across sessions.** `metalmind store copper "<insight>"` (alias: `save`) deposits a decision into your local Obsidian vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes. Tomorrow's session recalls it as if yesterday never ended.
 
-- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session — most memory tools silently inject 3-5 tool schemas into every Claude Code session before you've typed a prompt. We stamp the command into your `CLAUDE.md` so Claude reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph.
+- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session — most memory tools silently inject 3-5 tool schemas into every Claude Code session before you've typed a prompt. We stamp the command into your `CLAUDE.md` so Claude reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback.
+
+- **Session-start awareness without nagging.** metalmind installs a Claude Code SessionStart hook plus a top-of-file block in `~/.claude/CLAUDE.md` with explicit WHEN→DO triggers, so every new Claude session discovers the vault on its own — no "did you check memory?" prompting. Re-stamp anytime with `metalmind burn brass` (alias: `stamp`) after an upgrade.
 
 - **Sight across repos, not just one.** `metalmind burn bronze "<query>"` (alias: `graph`) queries a code graph of every repo in your *forge*. HTTP-route-match edges connect caller → handler *across services*. Every inferred edge carries `INFERRED_NAME` / `INFERRED_ROUTE` provenance so Claude can trust-grade what it reads.
 
@@ -49,7 +51,7 @@ The wizard walks six steps: prereq check, vault scaffold, Python engines via `uv
 - macOS or Linux (WSL2 works; native Windows not supported)
 - [Claude Code CLI](https://claude.ai/code) v2.1+
 - [Docker](https://www.docker.com) running
-- Python 3.10+, [uv](https://docs.astral.sh/uv/), git, Node 20+
+- Python 3.11+, [uv](https://docs.astral.sh/uv/), git, Node 20+
 
 Run `metalmind pulse` (alias: `doctor`) any time to check environment + install state.
 
@@ -69,6 +71,7 @@ Every themed (Scadrial) verb has a classic alias. Both always resolve — themin
 | `metalmind burn zinc "<bug>"` | `metalmind debug "<bug>"` | Dispatch `/team-debug` |
 | `metalmind burn pewter` | `metalmind reindex` | Rebuild code graph |
 | `metalmind forge <…>` | `metalmind group <…>` | Cross-repo graph groups |
+| `metalmind burn brass` | `metalmind stamp` | Re-imprint metalmind managed files (upgrade in place) |
 | `metalmind burn aluminum` | `metalmind wipe` | Uninstall alias |
 
 Pick a flavor during `init` — it only changes which variant your stamped `CLAUDE.md` recommends to Claude. The CLI always accepts both.
@@ -94,7 +97,7 @@ Your notes, embeddings, and code graphs never leave your machine. The only netwo
 metalmind uninstall
 ```
 
-Stops and removes the Docker containers, unloads the watcher service, strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, restores your prior output-style, removes shell aliases. Python tools stay unless you pass `--remove-serena --remove-graphify --remove-vault-rag`.
+Stops and removes the Docker containers, unloads the watcher service, strips the metalmind managed blocks from `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md` (user content outside the sentinel markers is preserved), removes the SessionStart hook + its entry in `~/.claude/settings.json` (other hooks stay), strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, restores your prior output-style, and removes shell aliases. Four interactive prompts ask whether to also `uv tool uninstall` Serena, graphify, `metalmind-vault-rag`, and whether to remove Docker volumes (keep them if you don't want to re-embed the vault).
 
 **Never touches your notes.**
 

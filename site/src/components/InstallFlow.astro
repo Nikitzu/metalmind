@@ -16,8 +16,8 @@ const steps: Step[] = [
     label: '01',
     title: 'Prereqs, detected',
     body:
-      'Claude Code, Docker, Python 3.10+, uv, git — each checked with a per-failure remediation. Failing prereqs halt the wizard with a concrete fix.',
-    code: '◆  Claude Code   2.1.114\n◆  Docker        reachable\n◆  Python 3.10+  via python3.12\n◆  uv            0.11.7\n◆  git           2.53.0',
+      'Claude Code, Docker, Python 3.11+, uv, git — each checked with a per-failure remediation. Failing prereqs halt the wizard with a concrete fix.',
+    code: '◆  Claude Code   2.1.114\n◆  Docker        reachable\n◆  Python 3.11+  via python3.12\n◆  uv            0.11.7\n◆  git           2.53.0',
   },
   {
     id: 'vault',
@@ -46,10 +46,10 @@ const steps: Step[] = [
   {
     id: 'services',
     label: '05',
-    title: 'Services & routing',
+    title: 'Services, hook & routing',
     body:
-      'Auto-reindex watcher runs as a background service — launchd on macOS, systemd --user on Linux. MCP registers Serena only; vault recall is a CLI call (no schema tokens). Optional: disable native auto-memory and route all memory to the vault.',
-    code: '◇  Installing watcher service\n◆  wrote com.metalmind.vault-indexer.plist\n◇  Registering MCP servers (serena/teams)\n◇  Applying memory routing\n◆  disabled native auto-memory',
+      'Auto-reindex watcher runs as a background service — launchd on macOS, systemd --user on Linux. MCP registers Serena only; vault recall is a CLI call (no schema tokens). A SessionStart hook injects a memory-available reminder so fresh Claude sessions discover the vault without prompting. Optional: disable native auto-memory and route all memory to the vault.',
+    code: '◇  Installing watcher service\n◆  wrote com.metalmind.vault-indexer.plist\n◇  Installing SessionStart hook\n◆  registered in settings.json\n◇  Applying memory routing\n◆  disabled native auto-memory',
   },
   {
     id: 'ready',
