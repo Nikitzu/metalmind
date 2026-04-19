@@ -9,6 +9,7 @@ import { getTemplatesDir } from '../util/paths.js';
 const KNOWN_PLACEHOLDERS = new Set([
   'VAULT_PATH', // rendered by launchd.ts, systemd.ts, stampClaudeMd
   'WATCHER_BIN', // rendered by launchd.ts, systemd.ts
+  'UV_BIN', // rendered by launchd.ts, systemd.ts (watcher invoked as `uv tool run`)
   'PATH_VALUE', // rendered by launchd.ts, systemd.ts
   'RECALL_CMD', // rendered by vault.ts, templates.ts (save.md + agents + rules)
   'HOME', // rendered by serena.ts into serena_config.yml

@@ -7,6 +7,7 @@ export type WatcherPlatform = 'darwin' | 'linux';
 export interface InstallWatcherOptions {
   vaultPath: string;
   watcherBin: string;
+  uvBin: string;
   platformOverride?: WatcherPlatform;
   launchAgentsDir?: string;
   systemdUserDir?: string;
@@ -51,6 +52,7 @@ export async function installWatcher(
     const r = await installLaunchdWatcher({
       vaultPath: opts.vaultPath,
       watcherBin: opts.watcherBin,
+      uvBin: opts.uvBin,
       templatesDir: opts.templatesDir,
       launchAgentsDir: opts.launchAgentsDir,
       skipLoad: opts.skipStart,
@@ -61,6 +63,7 @@ export async function installWatcher(
   const r = await installSystemdWatcher({
     vaultPath: opts.vaultPath,
     watcherBin: opts.watcherBin,
+    uvBin: opts.uvBin,
     templatesDir: opts.templatesDir,
     systemdUserDir: opts.systemdUserDir,
     skipEnable: opts.skipStart,

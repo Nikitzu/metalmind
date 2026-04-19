@@ -4,7 +4,7 @@ import { installAliases } from '../install/aliases.js';
 import { installWatcher } from '../install/watcher.js';
 import { applyMemoryRouting } from '../install/settings.js';
 import { copyClaudeTemplates, stampClaudeMd } from '../install/templates.js';
-import { resolveWatcherBinPath } from '../install/vault-rag.js';
+import { resolveUvBinPath, resolveWatcherBinPath } from '../install/vault-rag.js';
 import { setupVault } from '../install/vault.js';
 
 export interface StampOptions {
@@ -48,7 +48,8 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     log.step('Watcher unit file');
     try {
       const watcherBin = await resolveWatcherBinPath();
-      const watcher = await installWatcher({ vaultPath: config.vaultPath, watcherBin });
+      const uvBin = await resolveUvBinPath();
+      const watcher = await installWatcher({ vaultPath: config.vaultPath, watcherBin, uvBin });
       log.info(
         watcher.wroteUnit
           ? `  refreshed ${watcher.unitPath} (service restarted)`

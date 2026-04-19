@@ -50,6 +50,7 @@ describe('watcher dispatch', () => {
       platformOverride: 'darwin',
       vaultPath: '/v',
       watcherBin: '/bin/watcher',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
     });
@@ -69,6 +70,7 @@ describe('watcher dispatch', () => {
       platformOverride: 'linux',
       vaultPath: '/home/u/Knowledge',
       watcherBin: '/home/u/.local/bin/metalmind-vault-rag-watcher',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
     });
@@ -87,6 +89,7 @@ describe('watcher dispatch', () => {
       platformOverride: 'linux',
       vaultPath: '/v',
       watcherBin: '/b',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
       skipStart: true,

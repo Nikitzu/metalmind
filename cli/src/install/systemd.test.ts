@@ -54,6 +54,7 @@ Environment=PATH={{PATH_VALUE}}
     const result = await installSystemdWatcher({
       vaultPath: '/home/alice/Knowledge',
       watcherBin: '/home/alice/.local/bin/metalmind-vault-rag-watcher',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
     });
@@ -76,6 +77,7 @@ Environment=PATH={{PATH_VALUE}}
     const result = await installSystemdWatcher({
       vaultPath: '/v',
       watcherBin: '/b',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
     });
@@ -105,6 +107,7 @@ Environment=PATH={{PATH_VALUE}}
     const result = await installSystemdWatcher({
       vaultPath: '/v',
       watcherBin: '/b',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
     });
@@ -119,6 +122,7 @@ Environment=PATH={{PATH_VALUE}}
     const result = await installSystemdWatcher({
       vaultPath: '/v',
       watcherBin: '/b',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
       skipEnable: true,

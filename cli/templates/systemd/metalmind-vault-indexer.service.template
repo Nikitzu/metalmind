@@ -4,7 +4,7 @@ After=default.target
 
 [Service]
 Type=simple
-ExecStart={{WATCHER_BIN}}
+ExecStart={{UV_BIN}} tool run --from metalmind-vault-rag metalmind-vault-rag-watcher
 Environment=VAULT_PATH={{VAULT_PATH}}
 Environment=PATH={{PATH_VALUE}}
 Restart=always

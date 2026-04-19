@@ -62,6 +62,7 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/Users/me/Knowledge',
       watcherBin: '/opt/homebrew/bin/metalmind-vault-rag-watcher',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
     });
@@ -86,6 +87,7 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/v',
       watcherBin: '/u/metalmind-vault-rag-watcher',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
     });
@@ -113,6 +115,7 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/v',
       watcherBin: '/u/w',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
     });
@@ -129,6 +132,7 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/v',
       watcherBin: '/u/metalmind-vault-rag-watcher',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
     });
@@ -144,6 +148,7 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/v',
       watcherBin: '/u/metalmind-vault-rag-watcher',
+      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
       skipLoad: true,
@@ -188,6 +193,7 @@ describe('launchd watcher', () => {
       installLaunchdWatcher({
         vaultPath: '/v',
         watcherBin: '/u/metalmind-vault-rag-watcher',
+      uvBin: '/opt/homebrew/bin/uv',
         templatesDir,
         launchAgentsDir,
         skipLoad: true,

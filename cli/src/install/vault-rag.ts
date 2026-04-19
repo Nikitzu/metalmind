@@ -56,12 +56,23 @@ export async function installVaultRag(
 }
 
 export async function resolveWatcherBinPath(): Promise<string> {
+  // Retained for backwards compat; the watcher unit now invokes `uv tool run`
+  // directly so this probe is only used as a sanity check that the package is installed.
   const res = await runCommand('which', [VAULT_RAG_WATCHER_BIN]);
   const path = res.stdout.trim();
   if (!res.ok || !path) {
     throw new Error(
       `${VAULT_RAG_WATCHER_BIN} not found on PATH after install — check uv tool bin dir is on your PATH`,
     );
+  }
+  return path;
+}
+
+export async function resolveUvBinPath(): Promise<string> {
+  const res = await runCommand('which', ['uv']);
+  const path = res.stdout.trim();
+  if (!res.ok || !path) {
+    throw new Error('uv not found on PATH — install uv first: https://docs.astral.sh/uv/');
   }
   return path;
 }

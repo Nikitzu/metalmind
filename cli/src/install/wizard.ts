@@ -10,7 +10,7 @@ import { installSerena } from './serena.js';
 import { applyMemoryRouting } from './settings.js';
 import { setupStack } from './stack.js';
 import { appendGlobalGitignore, copyClaudeTemplates, stampClaudeMd } from './templates.js';
-import { installVaultRag, resolveWatcherBinPath } from './vault-rag.js';
+import { installVaultRag, resolveUvBinPath, resolveWatcherBinPath } from './vault-rag.js';
 import { promptVaultPath, setupVault } from './vault.js';
 
 export interface RunWizardOptions {
@@ -177,9 +177,11 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
 
   log.step('Installing watcher service');
   const watcherBinPath = await resolveWatcherBinPath();
+  const uvBinPath = await resolveUvBinPath();
   const watcher = await installWatcher({
     vaultPath: vault.vaultPath,
     watcherBin: watcherBinPath,
+    uvBin: uvBinPath,
   });
   if (watcher.wroteUnit) log.success(`  wrote ${watcher.unitPath}`);
   if (watcher.started) {

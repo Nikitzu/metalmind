@@ -6,7 +6,12 @@
     <string>com.metalmind.vault-indexer</string>
     <key>ProgramArguments</key>
     <array>
-        <string>{{WATCHER_BIN}}</string>
+        <string>{{UV_BIN}}</string>
+        <string>tool</string>
+        <string>run</string>
+        <string>--from</string>
+        <string>metalmind-vault-rag</string>
+        <string>metalmind-vault-rag-watcher</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
