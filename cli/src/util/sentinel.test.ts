@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -5,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   DEFAULT_METALMIND_MARKERS,
   extractSentinelBlock,
+  removeSentinelBlock,
   upsertSentinelBlock,
 } from './sentinel.js';
 
@@ -73,5 +75,51 @@ describe('upsertSentinelBlock', () => {
     const source = await readFile(target, 'utf8');
     expect(extractSentinelBlock(source)).toBe('payload');
     expect(extractSentinelBlock('no markers here')).toBeNull();
+  });
+
+  describe('removeSentinelBlock', () => {
+    it('returns no-file when target is missing', async () => {
+      expect((await removeSentinelBlock({ path: target })).action).toBe('no-file');
+    });
+
+    it('returns no-markers when block is absent', async () => {
+      await writeFile(target, 'just user content\n', 'utf8');
+      expect((await removeSentinelBlock({ path: target })).action).toBe('no-markers');
+      expect(await readFile(target, 'utf8')).toBe('just user content\n');
+    });
+
+    it('removes the block but keeps surrounding user content', async () => {
+      const content = [
+        '# above',
+        '',
+        DEFAULT_METALMIND_MARKERS.begin,
+        'managed body',
+        DEFAULT_METALMIND_MARKERS.end,
+        '',
+        '# below',
+        '',
+      ].join('\n');
+      await writeFile(target, content, 'utf8');
+      const res = await removeSentinelBlock({ path: target });
+      expect(res.action).toBe('removed');
+      const after = await readFile(target, 'utf8');
+      expect(after).not.toContain('managed body');
+      expect(after).toContain('# above');
+      expect(after).toContain('# below');
+    });
+
+    it('returns file-empty when block was the only content', async () => {
+      await upsertSentinelBlock({ path: target, content: 'alone' });
+      const res = await removeSentinelBlock({ path: target });
+      expect(res.action).toBe('file-empty');
+      expect(await readFile(target, 'utf8')).toBe('');
+    });
+
+    it('deletes the file when deleteIfEmpty and block was the only content', async () => {
+      await upsertSentinelBlock({ path: target, content: 'alone' });
+      const res = await removeSentinelBlock({ path: target, deleteIfEmpty: true });
+      expect(res.action).toBe('file-empty');
+      expect(existsSync(target)).toBe(false);
+    });
   });
 });

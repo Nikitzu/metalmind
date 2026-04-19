@@ -52,17 +52,21 @@ export async function installLaunchdWatcher(
 
   await mkdir(launchAgentsDir, { recursive: true });
 
-  let wrotePlist = false;
-  if (!existsSync(plistPath)) {
-    const templatePath = join(templatesDir, 'launchd', `${PLIST_NAME}.template`);
-    const template = await readFile(templatePath, 'utf8');
-    const rendered = renderPlist(template, {
-      VAULT_PATH: opts.vaultPath,
-      WATCHER_BIN: opts.watcherBin,
-      PATH_VALUE: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin',
-    });
+  const templatePath = join(templatesDir, 'launchd', `${PLIST_NAME}.template`);
+  const template = await readFile(templatePath, 'utf8');
+  const rendered = renderPlist(template, {
+    VAULT_PATH: opts.vaultPath,
+    WATCHER_BIN: opts.watcherBin,
+    PATH_VALUE: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin',
+  });
+
+  const prior = existsSync(plistPath) ? await readFile(plistPath, 'utf8') : null;
+  const wrotePlist = prior !== rendered;
+  if (wrotePlist) {
+    if (prior !== null) {
+      await runCommand('launchctl', ['unload', plistPath]);
+    }
     await writeFile(plistPath, rendered, 'utf8');
-    wrotePlist = true;
   }
 
   if (opts.skipLoad) {

@@ -16,9 +16,10 @@ export async function uninstall(): Promise<void> {
   log.info('  - stop watcher and Docker stack');
   log.info('  - remove <vault>/.metalmind-stack/ (stack code, NOT your notes)');
   log.info('  - remove MCP entries (vault-rag, serena) from ~/.claude.json');
-  log.info('  - remove shell aliases + source line from ~/.zshrc');
+  log.info('  - remove shell aliases + source line from ~/.zshrc and ~/.bashrc');
+  log.info('  - strip the metalmind managed blocks from ~/.claude/CLAUDE.md and <vault>/CLAUDE.md (user content outside the markers is preserved)');
   log.info('  - delete ~/.metalmind/config.json');
-  log.info('Will NOT touch: your notes, ~/.claude/agents, ~/.claude/rules, ~/.claude/CLAUDE.md');
+  log.info('Will NOT touch: your notes, ~/.claude/agents, ~/.claude/rules, custom content in your CLAUDE.md files');
 
   const proceed = await confirm({ message: 'Proceed?', initialValue: false });
   if (isCancel(proceed) || !proceed) {
@@ -71,6 +72,10 @@ export async function uninstall(): Promise<void> {
     if (result.aliases.removedSourceLine) log.success('.zshrc source line removed');
     if (result.outputStyle.styleRemoved) log.success('Output-style file removed');
     if (result.outputStyle.settingsRestored) log.success('settings.json outputStyle restored');
+    if (result.claudeMdBlocks.global === 'removed' || result.claudeMdBlocks.global === 'file-empty')
+      log.success('Stripped metalmind block from ~/.claude/CLAUDE.md');
+    if (result.claudeMdBlocks.vault === 'removed' || result.claudeMdBlocks.vault === 'file-empty')
+      log.success('Stripped metalmind block from vault CLAUDE.md');
     if (result.configRemoved) log.success('~/.metalmind/config.json deleted');
     outro('Uninstall complete. Your vault notes are untouched.');
   } catch (err) {

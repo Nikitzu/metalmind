@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, unlink, writeFile } from 'node:fs/promises';
 
 export interface SentinelMarkers {
   begin: string;
@@ -75,4 +75,44 @@ export function extractSentinelBlock(
   if (!found) return null;
   const inner = source.slice(found.start + markers.begin.length, found.end - markers.end.length);
   return inner.replace(/^\n/, '').replace(/\n$/, '');
+}
+
+export type SentinelRemoveAction = 'removed' | 'file-empty' | 'no-markers' | 'no-file';
+
+export interface RemoveSentinelBlockOptions {
+  path: string;
+  markers?: SentinelMarkers;
+  /** When true, delete the file if removing the block leaves it blank. Default: false. */
+  deleteIfEmpty?: boolean;
+}
+
+export interface RemoveSentinelBlockResult {
+  action: SentinelRemoveAction;
+}
+
+export async function removeSentinelBlock(
+  opts: RemoveSentinelBlockOptions,
+): Promise<RemoveSentinelBlockResult> {
+  const markers = opts.markers ?? DEFAULT_METALMIND_MARKERS;
+  if (!existsSync(opts.path)) return { action: 'no-file' };
+
+  const current = await readFile(opts.path, 'utf8');
+  const found = findMarkers(current, markers);
+  if (!found) return { action: 'no-markers' };
+
+  const before = current.slice(0, found.start).replace(/\s+$/, '');
+  const after = current.slice(found.end).replace(/^\s+/, '');
+  const next = [before, after].filter(Boolean).join('\n\n');
+
+  if (!next.trim()) {
+    if (opts.deleteIfEmpty) {
+      await unlink(opts.path);
+      return { action: 'file-empty' };
+    }
+    await writeFile(opts.path, '', 'utf8');
+    return { action: 'file-empty' };
+  }
+
+  await writeFile(opts.path, next.endsWith('\n') ? next : `${next}\n`, 'utf8');
+  return { action: 'removed' };
 }

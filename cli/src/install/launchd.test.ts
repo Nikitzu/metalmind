@@ -74,11 +74,13 @@ describe('launchd watcher', () => {
     expect(contents).not.toContain('{{');
   });
 
-  it('preserves existing plist on re-install', async () => {
+  it('overwrites stale plist on re-install, unloading first so the new config is picked up', async () => {
     await mkdir(launchAgentsDir, { recursive: true });
     const plistPath = join(launchAgentsDir, 'com.metalmind.vault-indexer.plist');
-    await writeFile(plistPath, '<!-- custom -->\n', 'utf8');
-    runCommand.mockResolvedValueOnce(mockOk());
+    await writeFile(plistPath, '<!-- stale -->\n', 'utf8');
+    runCommand
+      .mockResolvedValueOnce(mockOk()) // launchctl unload (prior cleanup)
+      .mockResolvedValueOnce(mockOk()); // launchctl load (new)
 
     const { installLaunchdWatcher } = await import('./launchd.js');
     const result = await installLaunchdWatcher({
@@ -88,8 +90,36 @@ describe('launchd watcher', () => {
       launchAgentsDir,
     });
 
+    expect(result.wrotePlist).toBe(true);
+    const contents = await readFile(plistPath, 'utf8');
+    expect(contents).not.toBe('<!-- stale -->\n');
+    expect(contents).toContain('/u/metalmind-vault-rag-watcher');
+    expect(runCommand.mock.calls[0]?.[1]?.[0]).toBe('unload');
+    expect(runCommand.mock.calls[1]?.[1]?.[0]).toBe('load');
+  });
+
+  it('reports wrotePlist=false when the rendered template matches the existing plist', async () => {
+    await mkdir(launchAgentsDir, { recursive: true });
+    const plistPath = join(launchAgentsDir, 'com.metalmind.vault-indexer.plist');
+    // Render the template ourselves and write it — matches what installer would render.
+    const identical = plistTemplate
+      .replace(/\{\{WATCHER_BIN\}\}/g, '/u/w')
+      .replace(/\{\{PATH_VALUE\}\}/g, process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin')
+      .replace(/\{\{VAULT_PATH\}\}/g, '/v');
+    await writeFile(plistPath, identical, 'utf8');
+    runCommand.mockResolvedValueOnce(mockOk());
+
+    const { installLaunchdWatcher } = await import('./launchd.js');
+    const result = await installLaunchdWatcher({
+      vaultPath: '/v',
+      watcherBin: '/u/w',
+      templatesDir,
+      launchAgentsDir,
+    });
+
     expect(result.wrotePlist).toBe(false);
-    expect(await readFile(plistPath, 'utf8')).toBe('<!-- custom -->\n');
+    // No unload call when content is unchanged — only the load at the end.
+    expect(runCommand.mock.calls[0]?.[1]?.[0]).toBe('load');
   });
 
   it('falls back to bootstrap when launchctl load fails', async () => {

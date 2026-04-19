@@ -1,7 +1,9 @@
 import { existsSync } from 'node:fs';
 import { rm, unlink } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
+import { removeSentinelBlock, type SentinelRemoveAction } from '../util/sentinel.js';
 import { uninstallAliases } from './aliases.js';
 import { uninstallGraphify } from './graphify.js';
 import { uninstallWatcher } from './watcher.js';
@@ -24,6 +26,7 @@ export interface TeardownOptions {
   configPath?: string;
   settingsPath?: string;
   removeVaultRag?: boolean;
+  claudeDir?: string;
 }
 
 export interface TeardownResult {
@@ -38,6 +41,7 @@ export interface TeardownResult {
   configRemoved: boolean;
   vaultRagUninstalled: boolean;
   memoryRoutingCleared: boolean;
+  claudeMdBlocks: { global: SentinelRemoveAction; vault: SentinelRemoveAction };
 }
 
 export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResult> {
@@ -56,6 +60,7 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     configRemoved: false,
     vaultRagUninstalled: false,
     memoryRoutingCleared: false,
+    claudeMdBlocks: { global: 'no-file', vault: 'no-file' },
   };
 
   const watcher = await uninstallWatcher({ launchAgentsDir: opts.launchAgentsDir });
@@ -113,6 +118,19 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
       priorValue: config.outputStyle.priorValue,
     });
     result.outputStyle = style;
+  }
+
+  const claudeDir = opts.claudeDir ?? join(homedir(), '.claude');
+  const globalClaudeMd = join(claudeDir, 'CLAUDE.md');
+  const vaultClaudeMd = config?.vaultPath ? join(config.vaultPath, 'CLAUDE.md') : null;
+
+  result.claudeMdBlocks.global = (
+    await removeSentinelBlock({ path: globalClaudeMd })
+  ).action;
+  if (vaultClaudeMd) {
+    result.claudeMdBlocks.vault = (
+      await removeSentinelBlock({ path: vaultClaudeMd, deleteIfEmpty: true })
+    ).action;
   }
 
   if (existsSync(configPath)) {

@@ -52,17 +52,18 @@ export async function installSystemdWatcher(
 
   await mkdir(systemdUserDir, { recursive: true });
 
-  let wroteService = false;
-  if (!existsSync(servicePath)) {
-    const templatePath = join(templatesDir, 'systemd', `${SERVICE_NAME}.template`);
-    const template = await readFile(templatePath, 'utf8');
-    const rendered = renderService(template, {
-      VAULT_PATH: opts.vaultPath,
-      WATCHER_BIN: opts.watcherBin,
-      PATH_VALUE: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin',
-    });
+  const templatePath = join(templatesDir, 'systemd', `${SERVICE_NAME}.template`);
+  const template = await readFile(templatePath, 'utf8');
+  const rendered = renderService(template, {
+    VAULT_PATH: opts.vaultPath,
+    WATCHER_BIN: opts.watcherBin,
+    PATH_VALUE: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin',
+  });
+
+  const prior = existsSync(servicePath) ? await readFile(servicePath, 'utf8') : null;
+  const wroteService = prior !== rendered;
+  if (wroteService) {
     await writeFile(servicePath, rendered, 'utf8');
-    wroteService = true;
   }
 
   if (opts.skipEnable) {
@@ -77,6 +78,11 @@ export async function installSystemdWatcher(
   const enable = await runCommand('systemctl', ['--user', 'enable', '--now', SERVICE_NAME]);
   if (!enable.ok) {
     throw new Error(`systemctl --user enable failed: ${enable.stderr || enable.stdout}`);
+  }
+
+  // If we just rewrote the unit file, restart so the new config takes effect.
+  if (wroteService && prior !== null) {
+    await runCommand('systemctl', ['--user', 'restart', SERVICE_NAME]);
   }
 
   return { servicePath, wroteService, enabled: true };

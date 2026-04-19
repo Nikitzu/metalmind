@@ -66,10 +66,39 @@ Environment=PATH={{PATH_VALUE}}
     expect(contents).not.toContain('{{');
   });
 
-  it('preserves existing service on re-install', async () => {
+  it('overwrites stale service on re-install and restarts it', async () => {
     await mkdir(systemdUserDir, { recursive: true });
     const servicePath = join(systemdUserDir, 'metalmind-vault-indexer.service');
-    await writeFile(servicePath, '# custom\n', 'utf8');
+    await writeFile(servicePath, '# stale\n', 'utf8');
+    runCommand.mockResolvedValue(ok());
+
+    const { installSystemdWatcher } = await import('./systemd.js');
+    const result = await installSystemdWatcher({
+      vaultPath: '/v',
+      watcherBin: '/b',
+      templatesDir,
+      systemdUserDir,
+    });
+
+    expect(result.wroteService).toBe(true);
+    const contents = await readFile(servicePath, 'utf8');
+    expect(contents).not.toBe('# stale\n');
+    expect(contents).toContain('ExecStart=/b');
+    // daemon-reload, enable --now, restart — three systemctl calls on stale-rewrite.
+    const cmds = runCommand.mock.calls.map((c) => c[1]?.[1]);
+    expect(cmds).toContain('daemon-reload');
+    expect(cmds).toContain('enable');
+    expect(cmds).toContain('restart');
+  });
+
+  it('reports wroteService=false when the rendered template matches the existing service', async () => {
+    await mkdir(systemdUserDir, { recursive: true });
+    const servicePath = join(systemdUserDir, 'metalmind-vault-indexer.service');
+    const identical = serviceTemplate
+      .replace(/\{\{WATCHER_BIN\}\}/g, '/b')
+      .replace(/\{\{PATH_VALUE\}\}/g, process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin')
+      .replace(/\{\{VAULT_PATH\}\}/g, '/v');
+    await writeFile(servicePath, identical, 'utf8');
     runCommand.mockResolvedValue(ok());
 
     const { installSystemdWatcher } = await import('./systemd.js');
@@ -81,7 +110,8 @@ Environment=PATH={{PATH_VALUE}}
     });
 
     expect(result.wroteService).toBe(false);
-    expect(await readFile(servicePath, 'utf8')).toBe('# custom\n');
+    const cmds = runCommand.mock.calls.map((c) => c[1]?.[1]);
+    expect(cmds).not.toContain('restart');
   });
 
   it('skipEnable writes service without starting', async () => {
