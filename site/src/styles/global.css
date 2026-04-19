@@ -483,42 +483,6 @@ body:has(#flavor-classic:checked) .feature-title {
   line-height: 1.45;
 }
 
-/* Asciinema — lazy, reserve space to avoid CLS */
-.cast-wrap {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  margin-top: 1.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-.cast-placeholder {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 2rem;
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--fg-muted);
-  text-align: center;
-  line-height: 1.55;
-}
-.cast-placeholder .chip {
-  display: inline-block;
-  padding: 0.15rem 0.55rem;
-  border: 1px solid rgba(212, 161, 74, 0.45);
-  border-radius: 999px;
-  color: var(--copper);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 /* Footer */
 footer {
   margin-top: 6rem;

@@ -1,0 +1,260 @@
+---
+// Scroll-driven install-flow stepper.
+// Each step activates as it enters the viewport; a copper rail fills as you descend.
+
+interface Step {
+  id: string;
+  label: string;
+  title: string;
+  body: string;
+  code: string;
+}
+
+const steps: Step[] = [
+  {
+    id: 'prereqs',
+    label: '01',
+    title: 'Prereqs, detected',
+    body:
+      'Claude Code, Docker, Python 3.10+, uv, git — each checked with a per-failure remediation. Failing prereqs halt the wizard with a concrete fix.',
+    code: '◆  Claude Code   2.1.114\n◆  Docker        reachable\n◆  Python 3.10+  via python3.12\n◆  uv            0.11.7\n◆  git           2.53.0',
+  },
+  {
+    id: 'vault',
+    label: '02',
+    title: 'Vault scaffold',
+    body:
+      'Picks or creates your Obsidian vault. Drops in Work / Personal / Learnings / Daily / Inbox / Archive / Memory, stamps a CLAUDE.md that teaches Claude to recall via CLI — not MCP tools.',
+    code: '◇  Setting up vault\n◆  Vault at ~/Knowledge\n   created: Work, Personal, Learnings, Daily, Inbox, Archive, Memory',
+  },
+  {
+    id: 'engines',
+    label: '03',
+    title: 'Engines installed',
+    body:
+      'Three Python tools land on PATH via uv — Serena (LSP navigation), graphify (code graph), vault-rag (recall server + watcher + indexer + doctor). Mirror of how you install anything else.',
+    code: '◇  Installing Serena      → uv tool install serena-agent\n◇  Installing graphify    → uv tool install graphifyy\n◇  Installing vault-rag   → uv tool install metalmind-vault-rag',
+  },
+  {
+    id: 'stack',
+    label: '04',
+    title: 'Local stack',
+    body:
+      'Qdrant + Ollama start as Docker containers (metalmind-qdrant, metalmind-ollama). nomic-embed-text pulls once. All embeddings stay on your machine.',
+    code: '◇  Starting Docker stack (Qdrant + Ollama)\n◆  stack at ~/Knowledge/.metalmind-stack\n   nomic-embed-text pulled',
+  },
+  {
+    id: 'services',
+    label: '05',
+    title: 'Services & routing',
+    body:
+      'Auto-reindex watcher runs as a background service — launchd on macOS, systemd --user on Linux. MCP registers Serena only; vault recall is a CLI call (no schema tokens). Optional: disable native auto-memory and route all memory to the vault.',
+    code: '◇  Installing watcher service\n◆  wrote com.metalmind.vault-indexer.plist\n◇  Registering MCP servers (serena/teams)\n◇  Applying memory routing\n◆  disabled native auto-memory',
+  },
+  {
+    id: 'ready',
+    label: '06',
+    title: 'Ready',
+    body:
+      'metalmind pulse verifies the whole chain end-to-end. metalmind uninstall rolls everything back — watcher, containers, MCP entries, settings, aliases — without ever touching your notes.',
+    code: '$ metalmind pulse\n◇  Prerequisites\n◇  Config\n●  flavor:     scadrial\n●  vaultPath:  ~/Knowledge\n●  mcp:        serena, graphify\n└  All systems nominal.',
+  },
+];
+---
+
+<ol class="flow" aria-label="Install flow, step by step">
+  <div class="flow-rail" aria-hidden="true">
+    <div class="flow-rail-fill" data-flow-fill></div>
+  </div>
+  {steps.map((step) => (
+    <li class="flow-step" data-flow-step id={`step-${step.id}`}>
+      <div class="flow-step-marker" aria-hidden="true">
+        <span class="flow-step-dot"></span>
+        <span class="flow-step-label">{step.label}</span>
+      </div>
+      <div class="flow-step-body">
+        <h3 class="flow-step-title">{step.title}</h3>
+        <p class="flow-step-copy">{step.body}</p>
+        <pre class="flow-step-code"><code>{step.code}</code></pre>
+      </div>
+    </li>
+  ))}
+</ol>
+
+<script>
+  const steps = Array.from(document.querySelectorAll('[data-flow-step]')) as HTMLElement[];
+  const fill = document.querySelector('[data-flow-fill]') as HTMLElement | null;
+
+  if (steps.length > 0) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          entry.target.classList.toggle('is-visible', entry.isIntersecting);
+        }
+      },
+      { rootMargin: '-20% 0px -40% 0px', threshold: 0 },
+    );
+    for (const el of steps) io.observe(el);
+  }
+
+  if (fill) {
+    const updateFill = () => {
+      const first = steps[0];
+      const last = steps[steps.length - 1];
+      if (!first || !last) return;
+      const start = first.getBoundingClientRect().top + window.scrollY;
+      const end = last.getBoundingClientRect().bottom + window.scrollY;
+      const viewport = window.scrollY + window.innerHeight * 0.5;
+      const total = end - start;
+      if (total <= 0) return;
+      const progress = Math.max(0, Math.min(1, (viewport - start) / total));
+      fill.style.transform = `scaleY(${progress})`;
+    };
+    updateFill();
+    window.addEventListener('scroll', updateFill, { passive: true });
+    window.addEventListener('resize', updateFill, { passive: true });
+  }
+</script>
+
+<style>
+  .flow {
+    position: relative;
+    list-style: none;
+    padding: 0 0 0 3.5rem;
+    margin: 2rem 0 0;
+    counter-reset: flow;
+  }
+
+  .flow-rail {
+    position: absolute;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    left: 1.25rem;
+    width: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .flow-rail-fill {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      var(--copper) 0%,
+      var(--copper-dim) 100%
+    );
+    transform-origin: top;
+    transform: scaleY(0);
+    transition: transform 120ms linear;
+  }
+
+  .flow-step {
+    position: relative;
+    padding: 1.25rem 0 2.25rem;
+    display: grid;
+    grid-template-columns: 0 1fr;
+    opacity: 0.45;
+    transform: translateY(6px);
+    transition: opacity 400ms ease, transform 400ms ease;
+  }
+  .flow-step.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .flow-step-marker {
+    position: absolute;
+    left: -3.5rem;
+    top: 1.25rem;
+    width: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .flow-step-dot {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    background: var(--surface-elev);
+    border: 2px solid var(--border-strong);
+    transition: all 280ms ease;
+  }
+  .flow-step.is-visible .flow-step-dot {
+    background: var(--copper);
+    border-color: var(--copper);
+    box-shadow: 0 0 0 4px var(--copper-glow);
+  }
+  .flow-step-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--fg-muted);
+    letter-spacing: 0.05em;
+  }
+  .flow-step.is-visible .flow-step-label {
+    color: var(--copper);
+  }
+
+  .flow-step-body {
+    grid-column: 2;
+  }
+  .flow-step-title {
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    margin: 0 0 0.5rem;
+    color: var(--fg-strong);
+    letter-spacing: 0.01em;
+  }
+  .flow-step-copy {
+    margin: 0 0 0.9rem;
+    color: var(--fg);
+    max-width: 56ch;
+  }
+  .flow-step-code {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--fg);
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .flow-step.is-visible .flow-step-code {
+    border-color: var(--border-strong);
+  }
+
+  @media (max-width: 640px) {
+    .flow {
+      padding-left: 2.5rem;
+    }
+    .flow-rail {
+      left: 0.85rem;
+    }
+    .flow-step-marker {
+      left: -2.5rem;
+      width: 1.75rem;
+    }
+    .flow-step-label {
+      display: none;
+    }
+    .flow-step-title {
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flow-step,
+    .flow-step-dot,
+    .flow-rail-fill {
+      transition: none;
+    }
+    .flow-step {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

@@ -1,17 +1,12 @@
 ---
-import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
 import CommandsTable from '../components/CommandsTable.astro';
 import FlavorToggle from '../components/FlavorToggle.astro';
+import InstallFlow from '../components/InstallFlow.astro';
 import '../styles/global.css';
 
 const title = 'metalmind — unified CLI for Obsidian vault, code graph, and cross-repo intelligence';
 const description =
   'Token-efficient, privacy-first Claude Code companion. Obsidian vault capture + local semantic recall, Serena LSP navigation, graphify code graphs, and a cross-repo forge — under one themed CLI.';
-
-const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public');
-const hasCast = existsSync(join(publicDir, 'wizard-demo.cast'));
 ---
 
 <!doctype html>
@@ -38,6 +33,7 @@ const hasCast = existsSync(join(publicDir, 'wizard-demo.cast'));
         <nav class="nav-links" aria-label="Primary">
           <a href="#commands">commands</a>
           <a href="#install">install</a>
+          <a href="#demo">flow</a>
           <a href="#how">how</a>
           <a href="https://github.com/Nikitzu/metalmind">github</a>
         </nav>
@@ -115,8 +111,8 @@ const hasCast = existsSync(join(publicDir, 'wizard-demo.cast'));
             <div class="feature-body">
               Replaces 14&nbsp;KB of overnight bash with a typed pipeline: prereq detection with
               per-failure remediation, atomic JSON writes that preserve your existing MCP servers,
-              and a full <code>uninstall</code> that restores your prior output-style, unloads
-              launchd, and never touches your notes.
+              and a full <code>uninstall</code> that restores your prior output-style, stops the
+              watcher service (launchd on macOS, systemd on Linux), and never touches your notes.
             </div>
           </div>
           <div class="feature">
@@ -193,25 +189,14 @@ const hasCast = existsSync(join(publicDir, 'wizard-demo.cast'));
 
       <hr class="metal-rule" />
 
-      <section class="container" aria-labelledby="demo-title">
+      <section class="container" aria-labelledby="demo-title" id="demo">
         <h2 id="demo-title">Install flow</h2>
         <p>
-          A single <code>metalmind init</code> drives the whole install — prereq checks, vault
-          setup, Docker stack start, MCP registration, launchd watcher, output-style migration.
-          Reversible via <code>metalmind uninstall</code>.
+          A single <code>metalmind init</code> drives the whole install — and every step is
+          reversible via <code>metalmind uninstall</code>, which never touches your notes.
+          Scroll the rail below to trace what happens.
         </p>
-        <div class="cast-wrap" aria-label="Install flow demo (asciinema cast)">
-          {hasCast ? (
-            <div id="cast-root" style="width: 100%; height: 100%"></div>
-          ) : (
-            <div class="cast-placeholder">
-              <span class="chip">Recording soon</span>
-              <span>
-                Install-flow demo coming. Clone the repo and run <code>metalmind init</code> to try it now.
-              </span>
-            </div>
-          )}
-        </div>
+        <InstallFlow />
       </section>
 
       <hr class="metal-rule" />
@@ -227,7 +212,7 @@ const hasCast = existsSync(join(publicDir, 'wizard-demo.cast'));
           <div class="diagram-node">
             <div class="diagram-node-title">Vault</div>
             <div class="diagram-node-body">
-              Obsidian + Qdrant + Ollama (nomic-embed-text). Auto-reindex via launchd watcher.
+              Obsidian + Qdrant + Ollama (nomic-embed-text). Auto-reindex via launchd (macOS) or systemd (Linux).
             </div>
           </div>
           <div class="diagram-node">
@@ -268,59 +253,5 @@ const hasCast = existsSync(join(publicDir, 'wizard-demo.cast'));
       <p style="margin-top:0.25rem;opacity:0.6;">Built on <a href="https://obsidian.md">Obsidian</a>, <a href="https://ollama.com">Ollama</a>, <a href="https://qdrant.tech">Qdrant</a>, <a href="https://github.com/oraios/serena">Serena</a>, <a href="https://pypi.org/project/graphifyy/">graphify</a>.</p>
     </footer>
 
-    {hasCast && (
-      <script>
-        const ASCIINEMA_VERSION = '3.8.1';
-        const castUrl = '/wizard-demo.cast';
-
-        const loadPlayer = () => {
-          if (document.getElementById('asciinema-css')) return;
-          const css = document.createElement('link');
-          css.id = 'asciinema-css';
-          css.rel = 'stylesheet';
-          css.href = `https://cdn.jsdelivr.net/npm/asciinema-player@${ASCIINEMA_VERSION}/dist/bundle/asciinema-player.css`;
-          document.head.appendChild(css);
-          const js = document.createElement('script');
-          js.src = `https://cdn.jsdelivr.net/npm/asciinema-player@${ASCIINEMA_VERSION}/dist/bundle/asciinema-player.min.js`;
-          js.onload = () => {
-            // @ts-ignore
-            if (window.AsciinemaPlayer) {
-              const root = document.getElementById('cast-root');
-              if (root) {
-                // @ts-ignore
-                window.AsciinemaPlayer.create(castUrl, root, {
-                  theme: 'solarized-dark',
-                  fit: 'both',
-                  terminalFontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                  poster: 'npt:0:04',
-                });
-              }
-            }
-          };
-          document.head.appendChild(js);
-        };
-
-        if ('IntersectionObserver' in window) {
-          const root = document.querySelector('.cast-wrap');
-          if (root) {
-            const io = new IntersectionObserver(
-              (entries) => {
-                for (const entry of entries) {
-                  if (entry.isIntersecting) {
-                    loadPlayer();
-                    io.disconnect();
-                    break;
-                  }
-                }
-              },
-              { rootMargin: '200px' },
-            );
-            io.observe(root);
-          }
-        } else {
-          loadPlayer();
-        }
-      </script>
-    )}
   </body>
 </html>
