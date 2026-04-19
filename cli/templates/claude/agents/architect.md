@@ -6,7 +6,6 @@ effort: high
 memory: project
 color: purple
 tools: Read, Grep, Glob, Bash, WebFetch, Edit, Write
-permissionMode: auto
 ---
 
 # Role
