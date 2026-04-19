@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { burn } from './commands/burn.js';
 import { doctor } from './commands/doctor.js';
+import { forgeAdd, forgeCreate, forgeDelete, forgeList, forgeRemove } from './commands/forge.js';
 import { init } from './commands/init.js';
 import { type StoreOptions, store } from './commands/store.js';
 import { type TapOptions, tap } from './commands/tap.js';
@@ -121,6 +122,23 @@ program
   .action((symbol: string, cmdOpts: { yes?: boolean }) =>
     burn({ metal: 'iron', input: symbol, assumeYes: cmdOpts.yes }),
   );
+
+function attachForgeSubcommands(parent: Command): void {
+  parent.command('create <name>').description('Create a new forge').action(forgeCreate);
+  parent.command('delete <name>').description('Delete a forge').action(forgeDelete);
+  parent.command('add <name> <repo>').description('Add a repo path to the forge').action(forgeAdd);
+  parent
+    .command('remove <name> <repo>')
+    .description('Remove a repo path from the forge')
+    .action(forgeRemove);
+  parent.command('list').description('List all forges').action(forgeList);
+}
+
+const forgeCmd = program.command('forge').description('Cross-repo graph groups');
+attachForgeSubcommands(forgeCmd);
+
+const groupCmd = program.command('group').description('Classic alias: cross-repo graph groups');
+attachForgeSubcommands(groupCmd);
 
 program.parseAsync(process.argv).catch((err: unknown) => {
   const message = err instanceof Error ? err.message : String(err);
