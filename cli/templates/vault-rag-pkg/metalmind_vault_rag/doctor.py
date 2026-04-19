@@ -1,14 +1,11 @@
-"""vault-doctor: hygiene checks for the Knowledge vault.
-
-Usage: uv run doctor.py [--duplicates] [--orphans] [--dead-links] [--stale-inbox] [--all]
-"""
+"""vault-doctor: hygiene checks for the Knowledge vault."""
 import argparse
 import re
 import time
 from collections import defaultdict
 from pathlib import Path
 
-from core import COLLECTION, VAULT, files_to_index, qdrant
+from .core import COLLECTION, VAULT, files_to_index, qdrant
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 STALE_DAYS = 14

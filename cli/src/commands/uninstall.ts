@@ -14,7 +14,7 @@ export async function uninstall(): Promise<void> {
 
   log.warn('This will:');
   log.info('  - stop watcher and Docker stack');
-  log.info('  - remove <vault>/.claude-stack/ (stack code, NOT your notes)');
+  log.info('  - remove <vault>/.metalmind-stack/ (stack code, NOT your notes)');
   log.info('  - remove MCP entries (vault-rag, serena) from ~/.claude.json');
   log.info('  - remove shell aliases + source line from ~/.zshrc');
   log.info('  - delete ~/.metalmind/config.json');
@@ -62,7 +62,7 @@ export async function uninstall(): Promise<void> {
     });
     if (result.watcher.removedPlist) log.success('launchd watcher unloaded + plist removed');
     if (result.stackStopped) log.success('Docker stack stopped');
-    if (result.stackRemoved) log.success('<vault>/.claude-stack removed');
+    if (result.stackRemoved) log.success('<vault>/.metalmind-stack removed');
     if (result.serenaUninstalled) log.success('Serena uninstalled');
     if (result.graphifyUninstalled) log.success('graphify uninstalled');
     if (result.mcp.removed.length > 0)

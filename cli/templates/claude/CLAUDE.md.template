@@ -43,10 +43,10 @@ Minimal scope only — no layout restructure, memoization, or splitting unless a
 
 **Save**: `/save` command. Propose note + path before writing; never save silently. Write only to `Inbox/`, `Daily/`, or a user-named note. Save decisions, not code.
 
-**Recall lookup order** — pick one:
-1. `search_vault(query)` — default for any conceptual vault question (prefer over Grep)
-2. `related_notes(file)` — expand from a hit into linked neighbors
-3. `expand_search(query)` — hits + linked context in one call
+**Recall lookup order** — pick one. All vault recall goes through the `metalmind` CLI (Bash), not via an MCP server — saves context tokens:
+1. `Bash: {{RECALL_CMD}} "<query>"` — semantic search, default for any conceptual vault question
+2. `Bash: {{RECALL_CMD}} "<query>" --deep` — hits + related notes in one call
+3. `Bash: {{RECALL_CMD}} "<query>" --expand` — hits + linked context graph
 4. `Read` — only for exact user-given paths
 5. `Grep` — only for exact string matches
 
@@ -62,7 +62,7 @@ Minimal scope only — no layout restructure, memoization, or splitting unless a
 
 - **Context7** — unfamiliar library APIs: `resolve-library-id` → `get-library-docs`. Skip for well-known APIs.
 - **Serena** — code navigation and symbol-level editing. See `rules/tool-philosophy.md`.
-- **vault-rag** — vault semantic search (`search_vault`, `related_notes`, `expand_search`).
+- **Vault recall** — via `Bash: {{RECALL_CMD}} …` (CLI, not MCP). Indexer + watcher run as background services.
 
 ## Plugins & skills
 

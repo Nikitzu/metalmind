@@ -6,7 +6,7 @@ import uuid
 
 import httpx
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, PointStruct, VectorParams
+from qdrant_client.http.models import Distance, VectorParams
 
 OLLAMA = os.environ.get("VAULT_OLLAMA_URL", "http://localhost:11434")
 QDRANT = os.environ.get("VAULT_QDRANT_URL", "http://localhost:6333")
@@ -75,7 +75,7 @@ def chunk_markdown(text: str) -> list[tuple[str, str]]:
 
 
 def files_to_index() -> list[pathlib.Path]:
-    skip = {".obsidian", ".claude-stack", ".trash"}
+    skip = {".obsidian", ".metalmind-stack", ".trash"}
     return [
         p
         for p in VAULT.rglob("*.md")

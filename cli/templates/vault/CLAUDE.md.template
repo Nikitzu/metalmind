@@ -1,0 +1,36 @@
+# Knowledge Vault
+
+Personal Obsidian vault. Claude persists insights here via `/save`, recalls via the `metalmind` CLI (not an MCP server — saves context tokens).
+
+## Folders
+
+`Work/` · `Personal/` · `Learnings/` · `Daily/` (YYYY-MM-DD.md) · `Inbox/` (triage bucket) · `Archive/` (stale) · `Memory/` (migrated native memory).
+
+MOCs live at `<Folder>/MOCs/<topic>.md` and index all notes on that topic.
+
+## Note conventions
+
+- **Filename**: `kebab-case.md`. H1 matches.
+- **One note = one topic.** Before creating, `{{RECALL_CMD}} "<topic>"` first; if a close match exists, edit it.
+- **Frontmatter** (every note): `tags:`, `created:`, `updated:`, `project:` (opt), `status: active|draft|archived`.
+- **Link aggressively** with `[[wikilinks]]`. No orphans — every note has ≥1 in/out link.
+- **No secrets** in any note.
+
+## Claude's behavior
+
+**Lookup order** (pick one, don't combine). All recall goes through the `metalmind` CLI via Bash — no vault-rag MCP tools are registered:
+
+1. `Bash: {{RECALL_CMD}} "<query>"` — semantic search, default for conceptual questions.
+2. `Bash: {{RECALL_CMD}} "<query>" --deep` — hits + related notes in one call.
+3. `Bash: {{RECALL_CMD}} "<query>" --expand` — hits + linked context graph.
+4. `Read` — only when user gave an exact path.
+5. `Grep` — only for exact string matches.
+6. `Glob` — only for file-pattern listing.
+
+**Writing**:
+
+- Write only to `Inbox/`, `Daily/`, or a note the user names.
+- Propose the note (path + draft) before writing — never save silently.
+- Never touch `Welcome.md` or `.obsidian/`.
+
+**Inbox/ files untouched >14 days** → propose triage on next `/save`.

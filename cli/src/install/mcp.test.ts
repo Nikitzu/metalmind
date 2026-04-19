@@ -21,21 +21,30 @@ describe('MCP registration', () => {
     await rm(tmp, { recursive: true, force: true });
   });
 
-  it('creates file with vault-rag entry when absent', async () => {
-    const result = await registerMcpServers({
-      vaultPath: '/v',
-      claudeJsonPath,
-    });
+  it('creates file with no servers when no optional features requested', async () => {
+    const result = await registerMcpServers({ claudeJsonPath });
 
-    expect(result.added).toEqual(['vault-rag']);
+    expect(result.added).toEqual([]);
     expect(result.skipped).toEqual([]);
-
     const data = await readJson(claudeJsonPath);
-    expect(data.mcpServers?.['vault-rag']?.command).toBe('uv');
-    expect(data.mcpServers?.['vault-rag']?.env?.VAULT_PATH).toBe('/v');
+    expect(data.mcpServers).toEqual({});
   });
 
-  it('preserves existing mcpServers entries', async () => {
+  it('strips legacy vault-rag entry on register', async () => {
+    await writeFile(
+      claudeJsonPath,
+      JSON.stringify({
+        mcpServers: { 'vault-rag': { command: 'uv', args: [] } },
+      }),
+      'utf8',
+    );
+
+    await registerMcpServers({ claudeJsonPath });
+    const data = await readJson(claudeJsonPath);
+    expect(data.mcpServers?.['vault-rag']).toBeUndefined();
+  });
+
+  it('preserves existing unrelated mcpServers entries', async () => {
     await writeFile(
       claudeJsonPath,
       JSON.stringify({
@@ -45,46 +54,16 @@ describe('MCP registration', () => {
       'utf8',
     );
 
-    const result = await registerMcpServers({
-      vaultPath: '/v',
-      claudeJsonPath,
-    });
-
-    expect(result.added).toEqual(['vault-rag']);
+    await registerMcpServers({ claudeJsonPath });
     const data = await readJson(claudeJsonPath);
     expect(data.mcpServers?.['other-server']?.command).toBe('custom');
-    expect(data.mcpServers?.['vault-rag']).toBeDefined();
     expect(data.unrelatedKey).toBe('preserved');
   });
 
-  it('skips vault-rag when already present', async () => {
-    await writeFile(
-      claudeJsonPath,
-      JSON.stringify({
-        mcpServers: { 'vault-rag': { command: 'custom-uv', args: [] } },
-      }),
-      'utf8',
-    );
-
-    const result = await registerMcpServers({
-      vaultPath: '/v',
-      claudeJsonPath,
-    });
-
-    expect(result.added).toEqual([]);
-    expect(result.skipped).toEqual(['vault-rag']);
-    const data = await readJson(claudeJsonPath);
-    expect(data.mcpServers?.['vault-rag']?.command).toBe('custom-uv');
-  });
-
   it('adds serena entry pointing at the serena binary on PATH', async () => {
-    const result = await registerMcpServers({
-      vaultPath: '/v',
-      serena: true,
-      claudeJsonPath,
-    });
+    const result = await registerMcpServers({ serena: true, claudeJsonPath });
 
-    expect(result.added).toEqual(['vault-rag', 'serena']);
+    expect(result.added).toEqual(['serena']);
     const data = await readJson(claudeJsonPath);
     expect(data.mcpServers?.serena?.command).toBe('serena');
     expect(data.mcpServers?.serena?.args).toEqual(['start-mcp-server', '--context', 'claude-code']);
@@ -92,11 +71,7 @@ describe('MCP registration', () => {
   });
 
   it('sets teammateMode when enableTeams and absent', async () => {
-    const result = await registerMcpServers({
-      vaultPath: '/v',
-      enableTeams: true,
-      claudeJsonPath,
-    });
+    const result = await registerMcpServers({ enableTeams: true, claudeJsonPath });
 
     expect(result.teammateModeSet).toBe(true);
     const data = await readJson(claudeJsonPath);
@@ -106,11 +81,7 @@ describe('MCP registration', () => {
   it('preserves existing teammateMode', async () => {
     await writeFile(claudeJsonPath, JSON.stringify({ teammateMode: 'manual' }), 'utf8');
 
-    const result = await registerMcpServers({
-      vaultPath: '/v',
-      enableTeams: true,
-      claudeJsonPath,
-    });
+    const result = await registerMcpServers({ enableTeams: true, claudeJsonPath });
 
     expect(result.teammateModeSet).toBe(false);
     const data = await readJson(claudeJsonPath);
@@ -118,17 +89,11 @@ describe('MCP registration', () => {
   });
 
   it('unregister removes named servers and preserves others', async () => {
-    await registerMcpServers({
-      vaultPath: '/v',
-      serena: true,
-      claudeJsonPath,
-    });
     await writeFile(
       claudeJsonPath,
       JSON.stringify({
-        ...(await readJson(claudeJsonPath)),
         mcpServers: {
-          ...(await readJson(claudeJsonPath)).mcpServers,
+          serena: { command: 'serena' },
           'other-server': { command: 'custom' },
         },
       }),
@@ -136,13 +101,12 @@ describe('MCP registration', () => {
     );
 
     const result = await unregisterMcpServers({
-      servers: ['vault-rag', 'serena'],
+      servers: ['serena'],
       claudeJsonPath,
     });
 
-    expect(result.removed).toEqual(['vault-rag', 'serena']);
+    expect(result.removed).toEqual(['serena']);
     const data = await readJson(claudeJsonPath);
-    expect(data.mcpServers?.['vault-rag']).toBeUndefined();
     expect(data.mcpServers?.serena).toBeUndefined();
     expect(data.mcpServers?.['other-server']?.command).toBe('custom');
   });
@@ -150,19 +114,19 @@ describe('MCP registration', () => {
   it('unregister reports missing servers under notPresent', async () => {
     await writeFile(claudeJsonPath, JSON.stringify({ mcpServers: {} }), 'utf8');
     const result = await unregisterMcpServers({
-      servers: ['vault-rag'],
+      servers: ['serena'],
       claudeJsonPath,
     });
     expect(result.removed).toEqual([]);
-    expect(result.notPresent).toEqual(['vault-rag']);
+    expect(result.notPresent).toEqual(['serena']);
   });
 
   it('unregister on missing file is a no-op', async () => {
     const result = await unregisterMcpServers({
-      servers: ['vault-rag'],
+      servers: ['serena'],
       claudeJsonPath,
     });
     expect(result.removed).toEqual([]);
-    expect(result.notPresent).toEqual(['vault-rag']);
+    expect(result.notPresent).toEqual(['serena']);
   });
 });

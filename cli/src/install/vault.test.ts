@@ -13,7 +13,11 @@ describe('setupVault', () => {
     tmp = await mkdtemp(join(tmpdir(), 'metalmind-vault-'));
     templatesDir = join(tmp, 'templates');
     await mkdir(join(templatesDir, 'vault'), { recursive: true });
-    await writeFile(join(templatesDir, 'vault', 'CLAUDE.md'), '# test vault claude md\n', 'utf8');
+    await writeFile(
+      join(templatesDir, 'vault', 'CLAUDE.md.template'),
+      '# test vault claude md\nrecall via {{RECALL_CMD}}\n',
+      'utf8',
+    );
   });
 
   afterEach(async () => {
@@ -22,7 +26,7 @@ describe('setupVault', () => {
 
   it('creates all folders on fresh install', async () => {
     const vaultPath = join(tmp, 'vault');
-    const result = await setupVault({ vaultPath, templatesDir });
+    const result = await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
 
     expect(result.vaultPath).toBe(vaultPath);
     expect(result.createdFolders).toEqual([...VAULT_FOLDERS]);
@@ -31,12 +35,23 @@ describe('setupVault', () => {
       expect(existsSync(join(vaultPath, folder))).toBe(true);
     }
     expect(existsSync(join(vaultPath, 'CLAUDE.md'))).toBe(true);
+    const rendered = await readFile(join(vaultPath, 'CLAUDE.md'), 'utf8');
+    expect(rendered).toContain('metalmind tap copper');
+    expect(rendered).not.toContain('{{RECALL_CMD}}');
+  });
+
+  it('renders classic recall verb when flavor=classic', async () => {
+    const vaultPath = join(tmp, 'vault');
+    await setupVault({ vaultPath, templatesDir, flavor: 'classic' });
+    const rendered = await readFile(join(vaultPath, 'CLAUDE.md'), 'utf8');
+    expect(rendered).toContain('metalmind recall');
+    expect(rendered).not.toContain('tap copper');
   });
 
   it('is idempotent on re-run', async () => {
     const vaultPath = join(tmp, 'vault');
-    await setupVault({ vaultPath, templatesDir });
-    const second = await setupVault({ vaultPath, templatesDir });
+    await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
+    const second = await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
     expect(second.createdFolders).toEqual([]);
     expect(second.wroteClaudeMd).toBe(false);
   });
@@ -46,7 +61,7 @@ describe('setupVault', () => {
     await mkdir(vaultPath, { recursive: true });
     await writeFile(join(vaultPath, 'CLAUDE.md'), '# user-customized\n', 'utf8');
 
-    const result = await setupVault({ vaultPath, templatesDir });
+    const result = await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
 
     expect(result.wroteClaudeMd).toBe(false);
     const contents = await readFile(join(vaultPath, 'CLAUDE.md'), 'utf8');
@@ -55,7 +70,7 @@ describe('setupVault', () => {
 
   it('expands tilde in vault path', async () => {
     process.env.HOME = tmp;
-    const result = await setupVault({ vaultPath: '~/my-vault', templatesDir });
+    const result = await setupVault({ vaultPath: '~/my-vault', templatesDir, flavor: 'scadrial' });
     expect(result.vaultPath).toBe(join(tmp, 'my-vault'));
     expect(existsSync(join(tmp, 'my-vault', 'Work'))).toBe(true);
   });

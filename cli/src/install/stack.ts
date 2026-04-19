@@ -3,11 +3,11 @@ import { join } from 'node:path';
 import { runCommand } from '../util/exec.js';
 import { getTemplatesDir } from '../util/paths.js';
 
-export const STACK_SUBDIR = '.claude-stack';
+export const STACK_SUBDIR = '.metalmind-stack';
 export const OLLAMA_URL = 'http://localhost:11434/api/tags';
 export const QDRANT_URL = 'http://localhost:6333/readyz';
 export const EMBED_MODEL = 'nomic-embed-text';
-export const OLLAMA_CONTAINER = 'knowledge-ollama';
+export const OLLAMA_CONTAINER = 'metalmind-ollama';
 
 export type FetchFn = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
@@ -32,7 +32,7 @@ export interface SetupStackResult {
 export async function copyStackTemplates(vaultPath: string, templatesDir: string): Promise<string> {
   const stackDir = join(vaultPath, STACK_SUBDIR);
   await mkdir(stackDir, { recursive: true });
-  await cp(join(templatesDir, 'claude-stack'), stackDir, { recursive: true });
+  await cp(join(templatesDir, 'metalmind-stack'), stackDir, { recursive: true });
   return stackDir;
 }
 

@@ -31,7 +31,7 @@ describe('templates', () => {
     await writeFile(join(claudeSrc, 'commands', 'team-debug.md'), '# team-debug\n', 'utf8');
     await writeFile(
       join(claudeSrc, 'CLAUDE.md.template'),
-      '# global\n\nvault at {{VAULT_PATH}}\n',
+      '# global\n\nvault at {{VAULT_PATH}}\nrecall via {{RECALL_CMD}}\n',
       'utf8',
     );
     runCommand.mockReset();
@@ -80,10 +80,11 @@ describe('templates', () => {
   });
 
   describe('stampClaudeMd', () => {
-    it('renders with VAULT_PATH substituted', async () => {
+    it('renders scadrial flavor with tap copper verb', async () => {
       const { stampClaudeMd } = await import('./templates.js');
       const result = await stampClaudeMd({
         vaultPath: '/Users/me/Knowledge',
+        flavor: 'scadrial',
         templatesDir,
         claudeDir,
       });
@@ -91,7 +92,23 @@ describe('templates', () => {
       expect(result.wrote).toBe(true);
       const contents = await readFile(result.path, 'utf8');
       expect(contents).toContain('vault at /Users/me/Knowledge');
+      expect(contents).toContain('metalmind tap copper');
       expect(contents).not.toContain('{{VAULT_PATH}}');
+      expect(contents).not.toContain('{{RECALL_CMD}}');
+    });
+
+    it('renders classic flavor with recall verb', async () => {
+      const { stampClaudeMd } = await import('./templates.js');
+      const result = await stampClaudeMd({
+        vaultPath: '/v',
+        flavor: 'classic',
+        templatesDir,
+        claudeDir,
+      });
+
+      const contents = await readFile(result.path, 'utf8');
+      expect(contents).toContain('metalmind recall');
+      expect(contents).not.toContain('tap copper');
     });
 
     it('preserves existing CLAUDE.md', async () => {
@@ -101,6 +118,7 @@ describe('templates', () => {
       const { stampClaudeMd } = await import('./templates.js');
       const result = await stampClaudeMd({
         vaultPath: '/v',
+        flavor: 'scadrial',
         templatesDir,
         claudeDir,
       });

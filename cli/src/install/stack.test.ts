@@ -20,7 +20,7 @@ describe('stack', () => {
   beforeEach(async () => {
     tmp = await mkdtemp(join(tmpdir(), 'metalmind-stack-'));
     templatesDir = join(tmp, 'templates');
-    const stackSrc = join(templatesDir, 'claude-stack');
+    const stackSrc = join(templatesDir, 'metalmind-stack');
     await mkdir(join(stackSrc, 'vault_rag'), { recursive: true });
     await writeFile(join(stackSrc, 'compose.yml'), 'services: {}\n', 'utf8');
     await writeFile(join(stackSrc, 'vault_rag', 'server.py'), '# vault_rag\n', 'utf8');
@@ -36,7 +36,7 @@ describe('stack', () => {
     const vaultPath = join(tmp, 'vault');
     const stackDir = await copyStackTemplates(vaultPath, templatesDir);
 
-    expect(stackDir).toBe(join(vaultPath, '.claude-stack'));
+    expect(stackDir).toBe(join(vaultPath, '.metalmind-stack'));
     expect(existsSync(join(stackDir, 'compose.yml'))).toBe(true);
     expect(existsSync(join(stackDir, 'vault_rag', 'server.py'))).toBe(true);
   });

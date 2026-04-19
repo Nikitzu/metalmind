@@ -44,6 +44,7 @@ describe('config', () => {
       mcp: { registered: ['vault-rag'] },
       hooks: { claudeCode: true },
       forge: { groups: {} },
+    memoryRouting: 'vault-only',
     };
 
     await writeConfig(cfg);

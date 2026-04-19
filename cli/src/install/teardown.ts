@@ -8,7 +8,9 @@ import { uninstallLaunchdWatcher } from './launchd.js';
 import { unregisterMcpServers } from './mcp.js';
 import { uninstallOutputStyle } from './output-style.js';
 import { uninstallSerena } from './serena.js';
+import { clearMemoryRouting } from './settings.js';
 import { STACK_SUBDIR, stopStack } from './stack.js';
+import { uninstallVaultRag } from './vault-rag.js';
 
 export interface TeardownOptions {
   config?: Config;
@@ -20,6 +22,8 @@ export interface TeardownOptions {
   aliasesPath?: string;
   zshrcPath?: string;
   configPath?: string;
+  settingsPath?: string;
+  removeVaultRag?: boolean;
 }
 
 export interface TeardownResult {
@@ -32,11 +36,13 @@ export interface TeardownResult {
   aliases: { removedAliases: boolean; removedSourceLine: boolean };
   outputStyle: { styleRemoved: boolean; settingsRestored: boolean };
   configRemoved: boolean;
+  vaultRagUninstalled: boolean;
+  memoryRoutingCleared: boolean;
 }
 
 export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResult> {
-  const config = opts.config ?? (await readConfig());
   const configPath = opts.configPath ?? CONFIG_PATH;
+  const config = opts.config ?? (await readConfig(configPath));
 
   const result: TeardownResult = {
     watcher: { removedPlist: false, unloaded: false },
@@ -48,6 +54,8 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     aliases: { removedAliases: false, removedSourceLine: false },
     outputStyle: { styleRemoved: false, settingsRestored: false },
     configRemoved: false,
+    vaultRagUninstalled: false,
+    memoryRoutingCleared: false,
   };
 
   const watcher = await uninstallLaunchdWatcher({ launchAgentsDir: opts.launchAgentsDir });
@@ -78,6 +86,13 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     const { uninstalled } = await uninstallGraphify();
     result.graphifyUninstalled = uninstalled;
   }
+
+  if (opts.removeVaultRag) {
+    const { uninstalled } = await uninstallVaultRag();
+    result.vaultRagUninstalled = uninstalled;
+  }
+
+  result.memoryRoutingCleared = await clearMemoryRouting(opts.settingsPath);
 
   const mcp = await unregisterMcpServers({
     servers: ['vault-rag', 'serena'],

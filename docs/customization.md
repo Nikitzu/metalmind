@@ -27,10 +27,11 @@ Agent file structure: see any of the 15 bundled files for the format. Key fields
 
 The whole stack reads `VAULT_PATH` from the environment. Places to update if you move the vault after install:
 
-1. `~/.zshrc` — change the `export VAULT_PATH=...` line (or rely on `~/.claude-knowledge-stack/aliases.sh`)
-2. `~/.claude.json` — the `vault-rag` MCP entry's `env.VAULT_PATH`
-3. `~/Library/LaunchAgents/com.claude.vault-indexer.plist` — `EnvironmentVariables.VAULT_PATH` and the paths in `ProgramArguments`
-4. `~/.claude/CLAUDE.md` — the `Storage:` line under "Memory — Obsidian vault"
+1. `~/.zshrc` — change the `export VAULT_PATH=...` line (or rely on `~/.metalmind-stack/aliases.sh`)
+2. `~/Library/LaunchAgents/com.metalmind.vault-indexer.plist` — `EnvironmentVariables.VAULT_PATH`
+3. `~/.claude/CLAUDE.md` — the `Storage:` line under "Memory — Obsidian vault"
+
+(The vault-rag MCP entry was retired — recall now runs via the `metalmind` CLI and reads `VAULT_PATH` from the environment directly.)
 
 Then: `launchctl unload <plist> && launchctl load <plist>`, restart Claude Code, `exec zsh`.
 
@@ -40,10 +41,10 @@ Default: `nomic-embed-text` (274 MB, 768-dim, fast, good enough for English note
 
 To switch models:
 
-1. `docker exec knowledge-ollama ollama pull <new-model>`
-2. In `templates/claude-stack/vault_rag/core.py` (or `VAULT_EMBED_MODEL` env var): update `MODEL`
-3. If new model has different dim: update `DIM` / `VAULT_EMBED_DIM`
-4. `vault-index` — full re-embed (old vectors are incompatible)
+1. `docker exec metalmind-ollama ollama pull <new-model>`
+2. Set `VAULT_EMBED_MODEL=<new-model>` in your shell or launchd plist env
+3. If the new model has a different dim, set `VAULT_EMBED_DIM=<n>` to match
+4. `metalmind-vault-rag-indexer` — full re-embed (old vectors are incompatible)
 
 Candidates: `mxbai-embed-large` (1024-dim, better recall, bigger), `snowflake-arctic-embed` (smaller, multilingual).
 
@@ -53,7 +54,7 @@ Edit `templates/vault/CLAUDE.md` and the default-mkdir line in `install.sh`. Re-
 
 ## Tweaking resource caps
 
-`~/Knowledge/.claude-stack/compose.yml` — `mem_limit` and `cpus` per service. Re-run `vault-up` to apply.
+`~/Knowledge/.metalmind-stack/compose.yml` — `mem_limit` and `cpus` per service. Re-run `vault-up` to apply.
 
 Defaults target an idle footprint of ~300 MB. The Ollama model unloads after 1 minute idle (`OLLAMA_KEEP_ALIVE=1m`) and reloads in ~2 seconds when queried.
 

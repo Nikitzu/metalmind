@@ -32,6 +32,7 @@ function baseConfig(vaultPath: string): Config {
     mcp: { registered: ['vault-rag'] },
     hooks: { claudeCode: false },
     forge: { groups: {} },
+    memoryRouting: 'vault-only',
   };
 }
 
@@ -49,13 +50,13 @@ describe('teardown', () => {
   beforeEach(async () => {
     tmp = await mkdtemp(join(tmpdir(), 'metalmind-teardown-'));
     vaultPath = join(tmp, 'vault');
-    stackDir = join(vaultPath, '.claude-stack');
+    stackDir = join(vaultPath, '.metalmind-stack');
     await mkdir(stackDir, { recursive: true });
     await writeFile(join(stackDir, 'compose.yml'), 'services: {}\n', 'utf8');
 
     launchAgentsDir = join(tmp, 'LaunchAgents');
     await mkdir(launchAgentsDir, { recursive: true });
-    plistPath = join(launchAgentsDir, 'com.claude.vault-indexer.plist');
+    plistPath = join(launchAgentsDir, 'com.metalmind.vault-indexer.plist');
     await writeFile(plistPath, '<!-- plist -->\n', 'utf8');
 
     claudeJsonPath = join(tmp, '.claude.json');

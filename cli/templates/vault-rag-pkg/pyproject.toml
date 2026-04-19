@@ -1,0 +1,24 @@
+[project]
+name = "metalmind-vault-rag"
+version = "0.1.0"
+description = "Obsidian vault RAG service for metalmind — MCP server, watcher, indexer, doctor."
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "qdrant-client>=1.9",
+    "mcp>=1.0",
+    "watchfiles>=0.22",
+]
+
+[project.scripts]
+metalmind-vault-rag-server = "metalmind_vault_rag.server:main"
+metalmind-vault-rag-watcher = "metalmind_vault_rag.watcher:main"
+metalmind-vault-rag-indexer = "metalmind_vault_rag.indexer:main"
+metalmind-vault-rag-doctor = "metalmind_vault_rag.doctor:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["metalmind_vault_rag"]

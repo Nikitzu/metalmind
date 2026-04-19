@@ -29,7 +29,7 @@ const SKIP_DIRS = new Set([
   '.pytest_cache',
   'coverage',
   'graphify-out',
-  '.claude-stack',
+  '.metalmind-stack',
 ]);
 
 const JS_EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);

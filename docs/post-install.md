@@ -2,7 +2,7 @@
 
 ## First things first
 
-1. **Restart Claude Code** — so it picks up the new MCP servers (`vault-rag`, `serena`).
+1. **Restart Claude Code** — so it picks up the new MCP servers (`serena`) and settings env (`CLAUDE_CODE_DISABLE_AUTO_MEMORY`, if you chose vault-only memory routing).
 2. **Open a new terminal** (or `exec zsh`) — so shell aliases load.
 
 ## Verify
@@ -10,11 +10,12 @@
 In a new shell:
 
 ```bash
-vault-status        # should show knowledge-ollama + knowledge-qdrant running
+vault-status        # should show metalmind-ollama + metalmind-qdrant running
 vault-doctor        # vault hygiene report (duplicates, orphans, dead links, stale inbox)
+metalmind pulse     # (or: metalmind doctor) — end-to-end install sanity check
 ```
 
-In Claude Code, ask something conceptual — Claude should call `search_vault`. If you just installed, the vault is empty, so results will be sparse. Save a first note:
+In Claude Code, ask something conceptual — Claude should call `Bash: metalmind tap copper "<query>"` (or `metalmind recall` on classic flavor). No MCP tool schemas are injected for vault recall; it runs as a CLI to save context tokens. If you just installed, the vault is empty, so results will be sparse. Save a first note:
 
 ```
 /save
@@ -24,7 +25,7 @@ Then paste a decision or insight. Claude proposes a filename, folder, and wikili
 
 ## Shell aliases
 
-Sourced from `~/.claude-knowledge-stack/aliases.sh` via `~/.zshrc`.
+Sourced from `~/.metalmind-stack/aliases.sh` via `~/.zshrc`.
 
 | Alias | What it does |
 |---|---|
@@ -32,8 +33,8 @@ Sourced from `~/.claude-knowledge-stack/aliases.sh` via `~/.zshrc`.
 | `vault-down` | Stop Docker stack |
 | `vault-status` | Show container status |
 | `vault-logs` | Tail container logs |
-| `vault-index` | Rebuild full index from scratch |
-| `vault-doctor` | Vault hygiene: duplicates, orphans, dead links, stale inbox |
+| `vault-index` | Rebuild full index from scratch (`metalmind-vault-rag-indexer`) |
+| `vault-doctor` | Vault hygiene (`metalmind-vault-rag-doctor --all`) |
 | `vault-watcher-start` / `vault-watcher-stop` | Load/unload the launchd watcher |
 
 ## Serena: activating repos
@@ -50,47 +51,42 @@ Project configs live in `~/.serena/projects-data/<name>/` — outside your repos
 
 ## Recommended plugin pack
 
-```bash
-./install-plugins.sh
-```
-
-Installs superpowers, context7, commit-commands, code-review, claude-md-management, hookify, ui-ux-pro-max. See [`plugins.md`](plugins.md).
+See [`plugins.md`](plugins.md).
 
 ## Troubleshooting
 
-**Claude Code doesn't see `search_vault`**
-Restart Claude Code. Verify `~/.claude.json` has an `mcpServers.vault-rag` entry. Run `vault-status` — containers must be up. Try `vault-logs` to see what Ollama and Qdrant are doing.
+**Claude Code doesn't recall from the vault**
+Ensure `metalmind-vault-rag-server` is on PATH (`which metalmind-vault-rag-server`). Run `vault-status` — containers must be up. Try `vault-logs` to see what Ollama and Qdrant are doing. Ask Claude to run `Bash: metalmind tap copper "test"` directly to verify the CLI path.
 
 **Watcher not auto-reindexing**
 ```bash
 launchctl list | grep vault-indexer
-tail -f ~/Knowledge/.claude-stack/watcher.err
+tail -f ~/Knowledge/.metalmind-stack/watcher.err
 ```
-If the log shows `ModuleNotFoundError`, re-run `cd ~/Knowledge/.claude-stack/vault_rag && uv sync`.
+If the log shows a missing-binary error, reinstall the Python package: `metalmind init` (idempotent) or `uv tool install --reinstall --from <metalmind-cli>/templates/vault-rag-pkg metalmind-vault-rag`.
 
 **"Connection refused" on port 11434 or 6333**
 Docker Desktop isn't running, or containers crashed. `vault-up` to restart. `vault-logs` for details.
 
 **Vault path elsewhere**
-Set `VAULT_PATH` before running `install.sh`:
-```bash
-VAULT_PATH="$HOME/obsidian-vaults/main" ./install.sh
-```
-To change after install: uninstall, re-install with the new path. (Or edit `~/.zshrc`, plist, and MCP config by hand.)
+Re-run `metalmind init` and provide the new path at the prompt. Teardown + re-init is the supported path — there's no in-place mover.
 
 **Serena prompts on each tool call**
-The installer only adds the safe read-only Serena tools to auto-allow by default — edit/write tools still prompt. To change, edit `~/.claude/settings.json` `permissions.allow`.
+Edit `~/.claude/settings.json` `permissions.allow` to auto-approve additional Serena tools.
 
 ## Updating
 
-Pull the repo, re-run `install.sh` — idempotent. For Serena itself:
-
 ```bash
-cd ~/.serena/src/serena && git pull
+npm update -g metalmind
+metalmind init    # re-run; idempotent, won't clobber customizations
 ```
+
+For Serena: `uv tool install --upgrade serena-agent`.
+For graphify: `uv tool install --upgrade graphifyy`.
+For vault-rag: `uv tool install --reinstall --force --from <metalmind-cli>/templates/vault-rag-pkg metalmind-vault-rag` (or just re-run `metalmind init`).
 
 For the stack images:
 
 ```bash
-vault-down && docker compose -f ~/Knowledge/.claude-stack/compose.yml pull && vault-up
+vault-down && docker compose -f ~/Knowledge/.metalmind-stack/compose.yml pull && vault-up
 ```

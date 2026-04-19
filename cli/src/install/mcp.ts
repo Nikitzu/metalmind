@@ -19,7 +19,6 @@ export interface ClaudeJson {
 }
 
 export interface RegisterMcpOptions {
-  vaultPath: string;
   serena?: boolean;
   enableTeams?: boolean;
   claudeJsonPath?: string;
@@ -57,15 +56,6 @@ async function writeClaudeJson(path: string, data: ClaudeJson): Promise<void> {
   await rename(tmp, path);
 }
 
-function buildVaultRagEntry(vaultPath: string): McpServerEntry {
-  return {
-    type: 'stdio',
-    command: 'uv',
-    args: ['run', '--directory', join(vaultPath, '.claude-stack/vault_rag'), 'python', 'server.py'],
-    env: { VAULT_PATH: vaultPath },
-  };
-}
-
 function buildSerenaEntry(): McpServerEntry {
   return {
     type: 'stdio',
@@ -85,10 +75,7 @@ export async function registerMcpServers(opts: RegisterMcpOptions): Promise<Regi
   const skipped: string[] = [];
 
   if ('vault-rag' in servers) {
-    skipped.push('vault-rag');
-  } else {
-    servers['vault-rag'] = buildVaultRagEntry(opts.vaultPath);
-    added.push('vault-rag');
+    delete servers['vault-rag'];
   }
 
   if (opts.serena) {

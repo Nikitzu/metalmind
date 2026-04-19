@@ -3,7 +3,7 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-from core import COLLECTION, VAULT, embed, files_to_index, qdrant
+from .core import COLLECTION, VAULT, embed, files_to_index, qdrant
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 
@@ -20,12 +20,7 @@ def _file_index() -> dict[str, Path]:
 
 @mcp.tool()
 def search_vault(query: str, k: int = 5) -> list[dict]:
-    """Semantic search over the Obsidian Knowledge vault.
-
-    Args:
-        query: Natural language query.
-        k: Number of results (default 5, max 20).
-    """
+    """Semantic search over the Obsidian Knowledge vault."""
     k = max(1, min(k, 20))
     vec = embed([query])[0]
     c = qdrant()
@@ -43,11 +38,7 @@ def search_vault(query: str, k: int = 5) -> list[dict]:
 
 @mcp.tool()
 def related_notes(file: str) -> dict:
-    """Return forward links (this note → others) and backlinks (others → this note).
-
-    Args:
-        file: Vault-relative path (e.g. 'Memory/feedback_team_spawn_cwd.md') or bare stem.
-    """
+    """Return forward links and backlinks for a note."""
     index = _file_index()
     target = Path(file)
     if target.suffix == ".md" and not target.is_absolute():
@@ -88,14 +79,7 @@ def related_notes(file: str) -> dict:
 
 @mcp.tool()
 def expand_search(query: str, k: int = 5) -> dict:
-    """Run search_vault, then return hits plus all wikilinks discovered in their source files.
-
-    Gives conceptual hits (semantic) + structural neighbors (graph) in one call.
-
-    Args:
-        query: Natural language query.
-        k: Number of semantic hits (default 5, max 10).
-    """
+    """search_vault + wikilinks discovered in source files."""
     k = max(1, min(k, 10))
     hits = search_vault(query, k=k)
     index = _file_index()
@@ -122,5 +106,9 @@ def expand_search(query: str, k: int = 5) -> dict:
     return {"hits": hits, "expansions": expansions}
 
 
-if __name__ == "__main__":
+def main() -> None:
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()

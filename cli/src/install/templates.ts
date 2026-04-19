@@ -22,8 +22,13 @@ export interface CopyClaudeTemplatesResult {
 
 export interface StampClaudeMdOptions {
   vaultPath: string;
+  flavor: 'scadrial' | 'classic';
   templatesDir?: string;
   claudeDir?: string;
+}
+
+export function recallCommand(flavor: 'scadrial' | 'classic'): string {
+  return flavor === 'scadrial' ? 'metalmind tap copper' : 'metalmind recall';
 }
 
 export interface StampClaudeMdResult {
@@ -113,7 +118,9 @@ export async function stampClaudeMd(opts: StampClaudeMdOptions): Promise<StampCl
 
   await mkdir(claudeDir, { recursive: true });
   const template = await readFile(join(templatesDir, 'claude', 'CLAUDE.md.template'), 'utf8');
-  const rendered = template.replace(/\{\{VAULT_PATH\}\}/g, opts.vaultPath);
+  const rendered = template
+    .replace(/\{\{VAULT_PATH\}\}/g, opts.vaultPath)
+    .replace(/\{\{RECALL_CMD\}\}/g, recallCommand(opts.flavor));
   await writeFile(target, rendered, 'utf8');
   return { path: target, wrote: true };
 }

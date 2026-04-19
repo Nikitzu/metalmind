@@ -3,20 +3,17 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.claude.vault-indexer</string>
+    <string>com.metalmind.vault-indexer</string>
     <key>ProgramArguments</key>
     <array>
-        <string>{{UV_PATH}}</string>
-        <string>run</string>
-        <string>--directory</string>
-        <string>{{VAULT_PATH}}/.claude-stack/vault_rag</string>
-        <string>python</string>
-        <string>watcher.py</string>
+        <string>{{WATCHER_BIN}}</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
         <key>VAULT_PATH</key>
         <string>{{VAULT_PATH}}</string>
+        <key>PATH</key>
+        <string>{{PATH_VALUE}}</string>
     </dict>
     <key>RunAtLoad</key>
     <true/>
@@ -25,8 +22,8 @@
     <key>ThrottleInterval</key>
     <integer>10</integer>
     <key>StandardOutPath</key>
-    <string>{{VAULT_PATH}}/.claude-stack/watcher.log</string>
+    <string>{{VAULT_PATH}}/.metalmind-stack/watcher.log</string>
     <key>StandardErrorPath</key>
-    <string>{{VAULT_PATH}}/.claude-stack/watcher.err</string>
+    <string>{{VAULT_PATH}}/.metalmind-stack/watcher.err</string>
 </dict>
 </plist>

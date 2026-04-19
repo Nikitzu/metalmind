@@ -1,8 +1,9 @@
 import { existsSync } from 'node:fs';
-import { copyFile, mkdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { text } from '@clack/prompts';
 import { expandTilde, getTemplatesDir } from '../util/paths.js';
+import { recallCommand } from './templates.js';
 
 export const VAULT_FOLDERS = [
   'Work',
@@ -22,6 +23,7 @@ export interface SetupVaultResult {
 
 export interface SetupVaultOptions {
   vaultPath: string;
+  flavor: 'scadrial' | 'classic';
   templatesDir?: string;
 }
 
@@ -57,8 +59,10 @@ export async function setupVault(opts: SetupVaultOptions): Promise<SetupVaultRes
   const claudeMdTarget = join(vaultPath, 'CLAUDE.md');
   let wroteClaudeMd = false;
   if (!existsSync(claudeMdTarget)) {
-    const claudeMdSource = join(templatesDir, 'vault', 'CLAUDE.md');
-    await copyFile(claudeMdSource, claudeMdTarget);
+    const claudeMdSource = join(templatesDir, 'vault', 'CLAUDE.md.template');
+    const template = await readFile(claudeMdSource, 'utf8');
+    const rendered = template.replace(/\{\{RECALL_CMD\}\}/g, recallCommand(opts.flavor));
+    await writeFile(claudeMdTarget, rendered, 'utf8');
     wroteClaudeMd = true;
   }
 

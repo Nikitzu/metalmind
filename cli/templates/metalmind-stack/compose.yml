@@ -1,7 +1,7 @@
 services:
   ollama:
     image: ollama/ollama:latest
-    container_name: knowledge-ollama
+    container_name: metalmind-ollama
     ports:
       - "11434:11434"
     volumes:
@@ -20,7 +20,7 @@ services:
 
   qdrant:
     image: qdrant/qdrant:latest
-    container_name: knowledge-qdrant
+    container_name: metalmind-qdrant
     ports:
       - "6333:6333"
       - "6334:6334"

@@ -17,6 +17,7 @@ function baseConfig(): Config {
     mcp: { registered: ['vault-rag'] },
     hooks: { claudeCode: false },
     forge: { groups: {} },
+    memoryRouting: 'vault-only',
   };
 }
 

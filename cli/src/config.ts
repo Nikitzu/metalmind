@@ -9,6 +9,7 @@ export const CONFIG_PATH = join(CONFIG_DIR, 'config.json');
 const FlavorSchema = z.enum(['scadrial', 'classic']);
 const RecallTierSchema = z.enum(['fast', 'deep', 'expand']);
 const EmbeddingsProviderSchema = z.enum(['local', 'ollama', 'custom', 'skip']);
+const MemoryRoutingSchema = z.enum(['vault-only', 'both']);
 
 const ForgeGroupSchema = z.object({
   repos: z.array(z.string()),
@@ -37,6 +38,7 @@ export const ConfigSchema = z.object({
   hooks: z.object({
     claudeCode: z.boolean(),
   }),
+  memoryRouting: MemoryRoutingSchema.default('vault-only'),
   forge: z.object({
     groups: z.record(z.string(), ForgeGroupSchema),
   }),
@@ -44,9 +46,9 @@ export const ConfigSchema = z.object({
 
 export type Config = z.infer<typeof ConfigSchema>;
 
-export async function readConfig(): Promise<Config | null> {
+export async function readConfig(path: string = CONFIG_PATH): Promise<Config | null> {
   try {
-    const raw = await readFile(CONFIG_PATH, 'utf8');
+    const raw = await readFile(path, 'utf8');
     return ConfigSchema.parse(JSON.parse(raw));
   } catch (err: unknown) {
     if (isNodeError(err) && err.code === 'ENOENT') return null;

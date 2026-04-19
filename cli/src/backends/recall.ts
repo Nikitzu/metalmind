@@ -1,4 +1,3 @@
-import { join } from 'node:path';
 import { extractText, type McpToolResult, StdioMcpClient } from './mcp-client.js';
 
 export type RecallTier = 'fast' | 'deep' | 'expand';
@@ -22,8 +21,8 @@ function vaultRagSpawn(vaultPath: string): {
   env: Record<string, string>;
 } {
   return {
-    command: 'uv',
-    args: ['run', '--directory', join(vaultPath, '.claude-stack/vault_rag'), 'python', 'server.py'],
+    command: 'metalmind-vault-rag-server',
+    args: [],
     env: { VAULT_PATH: vaultPath },
   };
 }

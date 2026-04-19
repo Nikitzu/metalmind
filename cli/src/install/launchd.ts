@@ -5,12 +5,12 @@ import { join } from 'node:path';
 import { runCommand } from '../util/exec.js';
 import { getTemplatesDir } from '../util/paths.js';
 
-export const PLIST_NAME = 'com.claude.vault-indexer.plist';
+export const PLIST_NAME = 'com.metalmind.vault-indexer.plist';
 export const DEFAULT_LAUNCH_AGENTS_DIR = join(homedir(), 'Library', 'LaunchAgents');
 
 export interface InstallWatcherOptions {
   vaultPath: string;
-  uvPath: string;
+  watcherBin: string;
   templatesDir?: string;
   launchAgentsDir?: string;
   skipLoad?: boolean;
@@ -58,7 +58,8 @@ export async function installLaunchdWatcher(
     const template = await readFile(templatePath, 'utf8');
     const rendered = renderPlist(template, {
       VAULT_PATH: opts.vaultPath,
-      UV_PATH: opts.uvPath,
+      WATCHER_BIN: opts.watcherBin,
+      PATH_VALUE: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin',
     });
     await writeFile(plistPath, rendered, 'utf8');
     wrotePlist = true;
