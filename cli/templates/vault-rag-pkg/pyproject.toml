@@ -15,6 +15,7 @@ metalmind-vault-rag-server = "metalmind_vault_rag.server:main"
 metalmind-vault-rag-watcher = "metalmind_vault_rag.watcher:main"
 metalmind-vault-rag-indexer = "metalmind_vault_rag.indexer:main"
 metalmind-vault-rag-doctor = "metalmind_vault_rag.doctor:main"
+metalmind-vault-rag-http = "metalmind_vault_rag.http_server:main"
 
 [build-system]
 requires = ["hatchling"]

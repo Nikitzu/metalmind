@@ -20,7 +20,17 @@ metalmind pulse --deep    # or: metalmind doctor --deep — end-to-end runtime c
 - Qdrant collection exists and has points
 - Ollama has `nomic-embed-text` pulled
 - Watcher service is loaded (launchd on macOS, systemd --user on Linux)
+- Recall HTTP fast-path reachable at `127.0.0.1:17317`
 - The metalmind-managed blocks are present in `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md`
+
+## Recall latency
+
+`metalmind tap copper` has two transport paths:
+
+1. **HTTP fast-path** (default, ~170ms median): hits the loopback endpoint co-hosted inside the watcher process — no Python spawn, no MCP handshake. `127.0.0.1:17317` only; nothing leaves your machine.
+2. **Stdio MCP fallback** (~570ms): spawns `metalmind-vault-rag-server` via stdio if the HTTP endpoint is down (watcher not running, port in use, etc).
+
+You never need to pick — the CLI tries HTTP first and falls back automatically. Override the endpoint with `METALMIND_RECALL_HTTP=...` if you want.
 
 Each failing check suggests the exact remediation command.
 

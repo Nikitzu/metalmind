@@ -107,6 +107,31 @@ async function checkOllamaModel(): Promise<DeepCheck> {
   }
 }
 
+async function checkRecallHttp(): Promise<DeepCheck> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1500);
+    const res = await fetch('http://127.0.0.1:17317/health', { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) {
+      return {
+        name: 'recall-http',
+        ok: false,
+        detail: `endpoint up but returned HTTP ${res.status}`,
+        remediation: 'Check watcher logs: `tail ~/Knowledge/.metalmind-stack/watcher.err`.',
+      };
+    }
+    return { name: 'recall-http', ok: true, detail: 'fast-path endpoint reachable (127.0.0.1:17317)' };
+  } catch {
+    return {
+      name: 'recall-http',
+      ok: false,
+      detail: 'fast-path endpoint unreachable — tap copper will fall back to stdio MCP',
+      remediation: 'Watcher not running or port 17317 in use. Check `vault-watcher-status`.',
+    };
+  }
+}
+
 async function checkWatcherService(): Promise<DeepCheck> {
   if (platform() === 'darwin') {
     const res = await runCommand('launchctl', ['list']);
@@ -166,13 +191,14 @@ async function checkClaudeMdSentinel(config: Config): Promise<DeepCheck[]> {
 
 async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   const docker = await checkDockerContainers();
-  const [qdrant, ollama, watcher, ...stamps] = await Promise.all([
+  const [qdrant, ollama, watcher, http, ...stamps] = await Promise.all([
     checkQdrantCollection(),
     checkOllamaModel(),
     checkWatcherService(),
+    checkRecallHttp(),
     ...(await checkClaudeMdSentinel(config)).map((c) => Promise.resolve(c)),
   ]);
-  return [...docker, qdrant!, ollama!, watcher!, ...stamps];
+  return [...docker, qdrant!, ollama!, watcher!, http!, ...stamps];
 }
 
 export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Promise<void> {

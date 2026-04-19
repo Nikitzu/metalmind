@@ -1,4 +1,6 @@
 """Watch the vault and re-embed changed markdown files (incremental upsert).
+Also hosts a loopback HTTP server so `metalmind tap copper` can bypass the
+per-call MCP stdio spawn cost.
 
 Batches burst saves within DEBOUNCE_SECONDS, then upserts only the changed
 files. Never wipes the collection — queries remain answerable during reindex.
@@ -8,6 +10,7 @@ from pathlib import Path
 
 from watchfiles import watch
 
+from . import http_server
 from .core import VAULT
 from .indexer import reindex_paths
 
@@ -20,6 +23,9 @@ def _md_change(path: str) -> bool:
 
 def main() -> None:
     print(f"watching {VAULT}", flush=True)
+    # Fire up the co-hosted HTTP recall endpoint (127.0.0.1 only). If the port
+    # is busy or binding fails, watcher keeps working — CLI falls back to stdio.
+    http_server.serve_forever()
     pending: set[Path] = set()
     last_flush = 0.0
 
