@@ -31,21 +31,48 @@ def _embed_file(path: Path) -> list[PointStruct]:
     ]
 
 
+UPSERT_BATCH = 500
+
+
 def reindex_all() -> int:
-    """Full wipe + rebuild. Used by CLI and first-run priming."""
+    """Stream-rebuild: walk every file, overwrite its chunks in place, upsert
+    in batches. Queries stay answerable throughout — no delete_collection,
+    no memory cliff. Use reindex_wipe() after a schema/dim change."""
+    c = qdrant()
+    ensure_collection()
+
+    files = files_to_index()
+    total = 0
+    batch: list[PointStruct] = []
+    for f in files:
+        rel = str(f.relative_to(VAULT))
+        file_filter = Filter(
+            must=[FieldCondition(key="file", match=MatchValue(value=rel))]
+        )
+        c.delete(COLLECTION, points_selector=file_filter)
+        points = _embed_file(f)
+        if not points:
+            continue
+        batch.extend(points)
+        if len(batch) >= UPSERT_BATCH:
+            c.upsert(COLLECTION, points=batch)
+            total += len(batch)
+            batch = []
+    if batch:
+        c.upsert(COLLECTION, points=batch)
+        total += len(batch)
+
+    print(f"Indexed {total} chunks from {len(files)} files.", flush=True)
+    return total
+
+
+def reindex_wipe() -> int:
+    """Drop + rebuild. For schema/dim changes or a corrupt collection."""
     c = qdrant()
     if c.collection_exists(COLLECTION):
         c.delete_collection(COLLECTION)
     ensure_collection()
-
-    files = files_to_index()
-    points: list[PointStruct] = []
-    for f in files:
-        points.extend(_embed_file(f))
-    if points:
-        c.upsert(COLLECTION, points=points)
-    print(f"Indexed {len(points)} chunks from {len(files)} files.", flush=True)
-    return len(points)
+    return reindex_all()
 
 
 def reindex_paths(paths: list[Path]) -> int:
@@ -91,10 +118,14 @@ def main() -> None:
             sys.exit(2)
         reindex_paths(paths)
         return
+    if args and args[0] == "--wipe":
+        reindex_wipe()
+        return
     if args and args[0] in {"-h", "--help"}:
         print(
-            "usage: metalmind-vault-rag-indexer                 # full wipe + rebuild\n"
-            "       metalmind-vault-rag-indexer --paths FILE... # incremental upsert",
+            "usage: metalmind-vault-rag-indexer                 # stream-rebuild (no query gap)\n"
+            "       metalmind-vault-rag-indexer --paths FILE... # incremental upsert\n"
+            "       metalmind-vault-rag-indexer --wipe          # drop collection + rebuild",
             flush=True,
         )
         return

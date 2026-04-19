@@ -36,6 +36,7 @@ program
   .option('--no-teams', 'Disable agent teams')
   .option('--memory-routing <mode>', '"vault-only" or "both"')
   .option('--skip-docker', 'Skip Docker stack setup (useful when stack is already running)')
+  .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
   .action((cmdOpts) => init(cmdOpts));
 program
   .command('doctor')
@@ -90,7 +91,10 @@ function attachTapFlags<T extends Command>(cmd: T): T {
     .option('--expand', 'expand_search: hits + linked context in one call')
     .option('-k, --k <n>', 'Limit results to top N', (v) => Number.parseInt(v, 10))
     .option('--json', 'Emit structured JSON (tier, query, text, raw)')
-    .option('--verbose', 'Include metadata line (overrides config.verbose)') as T;
+    .option('--verbose', 'Include metadata line (overrides config.verbose)')
+    .option('--list-recent <n>', 'List the N most-recently-modified notes (no query needed)', (v) =>
+      Number.parseInt(v, 10),
+    ) as T;
 }
 
 type TapCliOpts = {
@@ -99,6 +103,7 @@ type TapCliOpts = {
   k?: number;
   json?: boolean;
   verbose?: boolean;
+  listRecent?: number;
 };
 
 function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
@@ -108,6 +113,7 @@ function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
     k: cmdOpts.k,
     json: cmdOpts.json,
     verbose: cmdOpts.verbose,
+    listRecent: cmdOpts.listRecent,
   };
 }
 
@@ -116,13 +122,13 @@ const tapCmd = program
   .description('Feruchemy — withdraw state. Currently: `tap copper <query>` → vault.');
 attachTapFlags(
   tapCmd
-    .command('copper <query>')
+    .command('copper [query]')
     .description('Recall notes from your coppermind (the Obsidian vault)'),
-).action((query: string, cmdOpts: TapCliOpts) => tap(query, normalizeTapOpts(cmdOpts)));
+).action((query: string | undefined, cmdOpts: TapCliOpts) => tap(query, normalizeTapOpts(cmdOpts)));
 
 attachTapFlags(
-  program.command('recall <query>').description('Classic alias: recall notes from the vault'),
-).action((query: string, cmdOpts: TapCliOpts) => tap(query, normalizeTapOpts(cmdOpts)));
+  program.command('recall [query]').description('Classic alias: recall notes from the vault'),
+).action((query: string | undefined, cmdOpts: TapCliOpts) => tap(query, normalizeTapOpts(cmdOpts)));
 
 const burnCmd = program
   .command('burn')

@@ -58,10 +58,10 @@ export async function burnZinc(bug: string): Promise<void> {
   }
   const res = await runCommand('claude', ['-p', `/team-debug\n\nBug: ${bug}`], {
     timeoutMs: 0,
+    inheritStdio: true,
   });
-  if (res.stdout) process.stdout.write(`${res.stdout}\n`);
   if (!res.ok) {
-    log.error(`claude exited ${res.exitCode}: ${res.stderr}`);
+    log.error(`claude exited ${res.exitCode ?? 'unknown'}`);
     process.exitCode = res.exitCode ?? 1;
   }
 }

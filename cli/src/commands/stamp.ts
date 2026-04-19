@@ -2,8 +2,8 @@ import { intro, log, outro } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import { installAliases } from '../install/aliases.js';
 import { installWatcher } from '../install/watcher.js';
-import { applyMemoryRouting } from '../install/settings.js';
-import { copyClaudeTemplates, stampClaudeMd } from '../install/templates.js';
+import { applyMemoryRouting, applyMetalmindSessionStartHook } from '../install/settings.js';
+import { copyClaudeHooks, copyClaudeTemplates, stampClaudeMd } from '../install/templates.js';
 import { resolveUvBinPath, resolveWatcherBinPath } from '../install/vault-rag.js';
 import { setupVault } from '../install/vault.js';
 
@@ -43,6 +43,12 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     disableNative: config.memoryRouting === 'vault-only',
   });
   log.info(mem.changed ? '  settings.json env updated' : '  settings.json already correct');
+
+  log.step('SessionStart hook');
+  const hookScript = await copyClaudeHooks({ flavor: config.flavor });
+  const hookReg = await applyMetalmindSessionStartHook({ hookCommand: hookScript.hookCommand });
+  log.info(`  script: ${hookScript.action}`);
+  log.info(hookReg.changed ? '  settings.json: registered' : '  settings.json: already registered');
 
   if (!opts.skipWatcher) {
     log.step('Watcher unit file');

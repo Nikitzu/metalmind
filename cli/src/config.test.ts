@@ -39,7 +39,7 @@ describe('config', () => {
       graphifyCmd: 'graphify',
       outputStyle: { installed: 'marsh', priorValue: null },
       embeddings: { provider: 'local', baseURL: null },
-      recall: { defaultTier: 'fast' },
+      recall: { defaultTier: 'fast', httpEndpoint: null },
       verbose: false,
       mcp: { registered: ['vault-rag'] },
       hooks: { claudeCode: true },

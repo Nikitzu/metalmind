@@ -15,6 +15,44 @@ def file_index() -> dict[str, Path]:
     return {p.stem: p for p in files_to_index()}
 
 
+_BACKLINK_CACHE: dict[str, list[str]] | None = None
+_BACKLINK_KEY: tuple[int, float] | None = None
+
+
+def _backlink_index() -> dict[str, list[str]]:
+    """Process-lifetime backlink map: stem → [stems that link to it].
+    Rebuilt when file count or max mtime changes; O(1) on cache hit.
+    The watcher process reuses this across every recall; MCP one-shots pay
+    the same one-time walk cost as before."""
+    global _BACKLINK_CACHE, _BACKLINK_KEY
+    index = file_index()
+    max_mtime = 0.0
+    for p in index.values():
+        try:
+            m = p.stat().st_mtime
+        except OSError:
+            continue
+        if m > max_mtime:
+            max_mtime = m
+    key = (len(index), max_mtime)
+    if _BACKLINK_CACHE is not None and _BACKLINK_KEY == key:
+        return _BACKLINK_CACHE
+
+    backlinks: dict[str, list[str]] = {}
+    for stem, p in index.items():
+        try:
+            text = p.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        for linked_stem in parse_links(text):
+            if linked_stem in index and linked_stem != stem:
+                backlinks.setdefault(linked_stem, []).append(stem)
+
+    _BACKLINK_CACHE = backlinks
+    _BACKLINK_KEY = key
+    return backlinks
+
+
 def search_vault(query: str, k: int = 5) -> list[dict]:
     """Semantic search over the vault. Returns list of {file, heading, score, text}."""
     k = max(1, min(k, 20))
@@ -57,12 +95,12 @@ def related_notes(file: str) -> dict:
     missing_forward = [s for s in forward_stems if s not in index]
 
     target_stem = path.stem
-    backlinks = []
-    for stem, p in index.items():
-        if stem == target_stem:
-            continue
-        if target_stem in parse_links(p.read_text(encoding="utf-8", errors="ignore")):
-            backlinks.append({"stem": stem, "path": str(p.relative_to(VAULT))})
+    backlink_map = _backlink_index()
+    backlinks = [
+        {"stem": s, "path": str(index[s].relative_to(VAULT))}
+        for s in backlink_map.get(target_stem, [])
+        if s in index
+    ]
 
     return {
         "file": str(path.relative_to(VAULT)),

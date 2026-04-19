@@ -1,6 +1,7 @@
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 
 export const VAULT_INBOX_SUBDIR = 'Inbox';
 
@@ -17,6 +18,42 @@ export interface SaveToVaultResult {
   path: string;
   filename: string;
   bytesWritten: number;
+  /** True when an existing Inbox note with identical body content was found;
+   *  we return its path instead of creating a duplicate. */
+  deduped: boolean;
+}
+
+function normalizeForHash(content: string): string {
+  return content.trim();
+}
+
+function contentHash(content: string): string {
+  return createHash('sha1').update(normalizeForHash(content)).digest('hex');
+}
+
+function stripFrontmatter(raw: string): string {
+  if (!raw.startsWith('---\n')) return raw;
+  const end = raw.indexOf('\n---\n', 4);
+  if (end < 0) return raw;
+  return raw.slice(end + 5);
+}
+
+function stripLeadingHeading(body: string): string {
+  return body.replace(/^#\s+.*\n/, '');
+}
+
+async function findExistingByHash(inbox: string, hash: string): Promise<string | null> {
+  if (!existsSync(inbox)) return null;
+  const entries = await readdir(inbox, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+    const existing = await readFile(join(inbox, entry.name), 'utf8');
+    const body = stripLeadingHeading(stripFrontmatter(existing)).trim();
+    if (contentHash(body) === hash) {
+      return join(inbox, entry.name);
+    }
+  }
+  return null;
 }
 
 function slugify(input: string): string {
@@ -69,8 +106,19 @@ export async function saveToVault(opts: SaveToVaultOptions): Promise<SaveToVault
   if (!existsSync(inbox)) {
     await mkdir(inbox, { recursive: true });
   }
-  const destPath = join(inbox, filename);
 
+  const hash = contentHash(opts.content);
+  const existing = await findExistingByHash(inbox, hash);
+  if (existing) {
+    return {
+      path: existing,
+      filename: basename(existing),
+      bytesWritten: 0,
+      deduped: true,
+    };
+  }
+
+  const destPath = join(inbox, filename);
   const frontmatter = buildFrontmatter({
     title,
     tags: opts.tags ?? ['inbox'],
@@ -84,5 +132,6 @@ export async function saveToVault(opts: SaveToVaultOptions): Promise<SaveToVault
     path: destPath,
     filename,
     bytesWritten: Buffer.byteLength(body, 'utf8'),
+    deduped: false,
   };
 }

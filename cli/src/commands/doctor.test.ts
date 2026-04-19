@@ -160,7 +160,7 @@ describe('doctor deep checks', () => {
         graphifyCmd: 'graphify',
         outputStyle: { installed: null, priorValue: null },
         embeddings: { provider: 'local', baseURL: null },
-        recall: { defaultTier: 'fast' },
+        recall: { defaultTier: 'fast', httpEndpoint: null },
         verbose: false,
         mcp: { registered: [] },
         hooks: { claudeCode: false },

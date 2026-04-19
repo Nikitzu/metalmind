@@ -7,6 +7,10 @@ export interface RecallOptions {
   query: string;
   tier: RecallTier;
   k?: number;
+  /** When true, log the HTTP-path failure to stderr before falling back. */
+  verbose?: boolean;
+  /** Override the co-hosted HTTP recall endpoint. Defaults to env or config. */
+  httpEndpoint?: string | null;
 }
 
 export interface RecallResult {
@@ -17,8 +21,15 @@ export interface RecallResult {
   transport: 'http' | 'stdio';
 }
 
-const HTTP_ENDPOINT = process.env.METALMIND_RECALL_HTTP ?? 'http://127.0.0.1:17317';
-const HTTP_TIMEOUT_MS = 2_000;
+const DEFAULT_HTTP_ENDPOINT = 'http://127.0.0.1:17317';
+// Ollama cold-start + embed of the query can exceed 2s on the first call.
+// 6s covers a cold local host without starving the stdio fallback on a real
+// outage (we still fall through after the timeout).
+const HTTP_TIMEOUT_MS = 6_000;
+
+function resolveEndpoint(override?: string | null): string {
+  return override || process.env.METALMIND_RECALL_HTTP || DEFAULT_HTTP_ENDPOINT;
+}
 
 function vaultRagSpawn(vaultPath: string): {
   command: string;
@@ -32,11 +43,11 @@ function vaultRagSpawn(vaultPath: string): {
   };
 }
 
-async function httpPost(path: string, body: unknown): Promise<unknown> {
+async function httpPost(endpoint: string, path: string, body: unknown): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), HTTP_TIMEOUT_MS);
   try {
-    const res = await fetch(`${HTTP_ENDPOINT}${path}`, {
+    const res = await fetch(`${endpoint}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -58,9 +69,13 @@ function formatHits(hits: Array<Record<string, unknown>>): string {
 }
 
 async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
+  const endpoint = resolveEndpoint(opts.httpEndpoint);
   try {
     if (opts.tier === 'expand') {
-      const body = (await httpPost('/expand', { query: opts.query, k: opts.k ?? 5 })) as {
+      const body = (await httpPost(endpoint, '/expand', {
+        query: opts.query,
+        k: opts.k ?? 5,
+      })) as {
         hits: Array<Record<string, unknown>>;
         expansions: unknown[];
       };
@@ -68,9 +83,10 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
       return { tool: 'http:expand', text, raw: rawFromText(text), transport: 'http' };
     }
 
-    const hits = (await httpPost('/search', { query: opts.query, k: opts.k ?? 5 })) as {
-      hits: Array<Record<string, unknown>>;
-    };
+    const hits = (await httpPost(endpoint, '/search', {
+      query: opts.query,
+      k: opts.k ?? 5,
+    })) as { hits: Array<Record<string, unknown>> };
     if (opts.tier === 'fast') {
       const text = formatHits(hits.hits);
       return { tool: 'http:search', text, raw: rawFromText(text), transport: 'http' };
@@ -82,10 +98,16 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
       const text = formatHits(hits.hits);
       return { tool: 'http:search', text, raw: rawFromText(text), transport: 'http' };
     }
-    const related = await httpPost('/related', { file: topFile });
+    const related = await httpPost(endpoint, '/related', { file: topFile });
     const text = `${formatHits(hits.hits)}\n---related to ${topFile}---\n${JSON.stringify(related, null, 2)}`;
     return { tool: 'http:search+related', text, raw: rawFromText(text), transport: 'http' };
-  } catch {
+  } catch (err) {
+    if (opts.verbose) {
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(
+        `recall: HTTP path ${endpoint} failed (${message}); falling back to stdio MCP\n`,
+      );
+    }
     return null;
   }
 }

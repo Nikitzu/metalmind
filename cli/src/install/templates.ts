@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { appendFile, copyFile, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, chmod, copyFile, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { runCommand } from '../util/exec.js';
@@ -49,6 +49,20 @@ export interface AppendGlobalGitignoreResult {
   added: string[];
   existing: string[];
 }
+
+export interface CopyClaudeHooksOptions {
+  templatesDir?: string;
+  hooksDir?: string;
+  flavor: 'scadrial' | 'classic';
+}
+
+export interface CopyClaudeHooksResult {
+  hookScriptPath: string;
+  hookCommand: string;
+  action: 'created' | 'updated' | 'unchanged';
+}
+
+export const METALMIND_HOOK_FILENAME = 'metalmind-session-start.sh';
 
 type Renderer = (content: string) => string;
 
@@ -144,15 +158,42 @@ export async function stampClaudeMd(opts: StampClaudeMdOptions): Promise<StampCl
   return { path: target, blockAction: action, starterWritten };
 }
 
+export async function copyClaudeHooks(
+  opts: CopyClaudeHooksOptions,
+): Promise<CopyClaudeHooksResult> {
+  const templatesDir = opts.templatesDir ?? getTemplatesDir();
+  const hooksDir = opts.hooksDir ?? join(homedir(), '.claude', 'hooks');
+  await mkdir(hooksDir, { recursive: true });
+
+  const hookScriptPath = join(hooksDir, METALMIND_HOOK_FILENAME);
+  const srcPath = join(templatesDir, 'claude', 'hooks', 'session-start.sh.template');
+  const raw = await readFile(srcPath, 'utf8');
+  const rendered = raw.replace(/\{\{RECALL_CMD\}\}/g, recallCommand(opts.flavor));
+
+  let action: CopyClaudeHooksResult['action'] = 'created';
+  if (existsSync(hookScriptPath)) {
+    const existing = await readFile(hookScriptPath, 'utf8');
+    action = existing === rendered ? 'unchanged' : 'updated';
+  }
+  if (action !== 'unchanged') {
+    await writeFile(hookScriptPath, rendered, 'utf8');
+    await chmod(hookScriptPath, 0o755);
+  }
+
+  return { hookScriptPath, hookCommand: `bash ${hookScriptPath}`, action };
+}
+
 export async function appendGlobalGitignore(
   opts: AppendGlobalGitignoreOptions = {},
 ): Promise<AppendGlobalGitignoreResult> {
   const patterns = opts.patterns ?? DEFAULT_GITIGNORE_PATTERNS;
   let path = opts.gitignorePath;
 
+  let existingExcludes = '';
   if (!path && !opts.skipGitConfig) {
     const res = await runCommand('git', ['config', '--global', '--get', 'core.excludesfile']);
-    path = res.ok && res.stdout.trim() ? res.stdout.trim() : DEFAULT_GITIGNORE_GLOBAL;
+    existingExcludes = res.ok ? res.stdout.trim() : '';
+    path = existingExcludes || DEFAULT_GITIGNORE_GLOBAL;
   }
   const finalPath = path ?? DEFAULT_GITIGNORE_GLOBAL;
 
@@ -160,7 +201,10 @@ export async function appendGlobalGitignore(
     await writeFile(finalPath, '', 'utf8');
   }
 
-  if (!opts.skipGitConfig) {
+  // Only touch git config when it's missing or pointing somewhere else.
+  // The user rule "NEVER update the git config" means: don't overwrite the
+  // user's choice. Setting an unset value is fine; overwriting is not.
+  if (!opts.skipGitConfig && existingExcludes !== finalPath) {
     await runCommand('git', ['config', '--global', 'core.excludesfile', finalPath]);
   }
 

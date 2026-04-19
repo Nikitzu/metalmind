@@ -1,17 +1,16 @@
-## Memory — metalmind
+## Memory — metalmind (recall BEFORE you think)
 
-Vault at `{{VAULT_PATH}}` — personal knowledge base, auto-indexed into a local Qdrant via the metalmind watcher.
+Vault at `{{VAULT_PATH}}` — auto-indexed into local Qdrant; recall goes through the `metalmind` CLI (no MCP tools registered, zero token cost).
 
-**Recall** — all vault lookup goes through the `metalmind` CLI (Bash). No MCP tools are registered for recall — that keeps session-start context clean.
+**Recall FIRST — before any non-trivial task.** The #1 failure mode is re-deriving what's already in the vault. Run `Bash: {{RECALL_CMD}} "<query>"` before:
 
-1. `Bash: {{RECALL_CMD}} "<query>"` — semantic search, default for any conceptual vault question
-2. `Bash: {{RECALL_CMD}} "<query>" --deep` — hits + related notes in one call
-3. `Bash: {{RECALL_CMD}} "<query>" --expand` — hits + linked context graph
-4. `Read` — only for exact user-given paths
-5. `Grep` — only for exact string matches
+- Answering any architecture, design, or debugging question
+- Starting a feature, refactor, or migration
+- Writing a plan document
+- Running `/save` (recall first → surfaces edit-existing candidates, prevents duplicate notes)
 
-**Save** — use the `/save` skill. Propose note + path before writing; never save silently. Write only to `Inbox/`, `Daily/`, or a user-named note. Save decisions, not code.
+Default is fast semantic search. Add `--deep` for hits + related notes in one call; `--expand` for the full linked-context graph. `Read` / `Grep` are for exact paths and exact string matches only.
 
-**Folders**: `Work/` · `Personal/` · `Learnings/` · `Daily/` · `Inbox/` · `Archive/` · `Memory/` · MOCs at `<Folder>/MOCs/<topic>.md`.
+**Save decisions, not code.** Use the `/save` skill. Propose path + content before writing; never save silently. Folders: `Work/` · `Personal/` · `Learnings/` · `Daily/` · `Inbox/` · `Archive/` · `Memory/`. Plans live at `~/Documents/plans/<project>/YYYY-MM-DD-name.md` and surface through `{{RECALL_CMD}}` via the `~/Knowledge/Plans/` symlink.
 
-**Plans**: `~/Documents/plans/<project>/YYYY-MM-DD-name.md`. Symlinked into the vault as `~/Knowledge/Plans/` so `{{RECALL_CMD}}` surfaces plans alongside notes. Canonical path stays `~/Documents/plans/`.
+**When NOT to recall**: one-off syntax lookups (training knowledge is fine) and transient state (the git log already records it).

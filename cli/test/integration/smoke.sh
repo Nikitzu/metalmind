@@ -48,10 +48,10 @@ assert_contains() {
 
 section() { printf '\n=== %s ===\n' "$1"; }
 
-section "1. init --yes --skip-docker --no-serena --no-graphify"
+section "1. init --yes --skip-docker --skip-watcher --no-serena --no-graphify"
 "$METALMIND_BIN" init --yes \
     --vault-path "$TEST_HOME/Knowledge" \
-    --skip-docker --no-serena --no-graphify --no-teams \
+    --skip-docker --skip-watcher --no-serena --no-graphify --no-teams \
     --flavor classic --memory-routing vault-only \
     > "$TEST_HOME/init.log" 2>&1 || {
         echo "init failed; log:" && cat "$TEST_HOME/init.log" && exit 1

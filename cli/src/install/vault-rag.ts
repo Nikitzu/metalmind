@@ -21,8 +21,14 @@ export interface InstallVaultRagResult {
 }
 
 async function isVaultRagInstalled(): Promise<boolean> {
-  const res = await runCommand(VAULT_RAG_SERVER_BIN, ['--help']);
-  return res.ok || /usage/i.test(res.stderr) || /usage/i.test(res.stdout);
+  // `uv tool list` is non-blocking and authoritative — asking the server binary
+  // for --help used to block on stdin (FastMCP ignores argv and starts the
+  // stdio loop), racing the 5s default timeout every init.
+  const res = await runCommand('uv', ['tool', 'list'], { timeoutMs: 10_000 });
+  if (!res.ok) return false;
+  return res.stdout
+    .split('\n')
+    .some((line) => line.trim().startsWith(VAULT_RAG_PACKAGE));
 }
 
 export async function installVaultRag(

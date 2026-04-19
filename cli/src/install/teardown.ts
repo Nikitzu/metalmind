@@ -2,6 +2,8 @@ import { existsSync } from 'node:fs';
 import { rm, unlink } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { METALMIND_HOOK_FILENAME } from './templates.js';
+import { clearMetalmindSessionStartHook } from './settings.js';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
 import { removeSentinelBlock, type SentinelRemoveAction } from '../util/sentinel.js';
 import { uninstallAliases } from './aliases.js';
@@ -41,6 +43,7 @@ export interface TeardownResult {
   configRemoved: boolean;
   vaultRagUninstalled: boolean;
   memoryRoutingCleared: boolean;
+  sessionStartHook: { registrationCleared: boolean; scriptRemoved: boolean };
   claudeMdBlocks: { global: SentinelRemoveAction; vault: SentinelRemoveAction };
 }
 
@@ -60,6 +63,7 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     configRemoved: false,
     vaultRagUninstalled: false,
     memoryRoutingCleared: false,
+    sessionStartHook: { registrationCleared: false, scriptRemoved: false },
     claudeMdBlocks: { global: 'no-file', vault: 'no-file' },
   };
 
@@ -97,7 +101,17 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     result.vaultRagUninstalled = uninstalled;
   }
 
+  const claudeDir = opts.claudeDir ?? join(homedir(), '.claude');
+
   result.memoryRoutingCleared = await clearMemoryRouting(opts.settingsPath);
+  result.sessionStartHook.registrationCleared = await clearMetalmindSessionStartHook(
+    opts.settingsPath,
+  );
+  const hookScriptPath = join(claudeDir, 'hooks', METALMIND_HOOK_FILENAME);
+  if (existsSync(hookScriptPath)) {
+    await rm(hookScriptPath, { force: true });
+    result.sessionStartHook.scriptRemoved = true;
+  }
 
   const mcp = await unregisterMcpServers({
     servers: ['vault-rag', 'serena'],
@@ -120,7 +134,6 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     result.outputStyle = style;
   }
 
-  const claudeDir = opts.claudeDir ?? join(homedir(), '.claude');
   const globalClaudeMd = join(claudeDir, 'CLAUDE.md');
   const vaultClaudeMd = config?.vaultPath ? join(config.vaultPath, 'CLAUDE.md') : null;
 

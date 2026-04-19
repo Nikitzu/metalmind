@@ -18,7 +18,7 @@ describe('route parsers', () => {
     expect(routes[1]).toMatchObject({ method: 'POST', path: '/trips/:id', kind: 'handler' });
   });
 
-  it('parseJs finds fetch and axios callers (literal string URLs)', () => {
+  it('parseJs finds fetch and axios callers; fetch defaults to GET', () => {
     const source = `
       await fetch('/api/health');
       axios.post('/trips', payload);
@@ -26,8 +26,22 @@ describe('route parsers', () => {
     `;
     const routes = parseJs(source, 'client.ts', '/r');
     expect(routes).toHaveLength(2);
-    expect(routes.find((r) => r.kind === 'caller' && r.method === 'ANY')?.path).toBe('/api/health');
-    expect(routes.find((r) => r.kind === 'caller' && r.method === 'POST')?.path).toBe('/trips');
+    const fetchRoute = routes.find((r) => r.kind === 'caller' && r.path === '/api/health');
+    expect(fetchRoute?.method).toBe('GET');
+    const axiosRoute = routes.find((r) => r.kind === 'caller' && r.path === '/trips');
+    expect(axiosRoute?.method).toBe('POST');
+  });
+
+  it('parseJs captures explicit fetch method from init object', () => {
+    const source = `
+      await fetch('/api/users', { method: 'POST', body: payload });
+      fetch('/api/x', { method: 'DELETE' });
+    `;
+    const routes = parseJs(source, 'client.ts', '/r');
+    const post = routes.find((r) => r.path === '/api/users');
+    expect(post?.method).toBe('POST');
+    const del = routes.find((r) => r.path === '/api/x');
+    expect(del?.method).toBe('DELETE');
   });
 
   it('parsePy finds FastAPI decorators', () => {

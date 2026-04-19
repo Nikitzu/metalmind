@@ -220,3 +220,56 @@ export async function loadOrBuildMerged(
 export function defaultCacheDir(): string {
   return join(homedir(), '.metalmind', 'forge');
 }
+
+export interface CrossRepoHighlight {
+  source: string;
+  target: string;
+  confidence: 'INFERRED_NAME' | 'INFERRED_ROUTE';
+  label: string;
+  method?: string;
+  path?: string;
+}
+
+/** Pull every INFERRED_NAME / INFERRED_ROUTE edge in a merged graph whose
+ *  source, target, label or route matches the user's query (case-insensitive
+ *  substring). Answers "given this concept/symbol, where does it surface in
+ *  OTHER repos?" — the whole point of a forge. */
+export function crossRepoHighlights(
+  merged: MergedForgeGraph,
+  query: string,
+): CrossRepoHighlight[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return [];
+  const nodesById = new Map(merged.nodes.map((n) => [n.id, n]));
+  const out: CrossRepoHighlight[] = [];
+  for (const e of merged.edges) {
+    if (e.confidence !== 'INFERRED_NAME' && e.confidence !== 'INFERRED_ROUTE') continue;
+    const src = nodesById.get(e.source);
+    const tgt = nodesById.get(e.target);
+    const haystack = [
+      src?.label ?? e.source,
+      tgt?.label ?? e.target,
+      String((e as Record<string, unknown>).label ?? ''),
+      String((e as Record<string, unknown>).path ?? ''),
+    ]
+      .join(' ')
+      .toLowerCase();
+    if (!haystack.includes(needle)) continue;
+    out.push({
+      source: e.source,
+      target: e.target,
+      confidence: e.confidence as 'INFERRED_NAME' | 'INFERRED_ROUTE',
+      label: String((e as Record<string, unknown>).label ?? ''),
+      method: (e as Record<string, unknown>).method as string | undefined,
+      path: (e as Record<string, unknown>).path as string | undefined,
+    });
+  }
+  return out;
+}
+
+export function formatCrossRepoHighlight(h: CrossRepoHighlight): string {
+  if (h.confidence === 'INFERRED_ROUTE') {
+    return `  ${h.source}  —[${h.method ?? 'ANY'} ${h.path ?? ''}]→  ${h.target}`;
+  }
+  return `  ${h.source}  —[name: ${h.label}]→  ${h.target}`;
+}

@@ -39,6 +39,12 @@ describe('templates', () => {
       '## Memory\n\nvault at {{VAULT_PATH}}\nrecall via {{RECALL_CMD}}\n',
       'utf8',
     );
+    await mkdir(join(claudeSrc, 'hooks'), { recursive: true });
+    await writeFile(
+      join(claudeSrc, 'hooks', 'session-start.sh.template'),
+      '#!/usr/bin/env bash\n# recall via {{RECALL_CMD}}\n',
+      'utf8',
+    );
     runCommand.mockReset();
     runCommand.mockResolvedValue({ stdout: '', stderr: '', ok: true, exitCode: 0 });
   });
@@ -212,6 +218,50 @@ describe('templates', () => {
 
       const contents = await readFile(gitignorePath, 'utf8');
       expect(contents).toBe('existing-pattern\n.claude/\n.serena/\nCLAUDE.md\nCLAUDE.local.md\n');
+    });
+  });
+
+  describe('copyClaudeHooks', () => {
+    it('renders the SessionStart hook with the flavor-appropriate recall command', async () => {
+      const hooksDir = join(claudeDir, 'hooks');
+      const { copyClaudeHooks } = await import('./templates.js');
+      const result = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
+
+      expect(result.action).toBe('created');
+      expect(result.hookScriptPath).toBe(join(hooksDir, 'metalmind-session-start.sh'));
+      expect(result.hookCommand).toBe(`bash ${result.hookScriptPath}`);
+      const body = await readFile(result.hookScriptPath, 'utf8');
+      expect(body).toContain('recall via metalmind tap copper');
+      expect(body).not.toContain('{{RECALL_CMD}}');
+    });
+
+    it('uses the classic recall verb when flavor=classic', async () => {
+      const hooksDir = join(claudeDir, 'hooks');
+      const { copyClaudeHooks } = await import('./templates.js');
+      const result = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'classic' });
+
+      const body = await readFile(result.hookScriptPath, 'utf8');
+      expect(body).toContain('recall via metalmind recall');
+    });
+
+    it('is idempotent: re-run with same content returns unchanged', async () => {
+      const hooksDir = join(claudeDir, 'hooks');
+      const { copyClaudeHooks } = await import('./templates.js');
+      await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
+      const second = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
+
+      expect(second.action).toBe('unchanged');
+    });
+
+    it('overwrites when flavor switches', async () => {
+      const hooksDir = join(claudeDir, 'hooks');
+      const { copyClaudeHooks } = await import('./templates.js');
+      await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
+      const second = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'classic' });
+
+      expect(second.action).toBe('updated');
+      const body = await readFile(second.hookScriptPath, 'utf8');
+      expect(body).toContain('metalmind recall');
     });
   });
 });

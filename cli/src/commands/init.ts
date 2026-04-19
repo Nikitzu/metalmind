@@ -13,6 +13,7 @@ export interface InitCliOptions {
   noTeams?: boolean;
   memoryRouting?: string;
   skipDocker?: boolean;
+  skipWatcher?: boolean;
 }
 
 function isFlavor(v: string): v is 'scadrial' | 'classic' {
@@ -57,6 +58,7 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     if (teams !== undefined) wizardOpts.enableTeams = teams;
 
     if (cliOpts.skipDocker) wizardOpts.skipDocker = true;
+    if (cliOpts.skipWatcher) wizardOpts.skipWatcher = true;
 
     // --yes fills in every remaining prompt with its default.
     if (cliOpts.yes) {

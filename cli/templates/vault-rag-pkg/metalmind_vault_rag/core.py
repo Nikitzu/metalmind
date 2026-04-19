@@ -17,13 +17,36 @@ DIM = int(os.environ.get("VAULT_EMBED_DIM", "768"))
 MAX_CHUNK_CHARS = int(os.environ.get("VAULT_MAX_CHUNK_CHARS", "3500"))
 
 
+EMBED_BATCH = int(os.environ.get("VAULT_EMBED_BATCH", "64"))
+
+
 def embed(texts: list[str]) -> list[list[float]]:
+    """Batch-embed via Ollama's /api/embed. Falls back to legacy /api/embeddings
+    (one call per text) only if the batch endpoint returns 404 — so older
+    Ollama servers still work. 5–10× faster than the old per-text loop."""
+    if not texts:
+        return []
     out: list[list[float]] = []
     with httpx.Client(timeout=120) as c:
-        for t in texts:
-            r = c.post(f"{OLLAMA}/api/embeddings", json={"model": MODEL, "prompt": t})
-            r.raise_for_status()
-            out.append(r.json()["embedding"])
+        i = 0
+        use_legacy = False
+        while i < len(texts):
+            batch = texts[i : i + EMBED_BATCH]
+            if not use_legacy:
+                r = c.post(f"{OLLAMA}/api/embed", json={"model": MODEL, "input": batch})
+                if r.status_code == 404:
+                    use_legacy = True
+                else:
+                    r.raise_for_status()
+                    out.extend(r.json()["embeddings"])
+                    i += len(batch)
+                    continue
+            # Legacy fallback: one-at-a-time.
+            for t in batch:
+                lr = c.post(f"{OLLAMA}/api/embeddings", json={"model": MODEL, "prompt": t})
+                lr.raise_for_status()
+                out.append(lr.json()["embedding"])
+            i += len(batch)
     return out
 
 

@@ -32,6 +32,7 @@ export const ConfigSchema = z.object({
   }),
   recall: z.object({
     defaultTier: RecallTierSchema,
+    httpEndpoint: z.string().nullable().default(null),
   }),
   verbose: z.boolean().default(false),
   mcp: z.object({

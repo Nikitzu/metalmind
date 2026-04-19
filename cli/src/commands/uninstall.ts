@@ -18,6 +18,8 @@ export async function uninstall(): Promise<void> {
   log.info('  - remove MCP entries (vault-rag, serena) from ~/.claude.json');
   log.info('  - remove shell aliases + source line from ~/.zshrc and ~/.bashrc');
   log.info('  - strip the metalmind managed blocks from ~/.claude/CLAUDE.md and <vault>/CLAUDE.md (user content outside the markers is preserved)');
+  log.info('  - remove the SessionStart hook script + its entry in ~/.claude/settings.json (other hooks preserved)');
+  log.info('  - optionally uninstall the metalmind-vault-rag uv tool (prompt)');
   log.info('  - delete ~/.metalmind/config.json');
   log.info('Will NOT touch: your notes, ~/.claude/agents, ~/.claude/rules, custom content in your CLAUDE.md files');
 
@@ -45,6 +47,15 @@ export async function uninstall(): Promise<void> {
     return;
   }
 
+  const removeVaultRag = await confirm({
+    message: 'Also uninstall metalmind-vault-rag (uv tool uninstall — the watcher, indexer, and HTTP recall server)?',
+    initialValue: true,
+  });
+  if (isCancel(removeVaultRag)) {
+    cancel('aborted');
+    return;
+  }
+
   const removeVolumes = await confirm({
     message: 'Remove Docker volumes (Qdrant data, Ollama models ~274 MB)?',
     initialValue: false,
@@ -59,6 +70,7 @@ export async function uninstall(): Promise<void> {
       config: config ?? undefined,
       removeSerena,
       removeGraphify,
+      removeVaultRag,
       removeVolumes,
     });
     if (result.watcher.removedPlist) log.success('launchd watcher unloaded + plist removed');
@@ -66,6 +78,7 @@ export async function uninstall(): Promise<void> {
     if (result.stackRemoved) log.success('<vault>/.metalmind-stack removed');
     if (result.serenaUninstalled) log.success('Serena uninstalled');
     if (result.graphifyUninstalled) log.success('graphify uninstalled');
+    if (result.vaultRagUninstalled) log.success('metalmind-vault-rag uninstalled');
     if (result.mcp.removed.length > 0)
       log.success(`MCP entries removed: ${result.mcp.removed.join(', ')}`);
     if (result.aliases.removedAliases) log.success('Aliases file removed');
@@ -76,6 +89,8 @@ export async function uninstall(): Promise<void> {
       log.success('Stripped metalmind block from ~/.claude/CLAUDE.md');
     if (result.claudeMdBlocks.vault === 'removed' || result.claudeMdBlocks.vault === 'file-empty')
       log.success('Stripped metalmind block from vault CLAUDE.md');
+    if (result.sessionStartHook.registrationCleared) log.success('SessionStart hook entry removed from settings.json');
+    if (result.sessionStartHook.scriptRemoved) log.success('SessionStart hook script removed from ~/.claude/hooks/');
     if (result.configRemoved) log.success('~/.metalmind/config.json deleted');
     outro('Uninstall complete. Your vault notes are untouched.');
   } catch (err) {

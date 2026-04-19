@@ -4,8 +4,10 @@ Python MCP every call. Bound to 127.0.0.1 only — nothing leaves the machine.""
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 from . import search
+from .indexer import reindex_paths
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 17317
@@ -59,6 +61,14 @@ class _Handler(BaseHTTPRequestHandler):
                     self._send_json(400, {"error": "file is required"})
                     return
                 self._send_json(200, search.related_notes(file))
+            elif self.path == "/reindex":
+                raw_paths = body.get("paths") or []
+                if not isinstance(raw_paths, list) or not raw_paths:
+                    self._send_json(400, {"error": "paths must be a non-empty list"})
+                    return
+                paths = [Path(str(p)) for p in raw_paths if p]
+                count = reindex_paths(paths)
+                self._send_json(200, {"ok": True, "upserted": count, "files": len(paths)})
             else:
                 self._send_json(404, {"error": "not found"})
         except Exception as e:  # pragma: no cover - defensive

@@ -7,9 +7,14 @@ import { registerMcpServers } from './mcp.js';
 import { type FlavorChoice, installOutputStyle } from './output-style.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
 import { installSerena } from './serena.js';
-import { applyMemoryRouting } from './settings.js';
+import { applyMemoryRouting, applyMetalmindSessionStartHook } from './settings.js';
 import { setupStack } from './stack.js';
-import { appendGlobalGitignore, copyClaudeTemplates, stampClaudeMd } from './templates.js';
+import {
+  appendGlobalGitignore,
+  copyClaudeHooks,
+  copyClaudeTemplates,
+  stampClaudeMd,
+} from './templates.js';
 import { installVaultRag, resolveUvBinPath, resolveWatcherBinPath } from './vault-rag.js';
 import { promptVaultPath, setupVault } from './vault.js';
 
@@ -20,6 +25,7 @@ export interface RunWizardOptions {
   enableTeams?: boolean;
   flavor?: 'scadrial' | 'classic';
   skipDocker?: boolean;
+  skipWatcher?: boolean;
   memoryRouting?: 'vault-only' | 'both';
 }
 
@@ -175,17 +181,25 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     log.warn('Skipping Docker stack (opts.skipDocker)');
   }
 
-  log.step('Installing watcher service');
-  const watcherBinPath = await resolveWatcherBinPath();
-  const uvBinPath = await resolveUvBinPath();
-  const watcher = await installWatcher({
-    vaultPath: vault.vaultPath,
-    watcherBin: watcherBinPath,
-    uvBin: uvBinPath,
-  });
-  if (watcher.wroteUnit) log.success(`  wrote ${watcher.unitPath}`);
-  if (watcher.started) {
-    log.info(watcher.platform === 'darwin' ? '  launchctl load succeeded' : '  systemctl --user enable --now succeeded');
+  if (opts.skipWatcher) {
+    log.warn('Skipping watcher install (opts.skipWatcher)');
+  } else {
+    log.step('Installing watcher service');
+    const watcherBinPath = await resolveWatcherBinPath();
+    const uvBinPath = await resolveUvBinPath();
+    const watcher = await installWatcher({
+      vaultPath: vault.vaultPath,
+      watcherBin: watcherBinPath,
+      uvBin: uvBinPath,
+    });
+    if (watcher.wroteUnit) log.success(`  wrote ${watcher.unitPath}`);
+    if (watcher.started) {
+      log.info(
+        watcher.platform === 'darwin'
+          ? '  launchctl load succeeded'
+          : '  systemctl --user enable --now succeeded',
+      );
+    }
   }
 
   log.step('Registering MCP servers (serena/teams)');
@@ -207,6 +221,12 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   } else {
     log.info(`  ${mem.settingsPath} already in desired state`);
   }
+
+  log.step('Installing SessionStart hook (so every session knows memory is here)');
+  const hookScript = await copyClaudeHooks({ flavor });
+  const hookReg = await applyMetalmindSessionStartHook({ hookCommand: hookScript.hookCommand });
+  log.success(`  ${hookScript.action} ${hookScript.hookScriptPath}`);
+  log.info(hookReg.changed ? '  registered in settings.json → SessionStart' : '  already registered');
 
   log.step('Copying rules, agents, commands');
   const tpl = await copyClaudeTemplates({ withTeams: enableTeams, flavor });
@@ -241,7 +261,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     graphifyCmd: 'graphify',
     outputStyle: { installed: styleChoice, priorValue: style.priorValue },
     embeddings: { provider: 'local', baseURL: null },
-    recall: { defaultTier: 'fast' },
+    recall: { defaultTier: 'fast', httpEndpoint: null },
     verbose: false,
     mcp: {
       registered: [...(serena ? ['serena'] : []), ...(graphify ? ['graphify'] : [])],

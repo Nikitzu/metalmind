@@ -63,7 +63,11 @@ async function* walk(root: string, exts: Set<string>): AsyncGenerator<string> {
 
 const JS_HANDLER_RE =
   /\b(?:app|router|fastify|server)\.(get|post|put|patch|delete|options|head)\s*\(\s*['"`]([^'"`]+)['"`]/gi;
-const JS_FETCH_RE = /\bfetch\s*\(\s*['"`]([^'"`]+)['"`]/g;
+// Captures url (group 1) and optional explicit method (group 2) from the
+// second-arg init object. Falls back to 'GET' (fetch's default) — not 'ANY' —
+// so the method-equality guard in buildRouteMatchEdges stays meaningful.
+const JS_FETCH_RE =
+  /\bfetch\s*\(\s*['"`]([^'"`]+)['"`](?:\s*,\s*\{[^}]*?\bmethod\s*:\s*['"]([^'"]+)['"][^}]*\})?/g;
 const JS_AXIOS_RE =
   /\b(?:axios|got)\.(get|post|put|patch|delete|head|options)\s*\(\s*['"`]([^'"`]+)['"`]/gi;
 const PY_FASTAPI_RE =
@@ -75,6 +79,26 @@ const PY_REQUESTS_RE =
 function normPath(raw: string): string {
   if (!raw.startsWith('/')) return `/${raw}`;
   return raw;
+}
+
+/** Canonicalize a route path for cross-repo bucketing. Maps every param
+ *  notation to a shared `:param` marker so Express (`:id`), FastAPI (`{id}`),
+ *  Flask (`<int:id>`), and JS template literals (`${id}`) all collide on the
+ *  same key. Also strips query strings and trailing slashes (except root). */
+export function canonicalizePath(raw: string): string {
+  let p = raw.startsWith('/') ? raw : `/${raw}`;
+  const qIdx = p.indexOf('?');
+  if (qIdx >= 0) p = p.slice(0, qIdx);
+  if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+  const parts = p.split('/').map((seg) => {
+    if (!seg) return seg;
+    if (seg.startsWith(':')) return ':param';
+    if (/^\{[^}]+\}$/.test(seg)) return ':param';
+    if (/^<[^>]+>$/.test(seg)) return ':param';
+    if (/\$\{[^}]*\}/.test(seg)) return ':param';
+    return seg;
+  });
+  return parts.join('/');
 }
 
 export function parseJs(
@@ -98,7 +122,8 @@ export function parseJs(
     const raw = match[1] ?? '';
     if (!raw.startsWith('/') && !raw.startsWith('http')) continue;
     if (raw.startsWith('http')) continue;
-    out.push({ method: 'ANY', path: normPath(raw), kind: 'caller', framework, file, repo });
+    const method = (match[2]?.toUpperCase() as HttpMethod | undefined) ?? 'GET';
+    out.push({ method, path: normPath(raw), kind: 'caller', framework, file, repo });
   }
   for (const match of content.matchAll(JS_AXIOS_RE)) {
     const raw = match[2] ?? '';
@@ -178,7 +203,7 @@ export interface RouteEdge {
 export function buildRouteMatchEdges(routes: RouteEntry[]): RouteEdge[] {
   const byKey = new Map<string, RouteEntry[]>();
   for (const r of routes) {
-    const key = `${r.path}`;
+    const key = canonicalizePath(r.path);
     const bucket = byKey.get(key) ?? [];
     bucket.push(r);
     byKey.set(key, bucket);

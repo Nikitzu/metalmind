@@ -1,6 +1,10 @@
 import { confirm, isCancel, log } from '@clack/prompts';
 import { analyzeRepo, findRepoRoot, graphifyQuery, hasGraph } from '../backends/graphify.js';
-import { loadOrBuildMerged } from '../forge/loader.js';
+import {
+  crossRepoHighlights,
+  formatCrossRepoHighlight,
+  loadOrBuildMerged,
+} from '../forge/loader.js';
 import { getForge } from '../forge/store.js';
 
 export type BurnMetal = 'bronze' | 'iron';
@@ -66,6 +70,16 @@ async function burnForge(opts: BurnOptions, forgeName: string): Promise<void> {
     `merged ${merged.nodeCount} nodes, ${merged.edgeCount} edges (` +
       `${merged.nameMatchEdgeCount} name-match, ${merged.routeMatchEdgeCount} route-match)`,
   );
+
+  const highlights = crossRepoHighlights(merged, opts.input);
+  if (highlights.length > 0) {
+    process.stdout.write(
+      `\n=== cross-repo matches (${highlights.length} inferred edge${highlights.length === 1 ? '' : 's'}) ===\n`,
+    );
+    for (const h of highlights) process.stdout.write(`${formatCrossRepoHighlight(h)}\n`);
+  } else {
+    log.info(`  no cross-repo matches for "${opts.input}" in inferred edges`);
+  }
 
   for (const repo of group.repos) {
     try {

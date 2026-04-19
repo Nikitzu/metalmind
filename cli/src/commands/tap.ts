@@ -1,5 +1,6 @@
 import { log } from '@clack/prompts';
 import { type RecallTier, recall } from '../backends/recall.js';
+import { listRecentNotes } from '../backends/vault-browse.js';
 import { readConfig } from '../config.js';
 
 export interface TapOptions {
@@ -8,6 +9,7 @@ export interface TapOptions {
   k?: number;
   json?: boolean;
   verbose?: boolean;
+  listRecent?: number;
 }
 
 function resolveTier(opts: TapOptions, defaultTier: RecallTier): RecallTier {
@@ -17,15 +19,29 @@ function resolveTier(opts: TapOptions, defaultTier: RecallTier): RecallTier {
 }
 
 export async function tap(query: string | undefined, opts: TapOptions = {}): Promise<void> {
-  if (!query?.trim()) {
-    log.error('Usage: metalmind tap copper "<query>"');
+  const config = await readConfig();
+  if (!config) {
+    log.error('No metalmind config. Run `metalmind init` first.');
     process.exitCode = 1;
     return;
   }
 
-  const config = await readConfig();
-  if (!config) {
-    log.error('No metalmind config. Run `metalmind init` first.');
+  if (opts.listRecent !== undefined) {
+    const notes = await listRecentNotes(config.vaultPath, opts.listRecent);
+    if (opts.json) {
+      process.stdout.write(`${JSON.stringify(notes, null, 2)}\n`);
+      return;
+    }
+    for (const n of notes) {
+      const iso = new Date(n.modifiedMs).toISOString().slice(0, 10);
+      process.stdout.write(`\n${iso}  ${n.relPath}\n  ${n.title}\n`);
+      if (n.excerpt) process.stdout.write(`  ${n.excerpt}\n`);
+    }
+    return;
+  }
+
+  if (!query?.trim()) {
+    log.error('Usage: metalmind tap copper "<query>"  |  metalmind tap copper --list-recent N');
     process.exitCode = 1;
     return;
   }
@@ -39,6 +55,8 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       query,
       tier,
       k: opts.k,
+      verbose: showMeta,
+      httpEndpoint: config.recall.httpEndpoint,
     });
     if (opts.json) {
       process.stdout.write(
