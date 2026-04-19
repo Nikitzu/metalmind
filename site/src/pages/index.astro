@@ -43,9 +43,10 @@ const description =
         <div class="hero-eyebrow">Scadrial · Keeper</div>
         <h1 id="hero-title">metalmind</h1>
         <p class="hero-tagline">
-          One CLI for your second brain and your codebase. Obsidian vault with local semantic
-          recall, Serena symbol navigation, graphify code graphs, and a cross-repo forge — every
-          metal verb mapped to a neutral classic alias.
+          Not a wrapper — a connecting tissue. Cross-repo caller↔handler edges. A recall ladder
+          that preserves wikilink structure instead of flattening it. A typed installer that
+          replaces 14 KB of bash. One mental model over every backend — with a neutral alias
+          for every themed verb.
         </p>
 
         <div id="install">
@@ -66,31 +67,82 @@ const description =
 
       <hr class="metal-rule" />
 
+      <section class="container" aria-labelledby="beyond-title">
+        <h2 id="beyond-title">Beyond the glue</h2>
+        <p>
+          metalmind leans on strong open-source engines, but the tissue that connects them is
+          what makes it a tool rather than a README. Four concrete things we built on top.
+        </p>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-title">Cross-repo forge with route-match</div>
+            <div class="feature-body">
+              Name-match edges union the same symbol across repos. A framework-aware HTTP-route
+              matcher (Express / Fastify / Koa / FastAPI / Flask + fetch / axios / got / httpx /
+              requests) links caller→handler <em>across services</em>. Every inferred edge carries
+              provenance (<code>INFERRED_NAME</code> / <code>INFERRED_ROUTE</code>) so Claude can
+              trust-grade what it reads.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Recall ladder, not a search bar</div>
+            <div class="feature-body">
+              <code>tap copper</code> escalates deliberately: semantic-only (fast), then
+              <code>--deep</code> follows backlinks from the top hit, then <code>--expand</code>
+              returns hits with linked context in one call. Recovers the
+              <code>[[wikilink]]</code> graph that raw embeddings flatten away, and lets you pay
+              for depth only when you need it.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Typed, reversible installer</div>
+            <div class="feature-body">
+              Replaces 14&nbsp;KB of overnight bash with a typed pipeline: prereq detection with
+              per-failure remediation, atomic JSON writes that preserve your existing MCP servers,
+              and a full <code>uninstall</code> that restores your prior output-style, unloads
+              launchd, and never touches your notes.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">One mental model, swappable backends</div>
+            <div class="feature-body">
+              Every metal verb routes through a single dispatcher — bronze ↔ graphify,
+              steel ↔ Serena rename, copper ↔ vault-rag. Swap a backend later by changing one
+              row in the map; call sites don't move. Every themed command has a neutral classic
+              alias that always works.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="metal-rule" />
+
       <section class="container" aria-labelledby="what-title">
-        <h2 id="what-title">What it does</h2>
+        <h2 id="what-title">At a glance</h2>
         <div class="features">
           <div class="feature">
             <div class="feature-title">store copper / save</div>
             <div class="feature-body">
-              Drop a decision or insight into your vault. Frontmatter, timestamped slug, Inbox by default.
+              Deposit decisions into your vault — frontmatter, timestamped slug, Inbox by default.
             </div>
           </div>
           <div class="feature">
             <div class="feature-title">tap copper / recall</div>
             <div class="feature-body">
-              Semantic search over your vault — plus --deep backlink traversal and --expand hybrid retrieval.
+              Semantic search with opt-in <code>--deep</code> backlink traversal and
+              <code>--expand</code> hybrid retrieval.
             </div>
           </div>
           <div class="feature">
             <div class="feature-title">burn bronze / graph</div>
             <div class="feature-body">
-              Query a per-repo code graph built by graphify. Auto-indexes on first use.
+              Per-repo code-graph queries. Auto-indexes on first use; cached across sessions.
             </div>
           </div>
           <div class="feature">
             <div class="feature-title">forge / group</div>
             <div class="feature-body">
-              Cross-repo queries — name-match + HTTP-route edges, so caller↔handler relationships light up.
+              Group repos together — the merged graph lights up cross-service call paths.
             </div>
           </div>
         </div>
@@ -132,8 +184,9 @@ const description =
       <section class="container" aria-labelledby="how-title" id="how">
         <h2 id="how-title">How it works</h2>
         <p>
-          One CLI, many backends. metalmind doesn't reimplement any of its engines — it orchestrates
-          and routes.
+          Three engines do the heavy lifting; a fourth layer is metalmind's own. Each has a
+          typed interface behind a metal verb, which means swapping one later (GitNexus for
+          graphify, for example) doesn't touch your muscle memory.
         </p>
         <div class="diagram">
           <div class="diagram-node">
