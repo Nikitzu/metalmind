@@ -8,7 +8,7 @@ export interface PrereqResult {
 }
 
 const MIN_PYTHON_MAJOR = 3;
-const MIN_PYTHON_MINOR = 10;
+const MIN_PYTHON_MINOR = 11;
 
 export async function checkClaudeCode(): Promise<PrereqResult> {
   const { ok, stdout, stderr } = await runCommand('claude', ['--version']);
@@ -43,7 +43,7 @@ export async function checkDocker(): Promise<PrereqResult> {
       };
 }
 
-const PYTHON_CANDIDATES = ['python3', 'python3.13', 'python3.12', 'python3.11', 'python3.10'];
+const PYTHON_CANDIDATES = ['python3', 'python3.13', 'python3.12', 'python3.11'];
 
 function parsePythonVersion(stdout: string): { major: number; minor: number } | null {
   const match = stdout.match(/Python (\d+)\.(\d+)/);
@@ -72,7 +72,7 @@ export async function checkPython(): Promise<PrereqResult> {
     if (!version) continue;
     if (meetsMinimum(version)) {
       return {
-        name: 'Python 3.10+',
+        name: 'Python 3.11+',
         ok: true,
         detail: `${res.stdout} (via \`${cmd}\`)`,
       };
@@ -88,16 +88,16 @@ export async function checkPython(): Promise<PrereqResult> {
 
   if (latestSeen) {
     return {
-      name: 'Python 3.10+',
+      name: 'Python 3.11+',
       ok: false,
       detail: `found ${latestSeen.stdout} via \`${latestSeen.cmd}\` (need ${MIN_PYTHON_MAJOR}.${MIN_PYTHON_MINOR}+)`,
       remediation:
-        'Upgrade Python: `brew install python@3.12` — metalmind also probes python3.13 / python3.12 / python3.11 / python3.10 in case your PATH is pinned to an older python3.',
+        'Upgrade Python: `brew install python@3.12` — metalmind also probes python3.13 / python3.12 / python3.11 in case your PATH is pinned to an older python3.',
     };
   }
 
   return {
-    name: 'Python 3.10+',
+    name: 'Python 3.11+',
     ok: false,
     detail: 'no python3 variant found on PATH',
     remediation: 'Install Python: `brew install python@3.12`',

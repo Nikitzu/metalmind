@@ -3,7 +3,6 @@ import { runCommand } from '../util/exec.js';
 import { getTemplatesDir } from '../util/paths.js';
 
 export const VAULT_RAG_PACKAGE = 'metalmind-vault-rag';
-export const VAULT_RAG_PYTHON = '3.13';
 export const VAULT_RAG_SERVER_BIN = 'metalmind-vault-rag-server';
 export const VAULT_RAG_WATCHER_BIN = 'metalmind-vault-rag-watcher';
 export const VAULT_RAG_INDEXER_BIN = 'metalmind-vault-rag-indexer';
@@ -42,8 +41,6 @@ export async function installVaultRag(
       'tool',
       'install',
       ...(opts.reinstall ? ['--reinstall', '--force'] : []),
-      '-p',
-      VAULT_RAG_PYTHON,
       '--from',
       packageDir,
       VAULT_RAG_PACKAGE,

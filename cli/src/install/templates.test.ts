@@ -70,17 +70,31 @@ describe('templates', () => {
       expect(existsSync(join(claudeDir, 'commands', 'team-debug.md'))).toBe(true);
     });
 
-    it('skips existing files with skipped list', async () => {
+    it('overwrites existing files on re-run (metalmind-owned)', async () => {
       await mkdir(join(claudeDir, 'rules'), { recursive: true });
-      await writeFile(join(claudeDir, 'rules', 'principles.md'), '# user-custom\n', 'utf8');
+      await writeFile(join(claudeDir, 'rules', 'principles.md'), '# stale\n', 'utf8');
 
       const { copyClaudeTemplates } = await import('./templates.js');
       const result = await copyClaudeTemplates({ templatesDir, claudeDir });
 
-      expect(result.skipped).toContain('rules/principles.md');
+      expect(result.copied).toContain('rules/principles.md');
       expect(await readFile(join(claudeDir, 'rules', 'principles.md'), 'utf8')).toBe(
-        '# user-custom\n',
+        '# principles\n',
       );
+    });
+
+    it('renders {{RECALL_CMD}} in save.md per flavor', async () => {
+      // replace the default save.md with one that uses the placeholder
+      await writeFile(
+        join(templatesDir, 'claude', 'commands', 'save.md'),
+        'Run `Bash: {{RECALL_CMD}} "<q>"` first.\n',
+        'utf8',
+      );
+      const { copyClaudeTemplates } = await import('./templates.js');
+      await copyClaudeTemplates({ templatesDir, claudeDir, flavor: 'classic' });
+      const contents = await readFile(join(claudeDir, 'commands', 'save.md'), 'utf8');
+      expect(contents).toContain('metalmind recall');
+      expect(contents).not.toContain('{{RECALL_CMD}}');
     });
   });
 

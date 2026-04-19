@@ -207,8 +207,8 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   }
 
   log.step('Copying rules, agents, commands');
-  const tpl = await copyClaudeTemplates({ withTeams: enableTeams });
-  log.success(`  copied ${tpl.copied.length} files (${tpl.skipped.length} skipped)`);
+  const tpl = await copyClaudeTemplates({ withTeams: enableTeams, flavor });
+  log.success(`  wrote ${tpl.copied.length} files`);
   const claudeMd = await stampClaudeMd({ vaultPath: vault.vaultPath, flavor });
   if (claudeMd.starterWritten) log.info(`  wrote starter ${claudeMd.path}`);
   if (claudeMd.blockAction === 'created') log.info(`  wrote metalmind block → ${claudeMd.path}`);

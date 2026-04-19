@@ -14,11 +14,11 @@ export interface CopyClaudeTemplatesOptions {
   templatesDir?: string;
   claudeDir?: string;
   withTeams?: boolean;
+  flavor?: 'scadrial' | 'classic';
 }
 
 export interface CopyClaudeTemplatesResult {
   copied: string[];
-  skipped: string[];
 }
 
 export interface StampClaudeMdOptions {
@@ -50,26 +50,31 @@ export interface AppendGlobalGitignoreResult {
   existing: string[];
 }
 
-async function copyDirNonDestructive(
+type Renderer = (content: string) => string;
+
+async function copyDir(
   srcDir: string,
   destDir: string,
   filter: (name: string) => boolean,
-): Promise<{ copied: string[]; skipped: string[] }> {
+  render?: (name: string) => Renderer | null,
+): Promise<{ copied: string[] }> {
   await mkdir(destDir, { recursive: true });
   const copied: string[] = [];
-  const skipped: string[] = [];
   const entries = await readdir(srcDir, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isFile() || !filter(entry.name)) continue;
+    const srcPath = join(srcDir, entry.name);
     const destPath = join(destDir, entry.name);
-    if (existsSync(destPath)) {
-      skipped.push(entry.name);
-      continue;
+    const renderer = render?.(entry.name);
+    if (renderer) {
+      const raw = await readFile(srcPath, 'utf8');
+      await writeFile(destPath, renderer(raw), 'utf8');
+    } else {
+      await copyFile(srcPath, destPath);
     }
-    await copyFile(join(srcDir, entry.name), destPath);
     copied.push(entry.name);
   }
-  return { copied, skipped };
+  return { copied };
 }
 
 export async function copyClaudeTemplates(
@@ -78,21 +83,24 @@ export async function copyClaudeTemplates(
   const templatesDir = opts.templatesDir ?? getTemplatesDir();
   const claudeDir = opts.claudeDir ?? DEFAULT_CLAUDE_DIR;
   const srcRoot = join(templatesDir, 'claude');
+  const recall = recallCommand(opts.flavor ?? 'scadrial');
 
-  const rules = await copyDirNonDestructive(
+  const rules = await copyDir(
     join(srcRoot, 'rules'),
     join(claudeDir, 'rules'),
     (name) => name.endsWith('.md'),
   );
-  const agents = await copyDirNonDestructive(
+  const agents = await copyDir(
     join(srcRoot, 'agents'),
     join(claudeDir, 'agents'),
     (name) => name.endsWith('.md'),
   );
-  const commands = await copyDirNonDestructive(
+  const commands = await copyDir(
     join(srcRoot, 'commands'),
     join(claudeDir, 'commands'),
     (name) => name === 'save.md' || (opts.withTeams === true && name.startsWith('team-')),
+    (name) =>
+      name === 'save.md' ? (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall) : null,
   );
 
   return {
@@ -100,11 +108,6 @@ export async function copyClaudeTemplates(
       ...rules.copied.map((n) => `rules/${n}`),
       ...agents.copied.map((n) => `agents/${n}`),
       ...commands.copied.map((n) => `commands/${n}`),
-    ],
-    skipped: [
-      ...rules.skipped.map((n) => `rules/${n}`),
-      ...agents.skipped.map((n) => `agents/${n}`),
-      ...commands.skipped.map((n) => `commands/${n}`),
     ],
   };
 }
