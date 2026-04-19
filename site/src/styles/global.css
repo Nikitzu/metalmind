@@ -201,6 +201,34 @@ pre {
   color: var(--copper);
 }
 
+/* Compact flavor toggle in nav */
+.nav-flavor .flavor-toggle {
+  margin-bottom: 0;
+  padding: 3px;
+}
+.nav-flavor .flavor-toggle label {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.7rem;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 720px) {
+  .nav-inner {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+  }
+  .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.8rem;
+  }
+  .nav-flavor {
+    order: 2;
+  }
+}
+
 /* Hero */
 .hero {
   padding: 7rem 0 5rem;
