@@ -22,7 +22,14 @@ program
   .version('0.0.1');
 
 program.command('init').description('Interactive setup wizard').action(init);
-program.command('doctor').description('Diagnose installation state').action(doctor);
+program
+  .command('doctor')
+  .description('Diagnose installation state (classic alias for `pulse`)')
+  .action(doctor);
+program
+  .command('pulse')
+  .description('Pulse-check the install — prereqs, config, MCP state (Seeker)')
+  .action(doctor);
 program.command('uninstall').description('Reversible teardown').action(uninstall);
 
 function attachStoreFlags<T extends Command>(cmd: T): T {
