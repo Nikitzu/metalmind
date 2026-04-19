@@ -2,8 +2,6 @@
 name: backend-api-engineer
 description: Backend API specialist. Implements HTTP/GraphQL endpoints, resolvers, request/response validation, and server-side business logic. Use for building or modifying API surface area — controllers, routes, middleware, auth handling.
 model: claude-opus-4-6[1m]
-effort: medium
-memory: project
 color: blue
 tools: Read, Grep, Glob, Edit, Write, Bash, WebFetch
 ---

@@ -2,8 +2,6 @@
 name: conventions-reviewer
 description: Code conventions and style review specialist. Audits for adherence to project CLAUDE.md rules, user-level principles (YAGNI, DRY-vs-premature, strict equality, error handling), and repo-specific patterns. Use on any PR to catch style drift.
 model: claude-sonnet-4-6[1m]
-effort: low
-memory: project
 color: yellow
 tools: Read, Grep, Glob, Bash, WebFetch
 ---

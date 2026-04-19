@@ -2,8 +2,6 @@
 name: performance-reviewer
 description: Performance review specialist. Audits for N+1 queries, bundle-size regressions, render-thrash, memory leaks, and slow code paths. Use on PRs touching query layers, list rendering, large data transforms, or anything in a hot path.
 model: claude-sonnet-4-6[1m]
-effort: medium
-memory: user
 color: orange
 tools: Read, Grep, Glob, Bash, WebFetch
 ---

@@ -2,8 +2,6 @@
 name: frontend-web-engineer
 description: Web frontend specialist. Owns React/TypeScript/Vite components, state management, routing, and UI integration with backend APIs. Use for new UI features, component work, state refactors, or fixing frontend bugs.
 model: claude-opus-4-6[1m]
-effort: medium
-memory: project
 color: green
 tools: Read, Grep, Glob, Edit, Write, Bash, WebFetch
 ---

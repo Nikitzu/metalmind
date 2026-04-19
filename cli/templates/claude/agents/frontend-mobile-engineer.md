@@ -2,8 +2,6 @@
 name: frontend-mobile-engineer
 description: Mobile frontend specialist. Owns React Native (and native iOS/Android where applicable) screens, navigation, native modules, and device-specific behaviour. Use for mobile features, platform-specific bugs, permission flows, or native integrations.
 model: claude-opus-4-6[1m]
-effort: medium
-memory: project
 color: pink
 tools: Read, Grep, Glob, Edit, Write, Bash, WebFetch
 ---

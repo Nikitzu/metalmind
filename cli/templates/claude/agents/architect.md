@@ -2,8 +2,6 @@
 name: architect
 description: Design specialist. Produces implementation plans, ADRs, and scaffolding. Use for cross-cutting design decisions, new features requiring multiple layers, migration planning, or when trade-offs need to be weighed before code is written.
 model: claude-opus-4-6[1m]
-effort: high
-memory: project
 color: purple
 tools: Read, Grep, Glob, Bash, WebFetch, Edit, Write
 ---

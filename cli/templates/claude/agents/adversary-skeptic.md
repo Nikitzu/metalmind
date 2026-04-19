@@ -2,7 +2,6 @@
 name: adversary-skeptic
 description: Evidence-demanding, lateral-thinking debugging adversary. Looks in unusual places (environmental, timing, race conditions, caching) before committing to logic-bug explanations. Use in /team-debug teams alongside the base adversary to ensure unusual causes are not overlooked.
 model: claude-opus-4-6[1m]
-effort: high
 color: red
 tools: Read, Grep, Glob, Bash, WebFetch
 ---

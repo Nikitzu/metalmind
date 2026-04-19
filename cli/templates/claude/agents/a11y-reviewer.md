@@ -2,8 +2,6 @@
 name: a11y-reviewer
 description: Accessibility review specialist. Audits frontend code for WCAG compliance, keyboard navigation, screen reader support, semantic HTML, colour contrast, and focus management. Use on any PR touching user-facing UI components.
 model: claude-sonnet-4-6[1m]
-effort: low
-memory: user
 color: pink
 tools: Read, Grep, Glob, Bash, WebFetch
 ---
