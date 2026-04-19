@@ -30,8 +30,13 @@ describe('templates', () => {
     await writeFile(join(claudeSrc, 'commands', 'save.md'), '# save\n', 'utf8');
     await writeFile(join(claudeSrc, 'commands', 'team-debug.md'), '# team-debug\n', 'utf8');
     await writeFile(
-      join(claudeSrc, 'CLAUDE.md.template'),
-      '# global\n\nvault at {{VAULT_PATH}}\nrecall via {{RECALL_CMD}}\n',
+      join(claudeSrc, 'CLAUDE.md.starter.template'),
+      '# starter prefs\n\ngeneric stance section\n',
+      'utf8',
+    );
+    await writeFile(
+      join(claudeSrc, 'CLAUDE.md.block.template'),
+      '## Memory\n\nvault at {{VAULT_PATH}}\nrecall via {{RECALL_CMD}}\n',
       'utf8',
     );
     runCommand.mockReset();
@@ -80,7 +85,7 @@ describe('templates', () => {
   });
 
   describe('stampClaudeMd', () => {
-    it('renders scadrial flavor with tap copper verb', async () => {
+    it('writes starter + metalmind block on fresh install (scadrial)', async () => {
       const { stampClaudeMd } = await import('./templates.js');
       const result = await stampClaudeMd({
         vaultPath: '/Users/me/Knowledge',
@@ -89,31 +94,34 @@ describe('templates', () => {
         claudeDir,
       });
 
-      expect(result.wrote).toBe(true);
+      expect(result.starterWritten).toBe(true);
+      expect(result.blockAction).toBe('inserted');
       const contents = await readFile(result.path, 'utf8');
+      expect(contents).toContain('starter prefs');
       expect(contents).toContain('vault at /Users/me/Knowledge');
       expect(contents).toContain('metalmind tap copper');
+      expect(contents).toContain('<!-- metalmind:managed:begin -->');
+      expect(contents).toContain('<!-- metalmind:managed:end -->');
       expect(contents).not.toContain('{{VAULT_PATH}}');
       expect(contents).not.toContain('{{RECALL_CMD}}');
     });
 
     it('renders classic flavor with recall verb', async () => {
       const { stampClaudeMd } = await import('./templates.js');
-      const result = await stampClaudeMd({
+      await stampClaudeMd({
         vaultPath: '/v',
         flavor: 'classic',
         templatesDir,
         claudeDir,
       });
-
-      const contents = await readFile(result.path, 'utf8');
+      const contents = await readFile(join(claudeDir, 'CLAUDE.md'), 'utf8');
       expect(contents).toContain('metalmind recall');
       expect(contents).not.toContain('tap copper');
     });
 
-    it('preserves existing CLAUDE.md', async () => {
+    it('upserts block into existing user CLAUDE.md without stomping user content', async () => {
       await mkdir(claudeDir, { recursive: true });
-      await writeFile(join(claudeDir, 'CLAUDE.md'), '# hand-written\n', 'utf8');
+      await writeFile(join(claudeDir, 'CLAUDE.md'), '# hand-written\npersonal stuff\n', 'utf8');
 
       const { stampClaudeMd } = await import('./templates.js');
       const result = await stampClaudeMd({
@@ -123,8 +131,35 @@ describe('templates', () => {
         claudeDir,
       });
 
-      expect(result.wrote).toBe(false);
-      expect(await readFile(result.path, 'utf8')).toBe('# hand-written\n');
+      expect(result.starterWritten).toBe(false);
+      expect(result.blockAction).toBe('inserted');
+      const contents = await readFile(result.path, 'utf8');
+      expect(contents).toContain('# hand-written');
+      expect(contents).toContain('personal stuff');
+      expect(contents).toContain('metalmind tap copper');
+      expect(contents).toContain('<!-- metalmind:managed:begin -->');
+    });
+
+    it('refreshes stale block on re-run with new flavor, preserves user content', async () => {
+      const { stampClaudeMd } = await import('./templates.js');
+      await stampClaudeMd({ vaultPath: '/v', flavor: 'scadrial', templatesDir, claudeDir });
+      const after1 = await readFile(join(claudeDir, 'CLAUDE.md'), 'utf8');
+      await writeFile(join(claudeDir, 'CLAUDE.md'), `${after1}\n# added later\n`, 'utf8');
+
+      const second = await stampClaudeMd({
+        vaultPath: '/v',
+        flavor: 'classic',
+        templatesDir,
+        claudeDir,
+      });
+
+      expect(second.starterWritten).toBe(false);
+      expect(second.blockAction).toBe('updated');
+      const contents = await readFile(join(claudeDir, 'CLAUDE.md'), 'utf8');
+      expect(contents).toContain('metalmind recall');
+      expect(contents).not.toContain('tap copper');
+      expect(contents).toContain('# added later');
+      expect(contents).toContain('starter prefs');
     });
   });
 

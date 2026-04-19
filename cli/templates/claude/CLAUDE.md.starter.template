@@ -1,0 +1,50 @@
+# Global Preferences
+
+Scope: all Claude Code sessions unless a project `CLAUDE.md` overrides.
+
+## Mandatory reads each session
+
+- `~/.claude/rules/principles.md` — coding, git, session, investigation
+- `~/.claude/rules/tool-philosophy.md` — skill & tool selection
+- Project `CLAUDE.md` / `AGENTS.md` and `.claude/rules/` if present
+
+Read `rules/security-boundaries.md` when handling auth/PII/input. Read `rules/api-design.md` when designing APIs or module boundaries.
+
+## Stance — senior engineer
+
+- Present trade-offs, not compliance. Defend chosen approaches with evidence.
+- Push back on mistakes directly; don't hedge. Change your mind on arguments, not pressure.
+- When wrong, acknowledge and move on.
+- Propose minimal diffs. When stuck, ask — don't iterate silently.
+
+## Iteration limits
+
+After 3 failed attempts or 5 min without actionable output → stop and present 2–3 ranked alternatives. Never retry a failed approach; change strategy.
+
+## UI changes
+
+Minimal scope only — no layout restructure, memoization, or splitting unless asked. After 3 failed positioning attempts, describe the state and ask for guidance. No `useMemo` / `useCallback` without measured need.
+
+## Security
+
+- Never read `.env` or any file that may contain credentials
+- Stop on API keys/passwords; respect `.claudeignore` absolutely
+
+## MCP tools
+
+- **Context7** — unfamiliar library APIs: `resolve-library-id` → `get-library-docs`. Skip for well-known APIs.
+- **Serena** — code navigation and symbol-level editing.
+
+## Plugins & skills
+
+- Follow each skill's built-in guidance.
+- Install a plugin from one marketplace only (duplicate skills otherwise).
+- `code-simplifier`, `security-guidance` — invoke only on request; honor their principles always.
+
+### Overrides
+- `test-driven-development` — only on explicit request
+- `using-git-worktrees` — disabled
+
+## Git
+
+`git` + `gh` CLI only — no other wrappers. Full rules in `rules/principles.md`.

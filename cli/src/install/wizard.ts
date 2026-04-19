@@ -138,7 +138,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   log.step('Setting up vault');
   const vault = await setupVault({ vaultPath: vaultPathInput, flavor });
   log.success(`Vault at ${vault.vaultPath}`);
-  if (vault.wroteClaudeMd) log.info('  wrote vault CLAUDE.md');
+  if (vault.claudeMdAction === 'created') log.info('  wrote vault CLAUDE.md');
+  else if (vault.claudeMdAction === 'inserted') log.info('  inserted metalmind block into vault CLAUDE.md');
+  else if (vault.claudeMdAction === 'updated') log.info('  refreshed metalmind block in vault CLAUDE.md');
   if (vault.createdFolders.length > 0) log.info(`  created: ${vault.createdFolders.join(', ')}`);
 
   if (serena) {
@@ -208,8 +210,11 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   const tpl = await copyClaudeTemplates({ withTeams: enableTeams });
   log.success(`  copied ${tpl.copied.length} files (${tpl.skipped.length} skipped)`);
   const claudeMd = await stampClaudeMd({ vaultPath: vault.vaultPath, flavor });
-  if (claudeMd.wrote) log.info(`  wrote ${claudeMd.path}`);
-  else log.info(`  ${claudeMd.path} exists — kept`);
+  if (claudeMd.starterWritten) log.info(`  wrote starter ${claudeMd.path}`);
+  if (claudeMd.blockAction === 'created') log.info(`  wrote metalmind block → ${claudeMd.path}`);
+  else if (claudeMd.blockAction === 'inserted') log.info(`  inserted metalmind block → ${claudeMd.path}`);
+  else if (claudeMd.blockAction === 'updated') log.info(`  refreshed metalmind block → ${claudeMd.path}`);
+  else log.info(`  metalmind block up to date in ${claudeMd.path}`);
 
   log.step('Updating global gitignore');
   const gi = await appendGlobalGitignore();

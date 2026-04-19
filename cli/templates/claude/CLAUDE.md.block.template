@@ -1,0 +1,17 @@
+## Memory — metalmind
+
+Vault at `{{VAULT_PATH}}` — personal knowledge base, auto-indexed into a local Qdrant via the metalmind watcher.
+
+**Recall** — all vault lookup goes through the `metalmind` CLI (Bash). No MCP tools are registered for recall — that keeps session-start context clean.
+
+1. `Bash: {{RECALL_CMD}} "<query>"` — semantic search, default for any conceptual vault question
+2. `Bash: {{RECALL_CMD}} "<query>" --deep` — hits + related notes in one call
+3. `Bash: {{RECALL_CMD}} "<query>" --expand` — hits + linked context graph
+4. `Read` — only for exact user-given paths
+5. `Grep` — only for exact string matches
+
+**Save** — use the `/save` skill. Propose note + path before writing; never save silently. Write only to `Inbox/`, `Daily/`, or a user-named note. Save decisions, not code.
+
+**Folders**: `Work/` · `Personal/` · `Learnings/` · `Daily/` · `Inbox/` · `Archive/` · `Memory/` · MOCs at `<Folder>/MOCs/<topic>.md`.
+
+**Plans**: `~/Documents/plans/<project>/YYYY-MM-DD-name.md`. Symlinked into the vault as `~/Knowledge/Plans/` so `{{RECALL_CMD}}` surfaces plans alongside notes. Canonical path stays `~/Documents/plans/`.

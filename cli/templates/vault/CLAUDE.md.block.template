@@ -1,6 +1,6 @@
 # Knowledge Vault
 
-Personal Obsidian vault. Claude persists insights here via `/save`, recalls via the `metalmind` CLI (not an MCP server — saves context tokens).
+Personal Obsidian vault. Claude persists insights via the `/save` skill and recalls them via the `metalmind` CLI (Bash) — no MCP tools are registered for recall, which keeps session-start context clean.
 
 ## Folders
 
@@ -18,7 +18,7 @@ MOCs live at `<Folder>/MOCs/<topic>.md` and index all notes on that topic.
 
 ## Claude's behavior
 
-**Lookup order** (pick one, don't combine). All recall goes through the `metalmind` CLI via Bash — no vault-rag MCP tools are registered:
+**Lookup order** (pick one, don't combine):
 
 1. `Bash: {{RECALL_CMD}} "<query>"` — semantic search, default for conceptual questions.
 2. `Bash: {{RECALL_CMD}} "<query>" --deep` — hits + related notes in one call.

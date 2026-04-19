@@ -1,8 +1,9 @@
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { text } from '@clack/prompts';
 import { expandTilde, getTemplatesDir } from '../util/paths.js';
+import { upsertSentinelBlock, type SentinelUpsertAction } from '../util/sentinel.js';
 import { recallCommand } from './templates.js';
 
 export const VAULT_FOLDERS = [
@@ -18,7 +19,7 @@ export const VAULT_FOLDERS = [
 export interface SetupVaultResult {
   vaultPath: string;
   createdFolders: string[];
-  wroteClaudeMd: boolean;
+  claudeMdAction: SentinelUpsertAction;
 }
 
 export interface SetupVaultOptions {
@@ -56,15 +57,15 @@ export async function setupVault(opts: SetupVaultOptions): Promise<SetupVaultRes
     }
   }
 
-  const claudeMdTarget = join(vaultPath, 'CLAUDE.md');
-  let wroteClaudeMd = false;
-  if (!existsSync(claudeMdTarget)) {
-    const claudeMdSource = join(templatesDir, 'vault', 'CLAUDE.md.template');
-    const template = await readFile(claudeMdSource, 'utf8');
-    const rendered = template.replace(/\{\{RECALL_CMD\}\}/g, recallCommand(opts.flavor));
-    await writeFile(claudeMdTarget, rendered, 'utf8');
-    wroteClaudeMd = true;
-  }
+  const blockSource = await readFile(
+    join(templatesDir, 'vault', 'CLAUDE.md.block.template'),
+    'utf8',
+  );
+  const rendered = blockSource.replace(/\{\{RECALL_CMD\}\}/g, recallCommand(opts.flavor));
+  const { action } = await upsertSentinelBlock({
+    path: join(vaultPath, 'CLAUDE.md'),
+    content: rendered,
+  });
 
-  return { vaultPath, createdFolders, wroteClaudeMd };
+  return { vaultPath, createdFolders, claudeMdAction: action };
 }

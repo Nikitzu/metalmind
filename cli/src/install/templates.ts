@@ -4,6 +4,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { runCommand } from '../util/exec.js';
 import { getTemplatesDir } from '../util/paths.js';
+import { upsertSentinelBlock, type SentinelUpsertAction } from '../util/sentinel.js';
 
 export const DEFAULT_CLAUDE_DIR = join(homedir(), '.claude');
 export const DEFAULT_GITIGNORE_GLOBAL = join(homedir(), '.gitignore_global');
@@ -33,7 +34,8 @@ export function recallCommand(flavor: 'scadrial' | 'classic'): string {
 
 export interface StampClaudeMdResult {
   path: string;
-  wrote: boolean;
+  blockAction: SentinelUpsertAction;
+  starterWritten: boolean;
 }
 
 export interface AppendGlobalGitignoreOptions {
@@ -112,17 +114,28 @@ export async function stampClaudeMd(opts: StampClaudeMdOptions): Promise<StampCl
   const claudeDir = opts.claudeDir ?? DEFAULT_CLAUDE_DIR;
   const target = join(claudeDir, 'CLAUDE.md');
 
-  if (existsSync(target)) {
-    return { path: target, wrote: false };
+  await mkdir(claudeDir, { recursive: true });
+
+  let starterWritten = false;
+  if (!existsSync(target)) {
+    const starter = await readFile(
+      join(templatesDir, 'claude', 'CLAUDE.md.starter.template'),
+      'utf8',
+    );
+    await writeFile(target, starter, 'utf8');
+    starterWritten = true;
   }
 
-  await mkdir(claudeDir, { recursive: true });
-  const template = await readFile(join(templatesDir, 'claude', 'CLAUDE.md.template'), 'utf8');
-  const rendered = template
+  const blockSource = await readFile(
+    join(templatesDir, 'claude', 'CLAUDE.md.block.template'),
+    'utf8',
+  );
+  const rendered = blockSource
     .replace(/\{\{VAULT_PATH\}\}/g, opts.vaultPath)
     .replace(/\{\{RECALL_CMD\}\}/g, recallCommand(opts.flavor));
-  await writeFile(target, rendered, 'utf8');
-  return { path: target, wrote: true };
+  const { action } = await upsertSentinelBlock({ path: target, content: rendered });
+
+  return { path: target, blockAction: action, starterWritten };
 }
 
 export async function appendGlobalGitignore(

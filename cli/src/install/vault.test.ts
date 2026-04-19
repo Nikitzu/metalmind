@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_METALMIND_MARKERS } from '../util/sentinel.js';
 import { setupVault, VAULT_FOLDERS } from './vault.js';
 
 describe('setupVault', () => {
@@ -14,7 +15,7 @@ describe('setupVault', () => {
     templatesDir = join(tmp, 'templates');
     await mkdir(join(templatesDir, 'vault'), { recursive: true });
     await writeFile(
-      join(templatesDir, 'vault', 'CLAUDE.md.template'),
+      join(templatesDir, 'vault', 'CLAUDE.md.block.template'),
       '# test vault claude md\nrecall via {{RECALL_CMD}}\n',
       'utf8',
     );
@@ -24,18 +25,19 @@ describe('setupVault', () => {
     await rm(tmp, { recursive: true, force: true });
   });
 
-  it('creates all folders on fresh install', async () => {
+  it('creates all folders + writes sentinel-wrapped block on fresh install', async () => {
     const vaultPath = join(tmp, 'vault');
     const result = await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
 
     expect(result.vaultPath).toBe(vaultPath);
     expect(result.createdFolders).toEqual([...VAULT_FOLDERS]);
-    expect(result.wroteClaudeMd).toBe(true);
+    expect(result.claudeMdAction).toBe('created');
     for (const folder of VAULT_FOLDERS) {
       expect(existsSync(join(vaultPath, folder))).toBe(true);
     }
-    expect(existsSync(join(vaultPath, 'CLAUDE.md'))).toBe(true);
     const rendered = await readFile(join(vaultPath, 'CLAUDE.md'), 'utf8');
+    expect(rendered).toContain(DEFAULT_METALMIND_MARKERS.begin);
+    expect(rendered).toContain(DEFAULT_METALMIND_MARKERS.end);
     expect(rendered).toContain('metalmind tap copper');
     expect(rendered).not.toContain('{{RECALL_CMD}}');
   });
@@ -48,24 +50,43 @@ describe('setupVault', () => {
     expect(rendered).not.toContain('tap copper');
   });
 
-  it('is idempotent on re-run', async () => {
+  it('is idempotent: second run reports unchanged', async () => {
     const vaultPath = join(tmp, 'vault');
     await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
     const second = await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
     expect(second.createdFolders).toEqual([]);
-    expect(second.wroteClaudeMd).toBe(false);
+    expect(second.claudeMdAction).toBe('unchanged');
   });
 
-  it('preserves existing CLAUDE.md', async () => {
+  it('inserts block into existing user CLAUDE.md without stomping user content', async () => {
     const vaultPath = join(tmp, 'vault');
     await mkdir(vaultPath, { recursive: true });
-    await writeFile(join(vaultPath, 'CLAUDE.md'), '# user-customized\n', 'utf8');
+    await writeFile(join(vaultPath, 'CLAUDE.md'), '# user-customized\npersonal note\n', 'utf8');
 
     const result = await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
 
-    expect(result.wroteClaudeMd).toBe(false);
+    expect(result.claudeMdAction).toBe('inserted');
     const contents = await readFile(join(vaultPath, 'CLAUDE.md'), 'utf8');
-    expect(contents).toBe('# user-customized\n');
+    expect(contents).toContain('# user-customized');
+    expect(contents).toContain('personal note');
+    expect(contents).toContain(DEFAULT_METALMIND_MARKERS.begin);
+    expect(contents).toContain('metalmind tap copper');
+  });
+
+  it('refreshes stale block on re-run with new flavor, preserves user content', async () => {
+    const vaultPath = join(tmp, 'vault');
+    await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
+    // user adds their own content below the managed block
+    const current = await readFile(join(vaultPath, 'CLAUDE.md'), 'utf8');
+    await writeFile(join(vaultPath, 'CLAUDE.md'), `${current}\n# my addition\n`, 'utf8');
+
+    const second = await setupVault({ vaultPath, templatesDir, flavor: 'classic' });
+
+    expect(second.claudeMdAction).toBe('updated');
+    const contents = await readFile(join(vaultPath, 'CLAUDE.md'), 'utf8');
+    expect(contents).toContain('metalmind recall');
+    expect(contents).not.toContain('tap copper');
+    expect(contents).toContain('# my addition');
   });
 
   it('expands tilde in vault path', async () => {
