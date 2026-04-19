@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { buildRouteMatchEdges, extractRoutes } from './routes.js';
 import { FORGE_CACHE_DIR, type ForgeGroup } from './store.js';
 
 export interface GraphNode {
@@ -34,6 +35,7 @@ export interface MergedForgeGraph {
   nodeCount: number;
   edgeCount: number;
   nameMatchEdgeCount: number;
+  routeMatchEdgeCount: number;
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
@@ -126,12 +128,20 @@ export async function buildMergedGraph(group: ForgeGroup): Promise<MergedForgeGr
   const nameMatchEdges = buildNameMatchEdges(nodes);
   edges.push(...nameMatchEdges);
 
+  const allRoutes = [];
+  for (const repo of group.repos) {
+    allRoutes.push(...(await extractRoutes(repo)));
+  }
+  const routeEdges = buildRouteMatchEdges(allRoutes);
+  for (const r of routeEdges) edges.push({ ...r });
+
   return {
     generatedAt: new Date().toISOString(),
     repos: [...group.repos],
     nodeCount: nodes.length,
     edgeCount: edges.length,
     nameMatchEdgeCount: nameMatchEdges.length,
+    routeMatchEdgeCount: routeEdges.length,
     nodes,
     edges,
   };

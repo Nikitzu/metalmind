@@ -63,7 +63,8 @@ async function burnForge(opts: BurnOptions, forgeName: string): Promise<void> {
   log.info(`Building merged graph for forge '${forgeName}' (${group.repos.length} repos)`);
   const merged = await loadOrBuildMerged(forgeName, group);
   log.success(
-    `merged ${merged.nodeCount} nodes, ${merged.edgeCount} edges (${merged.nameMatchEdgeCount} name-match)`,
+    `merged ${merged.nodeCount} nodes, ${merged.edgeCount} edges (` +
+      `${merged.nameMatchEdgeCount} name-match, ${merged.routeMatchEdgeCount} route-match)`,
   );
 
   for (const repo of group.repos) {
