@@ -26,11 +26,13 @@ program.command('init').description('Interactive setup wizard').action(init);
 program
   .command('doctor')
   .description('Diagnose installation state (classic alias for `pulse`)')
-  .action(() => doctor('doctor'));
+  .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
+  .action((cmdOpts: { deep?: boolean }) => doctor('doctor', { deep: cmdOpts.deep }));
 program
   .command('pulse')
   .description('Pulse-check the install — prereqs, config, MCP state (Seeker)')
-  .action(() => doctor('pulse'));
+  .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
+  .action((cmdOpts: { deep?: boolean }) => doctor('pulse', { deep: cmdOpts.deep }));
 program.command('uninstall').description('Reversible teardown').action(uninstall);
 
 function attachStoreFlags<T extends Command>(cmd: T): T {

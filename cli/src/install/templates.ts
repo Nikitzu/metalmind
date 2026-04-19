@@ -85,22 +85,25 @@ export async function copyClaudeTemplates(
   const srcRoot = join(templatesDir, 'claude');
   const recall = recallCommand(opts.flavor ?? 'scadrial');
 
+  const renderRecall: Renderer = (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall);
+
   const rules = await copyDir(
     join(srcRoot, 'rules'),
     join(claudeDir, 'rules'),
     (name) => name.endsWith('.md'),
+    () => renderRecall,
   );
   const agents = await copyDir(
     join(srcRoot, 'agents'),
     join(claudeDir, 'agents'),
     (name) => name.endsWith('.md'),
+    () => renderRecall,
   );
   const commands = await copyDir(
     join(srcRoot, 'commands'),
     join(claudeDir, 'commands'),
     (name) => name === 'save.md' || (opts.withTeams === true && name.startsWith('team-')),
-    (name) =>
-      name === 'save.md' ? (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall) : null,
+    (name) => (name === 'save.md' ? renderRecall : null),
   );
 
   return {
