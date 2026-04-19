@@ -254,6 +254,25 @@ pre {
   color: var(--copper);
   user-select: none;
 }
+.install-note {
+  margin-top: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+}
+.install-chip {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid rgba(212, 161, 74, 0.45);
+  border-radius: 999px;
+  color: var(--copper);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 
 /* Button */
 .btn {
