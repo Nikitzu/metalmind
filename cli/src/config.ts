@@ -15,8 +15,10 @@ const ForgeGroupSchema = z.object({
   repos: z.array(z.string()),
 });
 
+export const CURRENT_CONFIG_VERSION = 1 as const;
+
 export const ConfigSchema = z.object({
-  version: z.literal(1),
+  version: z.literal(CURRENT_CONFIG_VERSION),
   flavor: FlavorSchema,
   vaultPath: z.string(),
   graphifyCmd: z.string().default('graphify'),
@@ -46,10 +48,38 @@ export const ConfigSchema = z.object({
 
 export type Config = z.infer<typeof ConfigSchema>;
 
+// Migrations run in ascending order. Each migration takes raw JSON and bumps
+// it to the next version. Only one exists today (v1 is current), but the
+// scaffold is here so adding v2 is a drop-in: register a new migration,
+// bump CURRENT_CONFIG_VERSION, update the schema.
+type RawConfig = Record<string, unknown>;
+type Migration = (raw: RawConfig) => RawConfig;
+
+const MIGRATIONS: Record<number, Migration> = {
+  // 0 → 1: not needed (v1 is the first versioned schema)
+};
+
+function migrate(raw: RawConfig): RawConfig {
+  let current = raw;
+  const startVersion = typeof current.version === 'number' ? current.version : 0;
+  for (let v = startVersion; v < CURRENT_CONFIG_VERSION; v++) {
+    const migration = MIGRATIONS[v];
+    if (!migration) {
+      throw new Error(
+        `No migration from config v${v} to v${v + 1}. Re-run \`metalmind init\` to rebuild the config.`,
+      );
+    }
+    current = migration(current);
+  }
+  return current;
+}
+
 export async function readConfig(path: string = CONFIG_PATH): Promise<Config | null> {
   try {
     const raw = await readFile(path, 'utf8');
-    return ConfigSchema.parse(JSON.parse(raw));
+    const parsed = JSON.parse(raw) as RawConfig;
+    const migrated = migrate(parsed);
+    return ConfigSchema.parse(migrated);
   } catch (err: unknown) {
     if (isNodeError(err) && err.code === 'ENOENT') return null;
     throw err;

@@ -22,11 +22,26 @@ export interface McpToolResult {
 }
 
 const DEFAULT_PROTOCOL_VERSION = '2025-06-18';
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+const STDERR_RING_MAX = 4096; // keep the last ~4KB of stderr for error context
+
+export interface StdioMcpClientOptions {
+  requestTimeoutMs?: number;
+}
 
 export class StdioMcpClient {
   private proc: ChildProcessWithoutNullStreams | null = null;
   private nextId = 1;
-  private pending = new Map<number, (res: JsonRpcResponse) => void>();
+  private pending = new Map<
+    number,
+    { resolve: (res: JsonRpcResponse) => void; reject: (err: Error) => void; timer: NodeJS.Timeout }
+  >();
+  private stderrBuffer = '';
+  private readonly requestTimeoutMs: number;
+
+  constructor(opts: StdioMcpClientOptions = {}) {
+    this.requestTimeoutMs = opts.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  }
 
   async start(opts: SpawnMcpOptions): Promise<void> {
     const proc = spawn(opts.command, opts.args ?? [], {
@@ -35,8 +50,30 @@ export class StdioMcpClient {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     this.proc = proc;
+
+    proc.on('error', (err) => {
+      this.rejectAll(new Error(`MCP spawn failed (${opts.command}): ${err.message}`));
+    });
+    proc.on('exit', (code, signal) => {
+      this.rejectAll(
+        new Error(
+          `MCP server exited (code=${code ?? 'null'}, signal=${signal ?? 'null'})${
+            this.stderrTail() ? `\nstderr: ${this.stderrTail()}` : ''
+          }`,
+        ),
+      );
+    });
+
     const rl = createInterface({ input: proc.stdout });
     rl.on('line', (line) => this.handleLine(line));
+
+    const errRl = createInterface({ input: proc.stderr });
+    errRl.on('line', (line) => {
+      this.stderrBuffer += `${line}\n`;
+      if (this.stderrBuffer.length > STDERR_RING_MAX) {
+        this.stderrBuffer = this.stderrBuffer.slice(-STDERR_RING_MAX);
+      }
+    });
 
     await this.request('initialize', {
       protocolVersion: DEFAULT_PROTOCOL_VERSION,
@@ -56,12 +93,25 @@ export class StdioMcpClient {
       return;
     }
     if (typeof msg.id === 'number') {
-      const handler = this.pending.get(msg.id);
-      if (handler) {
+      const entry = this.pending.get(msg.id);
+      if (entry) {
+        clearTimeout(entry.timer);
         this.pending.delete(msg.id);
-        handler(msg);
+        entry.resolve(msg);
       }
     }
+  }
+
+  private rejectAll(err: Error): void {
+    for (const entry of this.pending.values()) {
+      clearTimeout(entry.timer);
+      entry.reject(err);
+    }
+    this.pending.clear();
+  }
+
+  private stderrTail(): string {
+    return this.stderrBuffer.slice(-512).trim();
   }
 
   async request(method: string, params: unknown): Promise<unknown> {
@@ -69,12 +119,25 @@ export class StdioMcpClient {
     if (!proc) throw new Error('MCP client not started');
     const id = this.nextId++;
     const msg = { jsonrpc: '2.0' as const, method, params, id };
-    const promise = new Promise<JsonRpcResponse>((resolve) => {
-      this.pending.set(id, resolve);
+
+    const promise = new Promise<JsonRpcResponse>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pending.delete(id);
+        const tail = this.stderrTail();
+        reject(
+          new Error(
+            `MCP ${method} timed out after ${this.requestTimeoutMs}ms${tail ? `\nstderr: ${tail}` : ''}`,
+          ),
+        );
+      }, this.requestTimeoutMs);
+      this.pending.set(id, { resolve, reject, timer });
     });
     proc.stdin.write(`${JSON.stringify(msg)}\n`);
     const res = await promise;
-    if (res.error) throw new Error(`MCP ${method} error: ${res.error.message}`);
+    if (res.error) {
+      const tail = this.stderrTail();
+      throw new Error(`MCP ${method} error: ${res.error.message}${tail ? `\nstderr: ${tail}` : ''}`);
+    }
     return res.result;
   }
 
@@ -92,6 +155,7 @@ export class StdioMcpClient {
     const proc = this.proc;
     if (!proc) return;
     this.proc = null;
+    this.rejectAll(new Error('MCP client closed'));
     proc.kill();
   }
 }

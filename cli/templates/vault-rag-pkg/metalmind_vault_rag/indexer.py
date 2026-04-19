@@ -81,6 +81,23 @@ def reindex_paths(paths: list[Path]) -> int:
 
 
 def main() -> None:
+    import sys
+
+    args = sys.argv[1:]
+    if args and args[0] == "--paths":
+        paths = [Path(p) for p in args[1:] if p]
+        if not paths:
+            print("--paths requires at least one file", flush=True)
+            sys.exit(2)
+        reindex_paths(paths)
+        return
+    if args and args[0] in {"-h", "--help"}:
+        print(
+            "usage: metalmind-vault-rag-indexer                 # full wipe + rebuild\n"
+            "       metalmind-vault-rag-indexer --paths FILE... # incremental upsert",
+            flush=True,
+        )
+        return
     reindex_all()
 
 

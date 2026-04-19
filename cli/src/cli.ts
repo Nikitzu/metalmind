@@ -10,6 +10,7 @@ import {
   renameSymbol,
   toggleVerbose,
 } from './commands/remaining-burns.js';
+import { stamp } from './commands/stamp.js';
 import { type StoreOptions, store } from './commands/store.js';
 import { type TapOptions, tap } from './commands/tap.js';
 import { uninstall } from './commands/uninstall.js';
@@ -188,6 +189,12 @@ burnCmd
   .description('Burn Aluminum — wipe metalmind install (alias for uninstall)')
   .action(aluminumWipe);
 
+burnCmd
+  .command('brass')
+  .description('Burn Brass (Soother) — smooth out drift, re-imprint metalmind managed files')
+  .option('--skip-watcher', 'Skip refreshing the watcher unit file')
+  .action((cmdOpts: { skipWatcher?: boolean }) => stamp({ skipWatcher: cmdOpts.skipWatcher }));
+
 program
   .command('rename <old> <new>')
   .description('Classic alias: rename a symbol via Serena')
@@ -214,6 +221,12 @@ program
   .action(pewterReindex);
 
 program.command('wipe').description('Classic alias: uninstall metalmind').action(aluminumWipe);
+
+program
+  .command('stamp')
+  .description('Classic alias: smooth out drift, re-imprint metalmind managed files')
+  .option('--skip-watcher', 'Skip refreshing the watcher unit file')
+  .action((cmdOpts: { skipWatcher?: boolean }) => stamp({ skipWatcher: cmdOpts.skipWatcher }));
 
 program.parseAsync(process.argv).catch((err: unknown) => {
   const message = err instanceof Error ? err.message : String(err);
