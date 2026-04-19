@@ -2,7 +2,7 @@ import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/pro
 import { type Config, writeConfig } from '../config.js';
 import { installAliases } from './aliases.js';
 import { installGraphify } from './graphify.js';
-import { installLaunchdWatcher } from './launchd.js';
+import { installWatcher } from './watcher.js';
 import { registerMcpServers } from './mcp.js';
 import { type FlavorChoice, installOutputStyle } from './output-style.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
@@ -173,14 +173,16 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     log.warn('Skipping Docker stack (opts.skipDocker)');
   }
 
-  log.step('Installing launchd watcher');
+  log.step('Installing watcher service');
   const watcherBinPath = await resolveWatcherBinPath();
-  const watcher = await installLaunchdWatcher({
+  const watcher = await installWatcher({
     vaultPath: vault.vaultPath,
     watcherBin: watcherBinPath,
   });
-  if (watcher.wrotePlist) log.success(`  wrote ${watcher.plistPath}`);
-  if (watcher.loaded) log.info('  launchctl load succeeded');
+  if (watcher.wroteUnit) log.success(`  wrote ${watcher.unitPath}`);
+  if (watcher.started) {
+    log.info(watcher.platform === 'darwin' ? '  launchctl load succeeded' : '  systemctl --user enable --now succeeded');
+  }
 
   log.step('Registering MCP servers (serena/teams)');
   const mcp = await registerMcpServers({

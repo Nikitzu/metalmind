@@ -1,0 +1,16 @@
+[Unit]
+Description=metalmind vault indexer watcher
+After=default.target
+
+[Service]
+Type=simple
+ExecStart={{WATCHER_BIN}}
+Environment=VAULT_PATH={{VAULT_PATH}}
+Environment=PATH={{PATH_VALUE}}
+Restart=always
+RestartSec=10
+StandardOutput=append:{{VAULT_PATH}}/.metalmind-stack/watcher.log
+StandardError=append:{{VAULT_PATH}}/.metalmind-stack/watcher.err
+
+[Install]
+WantedBy=default.target
