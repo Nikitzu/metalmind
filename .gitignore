@@ -22,3 +22,6 @@ dist/
 coverage/
 *.tsbuildinfo
 .pnpm-store/
+
+# Astro
+.astro/
