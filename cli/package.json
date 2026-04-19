@@ -20,6 +20,8 @@
     "dev": "tsx src/cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:smoke": "pnpm build && pnpm link --global >/dev/null 2>&1 && ./test/integration/smoke.sh",
+    "test:python": "cd templates/vault-rag-pkg && uv run --extra dev pytest tests/",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -51,9 +51,11 @@ cli/
 pnpm install
 pnpm dev               # tsx watch — runs src/cli.ts directly
 pnpm typecheck         # tsc --noEmit
-pnpm test              # vitest run (121 tests)
+pnpm test              # vitest run (157 tests, ~800ms)
 pnpm test:watch
 pnpm build             # tsup → dist/cli.js (ESM, shebang, node20)
+pnpm test:python       # pytest against templates/vault-rag-pkg/ (requires uv)
+pnpm test:smoke        # end-to-end integration (builds, links, runs cli/test/integration/smoke.sh)
 ```
 
 After a build, the installed shim picks up new code immediately (pnpm / npm global links resolve through the local `dist/cli.js`).
@@ -66,6 +68,16 @@ After a build, the installed shim picks up new code immediately (pnpm / npm glob
 - **No real network**: `setupStack` takes a `fetchFn` for polling; tests pass a fake that returns 200 immediately.
 
 Each installer has a mirror `*.test.ts` next to it — add tests alongside the code you touch.
+
+### Test tiers
+
+| Tier | Runner | Covers | Runtime |
+|---|---|---|---|
+| Unit | `pnpm test` | All TS modules — mocked runCommand, fetch, fs | ~800ms |
+| Python | `pnpm test:python` | vault-rag-pkg: imports, search helpers, HTTP endpoint | ~4s |
+| Smoke | `pnpm test:smoke` | Scripted end-to-end: init --yes → stamp → save → uninstall | ~10s |
+
+Smoke test uses a temp `$HOME`, skips Docker/Serena/graphify, and asserts every managed file ends up in the right place. It's the "would a fresh-machine install work?" question answered in 20 assertions.
 
 ## Adding a new install step
 

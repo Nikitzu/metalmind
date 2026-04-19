@@ -11,14 +11,14 @@ export interface DoctorOptions {
   deep?: boolean;
 }
 
-interface DeepCheck {
+export interface DeepCheck {
   name: string;
   ok: boolean;
   detail: string;
   remediation?: string;
 }
 
-async function checkDockerContainers(): Promise<DeepCheck[]> {
+export async function checkDockerContainers(): Promise<DeepCheck[]> {
   const res = await runCommand('docker', ['ps', '--format', '{{.Names}}']);
   if (!res.ok) {
     return [
@@ -47,7 +47,7 @@ async function checkDockerContainers(): Promise<DeepCheck[]> {
   ];
 }
 
-async function checkQdrantCollection(): Promise<DeepCheck> {
+export async function checkQdrantCollection(): Promise<DeepCheck> {
   try {
     const res = await fetch('http://localhost:6333/collections/vault');
     if (!res.ok) {
@@ -76,7 +76,7 @@ async function checkQdrantCollection(): Promise<DeepCheck> {
   }
 }
 
-async function checkOllamaModel(): Promise<DeepCheck> {
+export async function checkOllamaModel(): Promise<DeepCheck> {
   try {
     const res = await fetch('http://localhost:11434/api/tags');
     if (!res.ok) {
@@ -107,7 +107,7 @@ async function checkOllamaModel(): Promise<DeepCheck> {
   }
 }
 
-async function checkRecallHttp(): Promise<DeepCheck> {
+export async function checkRecallHttp(): Promise<DeepCheck> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 1500);
@@ -132,7 +132,7 @@ async function checkRecallHttp(): Promise<DeepCheck> {
   }
 }
 
-async function checkWatcherService(): Promise<DeepCheck> {
+export async function checkWatcherService(): Promise<DeepCheck> {
   if (platform() === 'darwin') {
     const res = await runCommand('launchctl', ['list']);
     if (!res.ok) {
@@ -161,7 +161,7 @@ async function checkWatcherService(): Promise<DeepCheck> {
   return { name: 'watcher', ok: false, detail: `unsupported platform ${platform()}` };
 }
 
-async function checkClaudeMdSentinel(config: Config): Promise<DeepCheck[]> {
+export async function checkClaudeMdSentinel(config: Config): Promise<DeepCheck[]> {
   const claudeMd = join(process.env.HOME ?? '', '.claude', 'CLAUDE.md');
   const vaultMd = join(config.vaultPath, 'CLAUDE.md');
   const results: DeepCheck[] = [];

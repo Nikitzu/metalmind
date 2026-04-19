@@ -21,13 +21,23 @@ const KNOWN_PLACEHOLDERS = new Set([
 // braces without issue.
 const RENDERABLE_SUFFIXES = ['.template', 'CLAUDE.md.template', 'CLAUDE.md.block.template'];
 
+const SKIP_DIRS = new Set([
+  '__pycache__',
+  'node_modules',
+  '.venv',
+  '.pytest_cache',
+  '.ruff_cache',
+  'dist',
+  'site-packages',
+]);
+
 async function* walk(root: string): AsyncGenerator<string> {
   const entries = await readdir(root, { withFileTypes: true });
   for (const entry of entries) {
     const path = join(root, entry.name);
     if (entry.isDirectory()) {
-      // Skip Python build artifacts and venv dirs.
-      if (entry.name === '__pycache__' || entry.name === 'node_modules') continue;
+      if (SKIP_DIRS.has(entry.name)) continue;
+      if (entry.name.startsWith('.')) continue; // .venv, .git, etc
       yield* walk(path);
     } else if (entry.isFile()) {
       yield path;

@@ -10,6 +10,11 @@ dependencies = [
     "watchfiles>=0.22",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
 [project.scripts]
 metalmind-vault-rag-server = "metalmind_vault_rag.server:main"
 metalmind-vault-rag-watcher = "metalmind_vault_rag.watcher:main"
