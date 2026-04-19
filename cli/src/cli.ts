@@ -95,32 +95,36 @@ burnCmd
   .command('bronze <query>')
   .description('Burn Bronze (Seeker) — query the code graph for structure / concepts')
   .option('--yes', 'Skip the index prompt; assume yes if no graph exists')
-  .action((query: string, cmdOpts: { yes?: boolean }) =>
-    burn({ metal: 'bronze', input: query, assumeYes: cmdOpts.yes }),
+  .option('--forge <name>', 'Query across all repos in the named forge')
+  .action((query: string, cmdOpts: { yes?: boolean; forge?: string }) =>
+    burn({ metal: 'bronze', input: query, assumeYes: cmdOpts.yes, forge: cmdOpts.forge }),
   );
 
 burnCmd
   .command('iron <symbol>')
   .description('Burn Iron — pull a symbol and its neighbors out of the graph')
   .option('--yes', 'Skip the index prompt; assume yes if no graph exists')
-  .action((symbol: string, cmdOpts: { yes?: boolean }) =>
-    burn({ metal: 'iron', input: symbol, assumeYes: cmdOpts.yes }),
+  .option('--forge <name>', 'Query across all repos in the named forge')
+  .action((symbol: string, cmdOpts: { yes?: boolean; forge?: string }) =>
+    burn({ metal: 'iron', input: symbol, assumeYes: cmdOpts.yes, forge: cmdOpts.forge }),
   );
 
 program
   .command('graph <query>')
   .description('Classic alias: query the code graph')
   .option('--yes', 'Skip the index prompt')
-  .action((query: string, cmdOpts: { yes?: boolean }) =>
-    burn({ metal: 'bronze', input: query, assumeYes: cmdOpts.yes }),
+  .option('--group <name>', 'Query across all repos in the named group')
+  .action((query: string, cmdOpts: { yes?: boolean; group?: string }) =>
+    burn({ metal: 'bronze', input: query, assumeYes: cmdOpts.yes, forge: cmdOpts.group }),
   );
 
 program
   .command('symbol <symbol>')
   .description('Classic alias: pull a symbol and its neighbors')
   .option('--yes', 'Skip the index prompt')
-  .action((symbol: string, cmdOpts: { yes?: boolean }) =>
-    burn({ metal: 'iron', input: symbol, assumeYes: cmdOpts.yes }),
+  .option('--group <name>', 'Query across all repos in the named group')
+  .action((symbol: string, cmdOpts: { yes?: boolean; group?: string }) =>
+    burn({ metal: 'iron', input: symbol, assumeYes: cmdOpts.yes, forge: cmdOpts.group }),
   );
 
 function attachForgeSubcommands(parent: Command): void {

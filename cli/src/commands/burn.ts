@@ -1,5 +1,7 @@
 import { confirm, isCancel, log } from '@clack/prompts';
 import { analyzeRepo, findRepoRoot, graphifyQuery, hasGraph } from '../backends/graphify.js';
+import { loadOrBuildMerged } from '../forge/loader.js';
+import { getForge } from '../forge/store.js';
 
 export type BurnMetal = 'bronze' | 'iron';
 
@@ -8,6 +10,7 @@ export interface BurnOptions {
   input: string;
   skipIndexPrompt?: boolean;
   assumeYes?: boolean;
+  forge?: string;
 }
 
 async function ensureGraph(repoRoot: string, opts: BurnOptions): Promise<boolean> {
@@ -37,10 +40,57 @@ function ironQuery(symbol: string): string {
   return `show details and neighbors of ${symbol}`;
 }
 
+async function burnSingleRepo(opts: BurnOptions, repoRoot: string): Promise<void> {
+  const ready = await ensureGraph(repoRoot, opts);
+  if (!ready) {
+    log.info(`${repoRoot}: graph not available — skipping.`);
+    return;
+  }
+  const query = opts.metal === 'iron' ? ironQuery(opts.input) : opts.input;
+  const output = await graphifyQuery({ query, repoRoot });
+  process.stdout.write(`\n=== ${repoRoot} ===\n`);
+  process.stdout.write(output.endsWith('\n') ? output : `${output}\n`);
+}
+
+async function burnForge(opts: BurnOptions, forgeName: string): Promise<void> {
+  const group = await getForge(forgeName);
+  if (group.repos.length === 0) {
+    log.error(`forge '${forgeName}' has no repos. Add some with \`metalmind forge add\`.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  log.info(`Building merged graph for forge '${forgeName}' (${group.repos.length} repos)`);
+  const merged = await loadOrBuildMerged(forgeName, group);
+  log.success(
+    `merged ${merged.nodeCount} nodes, ${merged.edgeCount} edges (${merged.nameMatchEdgeCount} name-match)`,
+  );
+
+  for (const repo of group.repos) {
+    try {
+      await burnSingleRepo(opts, repo);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      log.error(`${repo}: ${message}`);
+    }
+  }
+}
+
 export async function burn(opts: BurnOptions): Promise<void> {
   if (!opts.input.trim()) {
     log.error(`Usage: metalmind burn ${opts.metal} "<value>"`);
     process.exitCode = 1;
+    return;
+  }
+
+  if (opts.forge) {
+    try {
+      await burnForge(opts, opts.forge);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      log.error(`burn ${opts.metal} --forge ${opts.forge} failed: ${message}`);
+      process.exitCode = 1;
+    }
     return;
   }
 
@@ -51,17 +101,8 @@ export async function burn(opts: BurnOptions): Promise<void> {
     return;
   }
 
-  const ready = await ensureGraph(repoRoot, opts);
-  if (!ready) {
-    log.info('Graph not available — skipping.');
-    return;
-  }
-
-  const query = opts.metal === 'iron' ? ironQuery(opts.input) : opts.input;
-
   try {
-    const output = await graphifyQuery({ query, repoRoot });
-    process.stdout.write(output.endsWith('\n') ? output : `${output}\n`);
+    await burnSingleRepo(opts, repoRoot);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     log.error(`burn ${opts.metal} failed: ${message}`);
