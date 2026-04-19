@@ -206,6 +206,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   await writeConfig(config);
   log.success('Wrote ~/.metalmind/config.json');
 
-  outro('Installed. Run `metalmind doctor` to verify.');
+  const verifyCmd = flavor === 'scadrial' ? 'pulse' : 'doctor';
+  outro(`Installed. Run \`metalmind ${verifyCmd}\` to verify.`);
   return config;
 }
