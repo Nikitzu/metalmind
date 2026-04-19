@@ -410,6 +410,24 @@ body:has(#flavor-classic:checked) .cmd-table td.metal {
   color: var(--steel);
 }
 
+/* Global flavor-swap utilities (applies anywhere on the page) */
+.scadrial-only {
+  display: inline;
+}
+.classic-only {
+  display: none;
+}
+body:has(#flavor-classic:checked) .scadrial-only {
+  display: none;
+}
+body:has(#flavor-classic:checked) .classic-only {
+  display: inline;
+}
+body:has(#flavor-classic:checked) .hero-eyebrow,
+body:has(#flavor-classic:checked) .feature-title {
+  color: var(--steel);
+}
+
 /* How it works diagram */
 .diagram {
   display: grid;

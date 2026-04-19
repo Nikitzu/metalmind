@@ -40,7 +40,10 @@ const description =
 
     <main>
       <section class="hero container" aria-labelledby="hero-title">
-        <div class="hero-eyebrow">Scadrial · Keeper</div>
+        <div class="hero-eyebrow">
+          <span class="scadrial-only">Scadrial · Keeper</span>
+          <span class="classic-only">Knowledge · CLI</span>
+        </div>
         <h1 id="hero-title">metalmind</h1>
         <p class="hero-tagline">
           Not a wrapper — a connecting tissue. Cross-repo caller↔handler edges. A recall ladder
@@ -75,7 +78,10 @@ const description =
         </p>
         <div class="features">
           <div class="feature">
-            <div class="feature-title">Cross-repo forge with route-match</div>
+            <div class="feature-title">
+              <span class="scadrial-only">Cross-repo forge with route-match</span>
+              <span class="classic-only">Cross-repo groups with route-match</span>
+            </div>
             <div class="feature-body">
               Name-match edges union the same symbol across repos. A framework-aware HTTP-route
               matcher (Express / Fastify / Koa / FastAPI / Flask + fetch / axios / got / httpx /
@@ -87,7 +93,8 @@ const description =
           <div class="feature">
             <div class="feature-title">Recall ladder, not a search bar</div>
             <div class="feature-body">
-              <code>tap copper</code> escalates deliberately: semantic-only (fast), then
+              <code><span class="scadrial-only">tap copper</span><span class="classic-only">recall</span></code>
+              escalates deliberately: semantic-only (fast), then
               <code>--deep</code> follows backlinks from the top hit, then <code>--expand</code>
               returns hits with linked context in one call. Recovers the
               <code>[[wikilink]]</code> graph that raw embeddings flatten away, and lets you pay
@@ -106,10 +113,14 @@ const description =
           <div class="feature">
             <div class="feature-title">One mental model, swappable backends</div>
             <div class="feature-body">
-              Every metal verb routes through a single dispatcher — bronze ↔ graphify,
-              steel ↔ Serena rename, copper ↔ vault-rag. Swap a backend later by changing one
-              row in the map; call sites don't move. Every themed command has a neutral classic
-              alias that always works.
+              <span class="scadrial-only">Every metal verb routes through a single dispatcher — bronze ↔ graphify,
+                steel ↔ Serena rename, copper ↔ vault-rag. Swap a backend later by changing one
+                row in the map; call sites don't move. Every themed command has a neutral classic
+                alias that always works.</span>
+              <span class="classic-only">Every command routes through a single dispatcher — graph ↔ graphify,
+                rename ↔ Serena, recall ↔ vault-rag. Swap a backend later by changing one row in
+                the map; call sites don't move. Every classic command has a themed Mistborn alias
+                for those who want it.</span>
             </div>
           </div>
         </div>
@@ -121,26 +132,38 @@ const description =
         <h2 id="what-title">At a glance</h2>
         <div class="features">
           <div class="feature">
-            <div class="feature-title">store copper / save</div>
+            <div class="feature-title">
+              <span class="scadrial-only">store copper</span>
+              <span class="classic-only">save</span>
+            </div>
             <div class="feature-body">
               Deposit decisions into your vault — frontmatter, timestamped slug, Inbox by default.
             </div>
           </div>
           <div class="feature">
-            <div class="feature-title">tap copper / recall</div>
+            <div class="feature-title">
+              <span class="scadrial-only">tap copper</span>
+              <span class="classic-only">recall</span>
+            </div>
             <div class="feature-body">
               Semantic search with opt-in <code>--deep</code> backlink traversal and
               <code>--expand</code> hybrid retrieval.
             </div>
           </div>
           <div class="feature">
-            <div class="feature-title">burn bronze / graph</div>
+            <div class="feature-title">
+              <span class="scadrial-only">burn bronze</span>
+              <span class="classic-only">graph</span>
+            </div>
             <div class="feature-body">
               Per-repo code-graph queries. Auto-indexes on first use; cached across sessions.
             </div>
           </div>
           <div class="feature">
-            <div class="feature-title">forge / group</div>
+            <div class="feature-title">
+              <span class="scadrial-only">forge</span>
+              <span class="classic-only">group</span>
+            </div>
             <div class="feature-body">
               Group repos together — the merged graph lights up cross-service call paths.
             </div>
@@ -208,7 +231,10 @@ const description =
             </div>
           </div>
           <div class="diagram-node">
-            <div class="diagram-node-title">Forge</div>
+            <div class="diagram-node-title">
+              <span class="scadrial-only">Forge</span>
+              <span class="classic-only">Group</span>
+            </div>
             <div class="diagram-node-body">
               Cross-repo merge layer — name-match + HTTP-route edges tagged with INFERRED provenance.
             </div>
