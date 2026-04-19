@@ -192,13 +192,11 @@ const description =
           Reversible via <code>metalmind uninstall</code>.
         </p>
         <div class="cast-wrap" aria-label="Install flow demo (asciinema cast)">
-          <!-- asciinema-player lazy-loaded; cast file dropped in public/ -->
-          <noscript>
-            <p style="padding:2rem;text-align:center;color:var(--fg-muted);">
-              Install demo requires JavaScript. Cast available at /wizard-demo.cast
-            </p>
-          </noscript>
-          <div id="cast-root" style="width:100%;height:100%;"></div>
+          <div id="cast-placeholder" class="cast-placeholder">
+            <span class="chip">Recording soon</span>
+            <span>Install-flow demo coming. Clone the repo and run <code>metalmind init</code> to try it now.</span>
+          </div>
+          <div id="cast-root" style="width: 100%; height: 100%; display: none"></div>
         </div>
       </section>
 
@@ -256,12 +254,12 @@ const description =
       <p style="margin-top:0.25rem;opacity:0.6;">Built on <a href="https://obsidian.md">Obsidian</a>, <a href="https://ollama.com">Ollama</a>, <a href="https://qdrant.tech">Qdrant</a>, <a href="https://github.com/oraios/serena">Serena</a>, <a href="https://pypi.org/project/graphifyy/">graphify</a>.</p>
     </footer>
 
-    <!-- asciinema-player lazy-loaded after first paint -->
+    <!-- asciinema-player lazy-loaded after first paint, only if the cast exists -->
     <script>
       const ASCIINEMA_VERSION = '3.8.1';
       const castUrl = '/wizard-demo.cast';
 
-      const load = () => {
+      const loadPlayer = () => {
         if (document.getElementById('asciinema-css')) return;
         const css = document.createElement('link');
         css.id = 'asciinema-css';
@@ -274,7 +272,10 @@ const description =
           // @ts-ignore
           if (window.AsciinemaPlayer) {
             const root = document.getElementById('cast-root');
+            const placeholder = document.getElementById('cast-placeholder');
             if (root) {
+              root.style.display = 'block';
+              if (placeholder) placeholder.style.display = 'none';
               // @ts-ignore
               window.AsciinemaPlayer.create(castUrl, root, {
                 theme: 'solarized-dark',
@@ -288,18 +289,34 @@ const description =
         document.head.appendChild(js);
       };
 
+      const maybeLoad = async () => {
+        try {
+          const res = await fetch(castUrl, { method: 'HEAD' });
+          if (res.ok) loadPlayer();
+        } catch {
+          /* keep placeholder */
+        }
+      };
+
       if ('IntersectionObserver' in window) {
         const root = document.querySelector('.cast-wrap');
         if (root) {
-          const io = new IntersectionObserver((entries) => {
-            for (const entry of entries) {
-              if (entry.isIntersecting) { load(); io.disconnect(); break; }
-            }
-          }, { rootMargin: '200px' });
+          const io = new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (entry.isIntersecting) {
+                  maybeLoad();
+                  io.disconnect();
+                  break;
+                }
+              }
+            },
+            { rootMargin: '200px' },
+          );
           io.observe(root);
         }
       } else {
-        load();
+        maybeLoad();
       }
     </script>
   </body>
