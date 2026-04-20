@@ -1,0 +1,46 @@
+---
+tags: [moc, <project>]
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+project: <project>
+status: active
+---
+
+# <project> — MOC
+
+One-line description of what this project is and where it lives.
+
+## Current state
+
+- Brief status (live/paused/done, version if any, link to repo).
+
+## Plans
+
+- [[YYYY-MM-DD-<topic>]]
+
+## Design / decisions
+
+- [[<note-name>]]
+
+## Learnings
+
+- [[<learning-note>]]
+
+## Inbox pointers
+
+- [[<pointer-note>]]
+
+## Dataview
+
+```dataview
+TABLE file.mtime AS Updated, status
+FROM ""
+WHERE project = "<project>"
+SORT file.mtime DESC
+```
+
+## When to use
+
+- "What's the shape of <project>?" → start here.
+- "What was decided about X?" → `metalmind tap copper "X"` first; fall back to the linked notes above.
+- "Show every <project> note" → the Dataview query, or filter the tag pane by `#<project>`.

@@ -26,6 +26,27 @@ Drop `*.md` files into `~/.claude/agents/` with a non-metalmind filename (don't 
 
 Agent frontmatter: `name`, `description`, `tools` (comma-separated), optional `model` and `color`.
 
+## Project MOCs and the flat plans layout
+
+metalmind assumes a **flat** `~/Knowledge/Plans/` — files are named `YYYY-MM-DD-<topic>.md`, chronological, no per-project subfolders. Project grouping lives in two places:
+
+1. **Frontmatter** on every plan / work note:
+   ```yaml
+   ---
+   project: <slug>
+   tags: [<slug>, ...]
+   status: active
+   ---
+   ```
+2. **A map-of-content (MOC)** at `<Folder>/MOCs/<project>.md` — typically `Work/MOCs/<project>.md` — that links to every note in the project and (optionally) runs a Dataview query to surface the whole set live.
+
+A ready-to-copy MOC scaffold ships at `cli/templates/vault/MOC.md.template`. Copy it, drop into `~/Knowledge/Work/MOCs/<project>.md`, replace the `<project>` placeholders, and start linking notes. Why this instead of per-project folders?
+
+- No duplication between folder structure and frontmatter.
+- Wikilinks are name-based in Obsidian — moving notes doesn't break them.
+- Semantic recall (`metalmind tap copper "<project>"`) and the MOC's Dataview query both return the project view from the same single source of truth.
+- Legacy notes still in old per-project subfolders keep working — wikilinks resolve by file stem — but new work should land flat.
+
 ## Changing the vault path
 
 Re-run `metalmind init` and provide the new path. The wizard is idempotent; it will move managed files to the new location and update the config.

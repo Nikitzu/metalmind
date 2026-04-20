@@ -11,6 +11,6 @@ Vault at `{{VAULT_PATH}}` — auto-indexed into local Qdrant; recall goes throug
 
 Default is fast semantic search. Add `--deep` for hits + related notes in one call; `--expand` for the full linked-context graph. `Read` / `Grep` are for exact paths and exact string matches only.
 
-**Save decisions, not code.** Use the `/save` skill. Propose path + content before writing; never save silently. Folders: `Work/` · `Personal/` · `Learnings/` · `Daily/` · `Inbox/` · `Archive/` · `Memory/`. Plans live at `~/Knowledge/Plans/<project>/YYYY-MM-DD-name.md` — directly inside the vault, indexed automatically.
+**Save decisions, not code.** Use the `/save` skill. Propose path + content before writing; never save silently. Folders: `Work/` · `Personal/` · `Learnings/` · `Daily/` · `Inbox/` · `Archive/` · `Memory/`. Plans live flat at `~/Knowledge/Plans/YYYY-MM-DD-<topic>.md` — indexed automatically. Project grouping comes from the `project:` frontmatter field plus a matching MOC at `<Folder>/MOCs/<project>.md`; no per-project subfolders.
 
 **When NOT to recall**: one-off syntax lookups (training knowledge is fine) and transient state (the git log already records it).
