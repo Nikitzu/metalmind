@@ -3,6 +3,15 @@
   "version": "0.1.4",
   "description": "Unified CLI for Obsidian vault, code graph (graphify), and cross-repo intelligence. Mistborn-themed with a neutral alias set.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nikitzu/metalmind.git",
+    "directory": "cli"
+  },
+  "homepage": "https://metalmind.mzyx.dev",
+  "bugs": {
+    "url": "https://github.com/Nikitzu/metalmind/issues"
+  },
   "type": "module",
   "bin": {
     "metalmind": "./dist/cli.js"
