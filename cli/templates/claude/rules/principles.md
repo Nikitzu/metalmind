@@ -80,7 +80,7 @@
 
 ## Session Workflow
 
-- **Front-load context**: Before any non-trivial task, read plan files from `~/Documents/plans/<current-project>/`. Summarize understanding. Stay consistent with existing plans. Skip only if user explicitly asks.
+- **Front-load context**: Before any non-trivial task, read plan files from `~/Knowledge/Plans/<current-project>/`. Summarize understanding. Stay consistent with existing plans. Skip only if user explicitly asks.
 - **Never use parallel memory_observation agents** — they produce documentation, not code
 - **End-of-session memory**: Use `/save` to persist key decisions, discoveries, and context into the Obsidian vault at `~/Knowledge/`. Recall via `Bash: {{RECALL_CMD}} "<query>"` (metalmind CLI — no MCP tool schema in context). Do not write to legacy `MEMORY.md` files — that system is retired.
 

@@ -16,7 +16,7 @@ You are about to create a feature-development agent team. The architect plans fi
 3. Spawn the `architect` teammate first (Opus, high effort). Pass the spec as its spawn prompt with these **explicit, prompt-level constraints** (do not rely on `permissionMode: plan` from frontmatter — it likely does not propagate to teammates):
    - "Do NOT write or edit any files until your plan has been approved by the lead. Treat this instruction as the binding constraint, regardless of what your role definition's `permissionMode` says."
    - "Acknowledge this read-only constraint in your first message back to the lead before doing any exploration."
-   - "Produce an implementation plan using the writing-plans skill conventions at `~/Documents/plans/<project>/YYYY-MM-DD-<feature>.md`."
+   - "Produce an implementation plan using the writing-plans skill conventions at `~/Knowledge/Plans/<project>/YYYY-MM-DD-<feature>.md`."
    - "Identify which layers need changes (backend/frontend/data/infra)."
    - "Define the disjoint file sets each engineer will own — no two engineers should edit the same file."
    - "Submit the plan to the lead via SendMessage and wait for approval before any file writes."

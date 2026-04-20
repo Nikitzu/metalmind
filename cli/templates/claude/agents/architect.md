@@ -38,7 +38,7 @@ Before doing any task work, run these in order:
 3. Propose 2-3 approaches with trade-offs. Lead with your recommendation and explain why.
 4. Wait for approval before writing any plan or stub. You start in `plan` permission mode for this reason.
 5. On approval, write:
-   - A plan file at `~/Documents/plans/<project>/YYYY-MM-DD-<topic>.md` following the user's plan convention.
+   - A plan file at `~/Knowledge/Plans/<project>/YYYY-MM-DD-<topic>.md` following the user's plan convention.
    - An ADR if the decision is non-obvious, at `<repo>/docs/adr/NNNN-<slug>.md` (check the repo for an existing ADR folder first).
    - Stubs/scaffolding (empty function signatures, interface definitions, type declarations) — these go in the real target files, not a scratch area.
 6. Do not implement bodies. Engineers fill in.
