@@ -54,6 +54,8 @@ The wizard walks six steps: prereq check, vault scaffold, Python engines via `uv
 
 ## Requirements
 
+**Today, metalmind only supports [Claude Code](https://claude.ai/code).** The session-start hook, stamped `CLAUDE.md`, and MCP fallback all target Claude Code specifically. Support for other agents (Cursor, Codex, Copilot, Gemini CLI) is on the roadmap but not shipped yet.
+
 - macOS or Linux (WSL2 works; native Windows not supported)
 - [Claude Code CLI](https://claude.ai/code) v2.1+
 - [Docker](https://www.docker.com) running

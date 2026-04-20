@@ -293,6 +293,19 @@ pre {
   color: var(--copper);
   user-select: none;
 }
+.install-scope {
+  margin-top: 0.7rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--fg-muted);
+  max-width: 34rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+.install-scope a {
+  color: var(--copper);
+}
 .install-note {
   margin-top: 0.9rem;
   display: flex;
