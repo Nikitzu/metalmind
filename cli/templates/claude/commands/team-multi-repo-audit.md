@@ -16,19 +16,21 @@ Parse `$ARGUMENTS` as:
 
 1. Validate each repo path exists and is a git repo. If any don't, stop and ask the user.
 
-2. Select the reviewer role:
+2. **Recall prior context.** Run `Bash: {{RECALL_CMD}} "<audit-pattern-keywords>" --deep` to surface prior audits of the same concern, known exceptions, and historical findings from the vault. Include any hits in each reviewer's spawn prompt as "prior context (from vault)" so reviewers know what's already been documented. If the user has native auto-memory off (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`), this is the only place prior context enters the team.
+
+3. Select the reviewer role:
    - Default: `conventions-reviewer` (Sonnet, low effort) for pattern/style audits
    - With `--security` flag: `security-reviewer` (Opus, high effort) for vulnerability audits
 
-3. Spawn one teammate per repo, all of the same selected role. Each teammate's spawn prompt must include:
+4. Spawn one teammate per repo, all of the same selected role. Each teammate's spawn prompt must include:
    - The specific repo path to `cd` into
    - The pattern/concern to audit for (verbatim from the user's argument)
    - Instruction to report findings with file:line citations relative to that repo root
    - Instruction NOT to modify any files — this is a read-only audit
 
-4. Teammates work independently. They should NOT talk to each other — findings should be independent per repo.
+5. Teammates work independently. They should NOT talk to each other — findings should be independent per repo.
 
-5. When all teammates report back, produce a cross-repo synthesis:
+6. When all teammates report back, produce a cross-repo synthesis:
 
    ```
    ## Cross-repo audit: <concern>
@@ -49,4 +51,4 @@ Parse `$ARGUMENTS` as:
    - <actionable next steps ordered by impact>
    ```
 
-6. Wait for the user to say "cleanup team" before releasing resources.
+7. Wait for the user to say "cleanup team" before releasing resources.

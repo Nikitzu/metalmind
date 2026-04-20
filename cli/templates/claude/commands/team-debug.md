@@ -13,7 +13,9 @@ You are about to create a debugging team that uses competing hypotheses. Multipl
 
 2. Extract: reproduction steps, observed behaviour, expected behaviour, environment, recent changes.
 
-3. Spawn three adversary teammates — one of each variant — so the debate covers distinct intellectual angles:
+3. **Recall prior context.** Run `Bash: {{RECALL_CMD}} "<symptom-keywords-or-component>" --deep` to surface prior incidents, postmortems, and related debug notes from the vault. Include any hits in each adversary's spawn prompt as "prior context (from vault)" — especially useful for the `adversary-archaeologist` to cross-reference against git history. If the user has native auto-memory off (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`), this is the only place prior context enters the team.
+
+4. Spawn three adversary teammates — one of each variant — so the debate covers distinct intellectual angles:
    - `adversary` (base) — generalist devil's advocate
    - `adversary-skeptic` — evidence-first, lateral-thinking (environmental/timing/caching/race conditions)
    - `adversary-archaeologist` — history-first, reads git log before source
@@ -25,13 +27,13 @@ You are about to create a debugging team that uses competing hypotheses. Multipl
    - Instructs them to actively attack other teammates' theories once those are shared
    - Instructs them never to propose a fix — only find the cause
 
-4. Wait for each teammate to produce its initial hypothesis.
+5. Wait for each teammate to produce its initial hypothesis.
 
-5. Broadcast all hypotheses to all teammates. Instruct them to debate via SendMessage — the goal is not to win but to converge on the theory with the strongest evidence.
+6. Broadcast all hypotheses to all teammates. Instruct them to debate via SendMessage — the goal is not to win but to converge on the theory with the strongest evidence.
 
-6. Monitor the debate. If teammates anchor or go in circles, intervene with concrete questions ("teammate X, what specific evidence would disprove your theory?").
+7. Monitor the debate. If teammates anchor or go in circles, intervene with concrete questions ("teammate X, what specific evidence would disprove your theory?").
 
-7. When consensus emerges (or persistent disagreement with defined tests to break the tie), produce a summary for the user:
+8. When consensus emerges (or persistent disagreement with defined tests to break the tie), produce a summary for the user:
 
    ```
    ## Debug team consensus: <bug>
@@ -53,6 +55,6 @@ You are about to create a debugging team that uses competing hypotheses. Multipl
    <one action — spawn an engineer to fix, add a test, gather more logs, etc.>
    ```
 
-8. Do not auto-spawn an engineer to fix. Wait for the user to decide.
+9. Do not auto-spawn an engineer to fix. Wait for the user to decide.
 
-9. Wait for the user to say "cleanup team" before releasing resources.
+10. Wait for the user to say "cleanup team" before releasing resources.
