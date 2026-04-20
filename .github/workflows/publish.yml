@@ -41,6 +41,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
+      # npm bundled with Node 20 (10.x) has incomplete OIDC trusted-publisher
+      # support — provenance signing works but the final registry PUT 404s
+      # because auth falls back to the empty token written by setup-node.
+      # Pinning latest npm (11+) fixes the handshake.
+      - name: Upgrade npm for OIDC trusted-publisher support
+        run: npm install -g npm@latest
+
       - name: Install
         run: pnpm install --frozen-lockfile
 
