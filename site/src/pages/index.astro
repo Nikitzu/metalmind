@@ -105,6 +105,15 @@ const description =
               a prompt. We stamp the command into your <code>CLAUDE.md</code> so Claude reaches for
               it naturally. <code>--deep</code> follows backlinks; <code>--expand</code> returns
               hits plus the surrounding graph.
+              <div class="feature-bench">
+                <strong>Measured on the 12-note fake vault</strong> (<a href="https://github.com/Nikitzu/metalmind/tree/main/bench/recall-v0" target="_blank" rel="noopener">bench/recall-v0/</a>):
+                <ul>
+                  <li><strong>hit@5 = 90%</strong> · hit@3 = 85% · hit@1 = 70%</li>
+                  <li>latency <strong>median 45 ms</strong> · p95 87 ms</li>
+                </ul>
+                The tax we avoid is the <em>standing</em> tool-schema cost, not the result tokens —
+                hit payloads are billed like any other bash output.
+              </div>
             </div>
           </div>
           <div class="feature">

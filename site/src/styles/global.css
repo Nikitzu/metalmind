@@ -359,6 +359,27 @@ pre {
   color: var(--fg-muted);
   line-height: 1.55;
 }
+.feature-bench {
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.85rem;
+  background: color-mix(in srgb, var(--copper) 8%, transparent);
+  border-left: 2px solid var(--copper);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  font-size: 0.85rem;
+}
+.feature-bench ul {
+  margin: 0.35rem 0 0.35rem 1.1rem;
+  padding: 0;
+  list-style: disc;
+}
+.feature-bench li {
+  margin: 0.1rem 0;
+}
+.feature-bench a {
+  color: var(--copper);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 /* Flavor toggle (metal chips) */
 .flavor-toggle {

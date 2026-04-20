@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import pkg from '../package.json' with { type: 'json' };
 import { burn } from './commands/burn.js';
 import { doctor } from './commands/doctor.js';
 import { forgeAdd, forgeCreate, forgeDelete, forgeList, forgeRemove } from './commands/forge.js';
@@ -20,7 +21,7 @@ const program = new Command();
 program
   .name('metalmind')
   .description('Unified CLI for Obsidian vault, code graph, and cross-repo intelligence.')
-  .version('0.0.1');
+  .version(pkg.version);
 
 program
   .command('init')
