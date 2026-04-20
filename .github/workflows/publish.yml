@@ -1,0 +1,68 @@
+name: Publish to npm
+
+# Safe wrt GitHub Actions workflow injection:
+#  - No interpolation of github.event.{issue,pull_request,comment,...}.* in run: blocks.
+#  - Tag name comes from the GITHUB_REF_NAME built-in env var, set by GitHub
+#    Actions itself, constrained to valid git ref characters.
+#  - workflow_dispatch inputs are used only in `if:` expressions, not in run:.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run (pack only, do not publish)'
+        required: false
+        default: 'false'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches cli/package.json version
+        if: github.event_name == 'push'
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          PKG_VERSION=$(node -p "require('./cli/package.json').version")
+          TAG_VERSION="${REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag v$TAG_VERSION does not match cli/package.json $PKG_VERSION"
+            exit 1
+          fi
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm --filter metalmind build
+
+      - name: Pack (dry-run check)
+        working-directory: cli
+        run: npm pack --dry-run
+
+      - name: Publish
+        if: github.event_name == 'push' || github.event.inputs.dry_run != 'true'
+        working-directory: cli
+        run: npm publish --provenance --access public
