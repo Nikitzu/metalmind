@@ -10,6 +10,7 @@ describe('aliases', () => {
   let templatesDir: string;
   let aliasesPath: string;
   let zshrcPath: string;
+  let bashrcPath: string;
 
   beforeEach(async () => {
     tmp = await mkdtemp(join(tmpdir(), 'metalmind-aliases-'));
@@ -22,6 +23,7 @@ describe('aliases', () => {
     );
     aliasesPath = join(tmp, '.metalmind', 'aliases.sh');
     zshrcPath = join(tmp, '.zshrc');
+    bashrcPath = join(tmp, '.bashrc');
   });
 
   afterEach(async () => {
@@ -30,7 +32,7 @@ describe('aliases', () => {
 
   it('installs aliases and appends source block to zshrc', async () => {
     await writeFile(zshrcPath, '# user zshrc\nexport PATH=$PATH\n', 'utf8');
-    const result = await installAliases({ templatesDir, aliasesPath, zshrcPath });
+    const result = await installAliases({ templatesDir, aliasesPath, zshrcPath, bashrcPath });
 
     expect(result.wroteAliases).toBe(true);
     expect(result.appendedSource).toBe(true);
@@ -42,7 +44,7 @@ describe('aliases', () => {
   });
 
   it('reports missing zshrc without failing', async () => {
-    const result = await installAliases({ templatesDir, aliasesPath, zshrcPath });
+    const result = await installAliases({ templatesDir, aliasesPath, zshrcPath, bashrcPath });
     expect(result.wroteAliases).toBe(true);
     expect(result.zshrcMissing).toBe(true);
     expect(result.appendedSource).toBe(false);
@@ -50,9 +52,9 @@ describe('aliases', () => {
 
   it('does not double-append source block on re-run', async () => {
     await writeFile(zshrcPath, '', 'utf8');
-    await installAliases({ templatesDir, aliasesPath, zshrcPath });
+    await installAliases({ templatesDir, aliasesPath, zshrcPath, bashrcPath });
     const first = await readFile(zshrcPath, 'utf8');
-    const result = await installAliases({ templatesDir, aliasesPath, zshrcPath });
+    const result = await installAliases({ templatesDir, aliasesPath, zshrcPath, bashrcPath });
     const second = await readFile(zshrcPath, 'utf8');
 
     expect(result.appendedSource).toBe(false);
@@ -61,8 +63,8 @@ describe('aliases', () => {
 
   it('uninstalls aliases and removes source block', async () => {
     await writeFile(zshrcPath, '# user zshrc\n', 'utf8');
-    await installAliases({ templatesDir, aliasesPath, zshrcPath });
-    const result = await uninstallAliases({ aliasesPath, zshrcPath });
+    await installAliases({ templatesDir, aliasesPath, zshrcPath, bashrcPath });
+    const result = await uninstallAliases({ aliasesPath, zshrcPath, bashrcPath });
 
     expect(result.removedAliases).toBe(true);
     expect(result.removedSourceLine).toBe(true);
@@ -73,7 +75,7 @@ describe('aliases', () => {
   });
 
   it('uninstall is no-op when nothing installed', async () => {
-    const result = await uninstallAliases({ aliasesPath, zshrcPath });
+    const result = await uninstallAliases({ aliasesPath, zshrcPath, bashrcPath });
     expect(result.removedAliases).toBe(false);
     expect(result.removedSourceLine).toBe(false);
   });
