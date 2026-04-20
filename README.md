@@ -1,5 +1,8 @@
 # metalmind
 
+[![npm version](https://img.shields.io/npm/v/metalmind.svg?color=%23d4a14a&label=npm)](https://www.npmjs.com/package/metalmind)
+[![license](https://img.shields.io/npm/l/metalmind.svg?color=%23d4a14a)](LICENSE)
+
 **A metalmind for Claude. Store decisions in copper. Tap them when you need them. Claude never meets you cold again.**
 
 Every `claude` invocation is a first meeting. Yesterday's architectural call, the reason you rejected that library, the 40-minute debug you just finished — gone by tomorrow. metalmind is the place Claude stores things, and the way Claude gets them back — without burning context tokens on tool schemas to do it.
@@ -29,19 +32,21 @@ metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the
 
 ## Install
 
-**Today — from source:**
+**Via npm (recommended):**
+
+```bash
+npm install -g metalmind
+metalmind init
+```
+
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.1.1`.
+
+**From source (for hacking on metalmind itself):**
 
 ```bash
 git clone https://github.com/Nikitzu/metalmind.git
 cd metalmind/cli
 pnpm install && pnpm build && pnpm link --global
-metalmind init
-```
-
-**Soon — via npm:**
-
-```bash
-npm install -g metalmind
 metalmind init
 ```
 

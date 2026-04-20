@@ -313,6 +313,14 @@ pre {
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  text-decoration: none;
+}
+.install-chip-live {
+  background: color-mix(in srgb, var(--copper) 14%, transparent);
+  border-color: var(--copper);
+}
+.install-chip-live:hover {
+  background: color-mix(in srgb, var(--copper) 22%, transparent);
 }
 
 /* Button */
