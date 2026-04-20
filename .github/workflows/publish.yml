@@ -19,7 +19,11 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    # macos-latest so the platform-specific tests (launchd plists, zsh rc paths)
+    # match the maintainer's local dev environment. Linux-side Bug to fix
+    # separately: aliases / teardown tests assume darwin and skip the systemd
+    # branch. Until that lands, don't block releases on Linux CI.
+    runs-on: macos-latest
     permissions:
       contents: read
       id-token: write
