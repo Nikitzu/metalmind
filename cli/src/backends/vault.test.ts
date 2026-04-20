@@ -69,6 +69,58 @@ describe('saveToVault', () => {
     expect(existsSync(join(tmp, 'Inbox'))).toBe(true);
   });
 
+  it('dedups against an existing Inbox note with identical body', async () => {
+    const content = 'a decision that should only be saved once';
+    const first = await saveToVault({
+      vaultPath: tmp,
+      content,
+      now: new Date('2026-04-19T10:00:00Z'),
+    });
+    expect(first.deduped).toBe(false);
+
+    const second = await saveToVault({
+      vaultPath: tmp,
+      content,
+      now: new Date('2026-04-19T11:00:00Z'),
+    });
+    expect(second.deduped).toBe(true);
+    expect(second.path).toBe(first.path);
+    expect(second.bytesWritten).toBe(0);
+  });
+
+  it('dedup ignores frontmatter differences — matches by body hash', async () => {
+    const first = await saveToVault({
+      vaultPath: tmp,
+      content: 'shared body text',
+      tags: ['one'],
+      now: new Date('2026-04-19T10:00:00Z'),
+    });
+    const second = await saveToVault({
+      vaultPath: tmp,
+      content: 'shared body text',
+      tags: ['two'],
+      project: 'different',
+      now: new Date('2026-04-19T11:00:00Z'),
+    });
+    expect(second.deduped).toBe(true);
+    expect(second.path).toBe(first.path);
+  });
+
+  it('does not dedup when body differs', async () => {
+    const first = await saveToVault({
+      vaultPath: tmp,
+      content: 'body A',
+      now: new Date('2026-04-19T10:00:00Z'),
+    });
+    const second = await saveToVault({
+      vaultPath: tmp,
+      content: 'body B',
+      now: new Date('2026-04-19T10:00:01Z'),
+    });
+    expect(second.deduped).toBe(false);
+    expect(second.path).not.toBe(first.path);
+  });
+
   it('includes project frontmatter when supplied', async () => {
     const result = await saveToVault({
       vaultPath: tmp,

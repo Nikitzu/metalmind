@@ -2,7 +2,12 @@ import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import { teardown } from '../install/teardown.js';
 
-export async function uninstall(): Promise<void> {
+export interface UninstallOptions {
+  yes?: boolean;
+  purge?: boolean;
+}
+
+export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
   intro('metalmind uninstall');
 
   const config = await readConfig();
@@ -23,46 +28,63 @@ export async function uninstall(): Promise<void> {
   log.info('  - delete ~/.metalmind/config.json');
   log.info('Will NOT touch: your notes, ~/.claude/agents, ~/.claude/rules, custom content in your CLAUDE.md files');
 
-  const proceed = await confirm({ message: 'Proceed?', initialValue: false });
-  if (isCancel(proceed) || !proceed) {
-    cancel('aborted');
-    return;
-  }
+  let removeSerena: boolean;
+  let removeGraphify: boolean;
+  let removeVaultRag: boolean;
+  let removeVolumes: boolean;
 
-  const removeSerena = await confirm({
-    message: 'Also uninstall Serena (uv tool uninstall)?',
-    initialValue: false,
-  });
-  if (isCancel(removeSerena)) {
-    cancel('aborted');
-    return;
-  }
+  if (opts.yes) {
+    log.info(`Non-interactive (--yes): removeVaultRag=true, removeSerena=false, removeGraphify=false, removeVolumes=${opts.purge === true}`);
+    removeSerena = false;
+    removeGraphify = false;
+    removeVaultRag = true;
+    removeVolumes = opts.purge === true;
+  } else {
+    const proceed = await confirm({ message: 'Proceed?', initialValue: false });
+    if (isCancel(proceed) || !proceed) {
+      cancel('aborted');
+      return;
+    }
 
-  const removeGraphify = await confirm({
-    message: 'Also uninstall graphify (uv tool uninstall)?',
-    initialValue: false,
-  });
-  if (isCancel(removeGraphify)) {
-    cancel('aborted');
-    return;
-  }
+    const s = await confirm({
+      message: 'Also uninstall Serena (uv tool uninstall)?',
+      initialValue: false,
+    });
+    if (isCancel(s)) {
+      cancel('aborted');
+      return;
+    }
+    removeSerena = s;
 
-  const removeVaultRag = await confirm({
-    message: 'Also uninstall metalmind-vault-rag (uv tool uninstall — the watcher, indexer, and HTTP recall server)?',
-    initialValue: true,
-  });
-  if (isCancel(removeVaultRag)) {
-    cancel('aborted');
-    return;
-  }
+    const g = await confirm({
+      message: 'Also uninstall graphify (uv tool uninstall)?',
+      initialValue: false,
+    });
+    if (isCancel(g)) {
+      cancel('aborted');
+      return;
+    }
+    removeGraphify = g;
 
-  const removeVolumes = await confirm({
-    message: 'Remove Docker volumes (Qdrant data, Ollama models ~274 MB)?',
-    initialValue: false,
-  });
-  if (isCancel(removeVolumes)) {
-    cancel('aborted');
-    return;
+    const v = await confirm({
+      message: 'Also uninstall metalmind-vault-rag (uv tool uninstall — the watcher, indexer, and HTTP recall server)?',
+      initialValue: true,
+    });
+    if (isCancel(v)) {
+      cancel('aborted');
+      return;
+    }
+    removeVaultRag = v;
+
+    const vol = await confirm({
+      message: 'Remove Docker volumes (Qdrant data, Ollama models ~274 MB)?',
+      initialValue: false,
+    });
+    if (isCancel(vol)) {
+      cancel('aborted');
+      return;
+    }
+    removeVolumes = vol;
   }
 
   try {

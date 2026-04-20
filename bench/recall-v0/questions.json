@@ -1,0 +1,122 @@
+[
+  {
+    "id": "Q01",
+    "query": "how do operators authenticate into the console",
+    "expected": ["auth-model.md"],
+    "tags": ["auth", "reference"]
+  },
+  {
+    "id": "Q02",
+    "query": "why did we pick Postgres over CockroachDB",
+    "expected": ["decision-postgres-over-cockroach.md"],
+    "tags": ["decision", "db"]
+  },
+  {
+    "id": "Q03",
+    "query": "what happened on Valentine's Day with the drones",
+    "expected": ["incident-2026-02-14.md"],
+    "tags": ["incident"]
+  },
+  {
+    "id": "Q04",
+    "query": "is row level security allowed in Postgres",
+    "expected": ["rls-ban.md"],
+    "tags": ["decision", "db", "security"]
+  },
+  {
+    "id": "Q05",
+    "query": "can we use RLS for multi-tenant isolation",
+    "expected": ["rls-ban.md"],
+    "tags": ["decision", "semantic-paraphrase"]
+  },
+  {
+    "id": "Q06",
+    "query": "where do we deploy the primary region",
+    "expected": ["deployment-targets.md"],
+    "tags": ["ops"]
+  },
+  {
+    "id": "Q07",
+    "query": "observability stack current choice",
+    "expected": ["observability-choice.md"],
+    "tags": ["decision", "ops"]
+  },
+  {
+    "id": "Q08",
+    "query": "did we drop Honeycomb",
+    "expected": ["observability-choice.md"],
+    "tags": ["decision", "semantic-paraphrase"]
+  },
+  {
+    "id": "Q09",
+    "query": "pricing for enterprise tier customers",
+    "expected": ["pricing-tiers.md"],
+    "tags": ["pricing"]
+  },
+  {
+    "id": "Q10",
+    "query": "who owns the Edge controller",
+    "expected": ["team.md"],
+    "tags": ["team"]
+  },
+  {
+    "id": "Q11",
+    "query": "are we hiring right now",
+    "expected": ["hiring-freeze.md"],
+    "tags": ["company"]
+  },
+  {
+    "id": "Q12",
+    "query": "what SDK versions are pinned",
+    "expected": ["sdk-versions.md"],
+    "tags": ["reference"]
+  },
+  {
+    "id": "Q13",
+    "query": "openfeature node version to use",
+    "expected": ["sdk-versions.md"],
+    "tags": ["semantic-paraphrase"]
+  },
+  {
+    "id": "Q14",
+    "query": "what is Project Wingspan",
+    "expected": ["project-wingspan.md"],
+    "tags": ["project"]
+  },
+  {
+    "id": "Q15",
+    "query": "multi-drone swarm delivery coordination",
+    "expected": ["project-wingspan.md"],
+    "tags": ["semantic-paraphrase"]
+  },
+  {
+    "id": "Q16",
+    "query": "what language is the dispatcher written in",
+    "expected": ["tech-stack.md"],
+    "tags": ["reference"]
+  },
+  {
+    "id": "Q17",
+    "query": "session cookie name for operators",
+    "expected": ["auth-model.md"],
+    "tags": ["semantic-paraphrase"]
+  },
+  {
+    "id": "Q18",
+    "query": "mean time to recover from the emergency land incident",
+    "expected": ["incident-2026-02-14.md"],
+    "tags": ["incident"]
+  },
+  {
+    "id": "Q19",
+    "query": "DR region recovery point objective",
+    "expected": ["deployment-targets.md"],
+    "tags": ["ops"]
+  },
+  {
+    "id": "Q20",
+    "query": "how much did the Valentine's incident cost",
+    "expected": ["incident-2026-02-14.md"],
+    "tags": ["incident"]
+  }
+]

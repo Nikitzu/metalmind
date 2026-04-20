@@ -1,6 +1,6 @@
 ## Memory — metalmind (recall BEFORE you think)
 
-Vault at `{{VAULT_PATH}}` — auto-indexed into local Qdrant; recall goes through the `metalmind` CLI (no MCP tools registered, zero token cost).
+Vault at `{{VAULT_PATH}}` — auto-indexed into local Qdrant; recall goes through the `metalmind` CLI over loopback HTTP. No MCP tool schema is registered, so the standing context budget stays clean; query results are billed like any other bash output.
 
 **Recall FIRST — before any non-trivial task.** The #1 failure mode is re-deriving what's already in the vault. Run `Bash: {{RECALL_CMD}} "<query>"` before:
 

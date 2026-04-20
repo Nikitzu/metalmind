@@ -39,7 +39,7 @@ function stripFrontmatter(raw: string): string {
 }
 
 function stripLeadingHeading(body: string): string {
-  return body.replace(/^#\s+.*\n/, '');
+  return body.replace(/^\s*#\s+.*\n?/, '');
 }
 
 async function findExistingByHash(inbox: string, hash: string): Promise<string | null> {
@@ -48,7 +48,7 @@ async function findExistingByHash(inbox: string, hash: string): Promise<string |
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
     const existing = await readFile(join(inbox, entry.name), 'utf8');
-    const body = stripLeadingHeading(stripFrontmatter(existing)).trim();
+    const body = stripLeadingHeading(stripFrontmatter(existing).trimStart()).trim();
     if (contentHash(body) === hash) {
       return join(inbox, entry.name);
     }

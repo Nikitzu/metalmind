@@ -96,6 +96,6 @@ export async function pewterReindex(): Promise<void> {
 }
 
 // Aluminum — alias to uninstall
-export async function aluminumWipe(): Promise<void> {
-  await uninstall();
+export async function aluminumWipe(opts: { yes?: boolean; purge?: boolean } = {}): Promise<void> {
+  await uninstall(opts);
 }

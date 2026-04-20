@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildRouteMatchEdges, extractRoutes, parseJs, parsePy } from './routes.js';
+import { buildRouteMatchEdges, canonicalizePath, extractRoutes, parseJs, parsePy } from './routes.js';
 
 describe('route parsers', () => {
   it('parseJs finds Express-style handlers', () => {
@@ -128,6 +128,56 @@ def health(): ...
       },
     ];
     expect(buildRouteMatchEdges(routes)).toEqual([]);
+  });
+});
+
+describe('canonicalizePath', () => {
+  it('maps every param notation to :param so cross-repo edges bucket together', () => {
+    const inputs = [
+      '/users/:id',
+      '/users/{id}',
+      '/users/<int:id>',
+      '/users/${id}',
+    ];
+    const canon = inputs.map(canonicalizePath);
+    expect(new Set(canon).size).toBe(1);
+    expect(canon[0]).toBe('/users/:param');
+  });
+
+  it('prepends leading slash and strips query + trailing slash', () => {
+    expect(canonicalizePath('users/:id/')).toBe('/users/:param');
+    expect(canonicalizePath('/users/:id?foo=bar')).toBe('/users/:param');
+  });
+
+  it('preserves root', () => {
+    expect(canonicalizePath('/')).toBe('/');
+  });
+
+  it('buildRouteMatchEdges links FastAPI handler to Express caller via canonical path', () => {
+    const edges = buildRouteMatchEdges([
+      {
+        method: 'GET',
+        path: '/users/{id}',
+        kind: 'handler',
+        framework: 'fastapi',
+        file: 'api.py',
+        repo: '/py-service',
+      },
+      {
+        method: 'GET',
+        path: '/users/:id',
+        kind: 'caller',
+        framework: 'js',
+        file: 'client.ts',
+        repo: '/js-client',
+      },
+    ]);
+    expect(edges).toHaveLength(1);
+    expect(edges[0]).toMatchObject({
+      source: '/js-client::client.ts',
+      target: '/py-service::api.py',
+      method: 'GET',
+    });
   });
 });
 

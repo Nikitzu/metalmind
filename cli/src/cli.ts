@@ -48,7 +48,12 @@ program
   .description('Pulse-check the install — prereqs, config, MCP state (Seeker)')
   .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
   .action((cmdOpts: { deep?: boolean }) => doctor('pulse', { deep: cmdOpts.deep }));
-program.command('uninstall').description('Reversible teardown').action(uninstall);
+program
+  .command('uninstall')
+  .description('Reversible teardown')
+  .option('-y, --yes', 'Non-interactive: accept defaults (keeps volumes, uninstalls vault-rag, leaves Serena/graphify)')
+  .option('--purge', 'Also remove Docker volumes (Qdrant data, Ollama models). Only takes effect with --yes or after prompt.')
+  .action((cmdOpts: { yes?: boolean; purge?: boolean }) => uninstall(cmdOpts));
 
 function attachStoreFlags<T extends Command>(cmd: T): T {
   return cmd
@@ -215,7 +220,9 @@ burnCmd
 burnCmd
   .command('aluminum')
   .description('Burn Aluminum — wipe metalmind install (alias for uninstall)')
-  .action(aluminumWipe);
+  .option('-y, --yes', 'Non-interactive: accept defaults')
+  .option('--purge', 'Also remove Docker volumes (with --yes)')
+  .action((cmdOpts: { yes?: boolean; purge?: boolean }) => aluminumWipe(cmdOpts));
 
 burnCmd
   .command('brass')
@@ -248,7 +255,12 @@ program
   .description('Classic alias: rebuild code graph for current repo')
   .action(pewterReindex);
 
-program.command('wipe').description('Classic alias: uninstall metalmind').action(aluminumWipe);
+program
+  .command('wipe')
+  .description('Classic alias: uninstall metalmind')
+  .option('-y, --yes', 'Non-interactive: accept defaults')
+  .option('--purge', 'Also remove Docker volumes (with --yes)')
+  .action((cmdOpts: { yes?: boolean; purge?: boolean }) => aluminumWipe(cmdOpts));
 
 program
   .command('stamp')

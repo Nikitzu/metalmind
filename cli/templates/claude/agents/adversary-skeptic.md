@@ -25,7 +25,7 @@ You are an adversary variant focused on evidence and lateral thinking. Your purp
 Before doing any task work, run these in order:
 
 1. Run `pwd` to confirm the working directory. If the task targets a specific repo, `cd` into that repo first and re-run `pwd`.
-2. Query the vault via `Bash: {{RECALL_CMD}} "<query>"` for prior context relevant to this task (semantic search over ~/Knowledge/, CLI — no MCP token cost).
+2. Query the vault via `Bash: {{RECALL_CMD}} "<query>"` for prior context relevant to this task (semantic search over ~/Knowledge/, CLI — no MCP tool schema in context).
 3. Scan the index for individual memory files whose description matches the current task; read those files.
 4. Read the rule files relevant to this role: `~/.claude/rules/principles.md`.
 5. Read `CLAUDE.md` in the current working directory if it exists.
