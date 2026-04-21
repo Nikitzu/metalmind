@@ -44,24 +44,24 @@ export async function installVaultRag(
   let installed = false;
   let alreadyInstalled = false;
 
-  const target = (opts.extras && opts.extras.length > 0)
-    ? `${VAULT_RAG_PACKAGE}[${opts.extras.join(',')}]`
-    : VAULT_RAG_PACKAGE;
+  // uv `tool install --from <path> <pkg>[extra]` errors with "conflicts with
+  // install request". The working incantation for a local path + extras is
+  // `tool install <path>[extra]` (positional, no --from). Without extras, the
+  // --from + package-name form stays — it's what every metalmind release since
+  // v0.1.0 has used.
+  const hasExtras = (opts.extras?.length ?? 0) > 0;
+  const forceFlags = opts.reinstall || hasExtras ? ['--reinstall', '--force'] : [];
+  const args = hasExtras
+    ? ['tool', 'install', ...forceFlags, `${packageDir}[${opts.extras!.join(',')}]`]
+    : ['tool', 'install', ...forceFlags, '--from', packageDir, VAULT_RAG_PACKAGE];
 
-  if (!opts.reinstall && (await isVaultRagInstalled()) && !opts.extras?.length) {
+  if (!opts.reinstall && !hasExtras && (await isVaultRagInstalled())) {
     alreadyInstalled = true;
   } else if (!opts.skipToolInstall) {
-    const args = [
-      'tool',
-      'install',
-      ...(opts.reinstall || opts.extras?.length ? ['--reinstall', '--force'] : []),
-      '--from',
-      packageDir,
-      target,
-    ];
     const res = await runCommand('uv', args, { timeoutMs: 900_000 });
     if (!res.ok) {
-      throw new Error(`uv tool install ${target} failed: ${res.stderr || res.stdout}`);
+      const label = hasExtras ? `${VAULT_RAG_PACKAGE}[${opts.extras!.join(',')}]` : VAULT_RAG_PACKAGE;
+      throw new Error(`uv tool install ${label} failed: ${res.stderr || res.stdout}`);
     }
     installed = true;
   }

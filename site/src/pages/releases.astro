@@ -70,6 +70,23 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.2.3</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong><code>uv tool install</code> syntax for the rerank extra.</strong>
+              <code>--from &lt;path&gt; metalmind-vault-rag[rerank]</code> is not valid uv
+              syntax. Switched to the positional <code>&lt;path&gt;[rerank]</code> form when
+              extras are requested; the no-extras path stays on <code>--from &lt;path&gt;
+              metalmind-vault-rag</code>. Caught live on first bootstrap run.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.2.2</h2>
             <span class="release-date">2026-04-21</span>
           </header>

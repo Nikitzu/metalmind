@@ -6,6 +6,13 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.2.3 — 2026-04-21
+
+### Fixed
+- **`uv tool install` syntax for the rerank extra.** `--from <path> metalmind-vault-rag[rerank]` is not valid uv syntax — uv rejects "path + extras-on-named-package" as conflicting. Switched to the positional `<path>[rerank]` form when extras are requested; the no-extras path (every release ≤ v0.2.0 used this) stays on `--from <path> metalmind-vault-rag`. Caught live on first bootstrap run.
+
+---
+
 ## 0.2.2 — 2026-04-21
 
 ### Fixed
