@@ -12,6 +12,10 @@ export interface InstallVaultRagOptions {
   templatesDir?: string;
   skipToolInstall?: boolean;
   reinstall?: boolean;
+  /** Python-side optional extras to enable (e.g. `['rerank']` pulls torch +
+   *  FlagEmbedding). Forwarded to `uv tool install` as
+   *  `metalmind-vault-rag[rerank,...]`. Unknown extras raise at install. */
+  extras?: string[];
 }
 
 export interface InstallVaultRagResult {
@@ -40,20 +44,24 @@ export async function installVaultRag(
   let installed = false;
   let alreadyInstalled = false;
 
-  if (!opts.reinstall && (await isVaultRagInstalled())) {
+  const target = (opts.extras && opts.extras.length > 0)
+    ? `${VAULT_RAG_PACKAGE}[${opts.extras.join(',')}]`
+    : VAULT_RAG_PACKAGE;
+
+  if (!opts.reinstall && (await isVaultRagInstalled()) && !opts.extras?.length) {
     alreadyInstalled = true;
   } else if (!opts.skipToolInstall) {
     const args = [
       'tool',
       'install',
-      ...(opts.reinstall ? ['--reinstall', '--force'] : []),
+      ...(opts.reinstall || opts.extras?.length ? ['--reinstall', '--force'] : []),
       '--from',
       packageDir,
-      VAULT_RAG_PACKAGE,
+      target,
     ];
-    const res = await runCommand('uv', args, { timeoutMs: 300_000 });
+    const res = await runCommand('uv', args, { timeoutMs: 900_000 });
     if (!res.ok) {
-      throw new Error(`uv tool install ${VAULT_RAG_PACKAGE} failed: ${res.stderr || res.stdout}`);
+      throw new Error(`uv tool install ${target} failed: ${res.stderr || res.stdout}`);
     }
     installed = true;
   }

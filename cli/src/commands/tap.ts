@@ -1,5 +1,6 @@
 import { log } from '@clack/prompts';
 import { type RecallTier, recall } from '../backends/recall.js';
+import { ensureRerankExtra } from '../backends/rerank-bootstrap.js';
 import { listRecentNotes } from '../backends/vault-browse.js';
 import { readConfig } from '../config.js';
 
@@ -49,6 +50,20 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
 
   const tier = resolveTier(opts, config.recall.defaultTier);
   const showMeta = opts.verbose ?? config.verbose;
+
+  if (opts.rerank) {
+    // One-time bootstrap: installs `metalmind-vault-rag[rerank]` and kicks the
+    // watcher so the new process picks up FlagEmbedding. No-op after the first
+    // successful call. Falls through silently if the watcher HTTP endpoint is
+    // unreachable (stdio MCP fallback still works without rerank).
+    const ready = await ensureRerankExtra({
+      httpEndpoint: config.recall.httpEndpoint,
+      onProgress: (msg) => log.info(msg),
+    });
+    if (!ready && showMeta) {
+      log.warn('rerank bootstrap incomplete — proceeding without rerank.');
+    }
+  }
 
   try {
     const result = await recall({

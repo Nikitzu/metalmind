@@ -30,6 +30,19 @@ DEFAULT_MODEL = os.environ.get("METALMIND_RERANKER_MODEL", "BAAI/bge-reranker-v2
 DEFAULT_OVERFETCH = max(1, int(os.environ.get("METALMIND_RERANK_OVERFETCH", "4")))
 
 
+def is_dep_available() -> bool:
+    """Is the optional FlagEmbedding dependency importable in this process?
+
+    Does NOT trigger a model download — just tells the CLI whether the
+    package has been installed with the `[rerank]` extra. Used by the
+    `/rerank/status` endpoint so `metalmind tap copper --rerank` can
+    auto-install + restart the watcher on first use instead of asking the
+    user to run a weird `uv tool install ...` command by hand.
+    """
+    import importlib.util
+    return importlib.util.find_spec("FlagEmbedding") is not None
+
+
 def _load_reranker():
     """Import + construct the reranker once, memoized. Returns None on failure."""
     global _RERANKER, _RERANKER_FAILED

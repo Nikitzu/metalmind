@@ -35,6 +35,13 @@ class _Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         if self.path == "/health":
             self._send_json(200, {"ok": True, "service": "metalmind-vault-rag"})
+        elif self.path == "/rerank/status":
+            # CLI probes this before issuing a `--rerank` call. If `available`
+            # is false, the CLI auto-installs the [rerank] extra and restarts
+            # the watcher so the user never sees a raw `uv tool install …`
+            # command in docs.
+            from . import rerank as rerank_mod
+            self._send_json(200, {"available": rerank_mod.is_dep_available()})
         else:
             self._send_json(404, {"error": "not found"})
 

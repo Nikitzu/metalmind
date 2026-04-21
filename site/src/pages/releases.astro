@@ -70,6 +70,37 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.2.1</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <p>
+            UX fix on top of 0.2.0: stop asking users to run a weird-looking
+            <code>uv tool install</code> by hand. First
+            <code><span class="scadrial-only">metalmind tap copper --rerank</span><span class="classic-only">metalmind recall --rerank</span></code>
+            now bootstraps itself.
+          </p>
+          <h3>Changed</h3>
+          <ul>
+            <li>
+              <strong>Reranker bootstrap is now auto-on-first-use.</strong> When you run
+              <code><span class="scadrial-only">tap copper --rerank</span><span class="classic-only">recall --rerank</span></code>,
+              the CLI probes a new
+              <code>/rerank/status</code> endpoint on the watcher. If
+              <code>FlagEmbedding</code> is missing, the CLI runs the
+              <code>[rerank]</code> extra install itself, restarts the watcher
+              (<code>launchctl</code> on macOS, <code>systemctl</code> on Linux), polls until
+              the new process is ready, then proceeds with the rerank call. One-time
+              ~1.2 GB download; zero-friction from then on.
+            </li>
+            <li>
+              <code>installVaultRag</code> (internal) gains an <code>extras</code> option;
+              watcher restart extracted into <code>watcher-restart.ts</code> for reuse.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.2.0</h2>
             <span class="release-date">2026-04-21</span>
           </header>
@@ -80,14 +111,13 @@ const description = 'Release notes and changelog for metalmind — one entry per
           <h3>Added</h3>
           <ul>
             <li>
-              <strong>Reranker tier (<code>tap copper --rerank</code>).</strong> Cross-encoder
+              <strong>Reranker tier (<code><span class="scadrial-only">tap copper --rerank</span><span class="classic-only">recall --rerank</span></code>).</strong> Cross-encoder
               (<code>BAAI/bge-reranker-v2-m3</code>) overfetches 4× from Qdrant and re-scores
               before returning top-k. Closes the <strong>hit@1=70% → hit@5=90%</strong> gap the
-              recall-v0 bench exposed. Opt-in; first call downloads ~500 MB via
-              <code>FlagEmbedding</code>. Enable with
-              <code>uv tool install 'metalmind-vault-rag[rerank]'</code>. Graceful fallback if
-              the dep is absent; themed first-load message when
-              <code>METALMIND_FLAVOR=scadrial</code>.
+              recall-v0 bench exposed. Opt-in; first call downloads ~500 MB. Graceful
+              fallback if the dep is absent; themed first-load message when
+              <code>METALMIND_FLAVOR=scadrial</code>. <em>(0.2.0 required a manual uv
+              install — 0.2.1 bootstraps automatically. See 0.2.1 below.)</em>
             </li>
             <li>
               <strong><code>bench/recall-v0/ --rerank</code>.</strong> Same runner, rerank mode
