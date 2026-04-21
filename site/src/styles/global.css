@@ -596,6 +596,45 @@ pre {
   color: var(--fg);
 }
 
+/* Homepage on-this-page TOC strip. Header-level nav stays identical across
+ * pages (forge · releases · github); section-level anchors live here, only
+ * on the long scroll-heavy page where they're useful. */
+.page-toc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem 1rem;
+  margin: 1.5rem auto 0;
+  padding: 0.7rem 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--fg-muted) 20%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--fg-muted) 20%, transparent);
+  font-size: 0.82rem;
+}
+.page-toc-label {
+  color: var(--fg-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-right: 0.3rem;
+}
+.page-toc ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+}
+.page-toc a {
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+.page-toc a:hover {
+  color: var(--copper);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Sibling-feature card: points at /forge, not a memory feature itself */
 .feature-sibling {
   border-style: dashed;
