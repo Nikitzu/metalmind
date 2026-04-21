@@ -19,17 +19,30 @@ function endpoint(override?: string | null): string {
   return override || process.env.METALMIND_RECALL_HTTP || DEFAULT_HTTP_ENDPOINT;
 }
 
-async function rerankStatus(ep: string): Promise<boolean | null> {
+type RerankStatus = 'available' | 'unavailable' | 'stale-watcher' | 'no-watcher';
+
+/** Distinguishes the failure modes the bootstrap has to react to differently:
+ *  - `available`        → nothing to do
+ *  - `unavailable`      → watcher is current, but the `[rerank]` extra missing
+ *  - `stale-watcher`    → watcher answered 404 on /rerank/status — Python
+ *                         package predates v0.2.1. Reinstalling with the
+ *                         `[rerank]` extra upgrades the package *and* adds the
+ *                         dep in one shot.
+ *  - `no-watcher`       → fetch failed (nothing listening). Don't install
+ *                         behind the user's back if we can't see the daemon.
+ */
+async function rerankStatus(ep: string): Promise<RerankStatus> {
   try {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), STATUS_TIMEOUT_MS);
     const res = await fetch(`${ep}/rerank/status`, { signal: controller.signal });
     clearTimeout(t);
-    if (!res.ok) return null;
+    if (res.status === 404) return 'stale-watcher';
+    if (!res.ok) return 'no-watcher';
     const body = (await res.json()) as { available?: boolean };
-    return typeof body.available === 'boolean' ? body.available : null;
+    return body.available === true ? 'available' : 'unavailable';
   } catch {
-    return null;
+    return 'no-watcher';
   }
 }
 
@@ -46,14 +59,23 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
   const progress = opts.onProgress ?? (() => {});
 
   const initial = await rerankStatus(ep);
-  if (initial === true) return true;
-  if (initial === null) {
-    // HTTP endpoint unreachable. Don't install behind the user's back if we
-    // can't see the watcher — they may be running the stdio path.
+  if (initial === 'available') return true;
+  if (initial === 'no-watcher') {
+    // Nothing listening on the recall endpoint — likely a cold CLI with no
+    // watcher service at all. Don't install blindly; let the stdio fallback
+    // handle the recall and return.
     return false;
   }
 
-  progress('enabling reranker — one-time install (~1.2 GB: torch + FlagEmbedding + model on first use)…');
+  if (initial === 'stale-watcher') {
+    progress(
+      'watcher predates the reranker feature — upgrading the vault-rag package and enabling the extra (one-time ~1.2 GB download)…',
+    );
+  } else {
+    progress(
+      'enabling reranker — one-time install (~1.2 GB: torch + FlagEmbedding + model on first use)…',
+    );
+  }
   await installVaultRag({ extras: ['rerank'] });
   progress('restarting watcher so the new dep is picked up…');
   const outcome = await restartWatcher();
@@ -68,7 +90,7 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, POST_RESTART_INTERVAL_MS));
     const after = await rerankStatus(ep);
-    if (after === true) {
+    if (after === 'available') {
       progress('reranker ready.');
       return true;
     }

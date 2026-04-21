@@ -6,6 +6,13 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.2.2 — 2026-04-21
+
+### Fixed
+- **Rerank bootstrap now handles stale Python packages.** Upgrade path between 0.1.x / 0.2.0 / 0.2.1 Python-side watchers: the `/rerank/status` endpoint doesn't exist in older packages, so a 404 response was misread as "watcher unreachable" and the bootstrap silently skipped. 0.2.2 distinguishes 404 (Python package predates the endpoint — run the `[rerank]` reinstall, which also upgrades the package) from connection-refused (no watcher running — stay hands-off).
+
+---
+
 ## 0.2.1 — 2026-04-21
 
 UX fix on top of 0.2.0: stop asking users to run a weird-looking `uv tool install 'metalmind-vault-rag[rerank]'` command by hand. First `metalmind tap copper --rerank` now bootstraps itself.
