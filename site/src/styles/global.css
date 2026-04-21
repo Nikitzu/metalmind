@@ -563,6 +563,39 @@ pre {
   text-underline-offset: 2px;
 }
 
+/* Scadrial-mode hero explainer — one short paragraph the first-time visitor
+ * sees if they stay on the themed default. Points them at Classic without
+ * demanding they use it. Hidden in Classic by the existing scadrial-only rules. */
+.hero-flavor-note {
+  margin: 0.8rem 0 0 0;
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  border-left: 2px solid color-mix(in srgb, var(--copper) 55%, transparent);
+  background: color-mix(in srgb, var(--copper) 5%, transparent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+.hero-flavor-note em {
+  color: var(--copper);
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.hero-flavor-note code {
+  font-size: 0.78rem;
+}
+.inline-toggle {
+  color: var(--copper);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+.inline-toggle:hover {
+  color: var(--fg);
+}
+
 /* Sibling-feature card: points at /forge, not a memory feature itself */
 .feature-sibling {
   border-style: dashed;
