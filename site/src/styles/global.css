@@ -543,6 +543,26 @@ pre {
   color: var(--fg);
 }
 
+/* Sustainability list (same shape as anti-persona, slightly different accent) */
+.sustainability {
+  margin: 0.6rem 0 0 1.2rem;
+  padding: 0;
+  list-style: disc;
+  color: var(--fg-muted);
+}
+.sustainability li {
+  margin: 0.55rem 0;
+  line-height: 1.6;
+}
+.sustainability strong {
+  color: var(--fg);
+}
+.sustainability a {
+  color: var(--copper);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Flavor toggle (metal chips) */
 .flavor-toggle {
   display: inline-flex;

@@ -34,6 +34,7 @@ const description =
           <a href="#beyond-title">what</a>
           <a href="#anti-mcp-title">why CLI</a>
           <a href="#anti-persona-title">not for you?</a>
+          <a href="#sustainability-title">sustainability</a>
           <a href="#commands">commands</a>
           <a href="#demo">flow</a>
           <a href="#how">under</a>
@@ -238,6 +239,19 @@ const description =
           <li><strong>You don't want Docker running.</strong> Qdrant + Ollama embed-stack is local but containerized. <code>sqlite-vec</code> backend is on the roadmap.</li>
           <li><strong>You want a 2-minute install.</strong> The wizard takes ~15 minutes the first time — prereqs, embed-model download, first-index. Worth it for daily users; overkill for evaluation.</li>
           <li><strong>You're a team of 5+ with shared memory needs.</strong> metalmind is single-dev by design. The forge supports many repos per dev; it does not sync vaults between devs.</li>
+        </ul>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="sustainability-title">
+        <h2 id="sustainability-title">Will this still be around?</h2>
+        <p>Fair question for any solo-maintainer tool. The sustainability story:</p>
+        <ul class="sustainability">
+          <li><strong>Your notes outlive metalmind.</strong> The vault is plain markdown in your own <code>~/Knowledge/</code> directory. If this project goes unmaintained tomorrow, you keep everything — Obsidian still opens the files, <code>grep</code> still searches them, <code>git</code> still versions them. metalmind is the layer that makes Claude use them well, not the layer that holds them hostage.</li>
+          <li><strong>No cloud, no accounts, no phone-home.</strong> Embeddings, indexing, recall, code graphs — all local. There is no metalmind backend to shut down, no API quota to throttle, no subscription to lapse. The only network call is the one you were already making to Claude.</li>
+          <li><strong>Reversible in one command.</strong> <code>metalmind uninstall</code> stops the watcher, removes Docker containers, strips the sentinel-bounded blocks from your <code>CLAUDE.md</code> files, and clears shell aliases. Your vault is never touched. Try it — then reinstall if you like it.</li>
+          <li><strong>MIT licensed.</strong> Fork it, vendor it, swap the embedding backend. Architecture decisions are documented in <a href="https://github.com/Nikitzu/metalmind/tree/main/docs" target="_blank" rel="noopener"><code>docs/</code></a>, <a href="https://github.com/Nikitzu/metalmind/tree/main/bench" target="_blank" rel="noopener"><code>bench/</code></a>, and <a href="/releases">CHANGELOG</a> specifically so a contributor — or a future-you — can keep it running.</li>
         </ul>
       </section>
 
