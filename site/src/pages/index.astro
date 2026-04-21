@@ -38,6 +38,7 @@ const description =
           <a href="#commands">commands</a>
           <a href="#demo">flow</a>
           <a href="#how">under</a>
+          <a href="/forge">forge</a>
           <a href="/releases">releases</a>
           <a href="https://github.com/Nikitzu/metalmind">github</a>
         </nav>
@@ -90,8 +91,9 @@ const description =
       <section class="container" aria-labelledby="beyond-title">
         <h2 id="beyond-title">What it adds</h2>
         <p>
-          Seven things that survive your <code>claude</code> ending, start fresh, and an eighth that
-          lets you take it all back. One CLI, one verb per concern.
+          Persistent memory that survives your <code>claude</code> ending. One CLI, one verb per
+          concern. Code-graph capabilities live on a <a href="/forge">dedicated forge page</a> —
+          same project, separate pitch.
         </p>
         <div class="features">
           <div class="feature">
@@ -125,39 +127,6 @@ const description =
             </div>
           </div>
           <div class="feature">
-            <div class="feature-title">Sight across repos, not just one</div>
-            <div class="feature-body">
-              <code><span class="scadrial-only">burn bronze "&lt;query&gt;"</span><span class="classic-only">graph "&lt;query&gt;"</span></code>
-              queries a code graph of every repo in your
-              <code><span class="scadrial-only">forge</span><span class="classic-only">group</span></code>.
-              HTTP-route-match edges connect caller → handler <em>across services</em> in three
-              tiers: OpenAPI specs on the metalmind shelf (never inside your repos), Java
-              RestTemplate/WebClient/Feign callers, and URL literals as an opt-in fallback. Every
-              inferred edge carries <code>INFERRED_NAME</code> / <code>INFERRED_ROUTE</code> /
-              <code>INFERRED_URL_LITERAL</code> provenance so Claude can trust-grade what it reads.
-            </div>
-          </div>
-          <div class="feature">
-            <div class="feature-title">Symbol-aware navigation and rename</div>
-            <div class="feature-body">
-              <code><span class="scadrial-only">burn iron &lt;symbol&gt;</span><span class="classic-only">symbol &lt;symbol&gt;</span></code>
-              returns a symbol's neighbors — who calls it, what it calls, its module — in one pass.
-              <code><span class="scadrial-only">burn steel &lt;old&gt; &lt;new&gt;</span><span class="classic-only">rename &lt;old&gt; &lt;new&gt;</span></code>
-              drives a coordinated rename through Serena's LSP backend. One verb per concern; no
-              LLM required for either.
-            </div>
-          </div>
-          <div class="feature">
-            <div class="feature-title">Team-debug, dispatched with context</div>
-            <div class="feature-body">
-              <code><span class="scadrial-only">burn zinc "&lt;bug&gt;"</span><span class="classic-only">debug "&lt;bug&gt;"</span></code>
-              hands a bug to the <code>/team-debug</code> skill with the code graph already primed.
-              The team agents start with relevant call-paths and files, not cold — so adversary,
-              skeptic, and archaeologist can each challenge a hypothesis that's grounded in your
-              actual code.
-            </div>
-          </div>
-          <div class="feature">
             <div class="feature-title">Vault writes without drift</div>
             <div class="feature-body">
               <code><span class="scadrial-only">scribe &lt;verb&gt;</span><span class="classic-only">note &lt;verb&gt;</span></code>
@@ -177,6 +146,19 @@ const description =
               settings we changed, removes shell aliases. <strong>Never touches your notes.</strong>
               Everything we did is undoable in one command — a design constraint, not an
               afterthought.
+            </div>
+          </div>
+          <div class="feature feature-sibling">
+            <div class="feature-title">
+              And: cross-repo code graph
+              <span class="feature-badge"><a href="/forge">forge →</a></span>
+            </div>
+            <div class="feature-body">
+              metalmind also ships a graphify-backed cross-repo code graph with HTTP-route-match
+              edges, OpenAPI-shelf-driven route extraction, symbol navigation, coordinated rename,
+              and team-debug dispatch. Different job from memory — so it has
+              <a href="/forge">its own page</a>. Use the forge if Claude needs to answer
+              <em>"which service calls this handler?"</em> across five repos.
             </div>
           </div>
         </div>

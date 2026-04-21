@@ -1,0 +1,315 @@
+---
+import FlavorToggle from '../components/FlavorToggle.astro';
+import '../styles/global.css';
+
+const title = 'metalmind forge — cross-repo code graph for Claude Code';
+const description =
+  'Cross-repo sight for teams working across many microservices. graphify-backed code graphs per repo, three-tier route extraction (OpenAPI shelf, Java callers, URL literals), INFERRED_* provenance so Claude can trust-grade what it reads.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07090c" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content="https://metalmind.mzyx.dev/forge" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="nav-inner">
+        <div class="nav-brand">
+          <a href="/" style="color:inherit;text-decoration:none;">
+            <span class="nav-brand-accent">∴</span>&nbsp;metalmind
+          </a>
+        </div>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="/#beyond-title">what</a>
+          <a href="/#anti-mcp-title">why CLI</a>
+          <a href="/forge" aria-current="page">forge</a>
+          <a href="/releases">releases</a>
+          <a href="https://github.com/Nikitzu/metalmind">github</a>
+        </nav>
+        <div class="nav-flavor">
+          <FlavorToggle />
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero container" aria-labelledby="forge-title">
+        <div class="hero-eyebrow">
+          <span class="scadrial-only">Scadrial · Seeker</span>
+          <span class="classic-only">Cross-repo · Code graph</span>
+        </div>
+        <h1 id="forge-title">forge</h1>
+        <p class="hero-lead">
+          <span class="scadrial-only">Sight across repos, not just one. Burn bronze to query the code graph of every repo in your forge.</span>
+          <span class="classic-only">Cross-repo code graph for Claude Code. Query every repo in your group from one call.</span>
+        </p>
+        <p class="hero-tagline">
+          One feature of
+          <a href="/" style="color:var(--copper);">metalmind</a>, split into its own page
+          because it's a different job from memory recall. Use the forge when Claude needs to answer
+          "which service calls this handler?" across five repos without you pasting code between
+          windows.
+        </p>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="forge-what-title">
+        <h2 id="forge-what-title">What the forge is</h2>
+        <p>
+          A <strong>forge</strong> is a named group of repo paths. Each repo already has its own
+          per-repo code graph (nodes = functions/classes/routes, edges = calls + imports) via
+          <a href="https://pypi.org/project/graphifyy/" target="_blank" rel="noopener">graphify</a>.
+          metalmind adds a <em>merge layer</em> that unions those graphs and infers three kinds of
+          cross-repo edges:
+        </p>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-title"><code>INFERRED_NAME</code></div>
+            <div class="feature-body">
+              Same identifier in two repos → candidate cross-repo reference. Cheap to compute,
+              high recall, medium precision. Use when chasing a renamed helper or a shared DTO.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title"><code>INFERRED_ROUTE</code></div>
+            <div class="feature-body">
+              HTTP caller in repo A matched to HTTP handler in repo B on
+              <code>(method, path)</code>. High precision when specs are available. Three tiers of
+              extraction drive this — see below.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title"><code>INFERRED_URL_LITERAL</code></div>
+            <div class="feature-body">
+              Opt-in fallback. Path-shaped string literals found in any text file, matched to
+              handlers. Lower precision but catches references the other tiers miss. Flagged
+              with its own confidence marker so Claude knows to double-check.
+            </div>
+          </div>
+        </div>
+        <p>
+          Every inferred edge carries its confidence tag in the payload. Claude reads the tag and
+          decides how much weight to give it — <code>INFERRED_ROUTE</code> from an OpenAPI spec is
+          near-ground-truth; <code>INFERRED_URL_LITERAL</code> from a regex match is "worth
+          checking."
+        </p>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="forge-tiers-title">
+        <h2 id="forge-tiers-title">How cross-repo route edges get built</h2>
+        <p>
+          Three tiers, most-trustworthy first. The forge runs each against both the caller and
+          handler sides, then joins on <code>(method, path-after-template-canonicalization)</code>.
+        </p>
+        <ol class="forge-tiers">
+          <li>
+            <strong>Tier 1 — OpenAPI specs on the metalmind shelf.</strong>
+            <code>metalmind forge capture-spec &lt;repo&gt; &lt;url-or-file&gt;</code> downloads or
+            copies the spec to
+            <code>~/.metalmind/specs/&lt;repo-basename&gt;.&#123;yaml,json&#125;</code>. Specs
+            never live inside your repo — this is a metalmind-owned shelf, not a commit-able file.
+            The <strong>single-dev-in-a-team</strong> constraint made this a hard requirement:
+            the tool has to work without polluting shared repos. When a spec is present, every
+            route in it becomes a first-class handler node that cross-repo callers match against.
+          </li>
+          <li>
+            <strong>Tier 2 — Java caller extraction.</strong> Regex-based parser for the three
+            client patterns real codebases actually use:
+            <code>RestTemplate</code> (<code>getForObject</code>, <code>postForEntity</code>,
+            <code>exchange</code>), <code>WebClient</code> fluent chains
+            (<code>.get().uri()</code>, <code>.method(HttpMethod.X).uri()</code>), and
+            <code>Feign</code> interfaces (<code>@GetMapping</code> inside a
+            <code>@FeignClient</code>). Adds call-sites to the graph that Tier 1 handlers can
+            bind to. No LSP, no compiler — runs over source.
+          </li>
+          <li>
+            <strong>Tier 3 — URL-literal fallback</strong>
+            (opt-in via <code>--include-literals</code>). Scans ~15 text extensions for
+            path-shaped string literals. Filters static-asset extensions
+            (<code>.png · .jpg · .css · .js · .html · .md · .yaml · .log · .tmp · .bak ·
+            .lock · .txt · .xml · .pdf</code>) to cut noise. Every edge it produces is tagged
+            <code>INFERRED_URL_LITERAL</code> — a louder "trust-but-verify" marker than
+            <code>INFERRED_ROUTE</code>.
+          </li>
+        </ol>
+        <p>
+          Results are cached per repo under <code>~/.metalmind/forge/routes/</code> keyed by
+          <code>sha1(repo, includeLiterals-flag)</code>. Cache staleness fingerprint combines the
+          repo's <code>graphify-out/graph.json</code> mtime with the shelf spec mtime, so
+          refreshing a spec via <code>forge capture-spec</code> automatically busts the cache.
+          Orphan entries (cache files whose repo path no longer exists) are pruned on every call.
+        </p>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="forge-commands-title">
+        <h2 id="forge-commands-title">Commands</h2>
+        <div class="cmd-table-wrap">
+          <table class="cmd-table">
+            <thead>
+              <tr>
+                <th scope="col">Metal</th>
+                <th scope="col">Command</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="metal">Forge</td>
+                <td class="cmd">
+                  <span class="scadrial"><span style="opacity:0.5">$</span> metalmind forge create &lt;g&gt;</span>
+                  <span class="classic"><span style="opacity:0.5">$</span> metalmind group create &lt;g&gt;</span>
+                </td>
+                <td class="desc">Define a new forge (group of repo paths).</td>
+              </tr>
+              <tr>
+                <td class="metal">Forge</td>
+                <td class="cmd">
+                  <span class="scadrial"><span style="opacity:0.5">$</span> metalmind forge add &lt;g&gt; &lt;repo&gt;</span>
+                  <span class="classic"><span style="opacity:0.5">$</span> metalmind group add &lt;g&gt; &lt;repo&gt;</span>
+                </td>
+                <td class="desc">Add a repo to the forge.</td>
+              </tr>
+              <tr>
+                <td class="metal">Forge</td>
+                <td class="cmd">
+                  <span class="scadrial"><span style="opacity:0.5">$</span> metalmind forge capture-spec &lt;repo&gt; &lt;url&gt;</span>
+                  <span class="classic"><span style="opacity:0.5">$</span> metalmind group capture-spec &lt;repo&gt; &lt;url&gt;</span>
+                </td>
+                <td class="desc">Seed the OpenAPI shelf for a repo (enables Tier 1).</td>
+              </tr>
+              <tr>
+                <td class="metal">Forge</td>
+                <td class="cmd">
+                  <span class="scadrial"><span style="opacity:0.5">$</span> metalmind forge spec-list</span>
+                  <span class="classic"><span style="opacity:0.5">$</span> metalmind group spec-list</span>
+                </td>
+                <td class="desc">List specs currently on the shelf.</td>
+              </tr>
+              <tr>
+                <td class="metal">Bronze</td>
+                <td class="cmd">
+                  <span class="scadrial"><span style="opacity:0.5">$</span> metalmind burn bronze "&lt;q&gt;" --forge &lt;g&gt;</span>
+                  <span class="classic"><span style="opacity:0.5">$</span> metalmind graph "&lt;q&gt;" --group &lt;g&gt;</span>
+                </td>
+                <td class="desc">Query across every repo in the forge. Add <code>--include-literals</code> for Tier 3.</td>
+              </tr>
+              <tr>
+                <td class="metal">Iron</td>
+                <td class="cmd">
+                  <span class="scadrial"><span style="opacity:0.5">$</span> metalmind burn iron &lt;sym&gt;</span>
+                  <span class="classic"><span style="opacity:0.5">$</span> metalmind symbol &lt;sym&gt;</span>
+                </td>
+                <td class="desc">Pull a symbol + its neighbors (callers, callees, module). LSP-backed via Serena.</td>
+              </tr>
+              <tr>
+                <td class="metal">Steel</td>
+                <td class="cmd">
+                  <span class="scadrial"><span style="opacity:0.5">$</span> metalmind burn steel &lt;old&gt; &lt;new&gt;</span>
+                  <span class="classic"><span style="opacity:0.5">$</span> metalmind rename &lt;old&gt; &lt;new&gt;</span>
+                </td>
+                <td class="desc">Coordinated rename through Serena's LSP.</td>
+              </tr>
+              <tr>
+                <td class="metal">Zinc</td>
+                <td class="cmd">
+                  <span class="scadrial"><span style="opacity:0.5">$</span> metalmind burn zinc "&lt;bug&gt;"</span>
+                  <span class="classic"><span style="opacity:0.5">$</span> metalmind debug "&lt;bug&gt;"</span>
+                </td>
+                <td class="desc">Dispatch <code>/team-debug</code> with the code graph pre-primed.</td>
+              </tr>
+              <tr>
+                <td class="metal">Pewter</td>
+                <td class="cmd">
+                  <span class="scadrial"><span style="opacity:0.5">$</span> metalmind burn pewter</span>
+                  <span class="classic"><span style="opacity:0.5">$</span> metalmind reindex</span>
+                </td>
+                <td class="desc">Force-rebuild the code graph for the current repo.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="forge-not-for-title">
+        <h2 id="forge-not-for-title">Who should NOT use the forge</h2>
+        <ul class="anti-persona">
+          <li><strong>You work in a single repo.</strong> The forge adds complexity for cross-repo reasoning. If everything is in one monorepo, plain <code>burn bronze</code> (no <code>--forge</code>) already queries the graph.</li>
+          <li><strong>Your services don't cross HTTP boundaries.</strong> The cross-repo edges that make the forge worth it are mostly <code>INFERRED_ROUTE</code>. If your repos share nothing but libraries, <code>INFERRED_NAME</code> alone may be noisy.</li>
+          <li><strong>You can't capture OpenAPI specs for services you consume.</strong> Tier 2 (Java callers) still works without specs, and Tier 3 (URL literals) is the universal fallback, but precision drops fast without Tier 1. If your platform doesn't publish specs, know what you're signing up for.</li>
+        </ul>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="forge-how-title">
+        <h2 id="forge-how-title">
+          <span class="scadrial-only">Under the forge</span>
+          <span class="classic-only">Under the hood</span>
+        </h2>
+        <div class="diagram">
+          <div class="diagram-node">
+            <div class="diagram-node-title">graphify</div>
+            <div class="diagram-node-body">
+              Per-repo code graph via tree-sitter AST. Clusters, god nodes, call paths. Zero LLM
+              cost for the graph itself.
+            </div>
+          </div>
+          <div class="diagram-node">
+            <div class="diagram-node-title">Serena</div>
+            <div class="diagram-node-body">
+              LSP-backed symbol lookup and coordinated renames. Same backend Claude Code's own
+              tooling can reach, invoked as a subprocess.
+            </div>
+          </div>
+          <div class="diagram-node">
+            <div class="diagram-node-title">OpenAPI shelf</div>
+            <div class="diagram-node-body">
+              <code>~/.metalmind/specs/</code>. Off-repo, single-dev, mtime-fingerprinted into
+              the forge cache so refreshes invalidate correctly.
+            </div>
+          </div>
+          <div class="diagram-node">
+            <div class="diagram-node-title">forge merge</div>
+            <div class="diagram-node-body">
+              Unions per-repo graphs, derives <code>INFERRED_NAME</code> /
+              <code>INFERRED_ROUTE</code> / <code>INFERRED_URL_LITERAL</code> edges, caches the
+              result. Orphan cache entries get pruned on every call.
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      <div class="footer-badges">
+        <a href="https://github.com/Nikitzu/metalmind/blob/main/LICENSE">
+          <img src="https://img.shields.io/badge/license-MIT-93b1d0?style=flat-square&labelColor=10141b" alt="MIT license" />
+        </a>
+        <a href="https://github.com/Nikitzu/metalmind">
+          <img src="https://img.shields.io/github/stars/Nikitzu/metalmind?style=flat-square&color=d4a14a&labelColor=10141b" alt="GitHub stars" />
+        </a>
+      </div>
+      <p>Inspired by Brandon Sanderson's Mistborn Era 1 novels. Not affiliated.</p>
+    </footer>
+
+  </body>
+</html>

@@ -563,6 +563,54 @@ pre {
   text-underline-offset: 2px;
 }
 
+/* Sibling-feature card: points at /forge, not a memory feature itself */
+.feature-sibling {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--copper) 3%, transparent);
+}
+.feature-sibling .feature-body a {
+  color: var(--copper);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.feature-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--copper) 18%, transparent);
+  vertical-align: middle;
+}
+.feature-badge a {
+  color: var(--copper);
+  text-decoration: none;
+}
+.feature-badge a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Forge page — numbered tier list */
+.forge-tiers {
+  margin: 0.6rem 0 0 1.4rem;
+  padding: 0;
+  list-style: decimal;
+}
+.forge-tiers li {
+  margin: 0.6rem 0;
+  line-height: 1.6;
+  color: var(--fg);
+  padding-left: 0.3rem;
+}
+.forge-tiers li::marker {
+  color: var(--copper);
+  font-weight: 600;
+}
+
 /* Flavor toggle (metal chips) */
 .flavor-toggle {
   display: inline-flex;
