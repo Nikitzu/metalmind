@@ -1,0 +1,47 @@
+name: CI
+
+# Safety: no user-controlled strings are interpolated anywhere. The only
+# template expression (${{ matrix.os }}) is a fixed enum from the strategy
+# matrix below. No github.event.* / github.head_ref usage.
+#
+# Runs the unit suite on every PR and every push to main, across macOS +
+# Ubuntu. Kept separate from publish.yml so a Linux-only test failure does
+# not block a tag-driven release — the release pipeline is still pinned
+# to macos-latest.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test
+        run: pnpm test

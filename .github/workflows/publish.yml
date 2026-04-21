@@ -25,10 +25,10 @@ env:
 
 jobs:
   publish:
-    # macos-latest so the platform-specific tests (launchd plists, zsh rc paths)
-    # match the maintainer's local dev environment. Linux-side Bug to fix
-    # separately: aliases / teardown tests assume darwin and skip the systemd
-    # branch. Until that lands, don't block releases on Linux CI.
+    # macos-latest matches the maintainer's local dev environment (launchd
+    # plists, zsh rc paths). Linux coverage lives in ci.yml, which runs on
+    # every PR + push-to-main against a full matrix. We deliberately do not
+    # gate tag-driven releases on Linux CI.
     runs-on: macos-latest
     permissions:
       contents: read

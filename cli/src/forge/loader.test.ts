@@ -184,6 +184,41 @@ describe('forge loader', () => {
     expect(existsSync(join(routesDir, 'orphan.json'))).toBe(false);
   });
 
+  it('busts route cache when OpenAPI spec on the shelf changes', async () => {
+    // Shelf mtime must participate in the per-repo fingerprint — otherwise
+    // editing a spec via `forge capture-spec` would silently return stale
+    // route edges until someone bumps the graph.
+    const shelfDir = join(tmp, 'specs');
+    await mkdir(shelfDir, { recursive: true });
+    const originalShelf = process.env.METALMIND_SHELF_DIR;
+    process.env.METALMIND_SHELF_DIR = shelfDir;
+    try {
+      const repoBasename = repoA.split('/').pop();
+      const specPath = join(shelfDir, `${repoBasename}.yaml`);
+      await writeGraph(repoA, [{ id: 'fn', label: 'handle' }]);
+
+      const specV1 = `openapi: 3.0.0\npaths:\n  /users:\n    get:\n      operationId: getUsers\n`;
+      await writeFile(specPath, specV1, 'utf8');
+
+      const group: ForgeGroup = { repos: [repoA] };
+      const first = await loadOrBuildMerged('g', group, { cacheDir });
+      const firstRoutes = first.routeMatchEdgeCount;
+
+      await new Promise((r) => setTimeout(r, 20));
+      const specV2 = `${specV1}  /orders:\n    get:\n      operationId: getOrders\n`;
+      await writeFile(specPath, specV2, 'utf8');
+
+      const second = await loadOrBuildMerged('g', group, { cacheDir });
+      expect(second.generatedAt).not.toBe(first.generatedAt);
+      // Route count may be the same for a single-repo forge (no cross-repo
+      // match target), but the cache must rebuild — generatedAt proves that.
+      expect(second.routeMatchEdgeCount).toBeGreaterThanOrEqual(firstRoutes);
+    } finally {
+      if (originalShelf === undefined) delete process.env.METALMIND_SHELF_DIR;
+      else process.env.METALMIND_SHELF_DIR = originalShelf;
+    }
+  });
+
   it('loadOrBuildMerged prunes orphans even on the warm cache hit path', async () => {
     const routesDir = join(cacheDir, 'routes');
     await mkdir(routesDir, { recursive: true });

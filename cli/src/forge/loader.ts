@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { shelfSpecMtime } from './openapi.js';
 import { buildRouteMatchEdges, extractRoutes, type RouteEntry } from './routes.js';
 import { FORGE_CACHE_DIR, type ForgeGroup } from './store.js';
 
@@ -52,14 +53,29 @@ async function loadGraph(repo: string): Promise<GraphDocument | null> {
   return JSON.parse(raw) as GraphDocument;
 }
 
+/** Per-repo staleness fingerprint for the forge caches. Combines the repo's
+ *  `graphify-out/graph.json` mtime with the mtime of the OpenAPI spec on the
+ *  shelf (if any). Editing either must invalidate downstream caches; before
+ *  spec mtime was included, users who ran `forge capture-spec` to refresh a
+ *  stale spec would silently get stale route edges until they bumped the
+ *  graph. */
+async function repoFingerprint(repo: string): Promise<number> {
+  let max = 0;
+  const graphPath = repoGraphPath(repo);
+  if (existsSync(graphPath)) {
+    const info = await stat(graphPath);
+    if (info.mtimeMs > max) max = info.mtimeMs;
+  }
+  const specMtime = await shelfSpecMtime(repo);
+  if (specMtime > max) max = specMtime;
+  return max;
+}
+
 async function latestRepoMtime(repos: string[]): Promise<number> {
   let max = 0;
   for (const repo of repos) {
-    const path = repoGraphPath(repo);
-    if (existsSync(path)) {
-      const info = await stat(path);
-      if (info.mtimeMs > max) max = info.mtimeMs;
-    }
+    const fp = await repoFingerprint(repo);
+    if (fp > max) max = fp;
   }
   return max;
 }
@@ -128,17 +144,12 @@ async function extractRoutesCached(
   includeLiterals: boolean,
 ): Promise<RouteEntry[]> {
   const cachePath = routeCachePath(cacheDir, repo, includeLiterals);
-  const graphPath = repoGraphPath(repo);
-  let graphMtime = 0;
-  if (existsSync(graphPath)) {
-    const info = await stat(graphPath);
-    graphMtime = info.mtimeMs;
-  }
+  const fingerprint = await repoFingerprint(repo);
 
   if (existsSync(cachePath)) {
     try {
       const cached = JSON.parse(await readFile(cachePath, 'utf8')) as CachedRoutes;
-      if (cached.repo === repo && graphMtime > 0 && cached.mtime >= graphMtime) {
+      if (cached.repo === repo && fingerprint > 0 && cached.mtime >= fingerprint) {
         return cached.routes;
       }
     } catch {
@@ -147,9 +158,9 @@ async function extractRoutesCached(
   }
 
   const fresh = await extractRoutes(repo, { includeLiterals });
-  if (graphMtime > 0) {
+  if (fingerprint > 0) {
     await mkdir(join(cacheDir, 'routes'), { recursive: true });
-    const payload: CachedRoutes = { repo, mtime: graphMtime, routes: fresh };
+    const payload: CachedRoutes = { repo, mtime: fingerprint, routes: fresh };
     await writeFile(cachePath, JSON.stringify(payload), 'utf8');
   }
   return fresh;

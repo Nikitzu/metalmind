@@ -17,7 +17,7 @@ const HTTP_METHODS: ReadonlyArray<HttpMethod> = [
 ];
 
 export function shelfDir(): string {
-  return join(homedir(), '.metalmind', 'specs');
+  return process.env.METALMIND_SHELF_DIR ?? join(homedir(), '.metalmind', 'specs');
 }
 
 export function shelfPathFor(repo: string, ext: (typeof SHELF_EXTS)[number]): string {
@@ -35,6 +35,20 @@ async function findShelfSpec(repo: string): Promise<string | null> {
     }
   }
   return null;
+}
+
+/** Returns the shelf OpenAPI spec's mtime for this repo, or 0 if there is no
+ *  spec on the shelf. Used by the route-cache + merged-graph staleness
+ *  fingerprint — without this, editing a spec on the shelf would not bust the
+ *  cache, and callers would silently read stale route edges. */
+export async function shelfSpecMtime(repo: string): Promise<number> {
+  const abs = await findShelfSpec(repo);
+  if (!abs) return 0;
+  try {
+    return (await stat(abs)).mtimeMs;
+  } catch {
+    return 0;
+  }
 }
 
 function parseSpec(raw: string, file: string): unknown {
