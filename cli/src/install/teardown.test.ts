@@ -46,6 +46,8 @@ describe('teardown', () => {
   let aliasesPath: string;
   let zshrcPath: string;
   let configPath: string;
+  let claudeDir: string;
+  let settingsPath: string;
 
   beforeEach(async () => {
     tmp = await mkdtemp(join(tmpdir(), 'metalmind-teardown-'));
@@ -58,6 +60,11 @@ describe('teardown', () => {
     await mkdir(launchAgentsDir, { recursive: true });
     plistPath = join(launchAgentsDir, 'com.metalmind.vault-indexer.plist');
     await writeFile(plistPath, '<!-- plist -->\n', 'utf8');
+
+    claudeDir = join(tmp, 'claude');
+    await mkdir(claudeDir, { recursive: true });
+    settingsPath = join(claudeDir, 'settings.json');
+    await writeFile(settingsPath, '{}', 'utf8');
 
     claudeJsonPath = join(tmp, '.claude.json');
     await writeFile(
@@ -100,6 +107,8 @@ describe('teardown', () => {
       claudeJsonPath,
       aliasesPath,
       zshrcPath,
+      claudeDir,
+      settingsPath,
       configPath,
     });
 
@@ -129,6 +138,8 @@ describe('teardown', () => {
       claudeJsonPath,
       aliasesPath,
       zshrcPath,
+      claudeDir,
+      settingsPath,
       configPath,
     });
 
@@ -147,6 +158,8 @@ describe('teardown', () => {
       claudeJsonPath,
       aliasesPath,
       zshrcPath,
+      claudeDir,
+      settingsPath,
       configPath,
     });
 
@@ -171,6 +184,8 @@ describe('teardown', () => {
       claudeJsonPath,
       aliasesPath,
       zshrcPath,
+      claudeDir,
+      settingsPath,
       configPath,
     });
 
@@ -187,6 +202,8 @@ describe('teardown', () => {
       claudeJsonPath,
       aliasesPath,
       zshrcPath,
+      claudeDir,
+      settingsPath,
       configPath: join(tmp, 'missing.json'),
     });
 

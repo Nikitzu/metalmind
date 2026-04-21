@@ -1,3 +1,5 @@
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import { teardown } from '../install/teardown.js';
@@ -88,7 +90,10 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
   }
 
   try {
+    const claudeDir = join(homedir(), '.claude');
     const result = await teardown({
+      claudeDir,
+      settingsPath: join(claudeDir, 'settings.json'),
       config: config ?? undefined,
       removeSerena,
       removeGraphify,

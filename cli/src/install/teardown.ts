@@ -1,6 +1,5 @@
 import { existsSync } from 'node:fs';
 import { rm, unlink } from 'node:fs/promises';
-import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { METALMIND_HOOK_FILENAME } from './templates.js';
 import { clearMetalmindSessionStartHook } from './settings.js';
@@ -17,6 +16,19 @@ import { STACK_SUBDIR, stopStack } from './stack.js';
 import { uninstallVaultRag } from './vault-rag.js';
 
 export interface TeardownOptions {
+  /**
+   * REQUIRED. Directory the teardown operates on — typically `~/.claude` in
+   * production, a tmp dir in tests. We do NOT default to the real home dir:
+   * silently stomping a user's `~/.claude/CLAUDE.md` from a test run is the
+   * kind of bug that costs a day to find. Callers (the uninstall command,
+   * tests) must opt in explicitly.
+   */
+  claudeDir: string;
+  /**
+   * REQUIRED. Path to the Claude Code settings.json the teardown may mutate.
+   * Same reasoning as `claudeDir` — no silent fallback to the real user file.
+   */
+  settingsPath: string;
   config?: Config;
   removeSerena?: boolean;
   removeGraphify?: boolean;
@@ -26,9 +38,7 @@ export interface TeardownOptions {
   aliasesPath?: string;
   zshrcPath?: string;
   configPath?: string;
-  settingsPath?: string;
   removeVaultRag?: boolean;
-  claudeDir?: string;
 }
 
 export interface TeardownResult {
@@ -47,7 +57,7 @@ export interface TeardownResult {
   claudeMdBlocks: { global: SentinelRemoveAction; vault: SentinelRemoveAction };
 }
 
-export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResult> {
+export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
   const configPath = opts.configPath ?? CONFIG_PATH;
   const config = opts.config ?? (await readConfig(configPath));
 
@@ -101,12 +111,11 @@ export async function teardown(opts: TeardownOptions = {}): Promise<TeardownResu
     result.vaultRagUninstalled = uninstalled;
   }
 
-  const claudeDir = opts.claudeDir ?? join(homedir(), '.claude');
+  const { claudeDir, settingsPath } = opts;
 
-  result.memoryRoutingCleared = await clearMemoryRouting(opts.settingsPath);
-  result.sessionStartHook.registrationCleared = await clearMetalmindSessionStartHook(
-    opts.settingsPath,
-  );
+  result.memoryRoutingCleared = await clearMemoryRouting(settingsPath);
+  result.sessionStartHook.registrationCleared =
+    await clearMetalmindSessionStartHook(settingsPath);
   const hookScriptPath = join(claudeDir, 'hooks', METALMIND_HOOK_FILENAME);
   if (existsSync(hookScriptPath)) {
     await rm(hookScriptPath, { force: true });
