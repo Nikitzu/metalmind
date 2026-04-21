@@ -15,6 +15,7 @@ export interface BurnOptions {
   skipIndexPrompt?: boolean;
   assumeYes?: boolean;
   forge?: string;
+  includeLiterals?: boolean;
 }
 
 async function ensureGraph(repoRoot: string, opts: BurnOptions): Promise<boolean> {
@@ -64,8 +65,12 @@ async function burnForge(opts: BurnOptions, forgeName: string): Promise<void> {
     return;
   }
 
-  log.info(`Building merged graph for forge '${forgeName}' (${group.repos.length} repos)`);
-  const merged = await loadOrBuildMerged(forgeName, group);
+  log.info(
+    `Building merged graph for forge '${forgeName}' (${group.repos.length} repos${opts.includeLiterals ? ', +URL literals' : ''})`,
+  );
+  const merged = await loadOrBuildMerged(forgeName, group, {
+    includeLiterals: opts.includeLiterals,
+  });
   log.success(
     `merged ${merged.nodeCount} nodes, ${merged.edgeCount} edges (` +
       `${merged.nameMatchEdgeCount} name-match, ${merged.routeMatchEdgeCount} route-match)`,

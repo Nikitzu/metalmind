@@ -131,6 +131,58 @@ def health(): ...
   });
 });
 
+describe('parseUrlLiterals (Tier 3)', () => {
+  it('extracts path-shaped string literals and drops obvious non-routes', async () => {
+    const { parseUrlLiterals } = await import('./routes.js');
+    const src = `
+      const log = "/var/log/foo.log";           // dropped: ends in .log
+      const asset = "/static/logo.png";          // dropped: .png
+      const url = "/api/users/{id}";             // kept
+      const route = '/health';                   // kept
+      const two = "/v1/bookings/cancel";         // kept
+      const bad = "//broken";                    // dropped: //
+      const dup = '/health';                     // dedup
+    `;
+    const out = parseUrlLiterals(src, 'a.ts', '/r');
+    const paths = out.map((r) => r.path).sort();
+    expect(paths).toEqual(['/api/users/{id}', '/health', '/v1/bookings/cancel']);
+    expect(out.every((r) => r.kind === 'caller' && r.framework === 'literal' && r.method === 'ANY')).toBe(true);
+  });
+
+  it('buildRouteMatchEdges tags URL-literal callers with INFERRED_URL_LITERAL confidence', async () => {
+    const { buildRouteMatchEdges, parseUrlLiterals } = await import('./routes.js');
+    const callers = parseUrlLiterals('const u = "/health";', 'client.go', '/consumer');
+    const handler = {
+      method: 'GET' as const,
+      path: '/health',
+      kind: 'handler' as const,
+      framework: 'openapi',
+      file: 'spec.yaml',
+      repo: '/provider',
+    };
+    const edges = buildRouteMatchEdges([...callers, handler]);
+    expect(edges).toHaveLength(1);
+    expect(edges[0]?.confidence).toBe('INFERRED_URL_LITERAL');
+  });
+
+  it('extractRoutes includes literals only when opted in', async () => {
+    const { extractRoutes } = await import('./routes.js');
+    const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const tmp = await mkdtemp(join(tmpdir(), 'mm-lit-'));
+    try {
+      await writeFile(join(tmp, 'cfg.yaml'), 'endpoint: "/legacy/ping"', 'utf8');
+      const off = await extractRoutes(tmp);
+      expect(off.find((r) => r.path === '/legacy/ping')).toBeUndefined();
+      const on = await extractRoutes(tmp, { includeLiterals: true });
+      expect(on.find((r) => r.path === '/legacy/ping')).toBeTruthy();
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('canonicalizePath', () => {
   it('maps every param notation to :param so cross-repo edges bucket together', () => {
     const inputs = [

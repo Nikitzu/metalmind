@@ -247,7 +247,49 @@ export function parseJava(content: string, file: string, repo: string): RouteEnt
   return out;
 }
 
-export async function extractRoutes(repo: string): Promise<RouteEntry[]> {
+/** Tier 3 URL-literal fallback: low-confidence extraction for repos whose
+ *  language/framework isn't covered by Tier 1 (OpenAPI) or Tier 2 regex.
+ *  Extracts path-shaped string literals as callers tagged framework='literal'.
+ *  Accepts leading-slash segments with alnum/underscore/dash/colon/braces. */
+const URL_LITERAL_RE = /["'`](\/[a-z0-9][a-z0-9_/:{}\-.]{2,})["'`]/gi;
+const TEXT_EXTS = new Set([
+  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
+  '.py', '.rb', '.php', '.go', '.rs', '.cs', '.scala', '.swift',
+  '.java', '.kt', '.kts', '.groovy',
+  '.yaml', '.yml', '.toml', '.conf', '.env',
+]);
+
+export function parseUrlLiterals(content: string, file: string, repo: string): RouteEntry[] {
+  const out: RouteEntry[] = [];
+  const seen = new Set<string>();
+  for (const m of content.matchAll(URL_LITERAL_RE)) {
+    const raw = m[1] ?? '';
+    if (raw.length < 3) continue;
+    if (raw.includes('//')) continue;
+    if (/\.(png|jpg|jpeg|gif|css|svg|ico|js|html|md|json|yaml|yml|log|tmp|bak|lock|txt|xml|pdf)$/i.test(raw)) continue;
+    const key = raw;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      method: 'ANY',
+      path: normPath(raw),
+      kind: 'caller',
+      framework: 'literal',
+      file,
+      repo,
+    });
+  }
+  return out;
+}
+
+export interface ExtractRoutesOptions {
+  includeLiterals?: boolean;
+}
+
+export async function extractRoutes(
+  repo: string,
+  opts: ExtractRoutesOptions = {},
+): Promise<RouteEntry[]> {
   const out: RouteEntry[] = [];
   out.push(...(await extractOpenApiRoutes(repo)));
   for await (const file of walk(repo, JS_EXT)) {
@@ -262,14 +304,22 @@ export async function extractRoutes(repo: string): Promise<RouteEntry[]> {
     const content = await readFile(file, 'utf8');
     out.push(...parseJava(content, file, repo));
   }
+  if (opts.includeLiterals) {
+    for await (const file of walk(repo, TEXT_EXTS)) {
+      const content = await readFile(file, 'utf8');
+      out.push(...parseUrlLiterals(content, file, repo));
+    }
+  }
   return out;
 }
+
+export type RouteConfidence = 'INFERRED_ROUTE' | 'INFERRED_URL_LITERAL';
 
 export interface RouteEdge {
   source: string;
   target: string;
   type: 'calls_route';
-  confidence: 'INFERRED_ROUTE';
+  confidence: RouteConfidence;
   method: HttpMethod;
   path: string;
 }
@@ -295,7 +345,7 @@ export function buildRouteMatchEdges(routes: RouteEntry[]): RouteEdge[] {
           source: `${caller.repo}::${caller.file}`,
           target: `${handler.repo}::${handler.file}`,
           type: 'calls_route',
-          confidence: 'INFERRED_ROUTE',
+          confidence: caller.framework === 'literal' ? 'INFERRED_URL_LITERAL' : 'INFERRED_ROUTE',
           method: handler.method,
           path: handler.path,
         });

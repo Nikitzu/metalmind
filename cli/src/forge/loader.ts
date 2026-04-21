@@ -110,8 +110,9 @@ export function buildNameMatchEdges(nodes: GraphNode[]): GraphEdge[] {
   return edges;
 }
 
-function routeCachePath(cacheDir: string, repo: string): string {
-  const hash = createHash('sha1').update(repo).digest('hex').slice(0, 16);
+function routeCachePath(cacheDir: string, repo: string, includeLiterals: boolean): string {
+  const key = includeLiterals ? `${repo}\0literals` : repo;
+  const hash = createHash('sha1').update(key).digest('hex').slice(0, 16);
   return join(cacheDir, 'routes', `${hash}.json`);
 }
 
@@ -121,12 +122,13 @@ interface CachedRoutes {
   routes: RouteEntry[];
 }
 
-async function extractRoutesCached(repo: string, cacheDir: string): Promise<RouteEntry[]> {
-  const cachePath = routeCachePath(cacheDir, repo);
+async function extractRoutesCached(
+  repo: string,
+  cacheDir: string,
+  includeLiterals: boolean,
+): Promise<RouteEntry[]> {
+  const cachePath = routeCachePath(cacheDir, repo, includeLiterals);
   const graphPath = repoGraphPath(repo);
-  // Use the repo's graph.json mtime as a proxy for "code changed since last walk".
-  // graphify rewrites graph.json on every `graphify update`, so the cache is valid
-  // until the next code-graph regeneration.
   let graphMtime = 0;
   if (existsSync(graphPath)) {
     const info = await stat(graphPath);
@@ -144,7 +146,7 @@ async function extractRoutesCached(repo: string, cacheDir: string): Promise<Rout
     }
   }
 
-  const fresh = await extractRoutes(repo);
+  const fresh = await extractRoutes(repo, { includeLiterals });
   if (graphMtime > 0) {
     await mkdir(join(cacheDir, 'routes'), { recursive: true });
     const payload: CachedRoutes = { repo, mtime: graphMtime, routes: fresh };
@@ -190,9 +192,10 @@ export async function pruneOrphanRouteCaches(cacheDir: string): Promise<number> 
 
 export async function buildMergedGraph(
   group: ForgeGroup,
-  opts: { cacheDir?: string } = {},
+  opts: { cacheDir?: string; includeLiterals?: boolean } = {},
 ): Promise<MergedForgeGraph> {
   const cacheDir = opts.cacheDir ?? FORGE_CACHE_DIR;
+  const includeLiterals = opts.includeLiterals ?? false;
   await pruneOrphanRouteCaches(cacheDir);
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
@@ -214,7 +217,7 @@ export async function buildMergedGraph(
 
   const allRoutes: RouteEntry[] = [];
   for (const repo of group.repos) {
-    allRoutes.push(...(await extractRoutesCached(repo, cacheDir)));
+    allRoutes.push(...(await extractRoutesCached(repo, cacheDir, includeLiterals)));
   }
   const routeEdges = buildRouteMatchEdges(allRoutes);
   for (const r of routeEdges) edges.push({ ...r });
@@ -234,10 +237,11 @@ export async function buildMergedGraph(
 export async function loadOrBuildMerged(
   name: string,
   group: ForgeGroup,
-  opts: { forceRebuild?: boolean; cacheDir?: string } = {},
+  opts: { forceRebuild?: boolean; cacheDir?: string; includeLiterals?: boolean } = {},
 ): Promise<MergedForgeGraph> {
   const dir = opts.cacheDir ?? FORGE_CACHE_DIR;
-  const path = join(dir, `${name}.json`);
+  const suffix = opts.includeLiterals ? '.literals.json' : '.json';
+  const path = join(dir, `${name}${suffix}`);
   if (!opts.forceRebuild && existsSync(path)) {
     const cached = JSON.parse(await readFile(path, 'utf8')) as MergedForgeGraph;
     const cachedTime = Date.parse(cached.generatedAt);
@@ -246,7 +250,10 @@ export async function loadOrBuildMerged(
       return cached;
     }
   }
-  const merged = await buildMergedGraph(group, { cacheDir: dir });
+  const merged = await buildMergedGraph(group, {
+    cacheDir: dir,
+    includeLiterals: opts.includeLiterals,
+  });
   await mkdir(dir, { recursive: true });
   await writeFile(path, `${JSON.stringify(merged, null, 2)}\n`, 'utf8');
   return merged;

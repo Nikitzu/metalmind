@@ -165,8 +165,22 @@ burnCmd
   .description('Burn Bronze (Seeker) — query the code graph for structure / concepts')
   .option('--yes', 'Skip the index prompt; assume yes if no graph exists')
   .option('--forge <name>', 'Query across all repos in the named forge')
-  .action((query: string, cmdOpts: { yes?: boolean; forge?: string }) =>
-    burn({ metal: 'bronze', input: query, assumeYes: cmdOpts.yes, forge: cmdOpts.forge }),
+  .option(
+    '--include-literals',
+    'Also match cross-repo URL string literals (Tier 3, lower confidence)',
+  )
+  .action(
+    (
+      query: string,
+      cmdOpts: { yes?: boolean; forge?: string; includeLiterals?: boolean },
+    ) =>
+      burn({
+        metal: 'bronze',
+        input: query,
+        assumeYes: cmdOpts.yes,
+        forge: cmdOpts.forge,
+        includeLiterals: cmdOpts.includeLiterals,
+      }),
   );
 
 burnCmd
@@ -183,8 +197,22 @@ program
   .description('Classic alias: query the code graph')
   .option('--yes', 'Skip the index prompt')
   .option('--group <name>', 'Query across all repos in the named group')
-  .action((query: string, cmdOpts: { yes?: boolean; group?: string }) =>
-    burn({ metal: 'bronze', input: query, assumeYes: cmdOpts.yes, forge: cmdOpts.group }),
+  .option(
+    '--include-literals',
+    'Also match cross-repo URL string literals (Tier 3, lower confidence)',
+  )
+  .action(
+    (
+      query: string,
+      cmdOpts: { yes?: boolean; group?: string; includeLiterals?: boolean },
+    ) =>
+      burn({
+        metal: 'bronze',
+        input: query,
+        assumeYes: cmdOpts.yes,
+        forge: cmdOpts.group,
+        includeLiterals: cmdOpts.includeLiterals,
+      }),
   );
 
 program
