@@ -402,6 +402,84 @@ pre {
   text-underline-offset: 2px;
 }
 
+/* MCP-tax bench table */
+.mcp-tax-bench {
+  margin-top: 1.2rem;
+  padding: 1rem 1.1rem;
+  background: color-mix(in srgb, var(--copper) 6%, transparent);
+  border-left: 2px solid var(--copper);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+.mcp-tax-bench .bench-caption {
+  margin: 0 0 0.6rem 0;
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+}
+.mcp-tax-bench .bench-caption a {
+  color: var(--copper);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.bench-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin: 0.35rem 0 0.6rem 0;
+}
+.bench-table th,
+.bench-table td {
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, var(--fg-muted) 25%, transparent);
+}
+.bench-table thead th {
+  font-weight: 600;
+  color: var(--fg-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom-color: color-mix(in srgb, var(--copper) 40%, transparent);
+}
+.bench-table tbody th {
+  font-weight: 500;
+}
+.bench-table tbody td:last-child,
+.bench-table thead th:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.bench-table tbody td small {
+  color: var(--fg-muted);
+  font-size: 0.78rem;
+}
+.bench-row-highlight {
+  background: color-mix(in srgb, var(--copper) 10%, transparent);
+}
+.bench-row-highlight th {
+  color: var(--copper);
+}
+.mcp-tax-bench .bench-note {
+  margin: 0.4rem 0 0 0;
+  color: var(--fg-muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+/* Anti-persona list */
+.anti-persona {
+  margin: 0.6rem 0 0 1.2rem;
+  padding: 0;
+  list-style: disc;
+  color: var(--fg-muted);
+}
+.anti-persona li {
+  margin: 0.45rem 0;
+  line-height: 1.55;
+}
+.anti-persona strong {
+  color: var(--fg);
+}
+
 /* Flavor toggle (metal chips) */
 .flavor-toggle {
   display: inline-flex;

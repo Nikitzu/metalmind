@@ -33,6 +33,7 @@ const description =
         <nav class="nav-links" aria-label="Primary">
           <a href="#beyond-title">what</a>
           <a href="#anti-mcp-title">why CLI</a>
+          <a href="#anti-persona-title">not for you?</a>
           <a href="#commands">commands</a>
           <a href="#demo">flow</a>
           <a href="#how">under</a>
@@ -68,7 +69,7 @@ const description =
             <span>npm install -g metalmind</span>
           </div>
           <div class="install-note">
-            <a class="install-chip install-chip-live" href="https://www.npmjs.com/package/metalmind" target="_blank" rel="noopener">Live on npm · v0.1.4</a>
+            <a class="install-chip install-chip-live" href="https://www.npmjs.com/package/metalmind" target="_blank" rel="noopener">Live on npm · v0.1.10</a>
             <span>Then run <code>metalmind init</code>.</span>
           </div>
           <p class="install-scope">
@@ -87,8 +88,8 @@ const description =
       <section class="container" aria-labelledby="beyond-title">
         <h2 id="beyond-title">What it adds</h2>
         <p>
-          Four things that survive your <code>claude</code> ending, start fresh, and a fifth that
-          lets you take it all back.
+          Seven things that survive your <code>claude</code> ending, start fresh, and an eighth that
+          lets you take it all back. One CLI, one verb per concern.
         </p>
         <div class="features">
           <div class="feature">
@@ -126,9 +127,43 @@ const description =
               <code><span class="scadrial-only">burn bronze "&lt;query&gt;"</span><span class="classic-only">graph "&lt;query&gt;"</span></code>
               queries a code graph of every repo in your
               <code><span class="scadrial-only">forge</span><span class="classic-only">group</span></code>.
-              HTTP-route-match edges connect caller → handler <em>across services</em>. Every
-              inferred edge carries <code>INFERRED_NAME</code> / <code>INFERRED_ROUTE</code>
-              provenance so Claude can trust-grade what it reads.
+              HTTP-route-match edges connect caller → handler <em>across services</em> in three
+              tiers: OpenAPI specs on the metalmind shelf (never inside your repos), Java
+              RestTemplate/WebClient/Feign callers, and URL literals as an opt-in fallback. Every
+              inferred edge carries <code>INFERRED_NAME</code> / <code>INFERRED_ROUTE</code> /
+              <code>INFERRED_URL_LITERAL</code> provenance so Claude can trust-grade what it reads.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Symbol-aware navigation and rename</div>
+            <div class="feature-body">
+              <code><span class="scadrial-only">burn iron &lt;symbol&gt;</span><span class="classic-only">symbol &lt;symbol&gt;</span></code>
+              returns a symbol's neighbors — who calls it, what it calls, its module — in one pass.
+              <code><span class="scadrial-only">burn steel &lt;old&gt; &lt;new&gt;</span><span class="classic-only">rename &lt;old&gt; &lt;new&gt;</span></code>
+              drives a coordinated rename through Serena's LSP backend. One verb per concern; no
+              LLM required for either.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Team-debug, dispatched with context</div>
+            <div class="feature-body">
+              <code><span class="scadrial-only">burn zinc "&lt;bug&gt;"</span><span class="classic-only">debug "&lt;bug&gt;"</span></code>
+              hands a bug to the <code>/team-debug</code> skill with the code graph already primed.
+              The team agents start with relevant call-paths and files, not cold — so adversary,
+              skeptic, and archaeologist can each challenge a hypothesis that's grounded in your
+              actual code.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Vault writes without drift</div>
+            <div class="feature-body">
+              <code><span class="scadrial-only">scribe &lt;verb&gt;</span><span class="classic-only">note &lt;verb&gt;</span></code>
+              is the CRUD interface agents use <em>instead of</em> raw <code>Write</code> — full
+              flow: <code>create · update · patch · delete · archive · rename · list · show</code>.
+              It stamps frontmatter, picks the right folder
+              (<code>Plans/Learnings/Work/Daily/Inbox/MOCs/Archive</code>), auto-links the project
+              MOC, and on rename rewrites <code>[[wikilinks]]</code> across the vault. Body on
+              stdin; every verb supports <code>--dry-run</code>.
             </div>
           </div>
           <div class="feature">
@@ -160,6 +195,40 @@ const description =
           context. The watcher, indexer, and embedding stack still live locally — they just don't
           live in Claude's tool registry.
         </p>
+        <div class="mcp-tax-bench">
+          <p class="bench-caption"><strong>Measured</strong> in <a href="https://github.com/Nikitzu/metalmind/tree/main/bench/mcp-tax-v0" target="_blank" rel="noopener">bench/mcp-tax-v0/</a> — first-turn token tax on a cold session, before any user turn:</p>
+          <table class="bench-table">
+            <thead>
+              <tr><th scope="col">System</th><th scope="col">Transport</th><th scope="col">Tools</th><th scope="col">First-turn tokens</th></tr>
+            </thead>
+            <tbody>
+              <tr class="bench-row-highlight"><th scope="row">metalmind (default)</th><td>loopback HTTP</td><td>0</td><td>~519 <small>(one-time CLAUDE.md block)</small></td></tr>
+              <tr><th scope="row">Claude Code native <code>/memory</code></th><td>CLAUDE.md text</td><td>0</td><td>~1</td></tr>
+              <tr><th scope="row">metalmind (stdio MCP fallback)</th><td>MCP stdio</td><td>3</td><td>~157</td></tr>
+              <tr><th scope="row">mem0 (<code>pinkpixel-dev/mem0-mcp</code>)</th><td>MCP stdio</td><td>3</td><td>~1,319</td></tr>
+            </tbody>
+          </table>
+          <p class="bench-note">
+            Approximation via <code>chars / 4</code>; rerun with a real
+            <code>ANTHROPIC_API_KEY</code> for exact counts. Shape is what matters: two zero-schema
+            transports, one modest, one bloat. Per-call result tokens are billed like any tool
+            output and are excluded here — this is <em>standing cost</em> before a single call.
+          </p>
+        </div>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="anti-persona-title">
+        <h2 id="anti-persona-title">Who should NOT use metalmind</h2>
+        <p>Honest anti-personas — install the wrong tool and you'll bounce in an hour:</p>
+        <ul class="anti-persona">
+          <li><strong>You don't use Claude Code.</strong> SessionStart hook, stamped <code>CLAUDE.md</code>, MCP fallback — all target Claude Code specifically. Cursor/Codex/Copilot/Gemini are roadmap.</li>
+          <li><strong>You don't use Obsidian.</strong> The vault is the storage layer. No other UI is planned.</li>
+          <li><strong>You don't want Docker running.</strong> Qdrant + Ollama embed-stack is local but containerized. <code>sqlite-vec</code> backend is on the roadmap.</li>
+          <li><strong>You want a 2-minute install.</strong> The wizard takes ~15 minutes the first time — prereqs, embed-model download, first-index. Worth it for daily users; overkill for evaluation.</li>
+          <li><strong>You're a team of 5+ with shared memory needs.</strong> metalmind is single-dev by design. The forge supports many repos per dev; it does not sync vaults between devs.</li>
+        </ul>
       </section>
 
       <hr class="metal-rule" />

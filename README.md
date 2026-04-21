@@ -20,7 +20,13 @@ Website: **[metalmind.mzyx.dev](https://metalmind.mzyx.dev)**
 
 - **Session-start awareness without nagging.** metalmind installs a Claude Code SessionStart hook plus a top-of-file block in `~/.claude/CLAUDE.md` with explicit WHEN→DO triggers, so every new Claude session discovers the vault on its own — no "did you check memory?" prompting. Re-stamp anytime with `metalmind burn brass` (alias: `stamp`) after an upgrade.
 
-- **Sight across repos, not just one.** `metalmind burn bronze "<query>"` (alias: `graph`) queries a code graph of every repo in your *forge*. HTTP-route-match edges connect caller → handler *across services*. Every inferred edge carries `INFERRED_NAME` / `INFERRED_ROUTE` provenance so Claude can trust-grade what it reads.
+- **Sight across repos, not just one.** `metalmind burn bronze "<query>"` (alias: `graph`) queries a code graph of every repo in your *forge*. HTTP-route-match edges connect caller → handler *across services* in three tiers: OpenAPI specs on the metalmind shelf (never inside your repos), Java RestTemplate/WebClient/Feign callers, and URL literals as an opt-in fallback. Every inferred edge carries `INFERRED_NAME` / `INFERRED_ROUTE` / `INFERRED_URL_LITERAL` provenance so Claude can trust-grade what it reads.
+
+- **Symbol-aware navigation and rename.** `metalmind burn iron <symbol>` (alias: `symbol`) returns a symbol's neighbors — who calls it, what it calls, its module. `metalmind burn steel <old> <new>` (alias: `rename`) drives a coordinated rename through Serena's LSP backend. One verb per concern.
+
+- **Team-debug, dispatched.** `metalmind burn zinc "<bug>"` (alias: `debug`) hands a bug to the `/team-debug` skill with the code graph already primed — the team agents start with context, not cold.
+
+- **Vault writes without drift.** `metalmind scribe <create|update|patch|delete|archive|list|show|rename>` (alias: `note`) is the CRUD interface agents use *instead of* raw `Write`. It stamps frontmatter, picks the right folder (`Plans/Learnings/Work/Daily/Inbox/MOCs/Archive`), auto-links the project MOC, and on `rename` rewrites `[[wikilinks]]` across the vault. Body on stdin; every verb supports `--dry-run`.
 
 - **Reversible to zero.** `metalmind uninstall` stops containers, unloads the watcher service, restores your prior output style, clears the settings we changed, and removes shell aliases. **It never touches your notes.**
 
@@ -29,6 +35,27 @@ Website: **[metalmind.mzyx.dev](https://metalmind.mzyx.dev)**
 Most memory tools register themselves as MCP servers. That design injects a handful of tool schemas (`search_memory`, `recall`, `store`, …) into **every** Claude session before you prompt anything. Those schemas eat context tokens you could be using for the actual task.
 
 metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the command once from your stamped `CLAUDE.md`, and every session starts with a clean context. The watcher, indexer, and embedding stack still live locally — they just don't live in Claude's tool registry.
+
+**Measured** in [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/) — first-turn token tax on a cold session:
+
+| System | Transport | Tools | First-turn tokens |
+|---|---|---:|---:|
+| **metalmind** (default) | loopback HTTP | 0 | ~519 *(one-time CLAUDE.md instruction block)* |
+| Claude Code native `/memory` | CLAUDE.md text | 0 | ~1 |
+| metalmind (stdio MCP fallback) | MCP stdio | 3 | ~157 |
+| mem0 (`pinkpixel-dev/mem0-mcp`) | MCP stdio | 3 | ~1,319 |
+
+Approximation via `chars / 4`; re-run with `ANTHROPIC_API_KEY=... pnpm bench:mcp-tax` for exact counts. `bench/mcp-tax-v0/README.md` details methodology and limits.
+
+## Who should NOT use metalmind
+
+Honest anti-personas — install the wrong tool and you'll bounce in an hour:
+
+- **You don't use Claude Code.** SessionStart hook, stamped `CLAUDE.md`, MCP fallback — all target Claude Code specifically. Cursor/Codex/Copilot/Gemini are roadmap, not shipped.
+- **You don't use Obsidian.** The vault is the storage layer. No other UI is planned.
+- **You don't want Docker running.** Qdrant + Ollama embed-stack is local but containerized. `sqlite-vec` backend is on the roadmap (removes Docker).
+- **You want a 2-minute install.** The wizard takes ~15 minutes the first time — prereqs, embed-model download, first-index. Worth it for daily users; overkill if you're evaluating.
+- **You're a team of 5+ with shared memory needs.** metalmind is single-dev by design. The *forge* supports many repos per dev; it does not sync vaults between devs.
 
 ## Install
 
@@ -39,7 +66,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.1.4`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.1.10`.
 
 **From source (for hacking on metalmind itself):**
 
@@ -78,7 +105,9 @@ Every themed (Scadrial) verb has a classic alias. Both always resolve — themin
 | `metalmind burn steel <old> <new>` | `metalmind rename <old> <new>` | Coordinated rename |
 | `metalmind burn zinc "<bug>"` | `metalmind debug "<bug>"` | Dispatch `/team-debug` |
 | `metalmind burn pewter` | `metalmind reindex` | Rebuild code graph |
-| `metalmind forge <…>` | `metalmind group <…>` | Cross-repo graph groups |
+| `metalmind forge <…>` | `metalmind group <…>` | Cross-repo graph groups; `forge capture-spec` seeds OpenAPI shelf |
+| `metalmind scribe <verb>` | `metalmind note <verb>` | Vault CRUD: `create \| update \| patch \| delete \| archive \| rename \| list \| show` |
+| `metalmind release-check` | `metalmind release-check` | Preflight — working tree, branch, version sync, tests, build, stamped-block present |
 | `metalmind burn brass` | `metalmind stamp` | Re-imprint metalmind managed files (upgrade in place) |
 | `metalmind burn aluminum` | `metalmind wipe` | Uninstall alias |
 

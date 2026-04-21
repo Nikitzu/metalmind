@@ -19,7 +19,10 @@ const rows: Row[] = [
   { metal: 'Brass', scadrial: 'burn brass', classic: 'stamp', desc: 'Soother — re-imprint metalmind managed files (upgrade in place).' },
   { metal: 'Forge', scadrial: 'forge create <g>', classic: 'group create <g>', desc: 'Define a cross-repo group.' },
   { metal: 'Forge', scadrial: 'forge add <g> <r>', classic: 'group add <g> <r>', desc: 'Add a repo to the group.' },
-  { metal: 'Forge', scadrial: 'burn bronze "<q>" --forge <g>', classic: 'graph "<q>" --group <g>', desc: 'Query across every repo in the group.' },
+  { metal: 'Forge', scadrial: 'forge capture-spec <r> <url>', classic: 'group capture-spec <r> <url>', desc: 'Seed the OpenAPI shelf for cross-repo route edges.' },
+  { metal: 'Forge', scadrial: 'burn bronze "<q>" --forge <g>', classic: 'graph "<q>" --group <g>', desc: 'Query across every repo in the group (--include-literals for URL-literal fallback).' },
+  { metal: 'Scribe', scadrial: 'scribe <verb>', classic: 'note <verb>', desc: 'Vault CRUD — create · update · patch · delete · archive · rename · list · show.' },
+  { metal: 'Release', scadrial: 'release-check', classic: 'release-check', desc: 'Preflight before tagging — working tree, branch, version sync, tests, build, stamped block.' },
   { metal: 'Seeker', scadrial: 'pulse', classic: 'doctor', desc: 'Pulse-check the install — prereqs, config, MCP state.' },
 ];
 ---
