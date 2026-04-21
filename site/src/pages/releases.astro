@@ -70,6 +70,26 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.2.4</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong>Rerank warmup folded into bootstrap.</strong> 0.2.3 installed the
+              extra + restarted the watcher, but the first real <code>--rerank</code> query
+              then timed out at the CLI's 6 s HTTP cap while the fresh watcher process
+              downloaded the ~500 MB model — silently falling back to stdio (embedder
+              ordering, not reranked). Bootstrap now issues a throwaway rerank warmup
+              against <code>/search</code> after restart, absorbing the model download
+              into the already-explicit setup phase. HTTP timeout for rerank calls lifted
+              to 90 s for headroom.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.2.3</h2>
             <span class="release-date">2026-04-21</span>
           </header>

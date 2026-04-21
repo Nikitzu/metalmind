@@ -6,6 +6,13 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.2.4 — 2026-04-21
+
+### Fixed
+- **Rerank warmup folded into bootstrap.** 0.2.3 successfully installed the `[rerank]` extra and restarted the watcher, but the user's first real `--rerank` query then timed out at the CLI's 6 s HTTP cap while the fresh watcher process downloaded the ~500 MB model — and the recall silently fell back to stdio (embedder ordering, not reranked). Bootstrap now issues a throwaway rerank warmup request against `/search` after the watcher restarts, absorbing the model download into the already-explicit setup phase. Separately: HTTP timeout for rerank calls lifted to 90 s so an unwarmed first call has headroom instead of racing the stdio fallback.
+
+---
+
 ## 0.2.3 — 2026-04-21
 
 ### Fixed

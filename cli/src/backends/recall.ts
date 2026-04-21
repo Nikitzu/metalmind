@@ -30,6 +30,11 @@ const DEFAULT_HTTP_ENDPOINT = 'http://127.0.0.1:17317';
 // 6s covers a cold local host without starving the stdio fallback on a real
 // outage (we still fall through after the timeout).
 const HTTP_TIMEOUT_MS = 6_000;
+// Rerank calls can legitimately run much longer on the first request — the
+// cross-encoder model warms up in-process and may trigger a download if the
+// bootstrap warmup step was skipped. 90s gives headroom without leaving the
+// user staring forever if something is genuinely wrong.
+const HTTP_TIMEOUT_MS_RERANK = 90_000;
 
 function resolveEndpoint(override?: string | null): string {
   return override || process.env.METALMIND_RECALL_HTTP || DEFAULT_HTTP_ENDPOINT;
@@ -47,9 +52,15 @@ function vaultRagSpawn(vaultPath: string): {
   };
 }
 
-async function httpPost(endpoint: string, path: string, body: unknown): Promise<unknown> {
+async function httpPost(
+  endpoint: string,
+  path: string,
+  body: unknown,
+  opts: { rerank?: boolean } = {},
+): Promise<unknown> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), HTTP_TIMEOUT_MS);
+  const timeoutMs = opts.rerank ? HTTP_TIMEOUT_MS_RERANK : HTTP_TIMEOUT_MS;
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(`${endpoint}${path}`, {
       method: 'POST',
@@ -87,11 +98,12 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
       return { tool: 'http:expand', text, raw: rawFromText(text), transport: 'http' };
     }
 
-    const hits = (await httpPost(endpoint, '/search', {
-      query: opts.query,
-      k: opts.k ?? 5,
-      rerank: opts.rerank ?? false,
-    })) as { hits: Array<Record<string, unknown>> };
+    const hits = (await httpPost(
+      endpoint,
+      '/search',
+      { query: opts.query, k: opts.k ?? 5, rerank: opts.rerank ?? false },
+      { rerank: opts.rerank },
+    )) as { hits: Array<Record<string, unknown>> };
     if (opts.tier === 'fast') {
       const text = formatHits(hits.hits);
       return { tool: 'http:search', text, raw: rawFromText(text), transport: 'http' };

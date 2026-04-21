@@ -1,6 +1,6 @@
 {
   "name": "metalmind",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Unified CLI for Obsidian vault, code graph (graphify), and cross-repo intelligence. Mistborn-themed with a neutral alias set.",
   "license": "MIT",
   "repository": {

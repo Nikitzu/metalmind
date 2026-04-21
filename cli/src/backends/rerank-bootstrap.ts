@@ -7,6 +7,33 @@ const STATUS_TIMEOUT_MS = 2_000;
 // Python process needs a few hundred ms to bind the port. Cap the wait.
 const POST_RESTART_POLL_MS = 10_000;
 const POST_RESTART_INTERVAL_MS = 250;
+// First rerank call triggers a ~500 MB model download from HuggingFace. Cap
+// generous — we'd rather block bootstrap for a minute than dump the user into
+// a state where their next real `--rerank` call silently falls back to stdio.
+const WARMUP_TIMEOUT_MS = 5 * 60_000;
+
+/** Issue a throwaway `rerank: true` search so the cross-encoder model is
+ *  downloaded + loaded inside the fresh watcher process. Keeps the user's
+ *  first real query off the cold path. Best-effort — if this times out we
+ *  still report "available" since the default recall path already has its
+ *  own longer timeout for rerank calls. */
+async function warmupRerank(ep: string): Promise<boolean> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), WARMUP_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${ep}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: '__metalmind_rerank_warmup__', k: 1, rerank: true }),
+      signal: controller.signal,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 export interface EnsureRerankOptions {
   httpEndpoint?: string | null;
@@ -91,7 +118,13 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
     await new Promise((r) => setTimeout(r, POST_RESTART_INTERVAL_MS));
     const after = await rerankStatus(ep);
     if (after === 'available') {
-      progress('reranker ready.');
+      progress('reranker installed — downloading + warming the cross-encoder (first time only, ~500 MB)…');
+      const warmed = await warmupRerank(ep);
+      progress(
+        warmed
+          ? 'reranker ready.'
+          : 'reranker installed but warmup did not complete in time — first real call may be slow.',
+      );
       return true;
     }
   }
