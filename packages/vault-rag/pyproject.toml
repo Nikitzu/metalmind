@@ -14,6 +14,11 @@ dependencies = [
 dev = [
     "pytest>=8.0",
 ]
+# `rerank` pulls torch (~700 MB). Opt-in — the default install stays slim.
+# Users enable it via `uv tool install 'metalmind-vault-rag[rerank]'`.
+rerank = [
+    "FlagEmbedding>=1.3",
+]
 
 [project.scripts]
 metalmind-vault-rag-server = "metalmind_vault_rag.server:main"

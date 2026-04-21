@@ -14,6 +14,7 @@ import { uninstallSerena } from './serena.js';
 import { clearMemoryRouting } from './settings.js';
 import { STACK_SUBDIR, stopStack } from './stack.js';
 import { uninstallVaultRag } from './vault-rag.js';
+import type { WatcherPlatform } from './watcher.js';
 
 export interface TeardownOptions {
   /**
@@ -39,6 +40,9 @@ export interface TeardownOptions {
   zshrcPath?: string;
   configPath?: string;
   removeVaultRag?: boolean;
+  /** Force the watcher-uninstall path in tests so the same expectations hold
+   *  on macOS + Linux CI. Production callers leave this undefined. */
+  platformOverride?: WatcherPlatform;
 }
 
 export interface TeardownResult {
@@ -77,7 +81,10 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
     claudeMdBlocks: { global: 'no-file', vault: 'no-file' },
   };
 
-  const watcher = await uninstallWatcher({ launchAgentsDir: opts.launchAgentsDir });
+  const watcher = await uninstallWatcher({
+    launchAgentsDir: opts.launchAgentsDir,
+    platformOverride: opts.platformOverride,
+  });
   result.watcher = { removedPlist: watcher.removedUnit, unloaded: watcher.stopped };
 
   if (config?.vaultPath) {

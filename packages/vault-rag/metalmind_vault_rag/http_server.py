@@ -44,10 +44,11 @@ class _Handler(BaseHTTPRequestHandler):
             if self.path == "/search":
                 query = str(body.get("query", ""))
                 k = int(body.get("k") or 5)
+                rerank = bool(body.get("rerank"))
                 if not query.strip():
                     self._send_json(400, {"error": "query is required"})
                     return
-                self._send_json(200, {"hits": search.search_vault(query, k)})
+                self._send_json(200, {"hits": search.search_vault(query, k, rerank=rerank)})
             elif self.path == "/expand":
                 query = str(body.get("query", ""))
                 k = int(body.get("k") or 5)

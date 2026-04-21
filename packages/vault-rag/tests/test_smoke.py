@@ -98,7 +98,29 @@ def test_http_server_search_delegates_to_search_module() -> None:
                 assert resp.status == 200
                 body = json.loads(resp.read().decode("utf-8"))
                 assert body["hits"] == fake_hits
-            m.assert_called_once_with("hello", 3)
+            m.assert_called_once_with("hello", 3, rerank=False)
+        finally:
+            server_obj.shutdown()
+            server_obj.server_close()
+
+
+def test_http_server_search_forwards_rerank_flag() -> None:
+    """?rerank=true on /search body must flow through to search_vault."""
+    with patch.object(search, "search_vault", return_value=[]) as m:
+        server_obj = ThreadingHTTPServer(("127.0.0.1", 0), http_server._Handler)
+        port = server_obj.server_address[1]
+        thread = threading.Thread(target=server_obj.serve_forever, daemon=True)
+        thread.start()
+        try:
+            req = urllib.request.Request(
+                f"http://127.0.0.1:{port}/search",
+                data=json.dumps({"query": "hello", "k": 3, "rerank": True}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                assert resp.status == 200
+            m.assert_called_once_with("hello", 3, rerank=True)
         finally:
             server_obj.shutdown()
             server_obj.server_close()

@@ -47,8 +47,9 @@ Either way the runner reads `METALMIND_RECALL_HTTP` (fallback
 | --- | --- | --- |
 | `METALMIND_BENCH_ENDPOINT` | `$METALMIND_RECALL_HTTP` → `http://127.0.0.1:17317` | Recall endpoint base URL. |
 | `METALMIND_BENCH_K` | `5` | Top-K to request and score against. |
-| `METALMIND_BENCH_TIMEOUT_MS` | `8000` | Per-query timeout. |
+| `METALMIND_BENCH_TIMEOUT_MS` | `8000` | Per-query timeout. Bumped to ≥180s automatically when `--rerank` is set (first call downloads ~500 MB). |
 | `METALMIND_BENCH_VAULT` | unset | Recorded in the report's meta block for traceability. |
+| `METALMIND_BENCH_RERANK=1` / `--rerank` | off | Flip the runner into rerank mode — asks the server to cross-encode the top-N and return a re-sorted top-K. Useful to measure the hit@1 lift. |
 
 ## Exit code
 

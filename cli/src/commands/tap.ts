@@ -6,6 +6,7 @@ import { readConfig } from '../config.js';
 export interface TapOptions {
   deep?: boolean;
   expand?: boolean;
+  rerank?: boolean;
   k?: number;
   json?: boolean;
   verbose?: boolean;
@@ -55,6 +56,7 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       query,
       tier,
       k: opts.k,
+      rerank: opts.rerank,
       verbose: showMeta,
       httpEndpoint: config.recall.httpEndpoint,
     });

@@ -115,6 +115,10 @@ function attachTapFlags<T extends Command>(cmd: T): T {
   return cmd
     .option('--deep', 'Search + related_notes on top hit')
     .option('--expand', 'expand_search: hits + linked context in one call')
+    .option(
+      '--rerank',
+      'Cross-encoder reranker tier (opt-in; first call downloads ~500 MB, needs vault-rag[rerank])',
+    )
     .option('-k, --k <n>', 'Limit results to top N', (v) => Number.parseInt(v, 10))
     .option('--json', 'Emit structured JSON (tier, query, text, raw)')
     .option('--verbose', 'Include metadata line (overrides config.verbose)')
@@ -126,6 +130,7 @@ function attachTapFlags<T extends Command>(cmd: T): T {
 type TapCliOpts = {
   deep?: boolean;
   expand?: boolean;
+  rerank?: boolean;
   k?: number;
   json?: boolean;
   verbose?: boolean;
@@ -136,6 +141,7 @@ function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
   return {
     deep: cmdOpts.deep,
     expand: cmdOpts.expand,
+    rerank: cmdOpts.rerank,
     k: cmdOpts.k,
     json: cmdOpts.json,
     verbose: cmdOpts.verbose,

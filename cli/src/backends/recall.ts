@@ -7,6 +7,10 @@ export interface RecallOptions {
   query: string;
   tier: RecallTier;
   k?: number;
+  /** When true, ask the HTTP endpoint to run a cross-encoder reranker over the
+   *  top-N hits before returning top-k. Opt-in. Silent no-op on stdio fallback
+   *  (the reranker lives in the watcher's HTTP server). */
+  rerank?: boolean;
   /** When true, log the HTTP-path failure to stderr before falling back. */
   verbose?: boolean;
   /** Override the co-hosted HTTP recall endpoint. Defaults to env or config. */
@@ -86,6 +90,7 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
     const hits = (await httpPost(endpoint, '/search', {
       query: opts.query,
       k: opts.k ?? 5,
+      rerank: opts.rerank ?? false,
     })) as { hits: Array<Record<string, unknown>> };
     if (opts.tier === 'fast') {
       const text = formatHits(hits.hits);

@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 from .core import COLLECTION, VAULT, embed, files_to_index, qdrant
+from .rerank import overfetch_k, rerank_hits
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 
@@ -53,13 +54,19 @@ def _backlink_index() -> dict[str, list[str]]:
     return backlinks
 
 
-def search_vault(query: str, k: int = 5) -> list[dict]:
-    """Semantic search over the vault. Returns list of {file, heading, score, text}."""
+def search_vault(query: str, k: int = 5, rerank: bool = False) -> list[dict]:
+    """Semantic search over the vault. Returns list of {file, heading, score, text}.
+
+    `rerank=True` pulls a larger top-N from Qdrant, re-scores with a
+    cross-encoder (see rerank.py), and returns the top-k from the new
+    ordering. Opt-in — first call triggers a ~500 MB model download.
+    """
     k = max(1, min(k, 20))
+    fetch = overfetch_k(k) if rerank else k
     vec = embed([query])[0]
     c = qdrant()
-    results = c.query_points(collection_name=COLLECTION, query=vec, limit=k).points
-    return [
+    results = c.query_points(collection_name=COLLECTION, query=vec, limit=fetch).points
+    hits = [
         {
             "file": r.payload["file"],
             "heading": r.payload["heading"],
@@ -68,6 +75,9 @@ def search_vault(query: str, k: int = 5) -> list[dict]:
         }
         for r in results
     ]
+    if rerank:
+        return rerank_hits(query, hits, k)
+    return hits
 
 
 def related_notes(file: str) -> dict:

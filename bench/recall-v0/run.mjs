@@ -14,16 +14,22 @@ const ENDPOINT =
   'http://127.0.0.1:17317';
 const K = Number(process.env.METALMIND_BENCH_K ?? 5);
 const TIMEOUT_MS = Number(process.env.METALMIND_BENCH_TIMEOUT_MS ?? 8000);
+// `--rerank` / METALMIND_BENCH_RERANK=1 flips the runner into rerank mode.
+// First call may be slow (cross-encoder warmup, model download on cold boot);
+// bump the timeout in that mode so the first query doesn't abort the bench.
+const RERANK =
+  process.argv.includes('--rerank') || process.env.METALMIND_BENCH_RERANK === '1';
+const EFFECTIVE_TIMEOUT_MS = RERANK ? Math.max(TIMEOUT_MS, 180_000) : TIMEOUT_MS;
 
 async function searchOnce(query, k) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), EFFECTIVE_TIMEOUT_MS);
   const t0 = performance.now();
   try {
     const res = await fetch(`${ENDPOINT}/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, k }),
+      body: JSON.stringify({ query, k, rerank: RERANK }),
       signal: controller.signal,
     });
     const latencyMs = performance.now() - t0;
@@ -82,6 +88,7 @@ function renderMarkdown({ meta, summary, perQ }) {
   lines.push('');
   lines.push(`- endpoint: \`${meta.endpoint}\``);
   lines.push(`- k: ${meta.k}`);
+  lines.push(`- rerank: ${meta.rerank ? 'on (--rerank)' : 'off (embedder-only baseline)'}`);
   lines.push(`- vault: ${meta.vault ?? '(unknown — set METALMIND_BENCH_VAULT)'}`);
   lines.push(`- questions: ${summary.total}`);
   lines.push('');
@@ -142,6 +149,7 @@ async function main() {
     ts,
     endpoint: ENDPOINT,
     k: K,
+    rerank: RERANK,
     vault: process.env.METALMIND_BENCH_VAULT ?? null,
     questionsSha1: createHash('sha1').update(raw).digest('hex').slice(0, 10),
   };

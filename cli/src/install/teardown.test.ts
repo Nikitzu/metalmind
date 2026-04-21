@@ -108,6 +108,7 @@ describe('teardown', () => {
       aliasesPath,
       zshrcPath,
       claudeDir,
+      platformOverride: 'darwin',
       settingsPath,
       configPath,
     });
@@ -139,6 +140,7 @@ describe('teardown', () => {
       aliasesPath,
       zshrcPath,
       claudeDir,
+      platformOverride: 'darwin',
       settingsPath,
       configPath,
     });
@@ -159,6 +161,7 @@ describe('teardown', () => {
       aliasesPath,
       zshrcPath,
       claudeDir,
+      platformOverride: 'darwin',
       settingsPath,
       configPath,
     });
@@ -185,6 +188,7 @@ describe('teardown', () => {
       aliasesPath,
       zshrcPath,
       claudeDir,
+      platformOverride: 'darwin',
       settingsPath,
       configPath,
     });
@@ -203,6 +207,7 @@ describe('teardown', () => {
       aliasesPath,
       zshrcPath,
       claudeDir,
+      platformOverride: 'darwin',
       settingsPath,
       configPath: join(tmp, 'missing.json'),
     });
