@@ -7,6 +7,7 @@ import {
   scribeDelete,
   scribeList,
   scribePatch,
+  scribeRename,
   scribeShow,
   scribeUpdate,
   type ScribeKind,
@@ -150,6 +151,22 @@ export async function scribeListCmd(opts: { project?: string; kind?: string }): 
         `  ${e.relPath}${e.title ? ` — ${e.title}` : ''}${e.project ? ` [${e.project}]` : ''}${e.status && e.status !== 'active' ? ` (${e.status})` : ''}`,
       );
     }
+  } catch (err) {
+    fail(err instanceof Error ? err.message : String(err));
+  }
+}
+
+export async function scribeRenameCmd(
+  from: string,
+  to: string,
+  opts: { dryRun?: boolean },
+): Promise<void> {
+  try {
+    const res = await scribeRename(from, to, await ctx(), { dryRun: opts.dryRun });
+    const verb = opts.dryRun ? 'would rename' : 'renamed';
+    log.success(
+      `${verb} ${res.from} → ${res.to} (${res.backlinksRewritten} backlink${res.backlinksRewritten === 1 ? '' : 's'} in ${res.filesTouched.length} file${res.filesTouched.length === 1 ? '' : 's'})`,
+    );
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
   }

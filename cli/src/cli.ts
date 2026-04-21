@@ -13,6 +13,7 @@ import {
   forgeSpecRemove,
 } from './commands/forge.js';
 import { init } from './commands/init.js';
+import { releaseCheck } from './commands/release-check.js';
 import {
   aluminumWipe,
   burnZinc,
@@ -26,6 +27,7 @@ import {
   scribeDeleteCmd,
   scribeListCmd,
   scribePatchCmd,
+  scribeRenameCmd,
   scribeShowCmd,
   scribeUpdateCmd,
 } from './commands/scribe.js';
@@ -281,6 +283,13 @@ function attachScribeSubcommands(parent: Command): void {
     .command('show <note>')
     .description('Print a note to stdout. Accepts kind:slug shortcut.')
     .action((note: string) => scribeShowCmd(note));
+  parent
+    .command('rename <from> <to>')
+    .description('Rename a note and rewrite all wikilink backlinks across the vault.')
+    .option('--dry-run', 'Preview changes without writing')
+    .action((from: string, to: string, cmdOpts: { dryRun?: boolean }) =>
+      scribeRenameCmd(from, to, cmdOpts),
+    );
 }
 
 const scribeCmd = program
@@ -290,6 +299,15 @@ attachScribeSubcommands(scribeCmd);
 
 const noteCmd = program.command('note').description('Classic alias: vault note CRUD');
 attachScribeSubcommands(noteCmd);
+
+program
+  .command('release-check')
+  .description(
+    'Preflight before tagging a release. Verifies working tree, branch, global install sync with HEAD, tests, build, doctor, and stamped CLAUDE.md block.',
+  )
+  .option('--skip-tests', 'Skip the test suite (not recommended)')
+  .option('--skip-build', 'Skip the build step')
+  .action((cmdOpts: { skipTests?: boolean; skipBuild?: boolean }) => releaseCheck(cmdOpts));
 
 burnCmd
   .command('steel <old> <new>')

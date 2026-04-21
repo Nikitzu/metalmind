@@ -192,6 +192,54 @@ describe('scribe CRUD', () => {
     expect(raw).toContain('appended');
   });
 
+  it('rename: moves file and rewrites wikilink backlinks', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: oldPath } = await scribeCreate(
+      { kind: 'learning', title: 'old-slug', body: 'x', project: 'metalmind' },
+      ctx,
+    );
+    const { scribeRename } = await import('./scribe.js');
+    // Create a sibling note that references the old slug in all wikilink flavors
+    await scribeCreate(
+      {
+        kind: 'work',
+        title: 'referrer',
+        body:
+          'See [[Learnings/old-slug]] and [[old-slug#Context]] and [[old-slug|pretty name]].',
+        project: 'metalmind',
+      },
+      ctx,
+    );
+    const res = await scribeRename('learning:old-slug', 'learning:new-slug', ctx);
+    expect(res.backlinksRewritten).toBeGreaterThanOrEqual(3);
+    await expect(readFile(oldPath, 'utf8')).rejects.toBeTruthy();
+    const referrer = await readFile(join(vault, 'Work/referrer.md'), 'utf8');
+    expect(referrer).toContain('[[Learnings/new-slug]]');
+    expect(referrer).toContain('[[new-slug#Context]]');
+    expect(referrer).toContain('[[new-slug|pretty name]]');
+    const moved = await readFile(join(vault, 'Learnings/new-slug.md'), 'utf8');
+    expect(moved).toContain('# old-slug');
+  });
+
+  it('rename --dry-run leaves files untouched but reports count', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: oldPath } = await scribeCreate(
+      { kind: 'learning', title: 'to-rename', body: 'x' },
+      ctx,
+    );
+    await scribeCreate(
+      { kind: 'work', title: 'r', body: '[[to-rename]]' },
+      ctx,
+    );
+    const { scribeRename } = await import('./scribe.js');
+    const res = await scribeRename('learning:to-rename', 'learning:renamed', ctx, {
+      dryRun: true,
+    });
+    expect(res.backlinksRewritten).toBe(1);
+    await expect(readFile(oldPath, 'utf8')).resolves.toBeTruthy();
+    await expect(readFile(join(vault, 'Learnings/renamed.md'), 'utf8')).rejects.toBeTruthy();
+  });
+
   it('dry-run on create does not write', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     await scribeCreate(

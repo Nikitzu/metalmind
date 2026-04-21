@@ -366,3 +366,104 @@ export async function scribeShow(notePath: string, ctx: ScribeOpts): Promise<str
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   return readFile(abs, 'utf8');
 }
+
+export interface RenameResult {
+  from: string;
+  to: string;
+  backlinksRewritten: number;
+  filesTouched: string[];
+}
+
+async function walkMarkdown(root: string): Promise<string[]> {
+  const out: string[] = [];
+  const queue = [root];
+  while (queue.length) {
+    const dir = queue.pop();
+    if (!dir) continue;
+    let entries: Array<{ name: string; isDirectory: () => boolean; isFile: () => boolean }>;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const abs = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === 'Archive' || entry.name === 'node_modules') continue;
+        queue.push(abs);
+      } else if (entry.isFile() && entry.name.endsWith('.md')) {
+        out.push(abs);
+      }
+    }
+  }
+  return out;
+}
+
+/** Rewrite wikilinks `[[old]]`, `[[old#h]]`, `[[old|alias]]`, `[[old#h|alias]]`
+ *  and path variants `[[dir/old]]` to point at the new slug. Returns the
+ *  rewritten text and a count of replacements. */
+export function rewriteBacklinks(
+  source: string,
+  oldSlug: string,
+  newSlug: string,
+): { text: string; count: number } {
+  const oldBase = oldSlug.split('/').pop() ?? oldSlug;
+  const newBase = newSlug.split('/').pop() ?? newSlug;
+  let count = 0;
+  const re = /\[\[([^\]|#]+?)([|#][^\]]*)?\]\]/g;
+  const text = source.replace(re, (match, target: string, suffix: string | undefined) => {
+    const base = target.split('/').pop() ?? target;
+    if (target === oldSlug) {
+      count++;
+      return `[[${newSlug}${suffix ?? ''}]]`;
+    }
+    if (base === oldBase) {
+      count++;
+      const prefix = target.slice(0, target.length - base.length);
+      return `[[${prefix}${newBase}${suffix ?? ''}]]`;
+    }
+    return match;
+  });
+  return { text, count };
+}
+
+export async function scribeRename(
+  from: string,
+  to: string,
+  ctx: ScribeOpts,
+  opts: { dryRun?: boolean } = {},
+): Promise<RenameResult> {
+  const absFrom = resolveNotePath(from, ctx.vaultRoot);
+  if (!(await exists(absFrom))) throw new Error(`source note not found: ${absFrom}`);
+  const absTo = resolveNotePath(to, ctx.vaultRoot);
+  if (absFrom === absTo) throw new Error('from and to resolve to the same path');
+  if (await exists(absTo)) throw new Error(`destination already exists: ${absTo}`);
+
+  const oldRel = relative(ctx.vaultRoot, absFrom).replace(/\.md$/, '');
+  const newRel = relative(ctx.vaultRoot, absTo).replace(/\.md$/, '');
+
+  const touched: string[] = [];
+  let total = 0;
+  const files = await walkMarkdown(ctx.vaultRoot);
+  for (const f of files) {
+    if (f === absFrom) continue;
+    const raw = await readFile(f, 'utf8');
+    const { text, count } = rewriteBacklinks(raw, oldRel, newRel);
+    if (count === 0) continue;
+    total += count;
+    touched.push(f);
+    if (!opts.dryRun) await writeFile(f, text, 'utf8');
+  }
+
+  if (!opts.dryRun) {
+    await mkdir(dirname(absTo), { recursive: true });
+    const raw = await readFile(absFrom, 'utf8');
+    const now = ctx.now ? ctx.now() : new Date();
+    const bumped = rewriteFrontmatterField(raw, 'updated', isoDate(now));
+    await writeFile(absTo, bumped, 'utf8');
+    await rm(absFrom);
+  }
+
+  return { from: absFrom, to: absTo, backlinksRewritten: total, filesTouched: touched };
+}
