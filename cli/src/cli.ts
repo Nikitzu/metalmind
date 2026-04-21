@@ -2,7 +2,16 @@ import { Command } from 'commander';
 import pkg from '../package.json' with { type: 'json' };
 import { burn } from './commands/burn.js';
 import { doctor } from './commands/doctor.js';
-import { forgeAdd, forgeCreate, forgeDelete, forgeList, forgeRemove } from './commands/forge.js';
+import {
+  forgeAdd,
+  forgeCaptureSpec,
+  forgeCreate,
+  forgeDelete,
+  forgeList,
+  forgeRemove,
+  forgeSpecList,
+  forgeSpecRemove,
+} from './commands/forge.js';
 import { init } from './commands/init.js';
 import {
   aluminumWipe,
@@ -185,6 +194,23 @@ function attachForgeSubcommands(parent: Command): void {
     .description('Remove a repo path from the forge')
     .action(forgeRemove);
   parent.command('list').description('List all forges').action(forgeList);
+  parent
+    .command('capture-spec <repo> <source>')
+    .description(
+      'Capture an OpenAPI spec (URL or file) into the metalmind spec shelf for cross-repo route matching. Does not touch the target repo.',
+    )
+    .option('--as <slug>', 'Override shelf slug (defaults to basename(repo))')
+    .action((repo: string, source: string, cmdOpts: { as?: string }) =>
+      forgeCaptureSpec(repo, source, { as: cmdOpts.as }),
+    );
+  parent
+    .command('spec-list')
+    .description('List OpenAPI specs on the shelf')
+    .action(forgeSpecList);
+  parent
+    .command('spec-remove <slug>')
+    .description('Remove an OpenAPI spec from the shelf by slug')
+    .action(forgeSpecRemove);
 }
 
 const forgeCmd = program.command('forge').description('Cross-repo graph groups');

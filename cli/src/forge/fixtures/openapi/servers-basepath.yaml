@@ -1,0 +1,9 @@
+openapi: 3.0.1
+info: { title: api, version: v1 }
+servers:
+  - url: https://prod.example.com/api
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      responses: { '200': { description: ok } }

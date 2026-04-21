@@ -38,6 +38,7 @@
     "@clack/prompts": "^0.7.0",
     "commander": "^12.1.0",
     "execa": "^9.4.0",
+    "yaml": "^2.8.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {

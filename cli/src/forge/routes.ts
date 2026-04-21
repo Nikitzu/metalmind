@@ -1,6 +1,7 @@
 import type { Dirent } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { extractOpenApiRoutes } from './openapi.js';
 
 export type RouteKind = 'handler' | 'caller';
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'ANY';
@@ -180,6 +181,7 @@ export function parsePy(content: string, file: string, repo: string): RouteEntry
 
 export async function extractRoutes(repo: string): Promise<RouteEntry[]> {
   const out: RouteEntry[] = [];
+  out.push(...(await extractOpenApiRoutes(repo)));
   for await (const file of walk(repo, JS_EXT)) {
     const content = await readFile(file, 'utf8');
     out.push(...parseJs(content, file, repo));

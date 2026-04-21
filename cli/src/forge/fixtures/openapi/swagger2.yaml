@@ -1,0 +1,15 @@
+swagger: "2.0"
+info:
+  title: legacy-service
+  version: v1
+basePath: /v1
+paths:
+  /bookings:
+    get:
+      responses:
+        '200':
+          description: ok
+    post:
+      responses:
+        '201':
+          description: created

@@ -1,0 +1,35 @@
+openapi: 3.0.1
+info:
+  title: coreapi-urishortener
+  version: v1
+servers:
+  - url: https://api.example.com
+paths:
+  /shortened-uri:
+    post:
+      summary: Create a shortened URI
+      responses:
+        '200':
+          description: ok
+    get:
+      summary: List
+      responses:
+        '200':
+          description: ok
+  /shortened-uri/{id}:
+    get:
+      summary: Get by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
+    delete:
+      summary: Delete
+      responses:
+        '204':
+          description: ok
