@@ -13,4 +13,8 @@ Default is fast semantic search. Add `--deep` for hits + related notes in one ca
 
 **Save decisions, not code.** Use the `/save` skill. Propose path + content before writing; never save silently. Folders: `Work/` · `Personal/` · `Learnings/` · `Daily/` · `Inbox/` · `Archive/` · `Memory/`. Plans live flat at `~/Knowledge/Plans/YYYY-MM-DD-<topic>.md` — indexed automatically. Project grouping comes from the `project:` frontmatter field plus a matching MOC at `<Folder>/MOCs/<project>.md`; no per-project subfolders.
 
+**Write vault notes via `metalmind scribe <create|update|patch|delete|archive|list|show>`** (classic alias `metalmind note`). It stamps frontmatter, picks the right path, and links the project MOC — raw `Write` causes drift. Body on stdin; `<note>` accepts `kind:slug` shortcuts (`learning:foo`, `plan:2026-04-21-bar`). All verbs support `--dry-run`; run `metalmind scribe --help` for flags.
+
+**Forge cross-repo route edges** need OpenAPI specs on the metalmind shelf — never inside the target repo. Populate once with `metalmind forge capture-spec <repo> <url-or-file>` (`forge spec-list` / `spec-remove` manage it).
+
 **When NOT to recall**: one-off syntax lookups (training knowledge is fine) and transient state (the git log already records it).

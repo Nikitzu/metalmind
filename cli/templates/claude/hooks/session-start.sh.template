@@ -13,5 +13,5 @@ if ! command -v metalmind >/dev/null 2>&1; then
 fi
 
 cat <<EOF
-{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"metalmind memory is available. Before any non-trivial task (architecture, design, debugging, planning, saving), run 'Bash: ${RECALL_CMD} \"<query>\"' to recall prior decisions from the Obsidian vault at ~/Knowledge/. Add --deep for related notes, --expand for linked context. Recall runs over loopback HTTP — no MCP tool schema in context (no standing token tax); hit payloads are billed like any other bash output. Do NOT trust training-cutoff knowledge over the vault."}}
+{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"metalmind memory is available. Before any non-trivial task (architecture, design, debugging, planning, saving), run 'Bash: ${RECALL_CMD} \"<query>\"' to recall prior decisions from the Obsidian vault at ~/Knowledge/. Add --deep for related notes, --expand for linked context. To WRITE to the vault, use 'metalmind scribe <create|update|patch|delete|archive|list|show>' instead of raw Write — it handles frontmatter, paths, and MOC linking (classic alias: 'metalmind note'). Recall runs over loopback HTTP — no MCP tool schema in context (no standing token tax); hit payloads are billed like any other bash output. Do NOT trust training-cutoff knowledge over the vault."}}
 EOF

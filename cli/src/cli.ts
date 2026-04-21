@@ -20,6 +20,15 @@ import {
   renameSymbol,
   toggleVerbose,
 } from './commands/remaining-burns.js';
+import {
+  scribeArchiveCmd,
+  scribeCreateCmd,
+  scribeDeleteCmd,
+  scribeListCmd,
+  scribePatchCmd,
+  scribeShowCmd,
+  scribeUpdateCmd,
+} from './commands/scribe.js';
 import { stamp } from './commands/stamp.js';
 import { type StoreOptions, store } from './commands/store.js';
 import { type TapOptions, tap } from './commands/tap.js';
@@ -218,6 +227,69 @@ attachForgeSubcommands(forgeCmd);
 
 const groupCmd = program.command('group').description('Classic alias: cross-repo graph groups');
 attachForgeSubcommands(groupCmd);
+
+function attachScribeSubcommands(parent: Command): void {
+  parent
+    .command('create <title>')
+    .description('Create a vault note with frontmatter + MOC linking. Body read from stdin.')
+    .requiredOption(
+      '--kind <kind>',
+      'plan | learning | work | daily | moc | inbox',
+    )
+    .option('--project <slug>', 'Project slug (drives MOC linking via frontmatter)')
+    .option('--tags <csv>', 'Comma-separated tags')
+    .option('--slug <slug>', 'Override derived slug')
+    .option('--body <body>', 'Body inline (otherwise read from stdin)')
+    .option('--no-moc', 'Skip appending a link to the project MOC')
+    .option('--dry-run', 'Preview only')
+    .action((title: string, cmdOpts) => scribeCreateCmd(title, cmdOpts));
+  parent
+    .command('update <note>')
+    .description('Append body to an existing note and bump updated:. Accepts kind:slug shortcut.')
+    .option('--body <body>', 'Body inline (otherwise read from stdin)')
+    .option('--dry-run', 'Preview only')
+    .action((note: string, cmdOpts) => scribeUpdateCmd(note, cmdOpts));
+  parent
+    .command('patch <note>')
+    .description('Replace one ## section in an existing note.')
+    .requiredOption('--section <heading>', 'Section heading without the ## prefix')
+    .option('--body <body>', 'Body inline (otherwise read from stdin)')
+    .option(
+      '--occurrence <n>',
+      '1-indexed occurrence when section appears multiple times',
+    )
+    .option('--dry-run', 'Preview only')
+    .action((note: string, cmdOpts) => scribePatchCmd(note, cmdOpts));
+  parent
+    .command('delete <note>')
+    .description('Soft-delete (move to .trash/). --hard to actually remove.')
+    .option('--hard', 'Hard delete instead of moving to .trash/')
+    .option('--dry-run', 'Preview only')
+    .action((note: string, cmdOpts) => scribeDeleteCmd(note, cmdOpts));
+  parent
+    .command('archive <note>')
+    .description('Move to Archive/ and set status: archived. MOC links preserved.')
+    .option('--dry-run', 'Preview only')
+    .action((note: string, cmdOpts) => scribeArchiveCmd(note, cmdOpts));
+  parent
+    .command('list')
+    .description('List notes, optionally filtered by project or kind.')
+    .option('--project <slug>', 'Filter by project frontmatter')
+    .option('--kind <kind>', 'Filter by note kind')
+    .action((cmdOpts) => scribeListCmd(cmdOpts));
+  parent
+    .command('show <note>')
+    .description('Print a note to stdout. Accepts kind:slug shortcut.')
+    .action((note: string) => scribeShowCmd(note));
+}
+
+const scribeCmd = program
+  .command('scribe')
+  .description('Write, update, patch, delete, archive vault notes');
+attachScribeSubcommands(scribeCmd);
+
+const noteCmd = program.command('note').description('Classic alias: vault note CRUD');
+attachScribeSubcommands(noteCmd);
 
 burnCmd
   .command('steel <old> <new>')
