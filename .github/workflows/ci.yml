@@ -31,7 +31,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22: astro-check (site typecheck) requires >=22.12. publish.yml
+          # stays on 20 because it doesn't run the site typecheck at all —
+          # that pipeline only tests + publishes the CLI.
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
