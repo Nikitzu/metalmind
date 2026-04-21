@@ -37,6 +37,7 @@ const description =
           <a href="#commands">commands</a>
           <a href="#demo">flow</a>
           <a href="#how">under</a>
+          <a href="/releases">releases</a>
           <a href="https://github.com/Nikitzu/metalmind">github</a>
         </nav>
         <div class="nav-flavor">
@@ -106,8 +107,9 @@ const description =
             <div class="feature-body">
               <code><span class="scadrial-only">tap copper "&lt;query&gt;"</span><span class="classic-only">recall "&lt;query&gt;"</span></code>
               is a Bash call, not an MCP tool — zero schema bloat per session. Most memory tools
-              silently inject 3–5 tool schemas into every Claude Code session before you've typed
-              a prompt. We stamp the command into your <code>CLAUDE.md</code> so Claude reaches for
+              silently inject a handful of tool schemas — often heavily over-specified — into
+              every Claude Code session before you've typed a prompt. <a href="#anti-mcp-title">Measured:</a>
+              metalmind costs ~2.5× less than mem0 as shipped. We stamp the command into your <code>CLAUDE.md</code> so Claude reaches for
               it naturally. <code>--deep</code> follows backlinks; <code>--expand</code> returns
               hits plus the surrounding graph.
               <div class="feature-bench">
@@ -208,11 +210,19 @@ const description =
               <tr><th scope="row">mem0 (<code>pinkpixel-dev/mem0-mcp</code>)</th><td>MCP stdio</td><td>3</td><td>~1,319</td></tr>
             </tbody>
           </table>
+          <p class="bench-headline">
+            <strong>~2.5× lower than mem0 as shipped</strong> (loopback-HTTP vs stdio MCP) ·
+            <strong>~8.4× lower on the apples-to-apples MCP comparison</strong> (metalmind's stdio
+            fallback vs mem0 — same transport, different schema discipline).
+          </p>
           <p class="bench-note">
-            Approximation via <code>chars / 4</code>; rerun with a real
-            <code>ANTHROPIC_API_KEY</code> for exact counts. Shape is what matters: two zero-schema
-            transports, one modest, one bloat. Per-call result tokens are billed like any tool
-            output and are excluded here — this is <em>standing cost</em> before a single call.
+            The ~519 tokens metalmind spends up front are prose in <code>~/.claude/CLAUDE.md</code>
+            that teaches Claude <em>when</em> to recall — work that mem0's schema-tax doesn't do.
+            Approximation via <code>chars / 4</code>; rerun with <code>pnpm bench:mcp-tax</code>
+            (add <code>ANTHROPIC_API_KEY</code> for exact counts). Shape is what matters: two
+            zero-schema transports, one modest, one bloat. Per-call result tokens are billed like
+            any tool output and are excluded here — this is <em>standing cost</em> before a single
+            call.
           </p>
         </div>
       </section>

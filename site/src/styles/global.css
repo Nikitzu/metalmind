@@ -464,6 +464,69 @@ pre {
   font-size: 0.8rem;
   line-height: 1.55;
 }
+.mcp-tax-bench .bench-headline {
+  margin: 0.6rem 0 0 0;
+  color: var(--fg);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.mcp-tax-bench .bench-headline strong {
+  color: var(--copper);
+}
+
+/* Releases page */
+.release-hero {
+  padding-top: 2.5rem;
+}
+.releases-body {
+  padding-bottom: 4rem;
+}
+.release {
+  padding: 1.2rem 0 1.6rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--fg-muted) 20%, transparent);
+}
+.release:last-child {
+  border-bottom: none;
+}
+.release-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+.release-head h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--copper);
+}
+.release-date {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  letter-spacing: 0.04em;
+}
+.release h3 {
+  margin: 0.9rem 0 0.3rem 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+}
+.release ul {
+  margin: 0.2rem 0 0 1.2rem;
+  padding: 0;
+  list-style: disc;
+}
+.release li {
+  margin: 0.45rem 0;
+  line-height: 1.6;
+  color: var(--fg);
+}
+.release li code {
+  color: var(--copper);
+}
 
 /* Anti-persona list */
 .anti-persona {

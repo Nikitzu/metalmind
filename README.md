@@ -15,7 +15,7 @@ Website: **[metalmind.mzyx.dev](https://metalmind.mzyx.dev)**
 
 - **Persistent memory across sessions.** `metalmind store copper "<insight>"` (alias: `save`) deposits a decision into your local Obsidian vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes. Tomorrow's session recalls it as if yesterday never ended.
 
-- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session — most memory tools silently inject 3-5 tool schemas into every Claude Code session before you've typed a prompt. We stamp the command into your `CLAUDE.md` so Claude reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback.
+- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session — most memory tools silently inject a handful of tool schemas — often heavily over-specified — into every Claude Code session before you've typed a prompt (measured: [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/)). We stamp the command into your `CLAUDE.md` so Claude reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback.
   <br><sub>**Measured** on the 12-note fake vault in [`bench/recall-v0/`](bench/recall-v0/): **hit@5 = 90%**, **hit@3 = 85%**, **hit@1 = 70%**, latency **median 45 ms / p95 87 ms**. Hit payloads are billed like any other bash output; the MCP tax we avoid is the standing tool-schema cost, not the result tokens.</sub>
 
 - **Session-start awareness without nagging.** metalmind installs a Claude Code SessionStart hook plus a top-of-file block in `~/.claude/CLAUDE.md` with explicit WHEN→DO triggers, so every new Claude session discovers the vault on its own — no "did you check memory?" prompting. Re-stamp anytime with `metalmind burn brass` (alias: `stamp`) after an upgrade.
@@ -45,7 +45,7 @@ metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the
 | metalmind (stdio MCP fallback) | MCP stdio | 3 | ~157 |
 | mem0 (`pinkpixel-dev/mem0-mcp`) | MCP stdio | 3 | ~1,319 |
 
-Approximation via `chars / 4`; re-run with `ANTHROPIC_API_KEY=... pnpm bench:mcp-tax` for exact counts. `bench/mcp-tax-v0/README.md` details methodology and limits.
+**~2.5× lower than mem0 as shipped** (loopback-HTTP vs stdio MCP), **~8.4× lower on the apples-to-apples MCP comparison** (metalmind's stdio fallback vs mem0 — same transport, different schema discipline). The ~519 tokens metalmind spends up front are prose in `~/.claude/CLAUDE.md` that teaches Claude *when* to recall — work that mem0's schema-tax doesn't do. Approximation via `chars / 4`; re-run with `ANTHROPIC_API_KEY=... pnpm bench:mcp-tax` for exact counts. `bench/mcp-tax-v0/README.md` details methodology and limits.
 
 ## Who should NOT use metalmind
 
@@ -140,11 +140,13 @@ Stops and removes the Docker containers, unloads the watcher service, strips the
 
 ## Docs
 
+- [`CHANGELOG.md`](CHANGELOG.md) — release notes, one entry per tag
 - [`docs/prerequisites.md`](docs/prerequisites.md) — what to install before `metalmind init`
 - [`docs/post-install.md`](docs/post-install.md) — verification + troubleshooting
 - [`docs/customization.md`](docs/customization.md) — swapping embedding model, relocating vault, etc.
 - [`docs/plugins.md`](docs/plugins.md) — recommended Claude Code plugins
 - [`docs/teams.md`](docs/teams.md) — the experimental agent-teams feature
+- [`bench/recall-v0/`](bench/recall-v0/) · [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/) — reproducible benches (recall quality + MCP token tax)
 
 ## Hacking on the CLI
 

@@ -1,0 +1,330 @@
+---
+import FlavorToggle from '../components/FlavorToggle.astro';
+import '../styles/global.css';
+
+const title = 'metalmind — releases';
+const description = 'Release notes and changelog for metalmind — one entry per tag.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07090c" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content="https://metalmind.mzyx.dev/releases" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="nav-inner">
+        <div class="nav-brand">
+          <a href="/" style="color:inherit;text-decoration:none;">
+            <span class="nav-brand-accent">∴</span>&nbsp;metalmind
+          </a>
+        </div>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="/#beyond-title">what</a>
+          <a href="/#anti-mcp-title">why CLI</a>
+          <a href="/#commands">commands</a>
+          <a href="/releases" aria-current="page">releases</a>
+          <a href="https://github.com/Nikitzu/metalmind">github</a>
+        </nav>
+        <div class="nav-flavor">
+          <FlavorToggle />
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="container release-hero" aria-labelledby="release-title">
+        <div class="hero-eyebrow">
+          <span class="scadrial-only">Scadrial · Records</span>
+          <span class="classic-only">Change log</span>
+        </div>
+        <h1 id="release-title">Releases</h1>
+        <p class="hero-tagline">
+          One entry per tag. The canonical source is <a
+            href="https://github.com/Nikitzu/metalmind/blob/main/CHANGELOG.md"
+            target="_blank"
+            rel="noopener"
+          ><code>CHANGELOG.md</code></a> in the repo — this page mirrors it.
+          Each version is published on <a
+            href="https://www.npmjs.com/package/metalmind"
+            target="_blank"
+            rel="noopener"
+          >npm</a> with sigstore provenance (OIDC trusted publisher).
+        </p>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container releases-body" aria-label="Changelog entries">
+
+        <article class="release">
+          <header class="release-head">
+            <h2>Unreleased</h2>
+            <span class="release-date">pending</span>
+          </header>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong>Vanishing stamped block bug.</strong> <code>teardown()</code> defaulted
+              <code>claudeDir</code> to the real <code>~/.claude</code> when tests forgot to pass
+              one, causing every <code>pnpm test</code> run to strip the metalmind managed block
+              from the user's <code>~/.claude/CLAUDE.md</code> and delete the session-start hook.
+              <code>claudeDir</code> and <code>settingsPath</code> are now required options — any
+              future test that omits them fails at the type level, not at the data-loss level.
+            </li>
+          </ul>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong><code>bench/mcp-tax-v0/</code></strong> — reproducible first-turn token-tax
+              bench vs mem0, metalmind's stdio MCP fallback, and Claude Code native
+              <code>/memory</code>. <code>pnpm bench:mcp-tax</code> prints a copy-paste markdown
+              table; runs via Anthropic <code>count_tokens</code> when
+              <code>ANTHROPIC_API_KEY</code> is set, falls back to char/4 approximation otherwise.
+              Headline: <strong>~2.5× lower</strong> than mem0 as shipped, <strong>~8.4× lower</strong>
+              on the apples-to-apples MCP comparison.
+            </li>
+          </ul>
+          <h3>Changed</h3>
+          <ul>
+            <li>
+              <strong>README + site</strong> surface forge (three-tier route extraction), steel
+              (rename), zinc (team-debug), and scribe (vault CRUD) as first-class features alongside
+              copper. New anti-persona section explicitly lists who should <em>not</em> install
+              metalmind.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.10</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong>Warm-path orphan-cache prune.</strong>
+              <code>pruneOrphanRouteCaches()</code> was only wired into
+              <code>buildMergedGraph</code> — <code>loadOrBuildMerged</code> short-circuits on a
+              warm merged cache, so orphan entries at <code>~/.metalmind/forge/routes/*.json</code>
+              persisted across runs even after the source repo was deleted. Moved the prune call
+              up into <code>loadOrBuildMerged</code> so it fires on every invocation.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.9</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong>Tier 3 URL-literal route extraction</strong> (opt-in via
+              <code>--include-literals</code>). Scans ~15 text extensions for path-shaped string
+              literals as a last-resort fallback when OpenAPI specs and Java caller parsers miss.
+              Every edge carries <code>INFERRED_URL_LITERAL</code> provenance. Noise filter drops
+              static asset extensions.
+            </li>
+            <li>
+              <strong>CI Node 24 opt-in</strong> via
+              <code>FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true</code> in the publish workflow.
+              Keeps the pipeline unblocked through 2026-09-16.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.8</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong>Orphan route-cache pruning.</strong> First pass:
+              <code>pruneOrphanRouteCaches()</code> now runs at the top of
+              <code>buildMergedGraph</code>, deleting cache entries whose source repo is missing.
+              One-time cleanup of 33 stale entries from the local shelf.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.7</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong><code>metalmind release-check</code></strong> — pre-tag preflight. Working
+              tree clean, on main, version sync between CLI and global install, tests pass, build
+              passes, doctor clean, stamped block present in <code>~/.claude/CLAUDE.md</code>.
+              <code>--skip-tests --skip-build</code> for speed during debugging.
+            </li>
+            <li>
+              <strong><code>metalmind scribe rename</code> + backlink rewriting.</strong> Moves a
+              vault note to a new kind/slug and rewrites every
+              <code>[[wikilink]]</code> reference across the vault.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.6</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong>Forge Tier 1 — language-agnostic OpenAPI route extraction.</strong> Reads
+              specs from a metalmind-managed shelf at
+              <code>~/.metalmind/specs/&lt;repo&gt;.&#123;yaml,json&#125;</code> — never from
+              inside the target repo. Satisfies the "single-dev tool, zero repo pollution"
+              constraint. <code>metalmind forge capture-spec &lt;repo&gt; &lt;url-or-file&gt;</code>
+              seeds the shelf.
+            </li>
+            <li>
+              <strong>Forge Tier 2 — Java caller extraction.</strong> Regex-based parser for
+              <code>RestTemplate</code> (getForObject/postForEntity/exchange),
+              <code>WebClient</code> fluent chains, and <code>Feign</code> clients
+              (<code>@GetMapping</code> inside <code>@FeignClient</code>). Cross-repo
+              <code>INFERRED_ROUTE</code> edges now link Java callers to handlers in any target
+              language.
+            </li>
+            <li>
+              <strong><code>metalmind scribe</code></strong> (alias: <code>note</code>) — vault
+              note CRUD. Full flow: <code>create · update · patch · delete · archive · list · show</code>.
+              Stamps frontmatter, picks the right folder from <code>kind</code>, auto-links the
+              project MOC, supports <code>--dry-run</code> on every verb, accepts
+              <code>kind:slug</code> shortcuts. Soft-delete by default.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.5</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong>graphify subcommand rename.</strong> graphify removed
+              <code>analyze</code>; metalmind was still calling it. Switched all call sites to
+              <code>graphify update</code>.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.4</h2>
+            <span class="release-date">2026-04-20</span>
+          </header>
+          <h3>Changed</h3>
+          <ul>
+            <li>
+              <strong>Flat <code>~/Knowledge/Plans/</code> layout.</strong> Plans are no longer
+              nested by project subdirectory — all plan notes live flat in <code>Plans/</code>,
+              grouped by <code>project:</code> frontmatter and a per-project MOC in
+              <code>Work/MOCs/&lt;project&gt;.md</code>.
+            </li>
+            <li>
+              <strong>MOC template scaffold</strong> — <code>metalmind init</code> now seeds a
+              starter Map-of-Content template.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.3</h2>
+            <span class="release-date">2026-04-20</span>
+          </header>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong>OIDC trusted-publisher release pipeline.</strong> Publishes to npm via OIDC
+              + sigstore provenance on every <code>v*.*.*</code> tag. No
+              <code>NPM_TOKEN</code> secret required.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.1</h2>
+            <span class="release-date">2026-04-20</span>
+          </header>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong><code>metalmind --version</code></strong> now reads from
+              <code>package.json</code> (was a hard-coded string). Prevents version-drift
+              between <code>npm view metalmind version</code> and local CLI output.
+            </li>
+          </ul>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong><code>bench/recall-v0/</code></strong> — reproducible recall-quality bench.
+              Current: hit@5 = 90%, hit@3 = 85%, hit@1 = 70%; latency median 45 ms / p95 87 ms.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.1.0</h2>
+            <span class="release-date">2026-04-20</span>
+          </header>
+          <p>Initial public release.</p>
+          <ul>
+            <li>One themed CLI (Scadrial verbs + Classic aliases).
+              <code>metalmind init</code> drives the whole install;
+              <code>metalmind uninstall</code> reverses it — never touches your notes.</li>
+            <li>Loopback-HTTP recall at <code>127.0.0.1:17317</code> as the default transport;
+              stdio-MCP as always-available fallback.</li>
+            <li>SessionStart hook + stamped <code>CLAUDE.md</code> block teach Claude Code when to
+              recall, without injecting MCP tool schemas.</li>
+            <li>Per-repo code graphs via graphify; cross-repo merge in the metalmind
+              <em>forge</em> with <code>INFERRED_NAME</code> edges.</li>
+            <li>Serena LSP backs <code>burn iron</code> (symbol navigation) and
+              <code>burn steel</code> (coordinated rename).</li>
+            <li><code>burn zinc</code> dispatches to the <code>/team-debug</code> skill with the
+              code graph pre-primed.</li>
+          </ul>
+        </article>
+
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-badges">
+        <a href="https://github.com/Nikitzu/metalmind/blob/main/LICENSE">
+          <img src="https://img.shields.io/badge/license-MIT-93b1d0?style=flat-square&labelColor=10141b" alt="MIT license" />
+        </a>
+        <a href="https://github.com/Nikitzu/metalmind">
+          <img src="https://img.shields.io/github/stars/Nikitzu/metalmind?style=flat-square&color=d4a14a&labelColor=10141b" alt="GitHub stars" />
+        </a>
+      </div>
+      <p>Inspired by Brandon Sanderson's Mistborn Era 1 novels. Not affiliated.</p>
+    </footer>
+
+  </body>
+</html>
