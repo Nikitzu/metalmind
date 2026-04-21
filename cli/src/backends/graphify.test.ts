@@ -57,10 +57,10 @@ describe('graphify backend', () => {
     expect(args).toEqual(['query', 'auth flow', '--graph', '/r/graphify-out/graph.json']);
   });
 
-  it('analyzeRepo shells out with analyze + path', async () => {
+  it('analyzeRepo shells out with update + path', async () => {
     runCommand.mockResolvedValueOnce(ok());
     const { analyzeRepo } = await import('./graphify.js');
     await analyzeRepo('/r');
-    expect(runCommand.mock.calls[0]?.[1]).toEqual(['analyze', '/r']);
+    expect(runCommand.mock.calls[0]?.[1]).toEqual(['update', '/r']);
   });
 });

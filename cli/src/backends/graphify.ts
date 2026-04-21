@@ -28,9 +28,9 @@ export function hasGraph(repoRoot: string): boolean {
 }
 
 export async function analyzeRepo(repoRoot: string): Promise<void> {
-  const res = await runCommand('graphify', ['analyze', repoRoot], { timeoutMs: 600_000 });
+  const res = await runCommand('graphify', ['update', repoRoot], { timeoutMs: 600_000 });
   if (!res.ok) {
-    throw new Error(`graphify analyze failed: ${res.stderr || res.stdout}`);
+    throw new Error(`graphify update failed: ${res.stderr || res.stdout}`);
   }
 }
 
