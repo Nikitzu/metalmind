@@ -183,4 +183,22 @@ describe('forge loader', () => {
     await buildMergedGraph(group, { cacheDir });
     expect(existsSync(join(routesDir, 'orphan.json'))).toBe(false);
   });
+
+  it('loadOrBuildMerged prunes orphans even on the warm cache hit path', async () => {
+    const routesDir = join(cacheDir, 'routes');
+    await mkdir(routesDir, { recursive: true });
+    await writeGraph(repoA, [{ id: 'fn1', label: 'handle' }]);
+    const group: ForgeGroup = { repos: [repoA] };
+    // Build once to populate the merged cache.
+    await loadOrBuildMerged('warm', group, { cacheDir });
+    // Drop in an orphan after the cache is warm.
+    await writeFile(
+      join(routesDir, 'orphan.json'),
+      JSON.stringify({ repo: '/still/no/such/repo', mtime: 0, routes: [] }),
+      'utf8',
+    );
+    // Warm cache hit — buildMergedGraph would not run, but prune should still fire.
+    await loadOrBuildMerged('warm', group, { cacheDir });
+    expect(existsSync(join(routesDir, 'orphan.json'))).toBe(false);
+  });
 });

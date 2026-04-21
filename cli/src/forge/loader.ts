@@ -240,6 +240,10 @@ export async function loadOrBuildMerged(
   opts: { forceRebuild?: boolean; cacheDir?: string; includeLiterals?: boolean } = {},
 ): Promise<MergedForgeGraph> {
   const dir = opts.cacheDir ?? FORGE_CACHE_DIR;
+  // Prune orphans on every call — buildMergedGraph is skipped on the warm
+  // path when the merged cache is fresh, so a prune there would never run
+  // for long-lived forges.
+  await pruneOrphanRouteCaches(dir);
   const suffix = opts.includeLiterals ? '.literals.json' : '.json';
   const path = join(dir, `${name}${suffix}`);
   if (!opts.forceRebuild && existsSync(path)) {
