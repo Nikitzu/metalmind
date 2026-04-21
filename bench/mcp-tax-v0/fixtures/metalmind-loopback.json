@@ -1,0 +1,6 @@
+{
+  "source": "metalmind default configuration (captured 2026-04-21)",
+  "capture_method": "Default metalmind install advertises zero MCP tools. Recall is a stamped bash command (metalmind tap copper) that Claude reaches for naturally via instructions in ~/.claude/CLAUDE.md. The loopback HTTP server at 127.0.0.1:17317 is the transport; Claude does not see it as a tool.",
+  "notes": "The instruction block stamped into CLAUDE.md IS billed as tokens, but it is a one-time ~20-line prose block, not a per-turn JSON schema. The instruction tokens are measured separately in results.json under 'instruction_block_tokens'.",
+  "tools": []
+}

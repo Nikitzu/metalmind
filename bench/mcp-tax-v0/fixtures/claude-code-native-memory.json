@@ -1,0 +1,6 @@
+{
+  "source": "Claude Code /memory (https://docs.claude.com/en/docs/claude-code/memory, captured 2026-04-21)",
+  "capture_method": "Claude Code's native memory is the CLAUDE.md hierarchy (project, user, enterprise). Read at session start, injected as system-prompt text — not as MCP tools.",
+  "notes": "Like metalmind-loopback, this is a zero-tool baseline. The cost is the text content of CLAUDE.md files themselves, not standing tool schemas. Useful as a floor for the comparison — confirms 'CLAUDE.md-as-instructions' is a legitimate design pattern, not a metalmind hack.",
+  "tools": []
+}

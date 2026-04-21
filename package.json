@@ -15,7 +15,9 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "bench:recall": "node bench/recall-v0/run.mjs",
+    "bench:mcp-tax": "node bench/mcp-tax-v0/run.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12"

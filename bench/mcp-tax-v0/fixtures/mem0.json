@@ -1,0 +1,73 @@
+{
+  "source": "https://github.com/pinkpixel-dev/mem0-mcp (src/index.ts @ main, captured 2026-04-21)",
+  "capture_method": "Direct copy of ListToolsRequestSchema handler output. See scripts/capture-mem0.md.",
+  "notes": "Represents the tool manifest mem0's MCP server advertises to MCP clients. Optional schema properties included because MCP hosts serialize the full manifest into the system prompt — there is no 'optional-fields-hidden' mode on the wire.",
+  "tools": [
+    {
+      "name": "add_memory",
+      "description": "Stores a piece of text as a memory in Mem0.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "content": { "type": "string", "description": "The text content to store as memory." },
+          "userId": { "type": "string", "description": "User ID to associate with the memory. If not provided, uses DEFAULT_USER_ID environment variable." },
+          "sessionId": { "type": "string", "description": "Optional session ID to associate with the memory." },
+          "agentId": { "type": "string", "description": "Optional agent ID - identifies the LLM/agent making the tool call. If not provided, uses DEFAULT_AGENT_ID environment variable." },
+          "appId": { "type": "string", "description": "Optional app ID - application identifier (legacy parameter). If not provided, uses DEFAULT_APP_ID environment variable." },
+          "projectId": { "type": "string", "description": "Optional project ID - for mem0 Pro plan project organization (e.g., proj_ABC123). If not provided, uses DEFAULT_PROJECT_ID environment variable." },
+          "orgId": { "type": "string", "description": "Optional organization ID - for mem0 organization-level management. If not provided, uses DEFAULT_ORG_ID environment variable." },
+          "metadata": { "type": "object", "description": "Optional key-value metadata." },
+          "includes": { "type": "string", "description": "Optional specific preferences to include in the memory (for cloud API)." },
+          "excludes": { "type": "string", "description": "Optional specific preferences to exclude from the memory (for cloud API)." },
+          "infer": { "type": "boolean", "description": "Optional whether to infer memories or directly store messages (default: true, for cloud API)." },
+          "outputFormat": { "type": "string", "description": "Optional format version, either v1.0 (deprecated) or v1.1 (recommended, for cloud API)." },
+          "customCategories": { "type": "object", "description": "Optional list of categories with names and descriptions (for cloud API)." },
+          "customInstructions": { "type": "string", "description": "Optional project-specific guidelines for handling and organizing memories (for cloud API)." },
+          "immutable": { "type": "boolean", "description": "Optional whether the memory is immutable (default: false, for cloud API)." },
+          "expirationDate": { "type": "string", "description": "Optional when the memory will expire (format: YYYY-MM-DD, for cloud API)." }
+        },
+        "required": ["content"]
+      }
+    },
+    {
+      "name": "search_memory",
+      "description": "Searches stored memories in Mem0 based on a query.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "The search query." },
+          "userId": { "type": "string", "description": "User ID to filter search. If not provided, uses DEFAULT_USER_ID environment variable." },
+          "sessionId": { "type": "string", "description": "Optional session ID to filter search." },
+          "agentId": { "type": "string", "description": "Optional agent ID - identifies the LLM/agent making the tool call. If not provided, uses DEFAULT_AGENT_ID environment variable." },
+          "appId": { "type": "string", "description": "Optional app ID - application identifier (legacy parameter). If not provided, uses DEFAULT_APP_ID environment variable." },
+          "projectId": { "type": "string", "description": "Optional project ID - for mem0 Pro plan project organization (e.g., proj_ABC123). If not provided, uses DEFAULT_PROJECT_ID environment variable." },
+          "orgId": { "type": "string", "description": "Optional organization ID - for mem0 organization-level management. If not provided, uses DEFAULT_ORG_ID environment variable." },
+          "filters": { "type": "object", "description": "Optional key-value filters for metadata." },
+          "threshold": { "type": "number", "description": "Optional similarity threshold for results (for cloud API)." },
+          "topK": { "type": "number", "description": "Optional number of top results to return (default: 10, for cloud API)." },
+          "fields": { "type": "array", "items": { "type": "string" }, "description": "Optional specific fields to include in the response (for cloud API)." },
+          "rerank": { "type": "boolean", "description": "Optional whether to rerank the memories (default: false, for cloud API)." },
+          "keywordSearch": { "type": "boolean", "description": "Optional whether to search based on keywords (default: false, for cloud API)." },
+          "filterMemories": { "type": "boolean", "description": "Optional whether to filter the memories (default: false, for cloud API)." }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "delete_memory",
+      "description": "Deletes a specific memory by ID from Mem0.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "memoryId": { "type": "string", "description": "The unique ID of the memory to delete." },
+          "userId": { "type": "string", "description": "User ID associated with the memory. If not provided, uses DEFAULT_USER_ID environment variable." },
+          "agentId": { "type": "string", "description": "Optional agent ID - identifies the LLM/agent making the tool call. If not provided, uses DEFAULT_AGENT_ID environment variable." },
+          "appId": { "type": "string", "description": "Optional app ID - application identifier (legacy parameter). If not provided, uses DEFAULT_APP_ID environment variable." },
+          "projectId": { "type": "string", "description": "Optional project ID - for mem0 Pro plan project organization (e.g., proj_ABC123). If not provided, uses DEFAULT_PROJECT_ID environment variable." },
+          "orgId": { "type": "string", "description": "Optional organization ID - for mem0 organization-level management. If not provided, uses DEFAULT_ORG_ID environment variable." }
+        },
+        "required": ["memoryId"]
+      }
+    }
+  ]
+}

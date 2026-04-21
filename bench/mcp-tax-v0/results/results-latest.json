@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-04-21T09:34:06.280Z",
+  "mode": "offline-approximation",
+  "model": null,
+  "approx_chars_per_token": 4,
+  "results": [
+    {
+      "name": "claude-code-native-memory",
+      "transport": "none (CLAUDE.md text only)",
+      "tool_count": 0,
+      "tools_json_chars": 2,
+      "mode": "offline-approximation",
+      "tools_tokens_approx": 1,
+      "first_turn_tokens_approx": 1
+    },
+    {
+      "name": "mem0",
+      "transport": "stdio MCP",
+      "tool_count": 3,
+      "tools_json_chars": 5276,
+      "mode": "offline-approximation",
+      "tools_tokens_approx": 1319,
+      "first_turn_tokens_approx": 1319
+    },
+    {
+      "name": "metalmind-loopback",
+      "transport": "loopback-http",
+      "tool_count": 0,
+      "tools_json_chars": 2,
+      "mode": "offline-approximation",
+      "tools_tokens_approx": 1,
+      "instruction_block_tokens_approx": 518,
+      "first_turn_tokens_approx": 519
+    },
+    {
+      "name": "metalmind-stdio",
+      "transport": "stdio MCP",
+      "tool_count": 3,
+      "tools_json_chars": 627,
+      "mode": "offline-approximation",
+      "tools_tokens_approx": 157,
+      "first_turn_tokens_approx": 157
+    }
+  ]
+}

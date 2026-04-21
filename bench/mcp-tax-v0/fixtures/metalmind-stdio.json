@@ -1,0 +1,42 @@
+{
+  "source": "metalmind packages/vault-rag/metalmind_vault_rag/server.py (captured 2026-04-21)",
+  "capture_method": "FastMCP tool registrations; input_schemas derived from function type hints as FastMCP would expose them.",
+  "notes": "This is metalmind's stdio MCP fallback — the tool manifest a user would see IF they disabled the loopback HTTP transport and fell back to MCP. The happy path advertises zero tools to Claude (see metalmind-loopback.json).",
+  "tools": [
+    {
+      "name": "search_vault",
+      "description": "Semantic search over the Obsidian Knowledge vault.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "k": { "type": "integer", "default": 5 }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "related_notes",
+      "description": "Return forward links and backlinks for a note.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string" }
+        },
+        "required": ["file"]
+      }
+    },
+    {
+      "name": "expand_search",
+      "description": "search_vault + wikilinks discovered in source files.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "k": { "type": "integer", "default": 5 }
+        },
+        "required": ["query"]
+      }
+    }
+  ]
+}

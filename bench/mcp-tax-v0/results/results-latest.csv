@@ -1,0 +1,5 @@
+name,transport,tool_count,tools_json_chars,tools_tokens,instruction_block_tokens,first_turn_tokens,mode
+"claude-code-native-memory","none (CLAUDE.md text only)",0,2,1,,1,"offline-approximation"
+"mem0","stdio MCP",3,5276,1319,,1319,"offline-approximation"
+"metalmind-loopback","loopback-http",0,2,1,518,519,"offline-approximation"
+"metalmind-stdio","stdio MCP",3,627,157,,157,"offline-approximation"

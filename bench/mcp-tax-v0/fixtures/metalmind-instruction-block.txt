@@ -1,0 +1,20 @@
+## Memory — metalmind (recall BEFORE you think)
+
+Vault at `~/Knowledge` — auto-indexed into local Qdrant; recall goes through the `metalmind` CLI over loopback HTTP. No MCP tool schema is registered, so the standing context budget stays clean; query results are billed like any other bash output.
+
+**Recall FIRST — before any non-trivial task.** The #1 failure mode is re-deriving what's already in the vault. Run `Bash: metalmind tap copper "<query>"` before:
+
+- Answering any architecture, design, or debugging question
+- Starting a feature, refactor, or migration
+- Writing a plan document
+- Running `/save` (recall first → surfaces edit-existing candidates, prevents duplicate notes)
+
+Default is fast semantic search. Add `--deep` for hits + related notes in one call; `--expand` for the full linked-context graph. `Read` / `Grep` are for exact paths and exact string matches only.
+
+**Save decisions, not code.** Use the `/save` skill. Propose path + content before writing; never save silently. Folders: `Work/` · `Personal/` · `Learnings/` · `Daily/` · `Inbox/` · `Archive/` · `Memory/`. Plans live flat at `~/Knowledge/Plans/YYYY-MM-DD-<topic>.md` — indexed automatically. Project grouping comes from the `project:` frontmatter field plus a matching MOC at `<Folder>/MOCs/<project>.md`; no per-project subfolders.
+
+**Write vault notes via `metalmind scribe <create|update|patch|delete|archive|list|show>`** (classic alias `metalmind note`). It stamps frontmatter, picks the right path, and links the project MOC — raw `Write` causes drift. Body on stdin; `<note>` accepts `kind:slug` shortcuts (`learning:foo`, `plan:2026-04-21-bar`). All verbs support `--dry-run`; run `metalmind scribe --help` for flags.
+
+**Forge cross-repo route edges** need OpenAPI specs on the metalmind shelf — never inside the target repo. Populate once with `metalmind forge capture-spec <repo> <url-or-file>` (`forge spec-list` / `spec-remove` manage it).
+
+**When NOT to recall**: one-off syntax lookups (training knowledge is fine) and transient state (the git log already records it).
