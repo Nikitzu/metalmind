@@ -35,6 +35,7 @@ const SKIP_DIRS = new Set([
 
 const JS_EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
 const PY_EXT = new Set(['.py']);
+const JAVA_EXT = new Set(['.java', '.kt']);
 
 async function* walk(root: string, exts: Set<string>): AsyncGenerator<string> {
   const queue = [root];
@@ -179,6 +180,73 @@ export function parsePy(content: string, file: string, repo: string): RouteEntry
   return out;
 }
 
+/** RestTemplate: .getForObject/.postForEntity/... first arg is the URL.
+ *  Captures method from the suffix (For-> HTTP verb) and URL literal. */
+const JAVA_RESTTEMPLATE_RE =
+  /\.(getForObject|getForEntity|postForObject|postForEntity|postForLocation|put|delete|patchForObject)\s*\(\s*"([^"]+)"/g;
+const JAVA_RESTTEMPLATE_EXCHANGE_RE =
+  /\.exchange\s*\(\s*"([^"]+)"\s*,\s*HttpMethod\.(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)/g;
+
+/** WebClient fluent: .get().uri("...") / .post().uri("...") / .method(HttpMethod.X).uri("...") */
+const JAVA_WEBCLIENT_RE =
+  /\.(get|post|put|patch|delete|options|head)\s*\(\s*\)\s*\.uri\s*\(\s*"([^"]+)"/g;
+const JAVA_WEBCLIENT_METHOD_RE =
+  /\.method\s*\(\s*HttpMethod\.(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*\)\s*\.uri\s*\(\s*"([^"]+)"/g;
+
+/** Feign: @GetMapping / @PostMapping / @RequestMapping(method=..., value="...") / @RequestLine("GET /path") */
+const JAVA_FEIGN_MAPPING_RE =
+  /@(Get|Post|Put|Patch|Delete)Mapping\s*\(\s*(?:value\s*=\s*)?"([^"]+)"/g;
+const JAVA_FEIGN_REQUESTLINE_RE =
+  /@RequestLine\s*\(\s*"(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+([^"]+)"/g;
+
+const REST_SUFFIX_TO_METHOD: Record<string, HttpMethod> = {
+  getForObject: 'GET',
+  getForEntity: 'GET',
+  postForObject: 'POST',
+  postForEntity: 'POST',
+  postForLocation: 'POST',
+  put: 'PUT',
+  delete: 'DELETE',
+  patchForObject: 'PATCH',
+};
+
+function pushCaller(out: RouteEntry[], method: HttpMethod, raw: string, file: string, repo: string): void {
+  if (!raw.startsWith('/')) return;
+  out.push({ method, path: normPath(raw), kind: 'caller', framework: 'java', file, repo });
+}
+
+export function parseJava(content: string, file: string, repo: string): RouteEntry[] {
+  const out: RouteEntry[] = [];
+  const isFeignClient = /@FeignClient\b/.test(content);
+
+  for (const m of content.matchAll(JAVA_RESTTEMPLATE_RE)) {
+    const method = REST_SUFFIX_TO_METHOD[m[1] ?? ''];
+    if (method) pushCaller(out, method, m[2] ?? '', file, repo);
+  }
+  for (const m of content.matchAll(JAVA_RESTTEMPLATE_EXCHANGE_RE)) {
+    pushCaller(out, (m[2] ?? 'GET') as HttpMethod, m[1] ?? '', file, repo);
+  }
+  for (const m of content.matchAll(JAVA_WEBCLIENT_RE)) {
+    const method = (m[1] ?? '').toUpperCase() as HttpMethod;
+    pushCaller(out, method, m[2] ?? '', file, repo);
+  }
+  for (const m of content.matchAll(JAVA_WEBCLIENT_METHOD_RE)) {
+    pushCaller(out, (m[1] ?? 'GET') as HttpMethod, m[2] ?? '', file, repo);
+  }
+
+  if (isFeignClient) {
+    for (const m of content.matchAll(JAVA_FEIGN_MAPPING_RE)) {
+      const verb = (m[1] ?? '').toUpperCase() as HttpMethod;
+      pushCaller(out, verb, m[2] ?? '', file, repo);
+    }
+    for (const m of content.matchAll(JAVA_FEIGN_REQUESTLINE_RE)) {
+      pushCaller(out, (m[1] ?? 'GET') as HttpMethod, m[2] ?? '', file, repo);
+    }
+  }
+
+  return out;
+}
+
 export async function extractRoutes(repo: string): Promise<RouteEntry[]> {
   const out: RouteEntry[] = [];
   out.push(...(await extractOpenApiRoutes(repo)));
@@ -189,6 +257,10 @@ export async function extractRoutes(repo: string): Promise<RouteEntry[]> {
   for await (const file of walk(repo, PY_EXT)) {
     const content = await readFile(file, 'utf8');
     out.push(...parsePy(content, file, repo));
+  }
+  for await (const file of walk(repo, JAVA_EXT)) {
+    const content = await readFile(file, 'utf8');
+    out.push(...parseJava(content, file, repo));
   }
   return out;
 }
