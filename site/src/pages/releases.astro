@@ -70,6 +70,66 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.2.0</h2>
+            <span class="release-date">2026-04-21</span>
+          </header>
+          <p>
+            Minor-rev bump: new recall tier, new optional dep group, Linux-real CI coverage, and
+            a landing-page positioning split. Nothing removed; everything opt-in.
+          </p>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong>Reranker tier (<code>tap copper --rerank</code>).</strong> Cross-encoder
+              (<code>BAAI/bge-reranker-v2-m3</code>) overfetches 4× from Qdrant and re-scores
+              before returning top-k. Closes the <strong>hit@1=70% → hit@5=90%</strong> gap the
+              recall-v0 bench exposed. Opt-in; first call downloads ~500 MB via
+              <code>FlagEmbedding</code>. Enable with
+              <code>uv tool install 'metalmind-vault-rag[rerank]'</code>. Graceful fallback if
+              the dep is absent; themed first-load message when
+              <code>METALMIND_FLAVOR=scadrial</code>.
+            </li>
+            <li>
+              <strong><code>bench/recall-v0/ --rerank</code>.</strong> Same runner, rerank mode
+              bumps timeout to 180 s for first-call warmup and records mode in the meta block.
+            </li>
+            <li>
+              <strong>Linux CI matrix.</strong> <code>.github/workflows/ci.yml</code> runs tests
+              on macOS + Ubuntu for every PR and push. <code>publish.yml</code> stays pinned to
+              macOS — release pipeline is intentionally not gated on Linux CI.
+            </li>
+            <li>
+              <strong><code>/forge</code> site page.</strong> Dedicated pitch for the cross-repo
+              code-graph story — tiers of confidence, three-tier route extraction, commands
+              table, anti-persona. Closes item #8 from the 2026-04-20 product analysis.
+            </li>
+          </ul>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong>Forge cache: spec-mtime invalidation.</strong> Route + merged-graph caches
+              were fingerprinted only against <code>graphify-out/graph.json</code> mtime.
+              Editing a spec via <code>forge capture-spec</code> silently returned stale edges.
+              Per-repo fingerprint is now <code>max(graphMtime, shelfSpecMtime)</code>.
+            </li>
+          </ul>
+          <h3>Changed</h3>
+          <ul>
+            <li>
+              <strong>Homepage slimmed to memory.</strong> Four forge-related feature cards
+              collapsed into one dashed sibling card linking to <a href="/forge"><code>/forge</code></a>.
+              No features removed — only repositioned.
+            </li>
+            <li>
+              <strong><code>teardown()</code> internal signature.</strong> <code>claudeDir</code>
+              and <code>settingsPath</code> now required (no silent fallback to real
+              <code>~/.claude</code>). Private API.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.1.11</h2>
             <span class="release-date">2026-04-21</span>
           </header>
