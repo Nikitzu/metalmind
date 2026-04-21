@@ -1,7 +1,7 @@
 # metalmind
 
-[![npm version](https://img.shields.io/npm/v/metalmind.svg?color=%23d4a14a&label=npm)](https://www.npmjs.com/package/metalmind)
-[![license](https://img.shields.io/npm/l/metalmind.svg?color=%23d4a14a)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/metalmind.svg?color=%23d4a14a&label=npm&cacheSeconds=300)](https://www.npmjs.com/package/metalmind)
+[![license](https://img.shields.io/npm/l/metalmind.svg?color=%23d4a14a&cacheSeconds=300)](LICENSE)
 
 **A metalmind for Claude. Store decisions in copper. Tap them when you need them. Claude never meets you cold again.**
 
