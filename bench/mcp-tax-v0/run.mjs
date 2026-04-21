@@ -182,7 +182,33 @@ async function main() {
     join(RESULTS_DIR, 'results-latest.csv'),
     `${[headers.join(','), ...rows].join('\n')}\n`,
   );
-  console.log(`\nWrote results to ${RESULTS_DIR}/results-latest.{json,csv}`);
+
+  printMarkdownTable(results);
+  console.log(`Wrote results to ${RESULTS_DIR}/results-latest.{json,csv}`);
+}
+
+function printMarkdownTable(results) {
+  const byName = Object.fromEntries(results.map((r) => [r.name, r]));
+  const order = [
+    'metalmind-loopback',
+    'claude-code-native-memory',
+    'metalmind-stdio',
+    'mem0',
+  ];
+  const tokensOf = (r) =>
+    r.first_turn_tokens ?? r.first_turn_tokens_approx ?? r.tools_tokens_approx ?? 0;
+  const rows = order
+    .filter((n) => byName[n])
+    .map((n) => {
+      const r = byName[n];
+      const suffix = n === 'metalmind-loopback' ? ' *(one-time CLAUDE.md block)*' : '';
+      return `| ${n} | ${r.transport} | ${r.tool_count} | ${tokensOf(r)}${suffix} |`;
+    });
+  console.log('\n### MCP-tax v0 — first-turn token tax\n');
+  console.log('| System | Transport | Tools | First-turn tokens |');
+  console.log('|---|---|---:|---:|');
+  for (const row of rows) console.log(row);
+  console.log('');
 }
 
 main().catch((err) => {
