@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { buildRouteMatchEdges, extractRoutes, type RouteEntry } from './routes.js';
@@ -153,11 +153,47 @@ async function extractRoutesCached(repo: string, cacheDir: string): Promise<Rout
   return fresh;
 }
 
+/** Delete cached route files whose recorded repo path no longer exists on
+ *  disk. Keeps the cache from accumulating orphans (typical cause: tmp dirs
+ *  from tests that macOS sweeps). Best-effort — never throws. */
+export async function pruneOrphanRouteCaches(cacheDir: string): Promise<number> {
+  const routesDir = join(cacheDir, 'routes');
+  let files: string[];
+  try {
+    files = await readdir(routesDir);
+  } catch {
+    return 0;
+  }
+  let pruned = 0;
+  for (const name of files) {
+    if (!name.endsWith('.json')) continue;
+    const abs = join(routesDir, name);
+    try {
+      const raw = await readFile(abs, 'utf8');
+      const { repo } = JSON.parse(raw) as { repo?: string };
+      if (!repo || !existsSync(repo)) {
+        await unlink(abs);
+        pruned++;
+      }
+    } catch {
+      // corrupt or unreadable — drop it
+      try {
+        await unlink(abs);
+        pruned++;
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return pruned;
+}
+
 export async function buildMergedGraph(
   group: ForgeGroup,
   opts: { cacheDir?: string } = {},
 ): Promise<MergedForgeGraph> {
   const cacheDir = opts.cacheDir ?? FORGE_CACHE_DIR;
+  await pruneOrphanRouteCaches(cacheDir);
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
 

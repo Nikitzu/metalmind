@@ -3,7 +3,12 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildMergedGraph, buildNameMatchEdges, loadOrBuildMerged } from './loader.js';
+import {
+  buildMergedGraph,
+  buildNameMatchEdges,
+  loadOrBuildMerged,
+  pruneOrphanRouteCaches,
+} from './loader.js';
 import type { ForgeGroup } from './store.js';
 
 async function writeGraph(
@@ -138,5 +143,44 @@ describe('forge loader', () => {
 
     expect(second.nodeCount).toBe(2);
     expect(second.generatedAt).not.toBe(first.generatedAt);
+  });
+
+  it('pruneOrphanRouteCaches removes cache entries whose repo is gone', async () => {
+    const routesDir = join(cacheDir, 'routes');
+    await mkdir(routesDir, { recursive: true });
+    const liveEntry = join(routesDir, 'live.json');
+    const orphanEntry = join(routesDir, 'orphan.json');
+    const corruptEntry = join(routesDir, 'corrupt.json');
+    await writeFile(
+      liveEntry,
+      JSON.stringify({ repo: repoA, mtime: Date.now(), routes: [] }),
+      'utf8',
+    );
+    await writeFile(
+      orphanEntry,
+      JSON.stringify({ repo: join(tmp, 'does-not-exist'), mtime: 0, routes: [] }),
+      'utf8',
+    );
+    await writeFile(corruptEntry, 'not json', 'utf8');
+
+    const pruned = await pruneOrphanRouteCaches(cacheDir);
+    expect(pruned).toBe(2);
+    expect(existsSync(liveEntry)).toBe(true);
+    expect(existsSync(orphanEntry)).toBe(false);
+    expect(existsSync(corruptEntry)).toBe(false);
+  });
+
+  it('buildMergedGraph prunes orphans as a side-effect', async () => {
+    const routesDir = join(cacheDir, 'routes');
+    await mkdir(routesDir, { recursive: true });
+    await writeFile(
+      join(routesDir, 'orphan.json'),
+      JSON.stringify({ repo: '/no/such/repo', mtime: 0, routes: [] }),
+      'utf8',
+    );
+    await writeGraph(repoA, [{ id: 'fn1', label: 'handle' }]);
+    const group: ForgeGroup = { repos: [repoA] };
+    await buildMergedGraph(group, { cacheDir });
+    expect(existsSync(join(routesDir, 'orphan.json'))).toBe(false);
   });
 });
