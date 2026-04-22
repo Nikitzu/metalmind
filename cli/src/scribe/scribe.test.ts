@@ -120,6 +120,30 @@ describe('scribe CRUD', () => {
     );
   });
 
+  it('patch: matches section headings containing regex metacharacters (parens, dots)', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate(
+      {
+        kind: 'work',
+        title: 't',
+        body: '## Known issues (next-session pickups)\n\nold\n\n## Other (v2.0)\n\nkeep',
+        project: 'x',
+      },
+      ctx,
+    );
+    await scribePatch(
+      path,
+      { section: 'Known issues (next-session pickups)', body: 'fresh' },
+      ctx,
+    );
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('## Known issues (next-session pickups)');
+    expect(raw).toContain('fresh');
+    expect(raw).not.toContain('old');
+    expect(raw).toContain('## Other (v2.0)');
+    expect(raw).toContain('keep');
+  });
+
   it('patch: --occurrence 2 targets the second match', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     const { path } = await scribeCreate(

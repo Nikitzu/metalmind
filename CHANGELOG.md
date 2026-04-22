@@ -6,6 +6,13 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.2.6 — 2026-04-22
+
+### Fixed
+- **`scribe patch` regex dropped parenthesized headings.** The metacharacter-escape character class `/[.*+?^${}()|[\\]\\\\]/g` had one backslash too many — `\\]` inside the regex literal parsed as literal `\` followed by `]`, **closing the character class early**. Net effect: every section heading with `(`, `)`, `.`, or any other metacharacter failed silently with "section not found", forcing a fallback to raw `Write`/`Edit` and eroding the "scribe is the only writer" contract. Fix at `cli/src/scribe/scribe.ts:240` drops one `\`. Regression test in `scribe.test.ts` covers a heading with both parens and a dot.
+
+---
+
 ## 0.2.5 — 2026-04-22
 
 ### Added

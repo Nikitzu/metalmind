@@ -237,7 +237,7 @@ export async function scribePatch(
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   const raw = await readFile(abs, 'utf8');
   const headingRe = new RegExp(
-    `^##\\s+${opts.section.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\s*$`,
+    `^##\\s+${opts.section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`,
     'gm',
   );
   const matches = [...raw.matchAll(headingRe)];
