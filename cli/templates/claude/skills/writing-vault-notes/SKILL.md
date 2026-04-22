@@ -13,11 +13,26 @@ In scope: OFM syntax (wikilinks, embeds, callouts, tags, block refs, highlights,
 
 Out of scope: Obsidian Bases (`.base`), JSON Canvas (`.canvas`), plugin-specific syntax (Dataview queries, Templater). If you need those, surface it — they're separate concerns.
 
-## Core metalmind rule
+## Core metalmind rules
+
+**Every vault operation goes through `metalmind scribe <verb>`.** There is no top-level `metalmind show` / `metalmind list` / `metalmind create` — those all live as `scribe show`, `scribe list`, `scribe create`, etc. If you reach for `metalmind <verb>` and it errors with `unknown command`, the verb is almost always under `scribe`.
 
 **`metalmind scribe` stamps frontmatter.** When piping a body through `scribe create|update|patch`, emit the body only — no `---` YAML block. Scribe writes `tags`, `created`, `updated`, `project`, `status` based on flags and the `kind:slug` target.
 
-When writing directly through the `Write` tool (rare — only when `scribe` can't express what you need), include frontmatter explicitly and put the file in the correct intent folder yourself.
+**Valid `kind:` prefixes** (these are the only ones — passing anything else throws `unknown kind`):
+
+| Kind | Folder | Intent |
+|------|--------|--------|
+| `plan:` | `Plans/` | Implementation plans, dated filename |
+| `learning:` | `Learnings/` | Durable cross-session lessons |
+| `work:` | `Work/` | Active project notes |
+| `moc:` | `Work/MOCs/` | Map-of-Content for a project |
+| `daily:` | `Daily/` | Journal entry (filename = today's date) |
+| `inbox:` | `Inbox/` | Triage / transient capture |
+| `memory:` | `Memory/` | Model-managed context notes |
+| `personal:` | `Personal/` | Non-work |
+
+When writing directly through the `Write` tool (rare — only when `scribe` can't express what you need, e.g. editing a section the patch matcher can't target), include frontmatter explicitly and put the file in the correct intent folder yourself.
 
 ## Workflow
 

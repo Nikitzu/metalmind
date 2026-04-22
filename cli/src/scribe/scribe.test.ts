@@ -26,6 +26,8 @@ describe('resolveNotePath', () => {
   it('resolves kind:slug shortcut', () => {
     expect(resolveNotePath('learning:x', '/v')).toBe('/v/Learnings/x.md');
     expect(resolveNotePath('plan:2026-04-21-foo', '/v')).toBe('/v/Plans/2026-04-21-foo.md');
+    expect(resolveNotePath('memory:trip-contacts', '/v')).toBe('/v/Memory/trip-contacts.md');
+    expect(resolveNotePath('personal:budget', '/v')).toBe('/v/Personal/budget.md');
   });
   it('passes absolute through and joins relative to vault', () => {
     expect(resolveNotePath('/abs/x.md', '/v')).toBe('/abs/x.md');

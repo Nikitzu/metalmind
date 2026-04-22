@@ -67,6 +67,34 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.2.7</h2>
+            <span class="release-date">2026-04-22</span>
+          </header>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong><code>memory:</code> and <code>personal:</code> kind-prefixes.</strong>
+              Both folders existed in the vault (<code>Memory/</code>,
+              <code>Personal/</code>) and the <code>writing-vault-notes</code> skill
+              already listed them, but <code>scribe</code> rejected them with
+              <code>unknown kind</code>. Another Claude session hit this live.
+              <code>KIND_DIRS</code> now covers all eight intent folders.
+            </li>
+          </ul>
+          <h3>Changed</h3>
+          <ul>
+            <li>
+              <strong><code>writing-vault-notes</code> skill hardened.</strong> Now opens
+              with "Every vault operation goes through <code>metalmind scribe &lt;verb&gt;</code>"
+              so agents don't waste a turn on <code>metalmind show</code>. Adds an
+              explicit table of all valid <code>kind:</code> prefixes so agents can see
+              the full set without trial-and-error.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.2.6</h2>
             <span class="release-date">2026-04-22</span>
           </header>

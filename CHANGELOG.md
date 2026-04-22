@@ -6,6 +6,16 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.2.7 — 2026-04-22
+
+### Added
+- **`memory:` and `personal:` kind-prefixes.** Both folders existed in the vault (`Memory/`, `Personal/`) and the `writing-vault-notes` skill already listed them, but `scribe` rejected them with `unknown kind`. Another Claude session ran into this live. `KIND_DIRS` now covers all eight intent folders; `resolveNotePath` test covers the new prefixes.
+
+### Changed
+- **`writing-vault-notes` skill hardened.** Now opens with "Every vault operation goes through `metalmind scribe <verb>`" so agents don't waste a turn on `metalmind show`. Adds an explicit table of all valid `kind:` prefixes so an agent can see the full set without trial-and-error.
+
+---
+
 ## 0.2.6 — 2026-04-22
 
 ### Fixed

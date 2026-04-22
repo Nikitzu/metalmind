@@ -1,7 +1,15 @@
 import { access, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, relative } from 'node:path';
 
-export type ScribeKind = 'plan' | 'learning' | 'work' | 'daily' | 'moc' | 'inbox';
+export type ScribeKind =
+  | 'plan'
+  | 'learning'
+  | 'work'
+  | 'daily'
+  | 'moc'
+  | 'inbox'
+  | 'memory'
+  | 'personal';
 
 export const KIND_DIRS: Record<ScribeKind, string> = {
   plan: 'Plans',
@@ -10,6 +18,8 @@ export const KIND_DIRS: Record<ScribeKind, string> = {
   daily: 'Daily',
   moc: 'Work/MOCs',
   inbox: 'Inbox',
+  memory: 'Memory',
+  personal: 'Personal',
 };
 
 const LINKED_NOTES_HEADING = '## Linked notes';
