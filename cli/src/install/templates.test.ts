@@ -89,6 +89,33 @@ describe('templates', () => {
       );
     });
 
+    it('copies skill bundles (directories under templates/claude/skills) recursively', async () => {
+      const claudeSrc = join(templatesDir, 'claude');
+      await mkdir(join(claudeSrc, 'skills', 'writing-vault-notes'), { recursive: true });
+      await writeFile(
+        join(claudeSrc, 'skills', 'writing-vault-notes', 'SKILL.md'),
+        '---\nname: writing-vault-notes\ndescription: test\n---\n# body\n',
+        'utf8',
+      );
+      await mkdir(join(claudeSrc, 'skills', 'writing-vault-notes', 'references'), {
+        recursive: true,
+      });
+      await writeFile(
+        join(claudeSrc, 'skills', 'writing-vault-notes', 'references', 'extra.md'),
+        '# extra\n',
+        'utf8',
+      );
+
+      const { copyClaudeTemplates } = await import('./templates.js');
+      const result = await copyClaudeTemplates({ templatesDir, claudeDir });
+
+      expect(result.copied).toContain('skills/writing-vault-notes');
+      expect(existsSync(join(claudeDir, 'skills', 'writing-vault-notes', 'SKILL.md'))).toBe(true);
+      expect(
+        existsSync(join(claudeDir, 'skills', 'writing-vault-notes', 'references', 'extra.md')),
+      ).toBe(true);
+    });
+
     it('renders {{RECALL_CMD}} in save.md per flavor', async () => {
       // replace the default save.md with one that uses the placeholder
       await writeFile(

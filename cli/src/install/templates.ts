@@ -91,6 +91,38 @@ async function copyDir(
   return { copied };
 }
 
+async function copyTreeRecursive(srcDir: string, destDir: string): Promise<void> {
+  await mkdir(destDir, { recursive: true });
+  const entries = await readdir(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = join(srcDir, entry.name);
+    const destPath = join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      await copyTreeRecursive(srcPath, destPath);
+    } else if (entry.isFile()) {
+      await copyFile(srcPath, destPath);
+    }
+  }
+}
+
+async function copySkillBundles(
+  srcDir: string,
+  destDir: string,
+): Promise<{ copied: string[] }> {
+  if (!existsSync(srcDir)) return { copied: [] };
+  await mkdir(destDir, { recursive: true });
+  const copied: string[] = [];
+  const entries = await readdir(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const skillSrc = join(srcDir, entry.name);
+    const skillDest = join(destDir, entry.name);
+    await copyTreeRecursive(skillSrc, skillDest);
+    copied.push(entry.name);
+  }
+  return { copied };
+}
+
 export async function copyClaudeTemplates(
   opts: CopyClaudeTemplatesOptions = {},
 ): Promise<CopyClaudeTemplatesResult> {
@@ -119,12 +151,17 @@ export async function copyClaudeTemplates(
     (name) => name === 'save.md' || (opts.withTeams === true && name.startsWith('team-')),
     (name) => (name === 'save.md' ? renderRecall : null),
   );
+  const skills = await copySkillBundles(
+    join(srcRoot, 'skills'),
+    join(claudeDir, 'skills'),
+  );
 
   return {
     copied: [
       ...rules.copied.map((n) => `rules/${n}`),
       ...agents.copied.map((n) => `agents/${n}`),
       ...commands.copied.map((n) => `commands/${n}`),
+      ...skills.copied.map((n) => `skills/${n}`),
     ],
   };
 }
