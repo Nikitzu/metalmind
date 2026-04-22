@@ -67,6 +67,60 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.2.6</h2>
+            <span class="release-date">2026-04-22</span>
+          </header>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong><code>scribe patch</code> regex dropped parenthesized headings.</strong>
+              The metacharacter-escape character class had one backslash too many —
+              <code>\]</code> inside the regex literal parsed as literal <code>\</code>
+              followed by the closing <code>]</code>, ending the class early. Net effect:
+              every section heading with <code>(</code>, <code>)</code>, <code>.</code>,
+              or any other metacharacter failed silently with "section not found", forcing
+              a fallback to raw edits and eroding the
+              scribe-is-the-only-writer contract. Fix at
+              <code>cli/src/scribe/scribe.ts:240</code> drops one backslash. Regression
+              test covers a heading with both parens and a dot.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.2.5</h2>
+            <span class="release-date">2026-04-22</span>
+          </header>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong><code>writing-vault-notes</code> skill</strong>, auto-installed to
+              <code>~/.claude/skills/</code> via <code>metalmind stamp</code>. Clean-room
+              Obsidian Flavored Markdown reference (wikilinks, embeds, callouts, block refs,
+              tasks, highlights) plus metalmind-specific conventions: <code>scribe</code>
+              stamps frontmatter so bodies stay frontmatter-free,
+              <code>[[kind:slug]]</code> wikilink shortcuts, folder-by-intent over
+              per-project subdirs. Loads on demand — only the name + description enter the
+              standing session context (~60 tokens); the full body loads only when the
+              skill triggers on a note-writing task. Existing users need to re-run
+              <code>metalmind stamp</code> to pick it up.
+            </li>
+          </ul>
+          <h3>Changed</h3>
+          <ul>
+            <li>
+              <strong><code>copyClaudeTemplates</code> now copies skill bundles.</strong>
+              New <code>copySkillBundles</code> helper recursively mirrors every directory
+              under <code>cli/templates/claude/skills/</code> into
+              <code>~/.claude/skills/</code>, so future skills drop in without touching the
+              install pipeline.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.2.4</h2>
             <span class="release-date">2026-04-21</span>
           </header>
