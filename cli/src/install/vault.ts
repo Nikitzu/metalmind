@@ -3,7 +3,7 @@ import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { text } from '@clack/prompts';
 import { expandTilde, getTemplatesDir } from '../util/paths.js';
-import { upsertSentinelBlock, type SentinelUpsertAction } from '../util/sentinel.js';
+import { type SentinelUpsertAction, upsertSentinelBlock } from '../util/sentinel.js';
 import { recallCommand } from './templates.js';
 
 export const VAULT_FOLDERS = [

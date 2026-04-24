@@ -2,7 +2,6 @@ import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/pro
 import { type Config, writeConfig } from '../config.js';
 import { installAliases } from './aliases.js';
 import { installGraphify } from './graphify.js';
-import { installWatcher } from './watcher.js';
 import { registerMcpServers } from './mcp.js';
 import { type FlavorChoice, installOutputStyle } from './output-style.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
@@ -15,8 +14,9 @@ import {
   copyClaudeTemplates,
   stampClaudeMd,
 } from './templates.js';
-import { installVaultRag, resolveUvBinPath, resolveWatcherBinPath } from './vault-rag.js';
 import { promptVaultPath, setupVault } from './vault.js';
+import { installVaultRag, resolveUvBinPath, resolveWatcherBinPath } from './vault-rag.js';
+import { installWatcher } from './watcher.js';
 
 export interface RunWizardOptions {
   vaultPath?: string;
@@ -145,8 +145,10 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   const vault = await setupVault({ vaultPath: vaultPathInput, flavor });
   log.success(`Vault at ${vault.vaultPath}`);
   if (vault.claudeMdAction === 'created') log.info('  wrote vault CLAUDE.md');
-  else if (vault.claudeMdAction === 'inserted') log.info('  inserted metalmind block into vault CLAUDE.md');
-  else if (vault.claudeMdAction === 'updated') log.info('  refreshed metalmind block in vault CLAUDE.md');
+  else if (vault.claudeMdAction === 'inserted')
+    log.info('  inserted metalmind block into vault CLAUDE.md');
+  else if (vault.claudeMdAction === 'updated')
+    log.info('  refreshed metalmind block in vault CLAUDE.md');
   if (vault.createdFolders.length > 0) log.info(`  created: ${vault.createdFolders.join(', ')}`);
 
   if (serena) {
@@ -226,7 +228,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   const hookScript = await copyClaudeHooks({ flavor });
   const hookReg = await applyMetalmindSessionStartHook({ hookCommand: hookScript.hookCommand });
   log.success(`  ${hookScript.action} ${hookScript.hookScriptPath}`);
-  log.info(hookReg.changed ? '  registered in settings.json → SessionStart' : '  already registered');
+  log.info(
+    hookReg.changed ? '  registered in settings.json → SessionStart' : '  already registered',
+  );
 
   log.step('Copying rules, agents, commands');
   const tpl = await copyClaudeTemplates({ withTeams: enableTeams, flavor });
@@ -234,8 +238,10 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   const claudeMd = await stampClaudeMd({ vaultPath: vault.vaultPath, flavor });
   if (claudeMd.starterWritten) log.info(`  wrote starter ${claudeMd.path}`);
   if (claudeMd.blockAction === 'created') log.info(`  wrote metalmind block → ${claudeMd.path}`);
-  else if (claudeMd.blockAction === 'inserted') log.info(`  inserted metalmind block → ${claudeMd.path}`);
-  else if (claudeMd.blockAction === 'updated') log.info(`  refreshed metalmind block → ${claudeMd.path}`);
+  else if (claudeMd.blockAction === 'inserted')
+    log.info(`  inserted metalmind block → ${claudeMd.path}`);
+  else if (claudeMd.blockAction === 'updated')
+    log.info(`  refreshed metalmind block → ${claudeMd.path}`);
   else log.info(`  metalmind block up to date in ${claudeMd.path}`);
 
   log.step('Updating global gitignore');

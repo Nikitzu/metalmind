@@ -72,6 +72,18 @@ describe('scribe CRUD', () => {
     expect(f).toContain('## afternoon');
   });
 
+  it('create daily with --slug ≠ today errors pointing at atium/daily new', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await expect(
+      scribeCreate({ kind: 'daily', title: '2026-04-22', body: 'x', slug: '2026-04-22' }, ctx),
+    ).rejects.toThrow(/metalmind atium new --date 2026-04-22/);
+  });
+
+  it('create daily with --slug equal to today is accepted', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await scribeCreate({ kind: 'daily', title: 'x', body: 'b', slug: '2026-04-21' }, ctx);
+  });
+
   it('create refuses duplicate for non-daily kind', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     await scribeCreate({ kind: 'learning', title: 't', body: 'x' }, ctx);
@@ -133,11 +145,7 @@ describe('scribe CRUD', () => {
       },
       ctx,
     );
-    await scribePatch(
-      path,
-      { section: 'Known issues (next-session pickups)', body: 'fresh' },
-      ctx,
-    );
+    await scribePatch(path, { section: 'Known issues (next-session pickups)', body: 'fresh' }, ctx);
     const raw = await readFile(path, 'utf8');
     expect(raw).toContain('## Known issues (next-session pickups)');
     expect(raw).toContain('fresh');
@@ -230,8 +238,7 @@ describe('scribe CRUD', () => {
       {
         kind: 'work',
         title: 'referrer',
-        body:
-          'See [[Learnings/old-slug]] and [[old-slug#Context]] and [[old-slug|pretty name]].',
+        body: 'See [[Learnings/old-slug]] and [[old-slug#Context]] and [[old-slug|pretty name]].',
         project: 'metalmind',
       },
       ctx,
@@ -253,10 +260,7 @@ describe('scribe CRUD', () => {
       { kind: 'learning', title: 'to-rename', body: 'x' },
       ctx,
     );
-    await scribeCreate(
-      { kind: 'work', title: 'r', body: '[[to-rename]]' },
-      ctx,
-    );
+    await scribeCreate({ kind: 'work', title: 'r', body: '[[to-rename]]' }, ctx);
     const { scribeRename } = await import('./scribe.js');
     const res = await scribeRename('learning:to-rename', 'learning:renamed', ctx, {
       dryRun: true,
@@ -268,10 +272,7 @@ describe('scribe CRUD', () => {
 
   it('dry-run on create does not write', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
-    await scribeCreate(
-      { kind: 'learning', title: 'nothing', body: 'x', dryRun: true },
-      ctx,
-    );
+    await scribeCreate({ kind: 'learning', title: 'nothing', body: 'x', dryRun: true }, ctx);
     await expect(readFile(join(vault, 'Learnings/nothing.md'), 'utf8')).rejects.toBeTruthy();
   });
 });

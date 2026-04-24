@@ -17,8 +17,7 @@ const TIMEOUT_MS = Number(process.env.METALMIND_BENCH_TIMEOUT_MS ?? 8000);
 // `--rerank` / METALMIND_BENCH_RERANK=1 flips the runner into rerank mode.
 // First call may be slow (cross-encoder warmup, model download on cold boot);
 // bump the timeout in that mode so the first query doesn't abort the bench.
-const RERANK =
-  process.argv.includes('--rerank') || process.env.METALMIND_BENCH_RERANK === '1';
+const RERANK = process.argv.includes('--rerank') || process.env.METALMIND_BENCH_RERANK === '1';
 const EFFECTIVE_TIMEOUT_MS = RERANK ? Math.max(TIMEOUT_MS, 180_000) : TIMEOUT_MS;
 
 async function searchOnce(query, k) {
@@ -40,7 +39,12 @@ async function searchOnce(query, k) {
     return { ok: true, latencyMs, hits: Array.isArray(body.hits) ? body.hits : [] };
   } catch (err) {
     const latencyMs = performance.now() - t0;
-    return { ok: false, latencyMs, error: err instanceof Error ? err.message : String(err), hits: [] };
+    return {
+      ok: false,
+      latencyMs,
+      error: err instanceof Error ? err.message : String(err),
+      hits: [],
+    };
   } finally {
     clearTimeout(timer);
   }
@@ -96,9 +100,15 @@ function renderMarkdown({ meta, summary, perQ }) {
   lines.push('');
   lines.push('| metric | value |');
   lines.push('| --- | --- |');
-  lines.push(`| hit@1 | ${summary.hitAt1.count}/${summary.total} (${(summary.hitAt1.rate * 100).toFixed(1)}%) |`);
-  lines.push(`| hit@3 | ${summary.hitAt3.count}/${summary.total} (${(summary.hitAt3.rate * 100).toFixed(1)}%) |`);
-  lines.push(`| hit@5 | ${summary.hitAt5.count}/${summary.total} (${(summary.hitAt5.rate * 100).toFixed(1)}%) |`);
+  lines.push(
+    `| hit@1 | ${summary.hitAt1.count}/${summary.total} (${(summary.hitAt1.rate * 100).toFixed(1)}%) |`,
+  );
+  lines.push(
+    `| hit@3 | ${summary.hitAt3.count}/${summary.total} (${(summary.hitAt3.rate * 100).toFixed(1)}%) |`,
+  );
+  lines.push(
+    `| hit@5 | ${summary.hitAt5.count}/${summary.total} (${(summary.hitAt5.rate * 100).toFixed(1)}%) |`,
+  );
   lines.push(`| latency min | ${summary.latencyMs.min.toFixed(1)} ms |`);
   lines.push(`| latency median | ${summary.latencyMs.median.toFixed(1)} ms |`);
   lines.push(`| latency p95 | ${summary.latencyMs.p95.toFixed(1)} ms |`);
@@ -140,7 +150,9 @@ async function main() {
       error: result.error,
     });
     const mark = rank ? `hit@${rank}` : 'MISS';
-    process.stdout.write(`${q.id} ${mark.padEnd(7)} ${result.latencyMs.toFixed(0)}ms  ${q.query}\n`);
+    process.stdout.write(
+      `${q.id} ${mark.padEnd(7)} ${result.latencyMs.toFixed(0)}ms  ${q.query}\n`,
+    );
   }
 
   const summary = summarize(perQ);

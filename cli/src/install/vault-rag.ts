@@ -30,9 +30,7 @@ async function isVaultRagInstalled(): Promise<boolean> {
   // stdio loop), racing the 5s default timeout every init.
   const res = await runCommand('uv', ['tool', 'list'], { timeoutMs: 10_000 });
   if (!res.ok) return false;
-  return res.stdout
-    .split('\n')
-    .some((line) => line.trim().startsWith(VAULT_RAG_PACKAGE));
+  return res.stdout.split('\n').some((line) => line.trim().startsWith(VAULT_RAG_PACKAGE));
 }
 
 export async function installVaultRag(
@@ -60,7 +58,9 @@ export async function installVaultRag(
   } else if (!opts.skipToolInstall) {
     const res = await runCommand('uv', args, { timeoutMs: 900_000 });
     if (!res.ok) {
-      const label = hasExtras ? `${VAULT_RAG_PACKAGE}[${opts.extras!.join(',')}]` : VAULT_RAG_PACKAGE;
+      const label = hasExtras
+        ? `${VAULT_RAG_PACKAGE}[${opts.extras!.join(',')}]`
+        : VAULT_RAG_PACKAGE;
       throw new Error(`uv tool install ${label} failed: ${res.stderr || res.stdout}`);
     }
     installed = true;

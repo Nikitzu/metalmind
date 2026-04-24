@@ -6,6 +6,24 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.2.8 — 2026-04-24
+
+### Added
+- **`atium new | add` (Scadrial) / `daily new | add` (classic)** — future-facing daily-note ops. `atium new --date <today|tomorrow|next-workday|YYYY-MM-DD>` creates the target note with frontmatter + empty `## Action Items`. `--from <prev-date>` carries over only unchecked `- [ ]` items from a prior note. `atium add "<item>" --date <date>` appends a bullet under `## Action Items`, creating the file + section if missing. Closes the gap that let agents reach for raw `Write` to create future-dated daily notes.
+- **`gold <note>` (Scadrial)** — one-shot archive shortcut. Equivalent to `scribe archive <note>` but surfaces at top level so the "burning gold reveals past selves" metaphor lands. `scribe archive` / `note archive` remain the CRUD-path entry for consistency with the rest of scribe.
+- **`flare banner | dialog | sticky` (Scadrial) / `notify banner | dialog | sticky` (classic)** — macOS desktop notifications. `flare banner <title> <text>` drops into Notification Center, `flare dialog <text>` opens a modal, `flare sticky <text>` creates a persistent Stickies.app note. Exits cleanly with an actionable error on Linux/Windows — these land when we do platform adapters.
+
+### Changed
+- **`scribe create --kind daily --slug X` now errors when `X ≠ today`**, pointing at `metalmind atium new --date X`. Before, the `--slug` was silently dropped and the note filed under today's date, producing a silent filename mismatch (the caller's motivating bug). Non-daily `scribe create` is unchanged.
+- **`/save` skill rewritten.** The "write via Write tool" fallback in step 6 is gone — it taught agents to bypass metalmind the moment scribe couldn't express a target. Replaced with "stop and surface the gap." The skill now carries a scadrial/classic command table so agents know both names for every vault op. Plus an **end-of-day hook**: when the local hour is 16 or 17, Claude offers to push the session's pending items into the next-workday daily via `atium add --date next-workday` and fires a `flare banner` confirmation.
+- **`writing-vault-notes` skill** gets the same scadrial/classic table and drops the "Write directly when scribe can't express it" escape hatch.
+- **`scribe create --kind` help text** now lists all 8 valid kinds (`plan | learning | work | daily | moc | inbox | memory | personal`). The last two were callable since v0.2.7 but missing from `--help` output, which could steer agents away from them.
+
+### Removed (breaking, pre-1.0)
+- **`metalmind wipe`** classic alias dropped. Three paths to uninstall (`uninstall` + `burn aluminum` + `wipe`) was docs noise. `uninstall` (classic) and `burn aluminum` (Scadrial) both remain.
+
+---
+
 ## 0.2.7 — 2026-04-22
 
 ### Added

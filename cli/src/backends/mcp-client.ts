@@ -136,7 +136,9 @@ export class StdioMcpClient {
     const res = await promise;
     if (res.error) {
       const tail = this.stderrTail();
-      throw new Error(`MCP ${method} error: ${res.error.message}${tail ? `\nstderr: ${tail}` : ''}`);
+      throw new Error(
+        `MCP ${method} error: ${res.error.message}${tail ? `\nstderr: ${tail}` : ''}`,
+      );
     }
     return res.result;
   }

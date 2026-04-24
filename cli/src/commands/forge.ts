@@ -1,6 +1,7 @@
-import { mkdir, writeFile, readFile, stat, unlink, readdir } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { log } from '@clack/prompts';
+import { shelfDir } from '../forge/openapi.js';
 import {
   addRepoToForge,
   createForge,
@@ -8,7 +9,6 @@ import {
   listForges,
   removeRepoFromForge,
 } from '../forge/store.js';
-import { shelfDir } from '../forge/openapi.js';
 
 function fail(message: string): void {
   log.error(message);

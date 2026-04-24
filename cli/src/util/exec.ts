@@ -15,7 +15,7 @@ export async function runCommand(
   try {
     const result = await execa(cmd, args, {
       // 0 disables execa's timeout; any other falsy falls back to the 5s default.
-      timeout: opts.timeoutMs === 0 ? undefined : opts.timeoutMs ?? 5000,
+      timeout: opts.timeoutMs === 0 ? undefined : (opts.timeoutMs ?? 5000),
       reject: false,
       stripFinalNewline: true,
       // When the caller wants live output (long-running claude sessions etc.),

@@ -43,9 +43,7 @@ function detectPlatform(override?: WatcherPlatform): WatcherPlatform {
   throw new Error(`metalmind watcher: unsupported platform "${p}" (need darwin or linux)`);
 }
 
-export async function installWatcher(
-  opts: InstallWatcherOptions,
-): Promise<InstallWatcherResult> {
+export async function installWatcher(opts: InstallWatcherOptions): Promise<InstallWatcherResult> {
   const target = detectPlatform(opts.platformOverride);
 
   if (target === 'darwin') {
@@ -57,7 +55,12 @@ export async function installWatcher(
       launchAgentsDir: opts.launchAgentsDir,
       skipLoad: opts.skipStart,
     });
-    return { platform: 'darwin', unitPath: r.plistPath, wroteUnit: r.wrotePlist, started: r.loaded };
+    return {
+      platform: 'darwin',
+      unitPath: r.plistPath,
+      wroteUnit: r.wrotePlist,
+      started: r.loaded,
+    };
   }
 
   const r = await installSystemdWatcher({
@@ -68,7 +71,12 @@ export async function installWatcher(
     systemdUserDir: opts.systemdUserDir,
     skipEnable: opts.skipStart,
   });
-  return { platform: 'linux', unitPath: r.servicePath, wroteUnit: r.wroteService, started: r.enabled };
+  return {
+    platform: 'linux',
+    unitPath: r.servicePath,
+    wroteUnit: r.wroteService,
+    started: r.enabled,
+  };
 }
 
 export async function uninstallWatcher(
@@ -78,9 +86,19 @@ export async function uninstallWatcher(
 
   if (target === 'darwin') {
     const r = await uninstallLaunchdWatcher({ launchAgentsDir: opts.launchAgentsDir });
-    return { platform: 'darwin', unitPath: r.plistPath, removedUnit: r.removedPlist, stopped: r.unloaded };
+    return {
+      platform: 'darwin',
+      unitPath: r.plistPath,
+      removedUnit: r.removedPlist,
+      stopped: r.unloaded,
+    };
   }
 
   const r = await uninstallSystemdWatcher({ systemdUserDir: opts.systemdUserDir });
-  return { platform: 'linux', unitPath: r.servicePath, removedUnit: r.removedService, stopped: r.disabled };
+  return {
+    platform: 'linux',
+    unitPath: r.servicePath,
+    removedUnit: r.removedService,
+    stopped: r.disabled,
+  };
 }

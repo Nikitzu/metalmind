@@ -44,7 +44,13 @@ describe('installVaultRag (isVaultRagInstalled via uv tool list)', () => {
     const secondCall = runCommand.mock.calls[1];
     expect(secondCall?.[0]).toBe('uv');
     expect(secondCall?.[1]).toEqual(
-      expect.arrayContaining(['tool', 'install', '--from', '/tmp/pkg/vault-rag-pkg', 'metalmind-vault-rag']),
+      expect.arrayContaining([
+        'tool',
+        'install',
+        '--from',
+        '/tmp/pkg/vault-rag-pkg',
+        'metalmind-vault-rag',
+      ]),
     );
   });
 

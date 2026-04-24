@@ -100,7 +100,11 @@ describe('forge loader', () => {
 
     // Simulate a source-only change (no graph.json update). Extract-cache keys
     // on graph.json mtime, so this write should NOT bust the route cache.
-    await writeFile(join(repoA, 'handlers.ts'), "const r = router; r.get('/api/diff', h);\n", 'utf8');
+    await writeFile(
+      join(repoA, 'handlers.ts'),
+      "const r = router; r.get('/api/diff', h);\n",
+      'utf8',
+    );
     const second = await buildMergedGraph(group, { cacheDir });
     // Second call still reflects the cached routes (graph.json unchanged).
     expect(second.routeMatchEdgeCount).toBe(first.routeMatchEdgeCount);

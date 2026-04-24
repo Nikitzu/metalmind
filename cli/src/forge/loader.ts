@@ -292,10 +292,7 @@ export interface CrossRepoHighlight {
  *  source, target, label or route matches the user's query (case-insensitive
  *  substring). Answers "given this concept/symbol, where does it surface in
  *  OTHER repos?" — the whole point of a forge. */
-export function crossRepoHighlights(
-  merged: MergedForgeGraph,
-  query: string,
-): CrossRepoHighlight[] {
+export function crossRepoHighlights(merged: MergedForgeGraph, query: string): CrossRepoHighlight[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return [];
   const nodesById = new Map(merged.nodes.map((n) => [n.id, n]));

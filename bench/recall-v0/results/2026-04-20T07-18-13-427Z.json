@@ -31,13 +31,8 @@
     {
       "id": "Q01",
       "query": "how do operators authenticate into the console",
-      "expected": [
-        "auth-model.md"
-      ],
-      "tags": [
-        "auth",
-        "reference"
-      ],
+      "expected": ["auth-model.md"],
+      "tags": ["auth", "reference"],
       "ok": true,
       "latencyMs": 87.072458,
       "rank": 1,
@@ -67,13 +62,8 @@
     {
       "id": "Q02",
       "query": "why did we pick Postgres over CockroachDB",
-      "expected": [
-        "decision-postgres-over-cockroach.md"
-      ],
-      "tags": [
-        "decision",
-        "db"
-      ],
+      "expected": ["decision-postgres-over-cockroach.md"],
+      "tags": ["decision", "db"],
       "ok": true,
       "latencyMs": 51.36520900000001,
       "rank": 1,
@@ -103,12 +93,8 @@
     {
       "id": "Q03",
       "query": "what happened on Valentine's Day with the drones",
-      "expected": [
-        "incident-2026-02-14.md"
-      ],
-      "tags": [
-        "incident"
-      ],
+      "expected": ["incident-2026-02-14.md"],
+      "tags": ["incident"],
       "ok": true,
       "latencyMs": 54.366040999999996,
       "rank": 1,
@@ -138,14 +124,8 @@
     {
       "id": "Q04",
       "query": "is row level security allowed in Postgres",
-      "expected": [
-        "rls-ban.md"
-      ],
-      "tags": [
-        "decision",
-        "db",
-        "security"
-      ],
+      "expected": ["rls-ban.md"],
+      "tags": ["decision", "db", "security"],
       "ok": true,
       "latencyMs": 50.70512499999998,
       "rank": 1,
@@ -175,13 +155,8 @@
     {
       "id": "Q05",
       "query": "can we use RLS for multi-tenant isolation",
-      "expected": [
-        "rls-ban.md"
-      ],
-      "tags": [
-        "decision",
-        "semantic-paraphrase"
-      ],
+      "expected": ["rls-ban.md"],
+      "tags": ["decision", "semantic-paraphrase"],
       "ok": true,
       "latencyMs": 49.45612500000004,
       "rank": 2,
@@ -211,12 +186,8 @@
     {
       "id": "Q06",
       "query": "where do we deploy the primary region",
-      "expected": [
-        "deployment-targets.md"
-      ],
-      "tags": [
-        "ops"
-      ],
+      "expected": ["deployment-targets.md"],
+      "tags": ["ops"],
       "ok": true,
       "latencyMs": 46.765791999999976,
       "rank": 1,
@@ -246,13 +217,8 @@
     {
       "id": "Q07",
       "query": "observability stack current choice",
-      "expected": [
-        "observability-choice.md"
-      ],
-      "tags": [
-        "decision",
-        "ops"
-      ],
+      "expected": ["observability-choice.md"],
+      "tags": ["decision", "ops"],
       "ok": true,
       "latencyMs": 46.358457999999985,
       "rank": 2,
@@ -282,13 +248,8 @@
     {
       "id": "Q08",
       "query": "did we drop Honeycomb",
-      "expected": [
-        "observability-choice.md"
-      ],
-      "tags": [
-        "decision",
-        "semantic-paraphrase"
-      ],
+      "expected": ["observability-choice.md"],
+      "tags": ["decision", "semantic-paraphrase"],
       "ok": true,
       "latencyMs": 39.189167,
       "rank": 4,
@@ -318,12 +279,8 @@
     {
       "id": "Q09",
       "query": "pricing for enterprise tier customers",
-      "expected": [
-        "pricing-tiers.md"
-      ],
-      "tags": [
-        "pricing"
-      ],
+      "expected": ["pricing-tiers.md"],
+      "tags": ["pricing"],
       "ok": true,
       "latencyMs": 43.826415999999995,
       "rank": 1,
@@ -353,12 +310,8 @@
     {
       "id": "Q10",
       "query": "who owns the Edge controller",
-      "expected": [
-        "team.md"
-      ],
-      "tags": [
-        "team"
-      ],
+      "expected": ["team.md"],
+      "tags": ["team"],
       "ok": true,
       "latencyMs": 42.16141700000003,
       "rank": 2,
@@ -388,12 +341,8 @@
     {
       "id": "Q11",
       "query": "are we hiring right now",
-      "expected": [
-        "hiring-freeze.md"
-      ],
-      "tags": [
-        "company"
-      ],
+      "expected": ["hiring-freeze.md"],
+      "tags": ["company"],
       "ok": true,
       "latencyMs": 40.44733300000007,
       "rank": 1,
@@ -423,12 +372,8 @@
     {
       "id": "Q12",
       "query": "what SDK versions are pinned",
-      "expected": [
-        "sdk-versions.md"
-      ],
-      "tags": [
-        "reference"
-      ],
+      "expected": ["sdk-versions.md"],
+      "tags": ["reference"],
       "ok": true,
       "latencyMs": 41.588708999999994,
       "rank": 1,
@@ -458,12 +403,8 @@
     {
       "id": "Q13",
       "query": "openfeature node version to use",
-      "expected": [
-        "sdk-versions.md"
-      ],
-      "tags": [
-        "semantic-paraphrase"
-      ],
+      "expected": ["sdk-versions.md"],
+      "tags": ["semantic-paraphrase"],
       "ok": true,
       "latencyMs": 47.17766699999993,
       "rank": 1,
@@ -493,12 +434,8 @@
     {
       "id": "Q14",
       "query": "what is Project Wingspan",
-      "expected": [
-        "project-wingspan.md"
-      ],
-      "tags": [
-        "project"
-      ],
+      "expected": ["project-wingspan.md"],
+      "tags": ["project"],
       "ok": true,
       "latencyMs": 38.63491699999997,
       "rank": null,
@@ -528,12 +465,8 @@
     {
       "id": "Q15",
       "query": "multi-drone swarm delivery coordination",
-      "expected": [
-        "project-wingspan.md"
-      ],
-      "tags": [
-        "semantic-paraphrase"
-      ],
+      "expected": ["project-wingspan.md"],
+      "tags": ["semantic-paraphrase"],
       "ok": true,
       "latencyMs": 42.87341600000002,
       "rank": 1,
@@ -563,12 +496,8 @@
     {
       "id": "Q16",
       "query": "what language is the dispatcher written in",
-      "expected": [
-        "tech-stack.md"
-      ],
-      "tags": [
-        "reference"
-      ],
+      "expected": ["tech-stack.md"],
+      "tags": ["reference"],
       "ok": true,
       "latencyMs": 45.600791999999956,
       "rank": null,
@@ -598,12 +527,8 @@
     {
       "id": "Q17",
       "query": "session cookie name for operators",
-      "expected": [
-        "auth-model.md"
-      ],
-      "tags": [
-        "semantic-paraphrase"
-      ],
+      "expected": ["auth-model.md"],
+      "tags": ["semantic-paraphrase"],
       "ok": true,
       "latencyMs": 40.19066699999996,
       "rank": 1,
@@ -633,12 +558,8 @@
     {
       "id": "Q18",
       "query": "mean time to recover from the emergency land incident",
-      "expected": [
-        "incident-2026-02-14.md"
-      ],
-      "tags": [
-        "incident"
-      ],
+      "expected": ["incident-2026-02-14.md"],
+      "tags": ["incident"],
       "ok": true,
       "latencyMs": 44.67812500000002,
       "rank": 1,
@@ -668,12 +589,8 @@
     {
       "id": "Q19",
       "query": "DR region recovery point objective",
-      "expected": [
-        "deployment-targets.md"
-      ],
-      "tags": [
-        "ops"
-      ],
+      "expected": ["deployment-targets.md"],
+      "tags": ["ops"],
       "ok": true,
       "latencyMs": 39.997999999999934,
       "rank": 1,
@@ -703,12 +620,8 @@
     {
       "id": "Q20",
       "query": "how much did the Valentine's incident cost",
-      "expected": [
-        "incident-2026-02-14.md"
-      ],
-      "tags": [
-        "incident"
-      ],
+      "expected": ["incident-2026-02-14.md"],
+      "tags": ["incident"],
       "ok": true,
       "latencyMs": 45.01162499999998,
       "rank": 1,

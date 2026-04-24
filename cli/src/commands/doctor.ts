@@ -30,7 +30,12 @@ export async function checkDockerContainers(): Promise<DeepCheck[]> {
       },
     ];
   }
-  const names = new Set(res.stdout.split('\n').map((l) => l.trim()).filter(Boolean));
+  const names = new Set(
+    res.stdout
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean),
+  );
   return [
     {
       name: 'metalmind-ollama',
@@ -64,7 +69,8 @@ export async function checkQdrantCollection(): Promise<DeepCheck> {
       name: 'qdrant-collection',
       ok: points > 0,
       detail: `${points} points`,
-      remediation: points === 0 ? 'Collection is empty — run `metalmind-vault-rag-indexer`.' : undefined,
+      remediation:
+        points === 0 ? 'Collection is empty — run `metalmind-vault-rag-indexer`.' : undefined,
     };
   } catch (err) {
     return {
@@ -121,7 +127,11 @@ export async function checkRecallHttp(): Promise<DeepCheck> {
         remediation: 'Check watcher logs: `tail ~/Knowledge/.metalmind-stack/watcher.err`.',
       };
     }
-    return { name: 'recall-http', ok: true, detail: 'fast-path endpoint reachable (127.0.0.1:17317)' };
+    return {
+      name: 'recall-http',
+      ok: true,
+      detail: 'fast-path endpoint reachable (127.0.0.1:17317)',
+    };
   } catch {
     return {
       name: 'recall-http',
@@ -147,7 +157,11 @@ export async function checkWatcherService(): Promise<DeepCheck> {
     };
   }
   if (platform() === 'linux') {
-    const res = await runCommand('systemctl', ['--user', 'is-active', 'metalmind-vault-indexer.service']);
+    const res = await runCommand('systemctl', [
+      '--user',
+      'is-active',
+      'metalmind-vault-indexer.service',
+    ]);
     const active = res.stdout.trim() === 'active';
     return {
       name: 'watcher',

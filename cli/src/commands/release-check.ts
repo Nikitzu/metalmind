@@ -11,7 +11,11 @@ interface CheckResult {
   detail: string;
 }
 
-function run(cmd: string, args: string[], cwd?: string): Promise<{ stdout: string; stderr: string; code: number }> {
+function run(
+  cmd: string,
+  args: string[],
+  cwd?: string,
+): Promise<{ stdout: string; stderr: string; code: number }> {
   return new Promise((resolve) => {
     const child = spawn(cmd, args, { cwd });
     let stdout = '';
@@ -33,7 +37,9 @@ async function checkWorkingTree(cwd: string): Promise<CheckResult> {
   return {
     name: 'working tree clean',
     ok: clean,
-    detail: clean ? 'no uncommitted changes' : `${stdout.trim().split('\n').length} uncommitted change(s)`,
+    detail: clean
+      ? 'no uncommitted changes'
+      : `${stdout.trim().split('\n').length} uncommitted change(s)`,
   };
 }
 
@@ -112,7 +118,10 @@ async function checkStampedBlockPresent(repoRoot: string): Promise<CheckResult> 
       };
     }
     const firstLine = template.split('\n').find((l) => l.trim().length > 0) ?? '';
-    const signature = firstLine.replace(/\{\{[^}]+\}\}/g, '').trim().slice(0, 40);
+    const signature = firstLine
+      .replace(/\{\{[^}]+\}\}/g, '')
+      .trim()
+      .slice(0, 40);
     const ok = signature.length > 0 && stamped.includes(signature);
     return {
       name: 'stamped block matches template shape',
@@ -130,7 +139,9 @@ async function checkStampedBlockPresent(repoRoot: string): Promise<CheckResult> 
   }
 }
 
-export async function releaseCheck(opts: { skipTests?: boolean; skipBuild?: boolean } = {}): Promise<void> {
+export async function releaseCheck(
+  opts: { skipTests?: boolean; skipBuild?: boolean } = {},
+): Promise<void> {
   const repoRoot = process.cwd();
   const checks: CheckResult[] = [];
   checks.push(await checkWorkingTree(repoRoot));

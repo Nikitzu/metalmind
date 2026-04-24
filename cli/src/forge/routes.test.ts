@@ -2,7 +2,13 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildRouteMatchEdges, canonicalizePath, extractRoutes, parseJs, parsePy } from './routes.js';
+import {
+  buildRouteMatchEdges,
+  canonicalizePath,
+  extractRoutes,
+  parseJs,
+  parsePy,
+} from './routes.js';
 
 describe('route parsers', () => {
   it('parseJs finds Express-style handlers', () => {
@@ -146,7 +152,9 @@ describe('parseUrlLiterals (Tier 3)', () => {
     const out = parseUrlLiterals(src, 'a.ts', '/r');
     const paths = out.map((r) => r.path).sort();
     expect(paths).toEqual(['/api/users/{id}', '/health', '/v1/bookings/cancel']);
-    expect(out.every((r) => r.kind === 'caller' && r.framework === 'literal' && r.method === 'ANY')).toBe(true);
+    expect(
+      out.every((r) => r.kind === 'caller' && r.framework === 'literal' && r.method === 'ANY'),
+    ).toBe(true);
   });
 
   it('buildRouteMatchEdges tags URL-literal callers with INFERRED_URL_LITERAL confidence', async () => {
@@ -185,12 +193,7 @@ describe('parseUrlLiterals (Tier 3)', () => {
 
 describe('canonicalizePath', () => {
   it('maps every param notation to :param so cross-repo edges bucket together', () => {
-    const inputs = [
-      '/users/:id',
-      '/users/{id}',
-      '/users/<int:id>',
-      '/users/${id}',
-    ];
+    const inputs = ['/users/:id', '/users/{id}', '/users/<int:id>', '/users/${id}'];
     const canon = inputs.map(canonicalizePath);
     expect(new Set(canon).size).toBe(1);
     expect(canon[0]).toBe('/users/:param');

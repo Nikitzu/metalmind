@@ -3,12 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  deriveBasePath,
-  extractOpenApiRoutes,
-  parseOpenApiDoc,
-  shelfDir,
-} from './openapi.js';
+import { deriveBasePath, extractOpenApiRoutes, parseOpenApiDoc, shelfDir } from './openapi.js';
 import { buildRouteMatchEdges, extractRoutes } from './routes.js';
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'openapi');
@@ -20,18 +15,12 @@ describe('deriveBasePath', () => {
   });
 
   it('picks shortest path across servers to avoid prod-only prefix', () => {
-    const servers = [
-      { url: 'https://prod.example.com/api' },
-      { url: 'http://localhost:8080' },
-    ];
+    const servers = [{ url: 'https://prod.example.com/api' }, { url: 'http://localhost:8080' }];
     expect(deriveBasePath(servers)).toBe('');
   });
 
   it('uses the common basePath when all servers share one', () => {
-    const servers = [
-      { url: 'https://a.example.com/api' },
-      { url: 'https://b.example.com/api' },
-    ];
+    const servers = [{ url: 'https://a.example.com/api' }, { url: 'https://b.example.com/api' }];
     expect(deriveBasePath(servers)).toBe('/api');
   });
 
@@ -53,12 +42,7 @@ describe('parseOpenApiDoc', () => {
     expect(routes.every((r) => r.kind === 'handler')).toBe(true);
     expect(routes.every((r) => r.framework === 'openapi')).toBe(true);
     const keys = routes.map((r) => `${r.method} ${r.path}`).sort();
-    expect(keys).toEqual([
-      'DELETE /users/{id}',
-      'GET /users',
-      'GET /users/{id}',
-      'POST /users',
-    ]);
+    expect(keys).toEqual(['DELETE /users/{id}', 'GET /users', 'GET /users/{id}', 'POST /users']);
   });
 
   it('prepends servers basePath when shared', () => {
@@ -139,7 +123,10 @@ describe('extractOpenApiRoutes (shelf-only)', () => {
   it('prefers yaml over yml over json when multiple exist', async () => {
     const base = basenameOf(repo);
     await copyFile(join(FIXTURES, 'swagger2.yaml'), join(shelfDir(), `${base}.yaml`));
-    await writeFile(join(shelfDir(), `${base}.json`), JSON.stringify({ paths: { '/z': { get: {} } } }));
+    await writeFile(
+      join(shelfDir(), `${base}.json`),
+      JSON.stringify({ paths: { '/z': { get: {} } } }),
+    );
     const routes = await extractOpenApiRoutes(repo);
     expect(routes.some((r) => r.path === '/bookings')).toBe(true);
     expect(routes.some((r) => r.path === '/z')).toBe(false);
@@ -171,15 +158,8 @@ describe('extractRoutes wiring (shelf)', () => {
         join(FIXTURES, 'springdoc.yaml'),
         join(shelfDir(), `${basenameOf(javaRepo)}.yaml`),
       );
-      await writeFile(
-        join(jsRepo, 'client.ts'),
-        "axios.get('/shortened-uri/:id');",
-        'utf8',
-      );
-      const routes = [
-        ...(await extractRoutes(javaRepo)),
-        ...(await extractRoutes(jsRepo)),
-      ];
+      await writeFile(join(jsRepo, 'client.ts'), "axios.get('/shortened-uri/:id');", 'utf8');
+      const routes = [...(await extractRoutes(javaRepo)), ...(await extractRoutes(jsRepo))];
       const edges = buildRouteMatchEdges(routes);
       expect(edges.length).toBeGreaterThan(0);
       expect(edges.some((e) => e.path === '/shortened-uri/{id}')).toBe(true);

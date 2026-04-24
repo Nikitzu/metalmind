@@ -33,11 +33,7 @@ describe('listRecentNotes', () => {
   it('respects the N cap', async () => {
     await mkdir(join(tmp, 'Inbox'), { recursive: true });
     for (let i = 0; i < 5; i += 1) {
-      await writeNote(
-        join(tmp, 'Inbox', `n${i}.md`),
-        `# N${i}\n\nbody`,
-        new Date(2020 + i, 0, 1),
-      );
+      await writeNote(join(tmp, 'Inbox', `n${i}.md`), `# N${i}\n\nbody`, new Date(2020 + i, 0, 1));
     }
     const notes = await listRecentNotes(tmp, 2);
     expect(notes).toHaveLength(2);
@@ -46,7 +42,11 @@ describe('listRecentNotes', () => {
 
   it('extracts title from first heading, falling back to filename', async () => {
     await mkdir(join(tmp, 'Inbox'), { recursive: true });
-    await writeNote(join(tmp, 'Inbox', 'with-heading.md'), '# My Heading\n\nhi', new Date(2026, 0, 2));
+    await writeNote(
+      join(tmp, 'Inbox', 'with-heading.md'),
+      '# My Heading\n\nhi',
+      new Date(2026, 0, 2),
+    );
     await writeNote(join(tmp, 'Inbox', 'no-heading.md'), 'just a body', new Date(2026, 0, 1));
 
     const notes = await listRecentNotes(tmp, 5);

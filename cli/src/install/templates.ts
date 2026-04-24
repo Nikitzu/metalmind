@@ -4,7 +4,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { runCommand } from '../util/exec.js';
 import { getTemplatesDir } from '../util/paths.js';
-import { upsertSentinelBlock, type SentinelUpsertAction } from '../util/sentinel.js';
+import { type SentinelUpsertAction, upsertSentinelBlock } from '../util/sentinel.js';
 
 export const DEFAULT_CLAUDE_DIR = join(homedir(), '.claude');
 export const DEFAULT_GITIGNORE_GLOBAL = join(homedir(), '.gitignore_global');
@@ -105,10 +105,7 @@ async function copyTreeRecursive(srcDir: string, destDir: string): Promise<void>
   }
 }
 
-async function copySkillBundles(
-  srcDir: string,
-  destDir: string,
-): Promise<{ copied: string[] }> {
+async function copySkillBundles(srcDir: string, destDir: string): Promise<{ copied: string[] }> {
   if (!existsSync(srcDir)) return { copied: [] };
   await mkdir(destDir, { recursive: true });
   const copied: string[] = [];
@@ -151,10 +148,7 @@ export async function copyClaudeTemplates(
     (name) => name === 'save.md' || (opts.withTeams === true && name.startsWith('team-')),
     (name) => (name === 'save.md' ? renderRecall : null),
   );
-  const skills = await copySkillBundles(
-    join(srcRoot, 'skills'),
-    join(claudeDir, 'skills'),
-  );
+  const skills = await copySkillBundles(join(srcRoot, 'skills'), join(claudeDir, 'skills'));
 
   return {
     copied: [

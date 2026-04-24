@@ -1,9 +1,9 @@
-import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { forgeCaptureSpec } from './forge.js';
 import { shelfDir } from '../forge/openapi.js';
+import { forgeCaptureSpec } from './forge.js';
 
 describe('forge capture-spec', () => {
   let home: string;

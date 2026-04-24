@@ -8,7 +8,7 @@
 //   ANTHROPIC_API_KEY=sk-ant-... node bench/mcp-tax-v0/run.mjs
 //   node bench/mcp-tax-v0/run.mjs --offline   # skip API, use char/4 approximation
 
-import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -96,8 +96,7 @@ async function measureFixture(name, fixture, instructionBlockText) {
     result.instruction_block_tokens = withInstructions - baseline;
   }
 
-  result.first_turn_tokens =
-    result.tools_tokens + (result.instruction_block_tokens ?? 0);
+  result.first_turn_tokens = result.tools_tokens + (result.instruction_block_tokens ?? 0);
   return result;
 }
 
@@ -111,9 +110,7 @@ function inferTransport(name) {
 async function main() {
   const entries = (await readdir(FIXTURES_DIR)).filter((f) => f.endsWith('.json'));
   const instructionBlockPath = join(FIXTURES_DIR, 'metalmind-instruction-block.txt');
-  const instructionBlockText = await readFile(instructionBlockPath, 'utf8').catch(
-    () => null,
-  );
+  const instructionBlockText = await readFile(instructionBlockPath, 'utf8').catch(() => null);
 
   const results = [];
   for (const file of entries) {
@@ -129,8 +126,7 @@ async function main() {
       attachInstructionBlock ? instructionBlockText : null,
     );
     results.push(res);
-    const tax =
-      res.first_turn_tokens ?? res.first_turn_tokens_approx ?? res.tools_tokens_approx;
+    const tax = res.first_turn_tokens ?? res.first_turn_tokens_approx ?? res.tools_tokens_approx;
     console.log(
       `${name.padEnd(32)} tools=${String(res.tool_count).padStart(2)} ` +
         `chars=${String(res.tools_json_chars).padStart(5)} ` +
@@ -146,10 +142,7 @@ async function main() {
     approx_chars_per_token: OFFLINE ? APPROX_CHARS_PER_TOKEN : null,
     results,
   };
-  await writeFile(
-    join(RESULTS_DIR, 'results-latest.json'),
-    `${JSON.stringify(latest, null, 2)}\n`,
-  );
+  await writeFile(join(RESULTS_DIR, 'results-latest.json'), `${JSON.stringify(latest, null, 2)}\n`);
 
   const headers = [
     'name',
@@ -189,12 +182,7 @@ async function main() {
 
 function printMarkdownTable(results) {
   const byName = Object.fromEntries(results.map((r) => [r.name, r]));
-  const order = [
-    'metalmind-loopback',
-    'claude-code-native-memory',
-    'metalmind-stdio',
-    'mem0',
-  ];
+  const order = ['metalmind-loopback', 'claude-code-native-memory', 'metalmind-stdio', 'mem0'];
   const tokensOf = (r) =>
     r.first_turn_tokens ?? r.first_turn_tokens_approx ?? r.tools_tokens_approx ?? 0;
   const rows = order

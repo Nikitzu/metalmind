@@ -15,9 +15,20 @@ Out of scope: Obsidian Bases (`.base`), JSON Canvas (`.canvas`), plugin-specific
 
 ## Core metalmind rules
 
-**Every vault operation goes through `metalmind scribe <verb>`.** There is no top-level `metalmind show` / `metalmind list` / `metalmind create` — those all live as `scribe show`, `scribe list`, `scribe create`, etc. If you reach for `metalmind <verb>` and it errors with `unknown command`, the verb is almost always under `scribe`.
+**Every vault operation goes through metalmind — never `Write`/`Edit` on vault files directly.** The write surface:
+
+| Intent | Scadrial | Classic |
+|---|---|---|
+| Note CRUD (create/update/patch/delete/archive/rename/list/show) | `metalmind scribe <verb>` | `metalmind note <verb>` |
+| Daily-note ops for today or a future date | `metalmind atium new\|add` | `metalmind daily new\|add` |
+| Archive a note (one-shot) | `metalmind gold <kind:slug>` | `metalmind scribe archive <kind:slug>` |
+| Desktop notification (macOS) | `metalmind flare banner\|dialog\|sticky` | `metalmind notify banner\|dialog\|sticky` |
+
+Both names always work — prefer whichever the user's `CLAUDE.md` suggests. If a command errors with `unknown command`, check the table above before assuming the CLI can't express your target.
 
 **`metalmind scribe` stamps frontmatter.** When piping a body through `scribe create|update|patch`, emit the body only — no `---` YAML block. Scribe writes `tags`, `created`, `updated`, `project`, `status` based on flags and the `kind:slug` target.
+
+**Future daily notes go through `atium`/`daily`, not `scribe create --kind daily`.** `scribe create --kind daily` hardcodes today's filename; passing a different `--slug` errors. For tomorrow or any other date, use `metalmind atium new --date <today|tomorrow|next-workday|YYYY-MM-DD>` (or the `daily` classic alias).
 
 **Valid `kind:` prefixes** (these are the only ones — passing anything else throws `unknown kind`):
 
@@ -32,7 +43,7 @@ Out of scope: Obsidian Bases (`.base`), JSON Canvas (`.canvas`), plugin-specific
 | `memory:` | `Memory/` | Model-managed context notes |
 | `personal:` | `Personal/` | Non-work |
 
-When writing directly through the `Write` tool (rare — only when `scribe` can't express what you need, e.g. editing a section the patch matcher can't target), include frontmatter explicitly and put the file in the correct intent folder yourself.
+**Do not use the `Write` tool on vault files.** Every target has a metalmind command (scribe / atium / gold / flare). If none fits, stop and surface the gap — do not bypass.
 
 ## Workflow
 

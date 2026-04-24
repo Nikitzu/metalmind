@@ -58,9 +58,7 @@ async function writeSettings(path: string, data: ClaudeSettings): Promise<void> 
   await rename(tmp, path);
 }
 
-export async function applyMemoryRouting(
-  opts: MemoryRoutingOptions,
-): Promise<MemoryRoutingResult> {
+export async function applyMemoryRouting(opts: MemoryRoutingOptions): Promise<MemoryRoutingResult> {
   const settingsPath = opts.settingsPath ?? DEFAULT_SETTINGS_PATH;
   const data = await readSettings(settingsPath);
   const env = data.env ?? {};

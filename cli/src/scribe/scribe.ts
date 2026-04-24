@@ -66,7 +66,8 @@ export function resolveNotePath(input: string, vaultRoot: string): string {
     const kind = m[1] as ScribeKind;
     const slug = m[2] ?? '';
     const dir = KIND_DIRS[kind];
-    if (!dir) throw new Error(`unknown kind '${kind}' (valid: ${Object.keys(KIND_DIRS).join(', ')})`);
+    if (!dir)
+      throw new Error(`unknown kind '${kind}' (valid: ${Object.keys(KIND_DIRS).join(', ')})`);
     const filename = slug.endsWith('.md') ? slug : `${slug}.md`;
     return join(vaultRoot, dir, filename);
   }
@@ -180,6 +181,11 @@ export async function scribeCreate(
   ctx: ScribeOpts,
 ): Promise<{ path: string; relPath: string; created: boolean }> {
   const now = ctx.now ? ctx.now() : new Date();
+  if (opts.kind === 'daily' && opts.slug && opts.slug !== isoDate(now)) {
+    throw new Error(
+      `scribe create --kind daily hardcodes today's date for the filename; --slug '${opts.slug}' would be dropped. Use 'metalmind atium new --date ${opts.slug}' (or 'metalmind daily new --date ${opts.slug}') for non-today daily notes.`,
+    );
+  }
   const slug = opts.slug ? slugify(opts.slug) : slugify(opts.title);
   if (!slug && opts.kind !== 'daily')
     throw new Error('could not derive slug from title; pass --slug');
@@ -338,9 +344,7 @@ export async function scribeList(
   ctx: ScribeOpts,
   filter: { project?: string; kind?: ScribeKind } = {},
 ): Promise<ListEntry[]> {
-  const dirs: ScribeKind[] = filter.kind
-    ? [filter.kind]
-    : (Object.keys(KIND_DIRS) as ScribeKind[]);
+  const dirs: ScribeKind[] = filter.kind ? [filter.kind] : (Object.keys(KIND_DIRS) as ScribeKind[]);
   const out: ListEntry[] = [];
   for (const kind of dirs) {
     const dir = join(ctx.vaultRoot, KIND_DIRS[kind]);

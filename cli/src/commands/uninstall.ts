@@ -24,11 +24,17 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
   log.info('  - remove <vault>/.metalmind-stack/ (stack code, NOT your notes)');
   log.info('  - remove MCP entries (vault-rag, serena) from ~/.claude.json');
   log.info('  - remove shell aliases + source line from ~/.zshrc and ~/.bashrc');
-  log.info('  - strip the metalmind managed blocks from ~/.claude/CLAUDE.md and <vault>/CLAUDE.md (user content outside the markers is preserved)');
-  log.info('  - remove the SessionStart hook script + its entry in ~/.claude/settings.json (other hooks preserved)');
+  log.info(
+    '  - strip the metalmind managed blocks from ~/.claude/CLAUDE.md and <vault>/CLAUDE.md (user content outside the markers is preserved)',
+  );
+  log.info(
+    '  - remove the SessionStart hook script + its entry in ~/.claude/settings.json (other hooks preserved)',
+  );
   log.info('  - optionally uninstall the metalmind-vault-rag uv tool (prompt)');
   log.info('  - delete ~/.metalmind/config.json');
-  log.info('Will NOT touch: your notes, ~/.claude/agents, ~/.claude/rules, custom content in your CLAUDE.md files');
+  log.info(
+    'Will NOT touch: your notes, ~/.claude/agents, ~/.claude/rules, custom content in your CLAUDE.md files',
+  );
 
   let removeSerena: boolean;
   let removeGraphify: boolean;
@@ -36,7 +42,9 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
   let removeVolumes: boolean;
 
   if (opts.yes) {
-    log.info(`Non-interactive (--yes): removeVaultRag=true, removeSerena=false, removeGraphify=false, removeVolumes=${opts.purge === true}`);
+    log.info(
+      `Non-interactive (--yes): removeVaultRag=true, removeSerena=false, removeGraphify=false, removeVolumes=${opts.purge === true}`,
+    );
     removeSerena = false;
     removeGraphify = false;
     removeVaultRag = true;
@@ -69,7 +77,8 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
     removeGraphify = g;
 
     const v = await confirm({
-      message: 'Also uninstall metalmind-vault-rag (uv tool uninstall — the watcher, indexer, and HTTP recall server)?',
+      message:
+        'Also uninstall metalmind-vault-rag (uv tool uninstall — the watcher, indexer, and HTTP recall server)?',
       initialValue: true,
     });
     if (isCancel(v)) {
@@ -116,8 +125,10 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
       log.success('Stripped metalmind block from ~/.claude/CLAUDE.md');
     if (result.claudeMdBlocks.vault === 'removed' || result.claudeMdBlocks.vault === 'file-empty')
       log.success('Stripped metalmind block from vault CLAUDE.md');
-    if (result.sessionStartHook.registrationCleared) log.success('SessionStart hook entry removed from settings.json');
-    if (result.sessionStartHook.scriptRemoved) log.success('SessionStart hook script removed from ~/.claude/hooks/');
+    if (result.sessionStartHook.registrationCleared)
+      log.success('SessionStart hook entry removed from settings.json');
+    if (result.sessionStartHook.scriptRemoved)
+      log.success('SessionStart hook script removed from ~/.claude/hooks/');
     if (result.configRemoved) log.success('~/.metalmind/config.json deleted');
     outro('Uninstall complete. Your vault notes are untouched.');
   } catch (err) {

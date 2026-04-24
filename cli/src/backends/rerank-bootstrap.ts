@@ -118,7 +118,9 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
     await new Promise((r) => setTimeout(r, POST_RESTART_INTERVAL_MS));
     const after = await rerankStatus(ep);
     if (after === 'available') {
-      progress('reranker installed — downloading + warming the cross-encoder (first time only, ~500 MB)…');
+      progress(
+        'reranker installed — downloading + warming the cross-encoder (first time only, ~500 MB)…',
+      );
       const warmed = await warmupRerank(ep);
       progress(
         warmed
@@ -128,6 +130,8 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
       return true;
     }
   }
-  progress('reranker install reported success but /rerank/status never flipped — retry `--rerank`.');
+  progress(
+    'reranker install reported success but /rerank/status never flipped — retry `--rerank`.',
+  );
   return false;
 }

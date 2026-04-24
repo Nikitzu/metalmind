@@ -63,9 +63,7 @@ export async function store(content: string | undefined, opts: StoreOptions = {}
       // Prefer the watcher's /reindex HTTP endpoint (sub-100ms, process already warm).
       // Fall back to spawning a one-shot indexer only if HTTP is unreachable.
       const endpoint =
-        config.recall.httpEndpoint ??
-        process.env.METALMIND_RECALL_HTTP ??
-        'http://127.0.0.1:17317';
+        config.recall.httpEndpoint ?? process.env.METALMIND_RECALL_HTTP ?? 'http://127.0.0.1:17317';
       const httpOk = await reindexViaHttp(endpoint, [result.path]);
       if (httpOk) {
         log.info('  indexed (via watcher HTTP)');

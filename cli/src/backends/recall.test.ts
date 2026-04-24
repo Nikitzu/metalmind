@@ -30,15 +30,14 @@ describe('recall transport selection', () => {
   });
 
   it('uses the HTTP transport when the local endpoint answers', async () => {
-    globalThis.fetch = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          hits: [
-            { file: 'decisions/auth.md', heading: '(root)', score: 0.9, text: 'bcrypt' },
-          ],
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      ),
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hits: [{ file: 'decisions/auth.md', heading: '(root)', score: 0.9, text: 'bcrypt' }],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
     ) as typeof fetch;
 
     const res = await recall({
@@ -77,8 +76,8 @@ describe('recall transport selection', () => {
   });
 
   it('falls back to stdio when HTTP returns a non-OK status', async () => {
-    globalThis.fetch = vi.fn(async () =>
-      new Response('server error', { status: 500 }),
+    globalThis.fetch = vi.fn(
+      async () => new Response('server error', { status: 500 }),
     ) as typeof fetch;
 
     const { StdioMcpClient } = await import('./mcp-client.js');

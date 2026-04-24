@@ -2,6 +2,8 @@ import { log } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import {
   KIND_DIRS,
+  type ScribeKind,
+  type ScribeOpts,
   scribeArchive,
   scribeCreate,
   scribeDelete,
@@ -10,8 +12,6 @@ import {
   scribeRename,
   scribeShow,
   scribeUpdate,
-  type ScribeKind,
-  type ScribeOpts,
 } from '../scribe/scribe.js';
 
 function fail(message: string): void {
@@ -59,7 +59,10 @@ export async function scribeCreateCmd(
         title,
         body,
         project: opts.project,
-        tags: opts.tags?.split(',').map((t) => t.trim()).filter(Boolean),
+        tags: opts.tags
+          ?.split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
         slug: opts.slug,
         moc: opts.moc,
         dryRun: opts.dryRun,

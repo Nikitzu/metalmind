@@ -74,9 +74,7 @@ describe('template placeholders', () => {
     }
 
     if (violations.length > 0) {
-      const msg = violations
-        .map((v) => `  ${v.file} uses {{${v.placeholder}}}`)
-        .join('\n');
+      const msg = violations.map((v) => `  ${v.file} uses {{${v.placeholder}}}`).join('\n');
       throw new Error(
         `Unknown template placeholders. Add them to KNOWN_PLACEHOLDERS (and the renderer) or rewrite the template:\n${msg}`,
       );

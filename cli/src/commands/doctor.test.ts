@@ -61,8 +61,8 @@ describe('doctor deep checks', () => {
 
   describe('checkQdrantCollection', () => {
     it('ok when collection has points', async () => {
-      globalThis.fetch = vi.fn(async () =>
-        new Response(JSON.stringify({ result: { points_count: 42 } }), { status: 200 }),
+      globalThis.fetch = vi.fn(
+        async () => new Response(JSON.stringify({ result: { points_count: 42 } }), { status: 200 }),
       ) as typeof fetch;
       const { checkQdrantCollection } = await import('./doctor.js');
       const res = await checkQdrantCollection();
@@ -71,8 +71,8 @@ describe('doctor deep checks', () => {
     });
 
     it('flags empty collection with a reindex remediation', async () => {
-      globalThis.fetch = vi.fn(async () =>
-        new Response(JSON.stringify({ result: { points_count: 0 } }), { status: 200 }),
+      globalThis.fetch = vi.fn(
+        async () => new Response(JSON.stringify({ result: { points_count: 0 } }), { status: 200 }),
       ) as typeof fetch;
       const { checkQdrantCollection } = await import('./doctor.js');
       const res = await checkQdrantCollection();
@@ -102,19 +102,20 @@ describe('doctor deep checks', () => {
 
   describe('checkOllamaModel', () => {
     it('ok when nomic-embed-text is present', async () => {
-      globalThis.fetch = vi.fn(async () =>
-        new Response(
-          JSON.stringify({ models: [{ name: 'nomic-embed-text:latest' }] }),
-          { status: 200 },
-        ),
+      globalThis.fetch = vi.fn(
+        async () =>
+          new Response(JSON.stringify({ models: [{ name: 'nomic-embed-text:latest' }] }), {
+            status: 200,
+          }),
       ) as typeof fetch;
       const { checkOllamaModel } = await import('./doctor.js');
       expect((await checkOllamaModel()).ok).toBe(true);
     });
 
     it('flags missing embed model with a docker exec hint', async () => {
-      globalThis.fetch = vi.fn(async () =>
-        new Response(JSON.stringify({ models: [{ name: 'llama3:8b' }] }), { status: 200 }),
+      globalThis.fetch = vi.fn(
+        async () =>
+          new Response(JSON.stringify({ models: [{ name: 'llama3:8b' }] }), { status: 200 }),
       ) as typeof fetch;
       const { checkOllamaModel } = await import('./doctor.js');
       const res = await checkOllamaModel();
@@ -125,8 +126,8 @@ describe('doctor deep checks', () => {
 
   describe('checkRecallHttp', () => {
     it('ok when /health returns 200', async () => {
-      globalThis.fetch = vi.fn(async () =>
-        new Response(JSON.stringify({ ok: true }), { status: 200 }),
+      globalThis.fetch = vi.fn(
+        async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
       ) as typeof fetch;
       const { checkRecallHttp } = await import('./doctor.js');
       expect((await checkRecallHttp()).ok).toBe(true);
@@ -174,8 +175,7 @@ describe('doctor deep checks', () => {
     });
 
     it('ok when both files contain the sentinel block', async () => {
-      const block =
-        '<!-- metalmind:managed:begin -->\nstuff\n<!-- metalmind:managed:end -->\n';
+      const block = '<!-- metalmind:managed:begin -->\nstuff\n<!-- metalmind:managed:end -->\n';
       await writeFile(join(tmp, '.claude', 'CLAUDE.md'), block, 'utf8');
       await writeFile(join(tmp, 'vault', 'CLAUDE.md'), block, 'utf8');
       const { checkClaudeMdSentinel } = await import('./doctor.js');

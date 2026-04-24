@@ -1,11 +1,11 @@
 import { intro, log, outro } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import { installAliases } from '../install/aliases.js';
-import { installWatcher } from '../install/watcher.js';
 import { applyMemoryRouting, applyMetalmindSessionStartHook } from '../install/settings.js';
 import { copyClaudeHooks, copyClaudeTemplates, stampClaudeMd } from '../install/templates.js';
-import { resolveUvBinPath, resolveWatcherBinPath } from '../install/vault-rag.js';
 import { setupVault } from '../install/vault.js';
+import { resolveUvBinPath, resolveWatcherBinPath } from '../install/vault-rag.js';
+import { installWatcher } from '../install/watcher.js';
 
 export interface StampOptions {
   skipWatcher?: boolean;

@@ -193,7 +193,7 @@ describe('launchd watcher', () => {
       installLaunchdWatcher({
         vaultPath: '/v',
         watcherBin: '/u/metalmind-vault-rag-watcher',
-      uvBin: '/opt/homebrew/bin/uv',
+        uvBin: '/opt/homebrew/bin/uv',
         templatesDir,
         launchAgentsDir,
         skipLoad: true,

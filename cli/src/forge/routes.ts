@@ -210,7 +210,13 @@ const REST_SUFFIX_TO_METHOD: Record<string, HttpMethod> = {
   patchForObject: 'PATCH',
 };
 
-function pushCaller(out: RouteEntry[], method: HttpMethod, raw: string, file: string, repo: string): void {
+function pushCaller(
+  out: RouteEntry[],
+  method: HttpMethod,
+  raw: string,
+  file: string,
+  repo: string,
+): void {
   if (!raw.startsWith('/')) return;
   out.push({ method, path: normPath(raw), kind: 'caller', framework: 'java', file, repo });
 }
@@ -253,10 +259,29 @@ export function parseJava(content: string, file: string, repo: string): RouteEnt
  *  Accepts leading-slash segments with alnum/underscore/dash/colon/braces. */
 const URL_LITERAL_RE = /["'`](\/[a-z0-9][a-z0-9_/:{}\-.]{2,})["'`]/gi;
 const TEXT_EXTS = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
-  '.py', '.rb', '.php', '.go', '.rs', '.cs', '.scala', '.swift',
-  '.java', '.kt', '.kts', '.groovy',
-  '.yaml', '.yml', '.toml', '.conf', '.env',
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.py',
+  '.rb',
+  '.php',
+  '.go',
+  '.rs',
+  '.cs',
+  '.scala',
+  '.swift',
+  '.java',
+  '.kt',
+  '.kts',
+  '.groovy',
+  '.yaml',
+  '.yml',
+  '.toml',
+  '.conf',
+  '.env',
 ]);
 
 export function parseUrlLiterals(content: string, file: string, repo: string): RouteEntry[] {
@@ -266,7 +291,12 @@ export function parseUrlLiterals(content: string, file: string, repo: string): R
     const raw = m[1] ?? '';
     if (raw.length < 3) continue;
     if (raw.includes('//')) continue;
-    if (/\.(png|jpg|jpeg|gif|css|svg|ico|js|html|md|json|yaml|yml|log|tmp|bak|lock|txt|xml|pdf)$/i.test(raw)) continue;
+    if (
+      /\.(png|jpg|jpeg|gif|css|svg|ico|js|html|md|json|yaml|yml|log|tmp|bak|lock|txt|xml|pdf)$/i.test(
+        raw,
+      )
+    )
+      continue;
     const key = raw;
     if (seen.has(key)) continue;
     seen.add(key);

@@ -5,9 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   applyMemoryRouting,
   applyMetalmindSessionStartHook,
+  type ClaudeSettings,
   clearMemoryRouting,
   clearMetalmindSessionStartHook,
-  type ClaudeSettings,
 } from './settings.js';
 
 async function readJson(path: string): Promise<ClaudeSettings> {
@@ -183,7 +183,10 @@ describe('settings', () => {
     });
 
     it('deletes the SessionStart array entirely when it was the only entry', async () => {
-      await applyMetalmindSessionStartHook({ settingsPath, hookCommand: 'bash /metalmind-session-start.sh' });
+      await applyMetalmindSessionStartHook({
+        settingsPath,
+        hookCommand: 'bash /metalmind-session-start.sh',
+      });
       const changed = await clearMetalmindSessionStartHook(settingsPath);
       expect(changed).toBe(true);
 

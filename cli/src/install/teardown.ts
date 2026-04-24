@@ -1,20 +1,19 @@
 import { existsSync } from 'node:fs';
 import { rm, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
-import { METALMIND_HOOK_FILENAME } from './templates.js';
-import { clearMetalmindSessionStartHook } from './settings.js';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
 import { removeSentinelBlock, type SentinelRemoveAction } from '../util/sentinel.js';
 import { uninstallAliases } from './aliases.js';
 import { uninstallGraphify } from './graphify.js';
-import { uninstallWatcher } from './watcher.js';
 import { unregisterMcpServers } from './mcp.js';
 import { uninstallOutputStyle } from './output-style.js';
 import { uninstallSerena } from './serena.js';
-import { clearMemoryRouting } from './settings.js';
+import { clearMemoryRouting, clearMetalmindSessionStartHook } from './settings.js';
 import { STACK_SUBDIR, stopStack } from './stack.js';
+import { METALMIND_HOOK_FILENAME } from './templates.js';
 import { uninstallVaultRag } from './vault-rag.js';
 import type { WatcherPlatform } from './watcher.js';
+import { uninstallWatcher } from './watcher.js';
 
 export interface TeardownOptions {
   /**
@@ -121,8 +120,7 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
   const { claudeDir, settingsPath } = opts;
 
   result.memoryRoutingCleared = await clearMemoryRouting(settingsPath);
-  result.sessionStartHook.registrationCleared =
-    await clearMetalmindSessionStartHook(settingsPath);
+  result.sessionStartHook.registrationCleared = await clearMetalmindSessionStartHook(settingsPath);
   const hookScriptPath = join(claudeDir, 'hooks', METALMIND_HOOK_FILENAME);
   if (existsSync(hookScriptPath)) {
     await rm(hookScriptPath, { force: true });
@@ -153,9 +151,7 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
   const globalClaudeMd = join(claudeDir, 'CLAUDE.md');
   const vaultClaudeMd = config?.vaultPath ? join(config.vaultPath, 'CLAUDE.md') : null;
 
-  result.claudeMdBlocks.global = (
-    await removeSentinelBlock({ path: globalClaudeMd })
-  ).action;
+  result.claudeMdBlocks.global = (await removeSentinelBlock({ path: globalClaudeMd })).action;
   if (vaultClaudeMd) {
     result.claudeMdBlocks.vault = (
       await removeSentinelBlock({ path: vaultClaudeMd, deleteIfEmpty: true })

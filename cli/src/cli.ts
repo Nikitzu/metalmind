@@ -1,7 +1,9 @@
 import { Command } from 'commander';
 import pkg from '../package.json' with { type: 'json' };
+import { atiumAddCmd, atiumNewCmd } from './commands/atium.js';
 import { burn } from './commands/burn.js';
 import { doctor } from './commands/doctor.js';
+import { flareBanner, flareDialog, flareSticky } from './commands/flare.js';
 import {
   forgeAdd,
   forgeCaptureSpec,
@@ -72,8 +74,14 @@ program
 program
   .command('uninstall')
   .description('Reversible teardown')
-  .option('-y, --yes', 'Non-interactive: accept defaults (keeps volumes, uninstalls vault-rag, leaves Serena/graphify)')
-  .option('--purge', 'Also remove Docker volumes (Qdrant data, Ollama models). Only takes effect with --yes or after prompt.')
+  .option(
+    '-y, --yes',
+    'Non-interactive: accept defaults (keeps volumes, uninstalls vault-rag, leaves Serena/graphify)',
+  )
+  .option(
+    '--purge',
+    'Also remove Docker volumes (Qdrant data, Ollama models). Only takes effect with --yes or after prompt.',
+  )
   .action((cmdOpts: { yes?: boolean; purge?: boolean }) => uninstall(cmdOpts));
 
 function attachStoreFlags<T extends Command>(cmd: T): T {
@@ -175,18 +183,14 @@ burnCmd
     '--include-literals',
     'Also match cross-repo URL string literals (Tier 3, lower confidence)',
   )
-  .action(
-    (
-      query: string,
-      cmdOpts: { yes?: boolean; forge?: string; includeLiterals?: boolean },
-    ) =>
-      burn({
-        metal: 'bronze',
-        input: query,
-        assumeYes: cmdOpts.yes,
-        forge: cmdOpts.forge,
-        includeLiterals: cmdOpts.includeLiterals,
-      }),
+  .action((query: string, cmdOpts: { yes?: boolean; forge?: string; includeLiterals?: boolean }) =>
+    burn({
+      metal: 'bronze',
+      input: query,
+      assumeYes: cmdOpts.yes,
+      forge: cmdOpts.forge,
+      includeLiterals: cmdOpts.includeLiterals,
+    }),
   );
 
 burnCmd
@@ -207,18 +211,14 @@ program
     '--include-literals',
     'Also match cross-repo URL string literals (Tier 3, lower confidence)',
   )
-  .action(
-    (
-      query: string,
-      cmdOpts: { yes?: boolean; group?: string; includeLiterals?: boolean },
-    ) =>
-      burn({
-        metal: 'bronze',
-        input: query,
-        assumeYes: cmdOpts.yes,
-        forge: cmdOpts.group,
-        includeLiterals: cmdOpts.includeLiterals,
-      }),
+  .action((query: string, cmdOpts: { yes?: boolean; group?: string; includeLiterals?: boolean }) =>
+    burn({
+      metal: 'bronze',
+      input: query,
+      assumeYes: cmdOpts.yes,
+      forge: cmdOpts.group,
+      includeLiterals: cmdOpts.includeLiterals,
+    }),
   );
 
 program
@@ -248,10 +248,7 @@ function attachForgeSubcommands(parent: Command): void {
     .action((repo: string, source: string, cmdOpts: { as?: string }) =>
       forgeCaptureSpec(repo, source, { as: cmdOpts.as }),
     );
-  parent
-    .command('spec-list')
-    .description('List OpenAPI specs on the shelf')
-    .action(forgeSpecList);
+  parent.command('spec-list').description('List OpenAPI specs on the shelf').action(forgeSpecList);
   parent
     .command('spec-remove <slug>')
     .description('Remove an OpenAPI spec from the shelf by slug')
@@ -270,7 +267,7 @@ function attachScribeSubcommands(parent: Command): void {
     .description('Create a vault note with frontmatter + MOC linking. Body read from stdin.')
     .requiredOption(
       '--kind <kind>',
-      'plan | learning | work | daily | moc | inbox',
+      'plan | learning | work | daily | moc | inbox | memory | personal',
     )
     .option('--project <slug>', 'Project slug (drives MOC linking via frontmatter)')
     .option('--tags <csv>', 'Comma-separated tags')
@@ -290,10 +287,7 @@ function attachScribeSubcommands(parent: Command): void {
     .description('Replace one ## section in an existing note.')
     .requiredOption('--section <heading>', 'Section heading without the ## prefix')
     .option('--body <body>', 'Body inline (otherwise read from stdin)')
-    .option(
-      '--occurrence <n>',
-      '1-indexed occurrence when section appears multiple times',
-    )
+    .option('--occurrence <n>', '1-indexed occurrence when section appears multiple times')
     .option('--dry-run', 'Preview only')
     .action((note: string, cmdOpts) => scribePatchCmd(note, cmdOpts));
   parent
@@ -333,6 +327,69 @@ attachScribeSubcommands(scribeCmd);
 
 const noteCmd = program.command('note').description('Classic alias: vault note CRUD');
 attachScribeSubcommands(noteCmd);
+
+function attachAtiumSubcommands(parent: Command): void {
+  parent
+    .command('new')
+    .description(
+      'Create a new daily note (defaults to today; --date tomorrow | next-workday | YYYY-MM-DD)',
+    )
+    .option('--date <date>', 'today | tomorrow | next-workday | YYYY-MM-DD (default: today)')
+    .option('--from <date>', 'Carry over unchecked "- [ ]" items from this prior date')
+    .option('--dry-run', 'Preview only')
+    .action((cmdOpts: { date?: string; from?: string; dryRun?: boolean }) => atiumNewCmd(cmdOpts));
+  parent
+    .command('add <item>')
+    .description('Append a bullet under ## Action Items. Creates the file if missing.')
+    .option('--date <date>', 'today | tomorrow | next-workday | YYYY-MM-DD (default: today)')
+    .option('--dry-run', 'Preview only')
+    .action((item: string, cmdOpts: { date?: string; dryRun?: boolean }) =>
+      atiumAddCmd(item, cmdOpts),
+    );
+}
+
+const atiumCmd = program
+  .command('atium')
+  .description(
+    'Allomancy — burn atium to see future notes. Create or append to Daily/YYYY-MM-DD notes.',
+  );
+attachAtiumSubcommands(atiumCmd);
+
+const dailyCmd = program.command('daily').description('Classic alias: daily-note ops (new, add)');
+attachAtiumSubcommands(dailyCmd);
+
+program
+  .command('gold <note>')
+  .description(
+    'Allomancy — burn gold to see past selves. Move a note to Archive/ and set status: archived.',
+  )
+  .option('--dry-run', 'Preview only')
+  .action((note: string, cmdOpts: { dryRun?: boolean }) => scribeArchiveCmd(note, cmdOpts));
+
+function attachFlareSubcommands(parent: Command): void {
+  parent
+    .command('banner <title> <text>')
+    .description('Transient notification banner (Notification Center)')
+    .action((title: string, text: string) => flareBanner(title, text));
+  parent
+    .command('dialog <text>')
+    .description('Modal dialog — blocks until dismissed')
+    .action((text: string) => flareDialog(text));
+  parent
+    .command('sticky <text>')
+    .description('Persistent Stickies.app note on desktop')
+    .action((text: string) => flareSticky(text));
+}
+
+const flareCmd = program
+  .command('flare')
+  .description('Flare a metal — amplify a signal. Deliver a desktop notification (macOS only).');
+attachFlareSubcommands(flareCmd);
+
+const notifyCmd = program
+  .command('notify')
+  .description('Classic alias: desktop notifications (banner, dialog, sticky)');
+attachFlareSubcommands(notifyCmd);
 
 program
   .command('release-check')
@@ -405,13 +462,6 @@ program
   .command('reindex')
   .description('Classic alias: rebuild code graph for current repo')
   .action(pewterReindex);
-
-program
-  .command('wipe')
-  .description('Classic alias: uninstall metalmind')
-  .option('-y, --yes', 'Non-interactive: accept defaults')
-  .option('--purge', 'Also remove Docker volumes (with --yes)')
-  .action((cmdOpts: { yes?: boolean; purge?: boolean }) => aluminumWipe(cmdOpts));
 
 program
   .command('stamp')
