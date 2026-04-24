@@ -15,6 +15,7 @@ with rotation (5 MB × 3 backups) so the long-running watcher never fills the
 disk with unrotated log output.
 """
 import logging
+import os
 import sys
 import time
 from logging.handlers import RotatingFileHandler
@@ -23,8 +24,8 @@ from pathlib import Path
 from watchfiles import watch
 
 from . import http_server
-from .core import VAULT
-from .indexer import reindex_paths
+from .core import COLLECTION, VAULT, fts_row_count, qdrant
+from .indexer import reindex_all, reindex_paths
 
 DEBOUNCE_SECONDS = 2.0
 TICK_MS = 1_000  # watch() heartbeat → worst-case flush latency = DEBOUNCE + TICK
@@ -76,9 +77,56 @@ def _md_change(path: str) -> bool:
     return path.endswith(".md") and ".obsidian" not in path and ".metalmind-stack" not in path
 
 
+def _maybe_backfill_fts() -> None:
+    """One-shot FTS5 backfill for upgraders.
+
+    v0.3.0 added a SQLite FTS5 keyword index alongside Qdrant. Users upgrading
+    from v0.2.x have a populated Qdrant collection but an empty FTS5 table —
+    hybrid search would silently degrade to semantic-only until they touched
+    each file manually. Detect the mismatch on startup and rebuild once.
+
+    Cheap: at 1000 chunks the rebuild takes seconds. For huge vaults users can
+    set ``VAULT_NO_FTS_BACKFILL=1`` to defer.
+    """
+    if os.environ.get("VAULT_NO_FTS_BACKFILL") == "1":
+        return
+    try:
+        fts_rows = fts_row_count()
+    except Exception as e:
+        print(f"fts backfill: could not read FTS5 row count ({e}); skipping check", flush=True)
+        return
+    if fts_rows > 0:
+        return  # already populated, nothing to do
+    try:
+        c = qdrant()
+        if not c.collection_exists(COLLECTION):
+            return  # fresh install, indexer will populate both stores
+        info = c.get_collection(COLLECTION)
+        qdrant_points = getattr(info, "points_count", 0) or 0
+    except Exception as e:
+        print(f"fts backfill: could not read Qdrant count ({e}); skipping check", flush=True)
+        return
+    if qdrant_points == 0:
+        return  # fresh install; first indexer run will populate both
+    print(
+        f"fts backfill: Qdrant has {qdrant_points} points, FTS5 has 0 rows "
+        f"— rebuilding keyword index (one-shot, ~seconds for typical vaults)",
+        flush=True,
+    )
+    try:
+        reindex_all()
+    except Exception as e:
+        print(
+            f"fts backfill failed: {e}; hybrid search will degrade to semantic-only "
+            f"until you run `metalmind-vault-rag-indexer`",
+            flush=True,
+        )
+
+
 def main() -> None:
     _install_log_rotation()
     print(f"watching {VAULT}", flush=True)
+    _maybe_backfill_fts()
     # Fire up the co-hosted HTTP recall endpoint (127.0.0.1 only). If the port
     # is busy or binding fails, watcher keeps working — CLI falls back to stdio.
     http_server.serve_forever()

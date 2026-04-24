@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { runCommand } from '../util/exec.js';
 import { getTemplatesDir } from '../util/paths.js';
@@ -33,6 +34,43 @@ async function isVaultRagInstalled(): Promise<boolean> {
   return res.stdout.split('\n').some((line) => line.trim().startsWith(VAULT_RAG_PACKAGE));
 }
 
+async function installedVaultRagVersion(): Promise<string | null> {
+  const res = await runCommand('uv', ['tool', 'list'], { timeoutMs: 10_000 });
+  if (!res.ok) return null;
+  for (const line of res.stdout.split('\n')) {
+    const t = line.trim();
+    if (!t.startsWith(VAULT_RAG_PACKAGE)) continue;
+    // Lines look like: "metalmind-vault-rag v0.1.0"
+    const parts = t.split(/\s+/);
+    const ver = parts[1]?.replace(/^v/, '') ?? null;
+    return ver;
+  }
+  return null;
+}
+
+async function bundledVaultRagVersion(packageDir: string): Promise<string | null> {
+  try {
+    const toml = await readFile(join(packageDir, 'pyproject.toml'), 'utf8');
+    const match = toml.match(/^\s*version\s*=\s*"([^"]+)"/m);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Probe the installed vault-rag venv for the `[rerank]` extra. Returns true
+ *  iff FlagEmbedding is importable there — i.e. the user opted into the
+ *  heavy rerank tier at some point. Lets `stamp` preserve that state on
+ *  upgrade-triggered reinstall instead of silently dropping the extra. */
+export async function hasRerankExtraInstalled(): Promise<boolean> {
+  const res = await runCommand(
+    'uv',
+    ['tool', 'run', '--from', VAULT_RAG_PACKAGE, 'python', '-c', 'import FlagEmbedding'],
+    { timeoutMs: 15_000 },
+  );
+  return res.ok;
+}
+
 export async function installVaultRag(
   opts: InstallVaultRagOptions = {},
 ): Promise<InstallVaultRagResult> {
@@ -48,12 +86,35 @@ export async function installVaultRag(
   // --from + package-name form stays — it's what every metalmind release since
   // v0.1.0 has used.
   const hasExtras = (opts.extras?.length ?? 0) > 0;
-  const forceFlags = opts.reinstall || hasExtras ? ['--reinstall', '--force'] : [];
+
+  // Version-aware reinstall: if an older vault-rag is already installed,
+  // force-reinstall so the newer bundled code (e.g. v0.3.0's FTS5 writes,
+  // the `transformers<5` pin on [rerank], the VAULT_HTTP_PORT env var) lands
+  // on upgrade. Without this, `uv tool list` says "already installed" and we
+  // skip — leaving users with stale code until they manually --force.
+  let versionMismatch = false;
+  let alreadyInstalledPackage = false;
+  if (!opts.reinstall && !hasExtras) {
+    const installedVer = await installedVaultRagVersion();
+    if (installedVer !== null) {
+      alreadyInstalledPackage = true;
+      const bundled = await bundledVaultRagVersion(packageDir);
+      if (bundled && bundled !== installedVer) versionMismatch = true;
+    }
+  }
+
+  const forceFlags =
+    opts.reinstall || hasExtras || versionMismatch ? ['--reinstall', '--force'] : [];
   const args = hasExtras
     ? ['tool', 'install', ...forceFlags, `${packageDir}[${opts.extras!.join(',')}]`]
     : ['tool', 'install', ...forceFlags, '--from', packageDir, VAULT_RAG_PACKAGE];
 
-  if (!opts.reinstall && !hasExtras && (await isVaultRagInstalled())) {
+  if (
+    !opts.reinstall &&
+    !hasExtras &&
+    !versionMismatch &&
+    alreadyInstalledPackage
+  ) {
     alreadyInstalled = true;
   } else if (!opts.skipToolInstall) {
     const res = await runCommand('uv', args, { timeoutMs: 900_000 });

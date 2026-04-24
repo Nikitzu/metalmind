@@ -4,7 +4,12 @@ import { installAliases } from '../install/aliases.js';
 import { applyMemoryRouting, applyMetalmindSessionStartHook } from '../install/settings.js';
 import { copyClaudeHooks, copyClaudeTemplates, stampClaudeMd } from '../install/templates.js';
 import { setupVault } from '../install/vault.js';
-import { resolveUvBinPath, resolveWatcherBinPath } from '../install/vault-rag.js';
+import {
+  hasRerankExtraInstalled,
+  installVaultRag,
+  resolveUvBinPath,
+  resolveWatcherBinPath,
+} from '../install/vault-rag.js';
 import { installWatcher } from '../install/watcher.js';
 
 export interface StampOptions {
@@ -55,6 +60,27 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
   log.info(hookReg.changed ? '  settings.json: registered' : '  settings.json: already registered');
 
   if (!opts.skipWatcher) {
+    log.step('Python package (metalmind-vault-rag)');
+    try {
+      // Preserve the [rerank] extra across upgrades. Users who opted into the
+      // heavy tier shouldn't silently lose it when stamp force-reinstalls the
+      // package after a version bump.
+      const hadRerank = await hasRerankExtraInstalled();
+      const rag = await installVaultRag(hadRerank ? { extras: ['rerank'] } : {});
+      if (rag.installed) {
+        log.info(
+          hadRerank
+            ? '  refreshed from bundled source (kept [rerank] extra)'
+            : '  refreshed from bundled source',
+        );
+      } else if (rag.alreadyInstalled) {
+        log.info('  already current');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      log.warn(`  skipped: ${message}`);
+    }
+
     log.step('Watcher unit file');
     try {
       const watcherBin = await resolveWatcherBinPath();

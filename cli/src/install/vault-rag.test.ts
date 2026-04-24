@@ -1,4 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommandResult } from '../util/exec.js';
 
 const runCommand = vi.hoisted(() =>
@@ -92,5 +95,55 @@ describe('installVaultRag (isVaultRagInstalled via uv tool list)', () => {
       .mockResolvedValueOnce(mockResult({ ok: false, exitCode: 1, stderr: 'boom' }));
     const { installVaultRag } = await import('./vault-rag.js');
     await expect(installVaultRag({ templatesDir: '/tmp/pkg' })).rejects.toThrow(/uv tool install/);
+  });
+});
+
+describe('installVaultRag — version-aware reinstall', () => {
+  let tmp: string;
+
+  beforeEach(async () => {
+    runCommand.mockReset();
+    tmp = await mkdtemp(join(tmpdir(), 'mm-vr-test-'));
+  });
+
+  afterEach(async () => {
+    await rm(tmp, { recursive: true, force: true });
+  });
+
+  async function writePyproject(version: string): Promise<void> {
+    const pkgDir = join(tmp, 'vault-rag-pkg');
+    await mkdir(pkgDir, { recursive: true });
+    await writeFile(
+      join(pkgDir, 'pyproject.toml'),
+      `[project]\nname = "metalmind-vault-rag"\nversion = "${version}"\n`,
+      'utf8',
+    );
+  }
+
+  it('force-reinstalls when installed version differs from bundled', async () => {
+    await writePyproject('0.1.1');
+    runCommand
+      // installedVaultRagVersion() reads uv tool list and finds older version
+      .mockResolvedValueOnce(mockResult({ stdout: 'metalmind-vault-rag v0.1.0\n- watcher\n' }))
+      // install call with --reinstall --force
+      .mockResolvedValueOnce(mockResult({ stdout: 'Installed', ok: true }));
+    const { installVaultRag } = await import('./vault-rag.js');
+    const r = await installVaultRag({ templatesDir: tmp });
+    expect(r.installed).toBe(true);
+    expect(r.alreadyInstalled).toBe(false);
+    const call = runCommand.mock.calls[1];
+    expect(call?.[1]).toEqual(expect.arrayContaining(['--reinstall', '--force']));
+  });
+
+  it('skips install when installed version matches bundled', async () => {
+    await writePyproject('0.1.0');
+    runCommand.mockResolvedValueOnce(
+      mockResult({ stdout: 'metalmind-vault-rag v0.1.0\n- watcher\n' }),
+    );
+    const { installVaultRag } = await import('./vault-rag.js');
+    const r = await installVaultRag({ templatesDir: tmp });
+    expect(r.alreadyInstalled).toBe(true);
+    expect(r.installed).toBe(false);
+    expect(runCommand).toHaveBeenCalledTimes(1);
   });
 });

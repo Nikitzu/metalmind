@@ -2,6 +2,7 @@
 `metalmind tap copper` can hit a long-running server instead of spawning a new
 Python MCP every call. Bound to 127.0.0.1 only — nothing leaves the machine."""
 import json
+import os
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -10,7 +11,7 @@ from . import search
 from .indexer import reindex_paths
 
 DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 17317
+DEFAULT_PORT = int(os.environ.get("VAULT_HTTP_PORT", "17317"))
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -52,10 +53,14 @@ class _Handler(BaseHTTPRequestHandler):
                 query = str(body.get("query", ""))
                 k = int(body.get("k") or 5)
                 rerank = bool(body.get("rerank"))
+                mode = str(body.get("mode") or "hybrid")
                 if not query.strip():
                     self._send_json(400, {"error": "query is required"})
                     return
-                self._send_json(200, {"hits": search.search_vault(query, k, rerank=rerank)})
+                self._send_json(
+                    200,
+                    {"hits": search.search_vault(query, k, rerank=rerank, mode=mode)},
+                )
             elif self.path == "/expand":
                 query = str(body.get("query", ""))
                 k = int(body.get("k") or 5)

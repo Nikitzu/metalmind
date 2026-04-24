@@ -1,6 +1,6 @@
 [project]
 name = "metalmind-vault-rag"
-version = "0.1.0"
+version = "0.1.1"
 description = "Obsidian vault RAG service for metalmind — MCP server, watcher, indexer, doctor."
 requires-python = ">=3.11"
 dependencies = [
@@ -18,6 +18,10 @@ dev = [
 # Users enable it via `uv tool install 'metalmind-vault-rag[rerank]'`.
 rerank = [
     "FlagEmbedding>=1.3",
+    # transformers 5.x removed XLMRobertaTokenizer.prepare_for_model, which
+    # FlagEmbedding 1.3's reranker still calls — every rerank silently falls
+    # back to embedder ordering. Pin below 5 until FlagEmbedding catches up.
+    "transformers<5",
 ]
 
 [project.scripts]
