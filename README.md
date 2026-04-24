@@ -47,6 +47,19 @@ metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the
 
 **~2.5× lower than mem0 as shipped** (loopback-HTTP vs stdio MCP), **~8.4× lower on the apples-to-apples MCP comparison** (metalmind's stdio fallback vs mem0 — same transport, different schema discipline). The ~519 tokens metalmind spends up front are prose in `~/.claude/CLAUDE.md` that teaches Claude *when* to recall — work that mem0's schema-tax doesn't do. Approximation via `chars / 4`; re-run with `ANTHROPIC_API_KEY=... pnpm bench:mcp-tax` for exact counts. `bench/mcp-tax-v0/README.md` details methodology and limits.
 
+## Recall quality at scale
+
+Token cost is only half the story — recall has to actually find your note. `v0.3.0` ships **hybrid retrieval** (semantic embedding + local SQLite FTS5 keyword index, fused via Reciprocal Rank Fusion). Measured in [`bench/recall-v0/`](bench/recall-v0/) on 12 hand-authored gold notes plus up to 988 seeded same-domain distractors, 20 paraphrase-ish queries:
+
+| Vault size | sem-only hit@5 | **hybrid hit@5** | **hybrid + rerank hit@1** | median latency (hybrid) |
+|---:|---:|---:|---:|---:|
+| 12 notes | 90% | **100%** | 90% | 66 ms |
+| 100 notes | 75% | **90%** | 90% | 57 ms |
+| 500 notes | 55% | **80%** | 90% | 54 ms |
+| 1,000 notes | 55% | **85%** | 90% | 55 ms |
+
+Hybrid search is the default as of v0.3.0 — it holds recall as the vault grows, which the v0.2.x semantic-only path did not. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query for the hit@1 jump. `--semantic-only` and `--keyword-only` flags let you A/B any query.
+
 ## Who should NOT use metalmind
 
 Honest anti-personas — install the wrong tool and you'll bounce in an hour:

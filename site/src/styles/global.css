@@ -401,6 +401,36 @@ pre {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+.feature-bench-table {
+  margin: 0.65rem 0 0.35rem;
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.feature-bench-table th,
+.feature-bench-table td {
+  padding: 0.3rem 0.55rem;
+  text-align: right;
+  border-bottom: 1px solid color-mix(in srgb, var(--copper) 18%, transparent);
+  font-size: 0.82rem;
+}
+.feature-bench-table thead th {
+  font-weight: 600;
+  color: var(--fg-muted);
+  border-bottom-color: color-mix(in srgb, var(--copper) 34%, transparent);
+}
+.feature-bench-table tbody th {
+  text-align: left;
+  font-weight: 500;
+}
+.feature-bench-table tbody tr:last-child th,
+.feature-bench-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.feature-bench-note {
+  margin: 0.45rem 0 0;
+  color: var(--fg-muted);
+}
 
 /* MCP-tax bench table */
 .mcp-tax-bench {

@@ -130,13 +130,36 @@ const description =
               it naturally. <code>--deep</code> follows backlinks; <code>--expand</code> returns
               hits plus the surrounding graph.
               <div class="feature-bench">
-                <strong>Measured on the 12-note fake vault</strong> (<a href="https://github.com/Nikitzu/metalmind/tree/main/bench/recall-v0" target="_blank" rel="noopener">bench/recall-v0/</a>):
-                <ul>
-                  <li><strong>hit@5 = 90%</strong> · hit@3 = 85% · hit@1 = 70%</li>
-                  <li>latency <strong>median 45 ms</strong> · p95 87 ms</li>
-                </ul>
-                The tax we avoid is the <em>standing</em> tool-schema cost, not the result tokens —
-                hit payloads are billed like any other bash output.
+                <strong>Measured at scale on the recall bench</strong>
+                (<a href="https://github.com/Nikitzu/metalmind/tree/main/bench/recall-v0" target="_blank" rel="noopener">bench/recall-v0/</a>,
+                12 hand-authored gold notes + up to 1,000 seeded same-domain distractors, 20 queries, v0.3.0):
+                <table class="feature-bench-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">vault size</th>
+                      <th scope="col">hit@5 (hybrid)</th>
+                      <th scope="col">hit@5 (hybrid+rerank)</th>
+                      <th scope="col">hit@1 (hybrid+rerank)</th>
+                      <th scope="col">median latency</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><th scope="row">12 notes</th><td>100%</td><td>95%</td><td>90%</td><td>66 ms</td></tr>
+                    <tr><th scope="row">100 notes</th><td>90%</td><td>95%</td><td>90%</td><td>57 ms</td></tr>
+                    <tr><th scope="row">500 notes</th><td>80%</td><td>90%</td><td>90%</td><td>54 ms</td></tr>
+                    <tr><th scope="row">1,000 notes</th><td>85%</td><td>90%</td><td>90%</td><td>55 ms</td></tr>
+                  </tbody>
+                </table>
+                <p class="feature-bench-note">
+                  Hybrid fuses semantic embeddings with a local SQLite FTS5 keyword index via
+                  Reciprocal Rank Fusion — recall holds as the vault grows, not just at the
+                  unit-smoke scale. Rerank (<code>--rerank</code>, opt-in) adds a cross-encoder
+                  rescore at the cost of ~2 s per query.
+                </p>
+                <p class="feature-bench-note">
+                  The tax we avoid is the <em>standing</em> tool-schema cost, not the result
+                  tokens — hit payloads are billed like any other bash output.
+                </p>
               </div>
             </div>
           </div>

@@ -67,6 +67,103 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.3.0</h2>
+            <span class="release-date">2026-04-24</span>
+          </header>
+          <h3>Hybrid retrieval — default <code>tap copper</code> behavior</h3>
+          <ul>
+            <li>
+              <strong>SQLite FTS5 keyword index</strong> lives alongside Qdrant at
+              <code>~/.metalmind/fts-&lt;collection&gt;.db</code>. The indexer writes both stores in
+              lockstep; the watcher keeps them in sync on every file change. Porter tokenizer
+              (English stemming), chunk-level granularity matching Qdrant points.
+            </li>
+            <li>
+              <strong>Reciprocal Rank Fusion</strong> (<code>k=60</code>) merges semantic and keyword
+              hits by rank, so BM25's unbounded scores and cosine similarity's [0, 1] range never
+              need calibration. On the scaled recall bench (12 gold + 988 same-domain distractors,
+              20 queries): hit@5 at 1,000 notes goes <strong>55% → 85%</strong> (hybrid) and
+              <strong>hit@1 → 90%</strong> with <code>--rerank</code>.
+            </li>
+            <li>
+              <strong>New <code>mode</code> param</strong> on <code>POST /search</code>:
+              <code>hybrid</code> (default), <code>semantic-only</code>, or <code>keyword-only</code>.
+              Clients that omit <code>mode</code> get hybrid automatically.
+            </li>
+            <li>
+              <strong>FTS5 auto-backfill</strong> on watcher startup. Detects the Qdrant-populated
+              / FTS5-empty state every v0.2.x upgrader lands in, rebuilds the keyword index once,
+              then resumes watching. <code>VAULT_NO_FTS_BACKFILL=1</code> defers for huge vaults.
+            </li>
+            <li>
+              <strong><code>VAULT_HTTP_PORT</code> env var</strong> on the loopback recall server.
+              Defaults to <code>17317</code> (unchanged). Lets multi-vault setups pick a free port.
+            </li>
+          </ul>
+          <h3>Fixed</h3>
+          <ul>
+            <li>
+              <strong><code>--rerank</code> was silently falling back to embedder-only ordering</strong>
+              for anyone who installed the <code>[rerank]</code> extra with transformers ≥ 5.
+              FlagEmbedding 1.3 calls <code>XLMRobertaTokenizer.prepare_for_model</code>, which was
+              removed in transformers 5. The server logged the <code>AttributeError</code> at WARN
+              level and returned the unreranked top-K — no visible error at the CLI. Pinned
+              <code>transformers&lt;5</code> in the <code>rerank</code> extra. Discovered running the
+              scaled bench: rerank on vs off produced byte-identical hit@K, which is exactly what
+              surfaced it.
+            </li>
+            <li>
+              <strong><code>metalmind stamp</code> now upgrades the Python package</strong> when the
+              bundled vault-rag version differs from the installed one. Previously stamp
+              short-circuited on "already installed" regardless of version, so CLI upgrades
+              silently failed to ship Python-side fixes. Preserves the <code>[rerank]</code> extra
+              across reinstall by probing <code>FlagEmbedding</code> importability in the tool venv.
+            </li>
+          </ul>
+          <h3>Added — doctor smoke checks</h3>
+          <ul>
+            <li>
+              <code>metalmind-vault-rag-doctor --rerank</code> runs a cross-encoder call with a
+              known hit list and verifies <code>prev_score</code> is populated on the top result.
+              Catches the silent-fallback class of bugs — model missing, tokenizer version drift,
+              OOM — that would otherwise look like "rerank is on" while returning unreranked hits.
+            </li>
+            <li>
+              <code>metalmind-vault-rag-doctor --fts</code> reports Qdrant points vs FTS5 rows.
+              Warns when FTS5 is empty while Qdrant is populated (stuck in pre-upgrade state) or
+              when row counts have drifted significantly.
+            </li>
+          </ul>
+          <h3>Bench</h3>
+          <ul>
+            <li>
+              <strong><code>bench/recall-v0/</code> scaled mode.</strong>
+              <code>--scales 12,100,500,1000</code> assembles an isolated tmp vault + dedicated
+              Qdrant collection + dedicated port per scale, indexes, queries, tears down —
+              idempotent on Ctrl-C / crash / normal exit. Four modes measured side-by-side at
+              every scale: <code>semantic-only</code>, <code>keyword-only</code>, <code>hybrid</code>,
+              <code>hybrid+rerank</code>, plus a pure-Node BM25 sanity column.
+            </li>
+            <li>
+              <strong>Seeded distractor generator</strong> (<code>mulberry32</code>, 16 topic
+              templates of same-domain Quillfly content that never overlaps with gold). 1,000 notes
+              are deterministic from seed; the distractor files themselves are gitignored — running
+              the generator produces byte-identical fixtures.
+            </li>
+          </ul>
+          <h3>Upgrade notes</h3>
+          <ul>
+            <li>
+              <strong><code>npm upgrade metalmind &amp;&amp; metalmind stamp</code> is sufficient.</strong>
+              <code>stamp</code> detects the version bump, force-reinstalls the Python package with
+              the <code>transformers&lt;5</code> pin, and the watcher auto-backfills FTS5 on next
+              start. No manual <code>uv tool install --force</code> needed.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.2.9</h2>
             <span class="release-date">2026-04-24</span>
           </header>
