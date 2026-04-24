@@ -6,6 +6,17 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.2.9 — 2026-04-24
+
+### Added
+- **`metalmind routine install eod` / `routine remove eod`** — launchd-backed end-of-day routine (macOS). At 17:30 Mon–Fri by default, runs `atium new --date next-workday --from <today>` then archives today's daily via `gold`. `--time HH:MM` overrides the schedule. Plist lives at `~/Library/LaunchAgents/com.metalmind.routine.eod.plist`; stdout/stderr go to `~/Library/Logs/metalmind-eod.{log,err}`. First routine shipped under the `metalmind routine` umbrella — the rest of the proposed routine family (morning stickies, etc.) lands when demand hits.
+
+### Changed
+- **`atium new` emits `- [ ]` checkbox bullets** instead of plain `- item`. Makes carry-forward explicit: unchecked boxes are "move me tomorrow"; `- [x]` or no bullet is "done, leave behind." Same for `atium add`.
+- **`atium new --from` loosened to treat plain `- item` bullets as unchecked too.** Lets the routine carry items from pre-v0.2.9 daily notes without forcing users to retrofit every file. `- [x] done` is still correctly excluded.
+
+---
+
 ## 0.2.8 — 2026-04-24
 
 ### Added

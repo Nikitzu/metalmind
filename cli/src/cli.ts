@@ -1,3 +1,4 @@
+import { log } from '@clack/prompts';
 import { Command } from 'commander';
 import pkg from '../package.json' with { type: 'json' };
 import { atiumAddCmd, atiumNewCmd } from './commands/atium.js';
@@ -23,6 +24,7 @@ import {
   renameSymbol,
   toggleVerbose,
 } from './commands/remaining-burns.js';
+import { routineInstallEodCmd, routineRemoveEodCmd } from './commands/routine.js';
 import {
   scribeArchiveCmd,
   scribeCreateCmd,
@@ -394,6 +396,33 @@ const notifyCmd = program
   .command('notify')
   .description('Classic alias: desktop notifications (banner, dialog, sticky)');
 attachFlareSubcommands(notifyCmd);
+
+const routineCmd = program
+  .command('routine')
+  .description('Install / remove metalmind scheduled routines (macOS launchd).');
+routineCmd
+  .command('install <name>')
+  .description('Install a named routine. Supported: "eod" (carry-forward + archive Mon–Fri).')
+  .option('--time <HH:MM>', 'Time to fire (default 17:30)')
+  .action((name: string, cmdOpts: { time?: string }) => {
+    if (name !== 'eod') {
+      log.error(`unknown routine '${name}' (valid: eod)`);
+      process.exitCode = 1;
+      return;
+    }
+    return routineInstallEodCmd(cmdOpts);
+  });
+routineCmd
+  .command('remove <name>')
+  .description('Remove a named routine.')
+  .action((name: string) => {
+    if (name !== 'eod') {
+      log.error(`unknown routine '${name}' (valid: eod)`);
+      process.exitCode = 1;
+      return;
+    }
+    return routineRemoveEodCmd();
+  });
 
 program
   .command('release-check')

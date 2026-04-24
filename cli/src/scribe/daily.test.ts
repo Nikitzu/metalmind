@@ -30,7 +30,7 @@ describe('resolveDate', () => {
 });
 
 describe('extractUncheckedItems', () => {
-  it('picks up only - [ ] items in ## Action Items', () => {
+  it('treats - [ ] and plain - bullets as unchecked, skips - [x]', () => {
     const src = [
       '---',
       'kind: daily',
@@ -48,7 +48,7 @@ describe('extractUncheckedItems', () => {
       '',
       '- [ ] not in action items',
     ].join('\n');
-    expect(extractUncheckedItems(src)).toEqual(['unchecked A', 'unchecked D']);
+    expect(extractUncheckedItems(src)).toEqual(['unchecked A', 'plain bullet C', 'unchecked D']);
   });
 });
 
@@ -107,12 +107,12 @@ describe('dailyNew + dailyAdd', () => {
       { date: '2026-04-21', from: '2026-04-20' },
       { vaultRoot: vault, now: tueMidday },
     );
-    expect(res.carried).toBe(2);
+    expect(res.carried).toBe(3);
     const raw = await readFile(res.path, 'utf8');
-    expect(raw).toContain('- leftover one');
-    expect(raw).toContain('- leftover two');
+    expect(raw).toContain('- [ ] leftover one');
+    expect(raw).toContain('- [ ] leftover two');
+    expect(raw).toContain('- [ ] plain');
     expect(raw).not.toContain('finished');
-    expect(raw).not.toContain('- plain');
   });
 
   it('new: errors on duplicate', async () => {
@@ -136,7 +136,7 @@ describe('dailyNew + dailyAdd', () => {
     expect(res.created).toBe(true);
     const raw = await readFile(res.path, 'utf8');
     expect(raw).toContain('## Action Items');
-    expect(raw).toContain('- ship 0.2.8');
+    expect(raw).toContain('- [ ] ship 0.2.8');
   });
 
   it('add: appends under existing ## Action Items', async () => {
@@ -146,9 +146,9 @@ describe('dailyNew + dailyAdd', () => {
     await dailyAdd('second', {}, ctx);
     const raw = await readFile(join(vault, 'Daily/2026-04-21.md'), 'utf8');
     const actionBlock = raw.split('## Action Items')[1] ?? '';
-    expect(actionBlock).toContain('- first');
-    expect(actionBlock).toContain('- second');
-    expect(actionBlock.indexOf('- first')).toBeLessThan(actionBlock.indexOf('- second'));
+    expect(actionBlock).toContain('- [ ] first');
+    expect(actionBlock).toContain('- [ ] second');
+    expect(actionBlock.indexOf('- [ ] first')).toBeLessThan(actionBlock.indexOf('- [ ] second'));
   });
 
   it('add: creates ## Action Items section when missing', async () => {
@@ -163,7 +163,7 @@ describe('dailyNew + dailyAdd', () => {
     const raw = await readFile(p, 'utf8');
     expect(raw).toContain('## Notes');
     expect(raw).toContain('## Action Items');
-    expect(raw).toContain('- new task');
+    expect(raw).toContain('- [ ] new task');
   });
 
   it('add: rejects empty item', async () => {

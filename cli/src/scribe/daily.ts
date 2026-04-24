@@ -73,7 +73,7 @@ function frontmatter(date: string, now: string): string {
 }
 
 function emptyNote(date: string, now: string, items: string[] = []): string {
-  const bullets = items.length === 0 ? '- ' : items.map((i) => `- ${i}`).join('\n');
+  const bullets = items.length === 0 ? '- [ ] ' : items.map((i) => `- [ ] ${i}`).join('\n');
   return `${frontmatter(date, now)}# ${date}\n\n${ACTION_ITEMS_HEADING}\n\n${bullets}\n`;
 }
 
@@ -88,8 +88,13 @@ export function extractUncheckedItems(source: string): string[] {
     }
     if (inSection && /^##\s+/.test(line)) break;
     if (!inSection) continue;
-    const m = /^-\s+\[\s\]\s+(.+)$/.exec(line);
-    if (m?.[1]) out.push(m[1].trim());
+    const checkbox = /^-\s+\[(.)\]\s+(.+)$/.exec(line);
+    if (checkbox) {
+      if (checkbox[1] === ' ' && checkbox[2]) out.push(checkbox[2].trim());
+      continue;
+    }
+    const plain = /^-\s+(.+)$/.exec(line);
+    if (plain?.[1]) out.push(plain[1].trim());
   }
   return out;
 }
@@ -155,7 +160,7 @@ export async function dailyAdd(
   const headingIdx = lines.findIndex((l) => /^##\s+Action\s+Items\s*$/.test(l));
 
   if (headingIdx < 0) {
-    const next = `${raw.trimEnd()}\n\n${ACTION_ITEMS_HEADING}\n\n- ${trimmed}\n`;
+    const next = `${raw.trimEnd()}\n\n${ACTION_ITEMS_HEADING}\n\n- [ ] ${trimmed}\n`;
     await writeFile(abs, next, 'utf8');
     return { path: abs, relPath, created: false };
   }
@@ -170,7 +175,7 @@ export async function dailyAdd(
   let last = insertAt - 1;
   while (last > headingIdx && (lines[last] ?? '').trim() === '') last--;
 
-  const bullet = `- ${trimmed}`;
+  const bullet = `- [ ] ${trimmed}`;
   const before = lines.slice(0, last + 1);
   const after = lines.slice(last + 1);
   const combined = [...before, bullet, ...after];
