@@ -420,7 +420,10 @@ pre {
 .feature-bench-table th,
 .feature-bench-table td {
   padding: 0.35rem 0.6rem;
-  text-align: right;
+  /* Center-align numeric columns so values sit mid-column instead of
+     floating to the far right of a header-wide cell. Headers overrule via
+     thead th below; row labels via tbody th. */
+  text-align: center;
   border-bottom: 1px solid color-mix(in srgb, var(--copper) 18%, transparent);
   font-size: 0.82rem;
 }
@@ -429,13 +432,6 @@ pre {
   color: var(--fg-muted);
   line-height: 1.25;
   border-bottom-color: color-mix(in srgb, var(--copper) 34%, transparent);
-}
-.feature-bench-table .th-sub {
-  display: inline-block;
-  margin-top: 0.1rem;
-  font-weight: 400;
-  font-size: 0.72rem;
-  color: color-mix(in srgb, var(--fg-muted) 80%, transparent);
 }
 .feature-bench-table tbody th {
   text-align: left;
