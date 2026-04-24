@@ -116,9 +116,12 @@ Every themed (Scadrial) verb has a classic alias. Both always resolve — themin
 | `metalmind burn pewter` | `metalmind reindex` | Rebuild code graph |
 | `metalmind forge <…>` | `metalmind group <…>` | Cross-repo graph groups; `forge capture-spec` seeds OpenAPI shelf |
 | `metalmind scribe <verb>` | `metalmind note <verb>` | Vault CRUD: `create \| update \| patch \| delete \| archive \| rename \| list \| show` |
+| `metalmind atium new \| add` | `metalmind daily new \| add` | Future daily notes — `--date today\|tomorrow\|next-workday\|YYYY-MM-DD`, `--from` carries unchecked items |
+| `metalmind gold <note>` | `metalmind scribe archive <note>` | One-shot archive — move note to `Archive/` |
+| `metalmind flare banner\|dialog\|sticky` | `metalmind notify banner\|dialog\|sticky` | macOS desktop notifications |
 | `metalmind release-check` | `metalmind release-check` | Preflight — working tree, branch, version sync, tests, build, stamped-block present |
 | `metalmind burn brass` | `metalmind stamp` | Re-imprint metalmind managed files (upgrade in place) |
-| `metalmind burn aluminum` | `metalmind wipe` | Uninstall alias |
+| `metalmind burn aluminum` | `metalmind uninstall` | Reversible teardown |
 
 Pick a flavor during `init` — it only changes which variant your stamped `CLAUDE.md` recommends to Claude. The CLI always accepts both.
 

@@ -166,6 +166,7 @@ describe('doctor deep checks', () => {
         mcp: { registered: [] },
         hooks: { claudeCode: false },
         memoryRouting: 'vault-only',
+        skills: { eodHook: true, notifications: true },
         forge: { groups: {} },
       };
     });

@@ -15,6 +15,28 @@ export interface CopyClaudeTemplatesOptions {
   claudeDir?: string;
   withTeams?: boolean;
   flavor?: 'scadrial' | 'classic';
+  eodHook?: boolean;
+  notifications?: boolean;
+}
+
+const SENTINEL_BLOCK_RE = (key: string) =>
+  new RegExp(
+    `\\n?<!--\\s*metalmind:${key}:start\\s*-->[\\s\\S]*?<!--\\s*metalmind:${key}:end\\s*-->\\n?`,
+    'g',
+  );
+const SENTINEL_COMMENT_RE = (key: string) =>
+  new RegExp(`\\n?<!--\\s*metalmind:${key}:(start|end)\\s*-->\\n?`, 'g');
+
+export function renderSkillSentinels(
+  source: string,
+  flags: { eodHook: boolean; notifications: boolean },
+): string {
+  let out = source;
+  if (!flags.eodHook) out = out.replace(SENTINEL_BLOCK_RE('eod'), '\n');
+  if (!flags.notifications) out = out.replace(SENTINEL_BLOCK_RE('notifications'), '\n');
+  out = out.replace(SENTINEL_COMMENT_RE('eod'), '\n');
+  out = out.replace(SENTINEL_COMMENT_RE('notifications'), '\n');
+  return out.replace(/\n{3,}/g, '\n\n');
 }
 
 export interface CopyClaudeTemplatesResult {
@@ -127,8 +149,12 @@ export async function copyClaudeTemplates(
   const claudeDir = opts.claudeDir ?? DEFAULT_CLAUDE_DIR;
   const srcRoot = join(templatesDir, 'claude');
   const recall = recallCommand(opts.flavor ?? 'scadrial');
+  const eodHook = opts.eodHook ?? true;
+  const notifications = opts.notifications ?? true;
 
   const renderRecall: Renderer = (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall);
+  const renderSave: Renderer = (raw) =>
+    renderSkillSentinels(renderRecall(raw), { eodHook, notifications });
 
   const rules = await copyDir(
     join(srcRoot, 'rules'),
@@ -146,7 +172,7 @@ export async function copyClaudeTemplates(
     join(srcRoot, 'commands'),
     join(claudeDir, 'commands'),
     (name) => name === 'save.md' || (opts.withTeams === true && name.startsWith('team-')),
-    (name) => (name === 'save.md' ? renderRecall : null),
+    (name) => (name === 'save.md' ? renderSave : null),
   );
   const skills = await copySkillBundles(join(srcRoot, 'skills'), join(claudeDir, 'skills'));
 

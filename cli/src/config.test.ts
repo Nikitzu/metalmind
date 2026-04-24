@@ -45,6 +45,7 @@ describe('config', () => {
       hooks: { claudeCode: true },
       forge: { groups: {} },
       memoryRouting: 'vault-only',
+      skills: { eodHook: true, notifications: true },
     };
 
     await writeConfig(cfg);

@@ -47,7 +47,9 @@ Decide the right folder based on content:
    | Future daily note | `metalmind atium new --date <date>` | `metalmind daily new --date <date>` |
    | Push action item | `metalmind atium add "<item>" --date <date>` | `metalmind daily add "<item>" --date <date>` |
    | Archive | `metalmind gold <kind:slug>` | `metalmind scribe archive <kind:slug>` |
+<!-- metalmind:notifications:start -->
    | Notify (macOS) | `metalmind flare banner "<t>" "<m>"` | `metalmind notify banner "<t>" "<m>"` |
+<!-- metalmind:notifications:end -->
 
    Common flags: `--project <slug>`, `--tags a,b`, body on stdin, `--dry-run` for preview.
 
@@ -57,16 +59,20 @@ Decide the right folder based on content:
 
    The metalmind watcher auto-reindexes within ~3 seconds.
 
+<!-- metalmind:eod:start -->
 ## End-of-day hook
 
 If the current **local time** is between **16:00 and 18:00** (i.e., the local hour is 16 or 17), the user is likely wrapping up their workday. After writing the insight note:
 
 1. **Offer** to push any unresolved work as action items into the next workday's daily note. Example wording: "Looks like end of day — want me to push today's pending items to tomorrow's note?"
 2. Wait for approval. On approval, run `metalmind atium add "<item>" --date next-workday` (or classic `metalmind daily add …`) once per item.
+<!-- metalmind:notifications:start -->
 3. On macOS, fire a confirmation banner: `metalmind flare banner "metalmind" "saved to <path>"` (or classic `metalmind notify banner …`).
+<!-- metalmind:notifications:end -->
 
 If the local hour is outside 16–17, skip this hook entirely — no need to offer or mention it.
 
+<!-- metalmind:eod:end -->
 ## Arguments
 
 If the user passed text after `/save`, treat it as the topic/title hint.

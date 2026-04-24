@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommandResult } from '../util/exec.js';
+import { renderSkillSentinels } from './templates.js';
 
 const runCommand = vi.hoisted(() =>
   vi.fn<(cmd: string, args?: string[], opts?: { timeoutMs?: number }) => Promise<CommandResult>>(),
@@ -290,5 +291,57 @@ describe('templates', () => {
       const body = await readFile(second.hookScriptPath, 'utf8');
       expect(body).toContain('metalmind recall');
     });
+  });
+});
+
+describe('renderSkillSentinels', () => {
+  const src = [
+    'Header',
+    '',
+    '<!-- metalmind:notifications:start -->',
+    'notify line',
+    '<!-- metalmind:notifications:end -->',
+    '',
+    '<!-- metalmind:eod:start -->',
+    '## EOD',
+    'content',
+    '<!-- metalmind:notifications:start -->',
+    'nested notify',
+    '<!-- metalmind:notifications:end -->',
+    '<!-- metalmind:eod:end -->',
+    '',
+    'Footer',
+    '',
+  ].join('\n');
+
+  it('keeps both blocks when both flags are true', () => {
+    const out = renderSkillSentinels(src, { eodHook: true, notifications: true });
+    expect(out).toContain('notify line');
+    expect(out).toContain('## EOD');
+    expect(out).toContain('nested notify');
+    expect(out).not.toContain('metalmind:eod');
+    expect(out).not.toContain('metalmind:notifications');
+  });
+
+  it('drops notify blocks when notifications=false', () => {
+    const out = renderSkillSentinels(src, { eodHook: true, notifications: false });
+    expect(out).not.toContain('notify line');
+    expect(out).not.toContain('nested notify');
+    expect(out).toContain('## EOD');
+  });
+
+  it('drops EOD block entirely when eodHook=false', () => {
+    const out = renderSkillSentinels(src, { eodHook: false, notifications: true });
+    expect(out).not.toContain('## EOD');
+    expect(out).not.toContain('nested notify');
+    expect(out).toContain('notify line');
+  });
+
+  it('drops both when both false', () => {
+    const out = renderSkillSentinels(src, { eodHook: false, notifications: false });
+    expect(out).not.toContain('notify line');
+    expect(out).not.toContain('## EOD');
+    expect(out).toContain('Header');
+    expect(out).toContain('Footer');
   });
 });

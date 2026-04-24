@@ -58,6 +58,10 @@ program
   .option('--teams', 'Enable agent teams')
   .option('--no-teams', 'Disable agent teams')
   .option('--memory-routing <mode>', '"vault-only" or "both"')
+  .option('--eod-hook', 'Include end-of-day hook in /save (default: prompt)')
+  .option('--no-eod-hook', 'Skip end-of-day hook in /save')
+  .option('--notifications', 'Enable macOS flare/notify commands in /save (default: prompt)')
+  .option('--no-notifications', 'Disable macOS flare/notify commands in /save')
   .option('--skip-docker', 'Skip Docker stack setup (useful when stack is already running)')
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
   .action((cmdOpts) => init(cmdOpts));

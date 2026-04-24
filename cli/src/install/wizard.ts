@@ -27,6 +27,8 @@ export interface RunWizardOptions {
   skipDocker?: boolean;
   skipWatcher?: boolean;
   memoryRouting?: 'vault-only' | 'both';
+  eodHook?: boolean;
+  notifications?: boolean;
 }
 
 function checkCancelled<T>(value: T | symbol, label: string): asserts value is T {
@@ -141,6 +143,35 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     enableTeams = answer;
   }
 
+  let eodHook: boolean;
+  if (opts.eodHook !== undefined) {
+    eodHook = opts.eodHook;
+  } else {
+    const answer = await confirm({
+      message:
+        "End-of-day hook in /save: when you save between 16:00–18:00 local, offer to push pending items into tomorrow's daily note?",
+      initialValue: true,
+    });
+    checkCancelled(answer, 'EOD hook prompt');
+    eodHook = answer;
+  }
+
+  const isMac = process.platform === 'darwin';
+  let notifications: boolean;
+  if (opts.notifications !== undefined) {
+    notifications = opts.notifications;
+  } else if (!isMac) {
+    notifications = false;
+  } else {
+    const answer = await confirm({
+      message:
+        'Fire macOS desktop notifications (flare/notify commands, used by /save to confirm writes)?',
+      initialValue: true,
+    });
+    checkCancelled(answer, 'Notifications prompt');
+    notifications = answer;
+  }
+
   log.step('Setting up vault');
   const vault = await setupVault({ vaultPath: vaultPathInput, flavor });
   log.success(`Vault at ${vault.vaultPath}`);
@@ -233,7 +264,12 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   );
 
   log.step('Copying rules, agents, commands');
-  const tpl = await copyClaudeTemplates({ withTeams: enableTeams, flavor });
+  const tpl = await copyClaudeTemplates({
+    withTeams: enableTeams,
+    flavor,
+    eodHook,
+    notifications,
+  });
   log.success(`  wrote ${tpl.copied.length} files`);
   const claudeMd = await stampClaudeMd({ vaultPath: vault.vaultPath, flavor });
   if (claudeMd.starterWritten) log.info(`  wrote starter ${claudeMd.path}`);
@@ -275,6 +311,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     memoryRouting,
     hooks: { claudeCode: graphifyHookWired },
     forge: { groups: {} },
+    skills: { eodHook, notifications },
   };
   await writeConfig(config);
   log.success('Wrote ~/.metalmind/config.json');

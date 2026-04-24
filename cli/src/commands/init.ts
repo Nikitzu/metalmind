@@ -14,6 +14,10 @@ export interface InitCliOptions {
   memoryRouting?: string;
   skipDocker?: boolean;
   skipWatcher?: boolean;
+  eodHook?: boolean;
+  noEodHook?: boolean;
+  notifications?: boolean;
+  noNotifications?: boolean;
 }
 
 function isFlavor(v: string): v is 'scadrial' | 'classic' {
@@ -56,6 +60,10 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     if (graphify !== undefined) wizardOpts.graphify = graphify;
     const teams = resolveBool(cliOpts.teams, cliOpts.noTeams);
     if (teams !== undefined) wizardOpts.enableTeams = teams;
+    const eodHook = resolveBool(cliOpts.eodHook, cliOpts.noEodHook);
+    if (eodHook !== undefined) wizardOpts.eodHook = eodHook;
+    const notifications = resolveBool(cliOpts.notifications, cliOpts.noNotifications);
+    if (notifications !== undefined) wizardOpts.notifications = notifications;
 
     if (cliOpts.skipDocker) wizardOpts.skipDocker = true;
     if (cliOpts.skipWatcher) wizardOpts.skipWatcher = true;
@@ -70,6 +78,8 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
       wizardOpts.flavor ??= 'scadrial';
       wizardOpts.memoryRouting ??= 'vault-only';
       wizardOpts.enableTeams ??= false;
+      wizardOpts.eodHook ??= true;
+      wizardOpts.notifications ??= process.platform === 'darwin';
     }
 
     await runWizard(wizardOpts);

@@ -22,6 +22,14 @@ The single source of truth for a release is the git tag and the published [npm p
 ### Removed (breaking, pre-1.0)
 - **`metalmind wipe`** classic alias dropped. Three paths to uninstall (`uninstall` + `burn aluminum` + `wipe`) was docs noise. `uninstall` (classic) and `burn aluminum` (Scadrial) both remain.
 
+### Install wizard
+- **Two new prompts, both opt-out.** `init` now asks "End-of-day hook in /save?" (default yes) and "Fire macOS notifications?" (default yes on macOS, skipped on Linux/Windows). Answers persist to `~/.metalmind/config.json` under `skills: { eodHook, notifications }`. `metalmind stamp` re-reads them on upgrade.
+- **Flag parity with every prompt.** `--eod-hook` / `--no-eod-hook` and `--notifications` / `--no-notifications` let scripted installs skip the prompt without resorting to `--yes`.
+- **Conditional skill rendering.** `/save` template now uses sentinel-wrapped optional blocks (`<!-- metalmind:eod:start -->`, `<!-- metalmind:notifications:start -->`). `copyClaudeTemplates` strips blocks whose flag is false, so users who decline never see the EOD prompt or the notify command in their skill. Nested notify-inside-EOD works — notify line is dropped from the EOD block independently.
+
+### Docs
+- **README + landing-page command table** now list `atium/daily`, `gold`, `flare/notify` alongside the existing metals, and reflect the `wipe` → `uninstall` classic-alias consolidation.
+
 ---
 
 ## 0.2.7 — 2026-04-22

@@ -45,6 +45,12 @@ export const ConfigSchema = z.object({
   forge: z.object({
     groups: z.record(z.string(), ForgeGroupSchema),
   }),
+  skills: z
+    .object({
+      eodHook: z.boolean().default(true),
+      notifications: z.boolean().default(true),
+    })
+    .default({ eodHook: true, notifications: true }),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

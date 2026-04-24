@@ -26,7 +26,11 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
   log.info(`  ${vault.claudeMdAction}`);
 
   log.step('Global CLAUDE.md block + rules/agents/commands');
-  const tpl = await copyClaudeTemplates({ flavor: config.flavor });
+  const tpl = await copyClaudeTemplates({
+    flavor: config.flavor,
+    eodHook: config.skills.eodHook,
+    notifications: config.skills.notifications,
+  });
   log.info(`  ${tpl.copied.length} files refreshed`);
   const claudeMd = await stampClaudeMd({
     vaultPath: config.vaultPath,
