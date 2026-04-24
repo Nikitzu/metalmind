@@ -359,6 +359,31 @@ pre {
 }
 
 /* Feature list */
+.thesis-list {
+  margin: 1rem 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+.thesis-list li strong {
+  color: var(--fg);
+}
+.thesis-note {
+  margin-top: 1.1rem;
+  padding: 0.75rem 0.95rem;
+  border-left: 2px solid color-mix(in srgb, var(--copper) 55%, transparent);
+  background: color-mix(in srgb, var(--copper) 5%, transparent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: var(--fg-muted);
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+.thesis-note strong {
+  color: var(--fg);
+}
 .features {
   /* Single column so cards stack one after another, all full width.
      Previously a 2-col auto-fit grid, which forced bench-table content into

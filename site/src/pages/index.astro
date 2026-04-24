@@ -73,7 +73,7 @@ const description =
             <span>npm install -g metalmind</span>
           </div>
           <div class="install-note">
-            <a class="install-chip install-chip-live" href="https://www.npmjs.com/package/metalmind" target="_blank" rel="noopener">Live on npm · v0.2.7</a>
+            <a class="install-chip install-chip-live" href="https://www.npmjs.com/package/metalmind" target="_blank" rel="noopener">Live on npm · v0.3.0</a>
             <span>Then run <code>metalmind init</code>.</span>
           </div>
           <p class="install-scope">
@@ -90,6 +90,7 @@ const description =
       <nav class="page-toc container" aria-label="On this page">
         <span class="page-toc-label">On this page</span>
         <ul>
+          <li><a href="#thesis-title">what it's for</a></li>
           <li><a href="#beyond-title">what it adds</a></li>
           <li><a href="#anti-mcp-title">why CLI, not MCP</a></li>
           <li><a href="#anti-persona-title">not for you?</a></li>
@@ -99,6 +100,53 @@ const description =
           <li><a href="#how">under the hood</a></li>
         </ul>
       </nav>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="thesis-title">
+        <h2 id="thesis-title">What it's actually for</h2>
+        <p>
+          metalmind pays off when your knowledge lives across <strong>more than one repo</strong>.
+          A single-repo user gets a lot from Claude Code's native <code>/memory</code> — text in
+          <code>CLAUDE.md</code>, free, no moving parts. A multi-repo engineer — same vault across
+          every project, decisions that outlive any single codebase, code graphs that cross
+          service boundaries — is who metalmind is built for.
+        </p>
+        <ul class="thesis-list">
+          <li>
+            <strong>One vault, every project.</strong> <code>project:</code> frontmatter plus a MOC per
+            project. A decision written in repo A surfaces when you
+            <code><span class="scadrial-only">tap copper</span><span class="classic-only">recall</span></code>
+            in repo B if it's topically relevant. Native <code>CLAUDE.md</code> is scoped per-project;
+            learnings don't cross-pollinate.
+          </li>
+          <li>
+            <strong>Cross-repo code graph via forge.</strong>
+            <code><span class="scadrial-only">burn bronze "&lt;q&gt;" --forge &lt;group&gt;</span><span class="classic-only">graph "&lt;q&gt;" --group &lt;group&gt;</span></code>
+            queries every repo in a group. HTTP-route edges connect a caller in one service to a
+            handler in another — Claude native has no concept of "the other service's code."
+            Details on the <a href="/forge">forge page</a>.
+          </li>
+          <li>
+            <strong>Knowledge that compounds.</strong> Each new project starts with every learning
+            you've documented elsewhere. <code>Learnings/</code> is intentionally flat — "CLIs
+            should never paste weird package-manager invocations" applies to every repo you work
+            in. With native memory you'd copy-paste the insight into every <code>CLAUDE.md</code>
+            separately.
+          </li>
+          <li>
+            <strong>Decisions that outlive the codebase.</strong> Repos get archived, rewritten,
+            replaced. The vault doesn't — plain markdown in your own Obsidian directory,
+            searchable forever. When a project finishes, the learnings stay accessible.
+          </li>
+        </ul>
+        <p class="thesis-note">
+          <strong>Where native <code>/memory</code> still wins:</strong> solo repo, under ~50 notes of
+          context, no historical lookback needed. Below the break-even, it's simpler and free.
+          metalmind earns its install cost when you've got more to remember than a single
+          <code>CLAUDE.md</code> can cheaply hold.
+        </p>
+      </section>
 
       <hr class="metal-rule" />
 

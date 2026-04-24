@@ -11,6 +11,19 @@ Website: **[metalmind.mzyx.dev](https://metalmind.mzyx.dev)**
 
 ---
 
+## What it's actually for
+
+metalmind pays off when your knowledge lives across **more than one repo**. A single-repo user gets a lot from Claude Code's native `/memory` — text in `CLAUDE.md`, free, no moving parts. A multi-repo engineer — same vault across every project, decisions that outlive any single codebase, code graphs that cross service boundaries — is who metalmind is built for.
+
+- **One vault, every project.** `project:` frontmatter plus a MOC per project. A decision written in repo A surfaces when you `tap copper` in repo B if it's topically relevant. Native `CLAUDE.md` is scoped per-project; learnings don't cross-pollinate.
+- **Cross-repo code graph via forge.** `metalmind burn bronze "<q>" --forge <group>` queries every repo in a group. HTTP-route edges connect a caller in one service to a handler in another — Claude native has no concept of "the other service's code." More on the [forge page](https://metalmind.mzyx.dev/forge).
+- **Knowledge that compounds.** Each new project starts with every learning you've documented elsewhere. `Learnings/` is intentionally flat — "CLIs should never paste weird package-manager invocations" applies to every repo. With native memory you'd copy-paste the insight into every project's `CLAUDE.md` separately.
+- **Decisions that outlive the codebase.** Repos get archived, rewritten, replaced. The vault doesn't — plain markdown in your own Obsidian directory, searchable forever.
+
+**Where native `/memory` still wins:** solo repo, under ~50 notes of context, no historical lookback needed. Below that break-even, it's simpler and free. metalmind earns its install cost when you've got more to remember than a single `CLAUDE.md` can cheaply hold.
+
+---
+
 ## What it adds
 
 - **Persistent memory across sessions.** `metalmind store copper "<insight>"` (alias: `save`) deposits a decision into your local Obsidian vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes. Tomorrow's session recalls it as if yesterday never ended.
