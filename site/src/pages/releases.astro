@@ -67,6 +67,85 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.2.8</h2>
+            <span class="release-date">2026-04-24</span>
+          </header>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong><code>atium new | add</code> (Scadrial) / <code>daily new | add</code> (classic).</strong>
+              Future-facing daily-note ops. <code>atium new --date today|tomorrow|next-workday|YYYY-MM-DD</code>
+              creates a daily note with an empty <code>## Action Items</code> section. <code>--from &lt;prev-date&gt;</code>
+              carries only unchecked <code>- [ ]</code> items from a prior note. <code>atium add "&lt;item&gt;" --date &lt;date&gt;</code>
+              appends a bullet, creating the file + section if missing. Closes the gap that let agents reach
+              for raw <code>Write</code> to create future-dated daily notes.
+            </li>
+            <li>
+              <strong><code>gold &lt;note&gt;</code> (Scadrial).</strong> One-shot archive shortcut at top level —
+              equivalent to <code>scribe archive</code> but with the "burning gold reveals past selves" metaphor
+              surfaced where it belongs.
+            </li>
+            <li>
+              <strong><code>flare banner | dialog | sticky</code> (Scadrial) / <code>notify ...</code> (classic).</strong>
+              macOS desktop notifications via <code>osascript</code>. Notification Center banner, modal dialog,
+              or a persistent Stickies note. Linux/Windows support: planned adapter.
+            </li>
+          </ul>
+          <h3>Changed</h3>
+          <ul>
+            <li>
+              <strong><code>scribe create --kind daily --slug X</code> now errors when X ≠ today</strong>, pointing
+              at <code>metalmind atium new --date X</code>. Before, the <code>--slug</code> was silently dropped
+              and the note filed under today's date, producing the silent filename mismatch that motivated this
+              release.
+            </li>
+            <li>
+              <strong><code>/save</code> skill rewritten.</strong> The "write via Write tool" fallback is gone —
+              it taught agents to bypass metalmind the moment scribe couldn't express a target. Replaced with
+              "stop and surface the gap." The skill now carries a Scadrial/classic command table so agents know
+              both names for every vault op. Added an <strong>end-of-day hook</strong>: between 16:00–18:00 local,
+              Claude offers to push pending items into the next-workday daily via <code>atium add --date next-workday</code>
+              and fires a <code>flare banner</code> confirmation.
+            </li>
+            <li>
+              <strong><code>writing-vault-notes</code> skill</strong> gets the same Scadrial/classic table and drops
+              the "Write directly when scribe can't" escape hatch.
+            </li>
+            <li>
+              <strong><code>scribe create --kind</code> help text</strong> now lists all 8 valid kinds. <code>memory</code>
+              and <code>personal</code> shipped in 0.2.7 but were missing from <code>--help</code>.
+            </li>
+          </ul>
+          <h3>Install wizard</h3>
+          <ul>
+            <li>
+              <strong>Two new opt-out prompts.</strong> <code>init</code> now asks "End-of-day hook in /save?"
+              (default yes) and "Fire macOS notifications?" (default yes on macOS, skipped elsewhere). Answers
+              persist to <code>~/.metalmind/config.json</code> under <code>skills</code>. <code>metalmind stamp</code>
+              re-reads them on upgrade.
+            </li>
+            <li>
+              <strong>Flag parity:</strong> <code>--eod-hook</code>/<code>--no-eod-hook</code> and
+              <code>--notifications</code>/<code>--no-notifications</code> for scripted installs.
+            </li>
+            <li>
+              <strong>Conditional skill rendering.</strong> <code>/save</code> template wraps optional blocks
+              with sentinel comments; <code>copyClaudeTemplates</code> strips blocks whose flag is false. Users
+              who decline never see the EOD prompt or the notify command in their skill.
+            </li>
+          </ul>
+          <h3>Removed (breaking, pre-1.0)</h3>
+          <ul>
+            <li>
+              <strong><code>metalmind wipe</code></strong> classic alias dropped. Three paths to uninstall
+              (<code>uninstall</code> + <code>burn aluminum</code> + <code>wipe</code>) was docs noise.
+              <code>uninstall</code> (classic) and <code>burn aluminum</code> (Scadrial) both remain.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.2.7</h2>
             <span class="release-date">2026-04-22</span>
           </header>
