@@ -146,7 +146,9 @@ pre {
 .metal-rule {
   border: 0;
   height: 1px;
-  margin: 0;
+  /* Symmetric vertical breathing room so sections don't touch the divider.
+     Previously zero-margin, which put cards flush against the rule. */
+  margin: 2.5rem 0;
   background: linear-gradient(90deg, transparent, rgba(212, 161, 74, 0.35), transparent);
 }
 
@@ -367,6 +369,11 @@ pre {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
+}
+/* Full-row card — opt-in for features whose content (e.g. the bench table)
+   wants the full grid width instead of squeezing into a 2-column cell. */
+.feature.feature--wide {
+  grid-column: 1 / -1;
 }
 .feature-title {
   font-family: var(--font-mono);
