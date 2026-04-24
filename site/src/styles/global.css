@@ -360,20 +360,19 @@ pre {
 
 /* Feature list */
 .features {
-  display: grid;
+  /* Single column so cards stack one after another, all full width.
+     Previously a 2-col auto-fit grid, which forced bench-table content into
+     a half-width cell and left "Persistent memory" orphaned when we opted
+     the bench card out via grid-column. */
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 .feature {
   padding: 1.25rem 1.25rem 1.5rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-}
-/* Full-row card — opt-in for features whose content (e.g. the bench table)
-   wants the full grid width instead of squeezing into a 2-column cell. */
-.feature.feature--wide {
-  grid-column: 1 / -1;
 }
 .feature-title {
   font-family: var(--font-mono);
@@ -410,7 +409,10 @@ pre {
 }
 .feature-bench-table {
   margin: 0.65rem 0 0.35rem;
-  width: 100%;
+  /* Natural width, not 100% — stops columns from spreading across a
+     full-width card and leaving big gaps between headers and numbers. */
+  width: auto;
+  max-width: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
