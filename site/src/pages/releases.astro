@@ -67,6 +67,38 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.2.9</h2>
+            <span class="release-date">2026-04-24</span>
+          </header>
+          <h3>Added</h3>
+          <ul>
+            <li>
+              <strong><code>metalmind routine install eod</code> / <code>routine remove eod</code>.</strong>
+              Launchd-backed end-of-day routine on macOS. At 17:30 Mon–Fri by default it runs
+              <code>atium new --date next-workday --from &lt;today&gt;</code> then archives today's
+              daily via <code>gold</code>. <code>--time HH:MM</code> overrides the schedule. Plist
+              lives at <code>~/Library/LaunchAgents/com.metalmind.routine.eod.plist</code>; logs at
+              <code>~/Library/Logs/metalmind-eod.&#123;log,err&#125;</code>. First routine shipped under the
+              <code>metalmind routine</code> umbrella.
+            </li>
+          </ul>
+          <h3>Changed</h3>
+          <ul>
+            <li>
+              <strong><code>atium new</code> and <code>atium add</code> emit <code>- [ ]</code> checkbox bullets</strong>
+              instead of plain <code>-&nbsp;item</code>. Makes carry-forward explicit: unchecked
+              boxes are "move me tomorrow"; <code>[x]</code> is "done, leave behind."
+            </li>
+            <li>
+              <strong><code>atium new --from</code> loosened to treat plain <code>- item</code> bullets as unchecked too.</strong>
+              The EOD routine can migrate pre-v0.2.9 daily notes without forcing users to retrofit
+              every file. <code>- [x] done</code> is still correctly excluded.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.2.8</h2>
             <span class="release-date">2026-04-24</span>
           </header>

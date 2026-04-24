@@ -119,6 +119,7 @@ Every themed (Scadrial) verb has a classic alias. Both always resolve — themin
 | `metalmind atium new \| add` | `metalmind daily new \| add` | Future daily notes — `--date today\|tomorrow\|next-workday\|YYYY-MM-DD`, `--from` carries unchecked items |
 | `metalmind gold <note>` | `metalmind scribe archive <note>` | One-shot archive — move note to `Archive/` |
 | `metalmind flare banner\|dialog\|sticky` | `metalmind notify banner\|dialog\|sticky` | macOS desktop notifications |
+| `metalmind routine install eod` | `metalmind routine install eod` | Launchd EOD agent — carries unchecked items to next workday and archives today's note, Mon–Fri |
 | `metalmind release-check` | `metalmind release-check` | Preflight — working tree, branch, version sync, tests, build, stamped-block present |
 | `metalmind burn brass` | `metalmind stamp` | Re-imprint metalmind managed files (upgrade in place) |
 | `metalmind burn aluminum` | `metalmind uninstall` | Reversible teardown |

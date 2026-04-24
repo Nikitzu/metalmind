@@ -153,6 +153,19 @@ const description =
             </div>
           </div>
           <div class="feature">
+            <div class="feature-title">Daily notes that roll themselves forward</div>
+            <div class="feature-body">
+              <code><span class="scadrial-only">atium new | add</span><span class="classic-only">daily new | add</span></code>
+              creates or appends to <code>Daily/YYYY-MM-DD.md</code> with checkbox action items.
+              <code><span class="scadrial-only">metalmind routine install eod</span><span class="classic-only">metalmind routine install eod</span></code>
+              schedules a launchd agent at 17:30 Mon–Fri that runs
+              <code>atium new --date next-workday --from &lt;today&gt;</code> and archives today's
+              note via <code><span class="scadrial-only">gold</span><span class="classic-only">scribe archive</span></code>.
+              Unchecked <code>- [ ]</code> items move forward; <code>- [x]</code> stays behind. No
+              manual EOD ritual, no hand-rolled cron — the primitives all compose through the CLI.
+            </div>
+          </div>
+          <div class="feature">
             <div class="feature-title">Reversible to zero</div>
             <div class="feature-body">
               <code>metalmind uninstall</code> stops containers, unloads the watcher service
