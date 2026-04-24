@@ -406,10 +406,11 @@ pre {
   width: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .feature-bench-table th,
 .feature-bench-table td {
-  padding: 0.3rem 0.55rem;
+  padding: 0.35rem 0.6rem;
   text-align: right;
   border-bottom: 1px solid color-mix(in srgb, var(--copper) 18%, transparent);
   font-size: 0.82rem;
@@ -417,15 +418,36 @@ pre {
 .feature-bench-table thead th {
   font-weight: 600;
   color: var(--fg-muted);
+  line-height: 1.25;
   border-bottom-color: color-mix(in srgb, var(--copper) 34%, transparent);
+}
+.feature-bench-table .th-sub {
+  display: inline-block;
+  margin-top: 0.1rem;
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: color-mix(in srgb, var(--fg-muted) 80%, transparent);
 }
 .feature-bench-table tbody th {
   text-align: left;
   font-weight: 500;
+  color: var(--fg);
+}
+.feature-bench-table tbody td {
+  color: var(--fg);
 }
 .feature-bench-table tbody tr:last-child th,
 .feature-bench-table tbody tr:last-child td {
   border-bottom: none;
+}
+@media (max-width: 560px) {
+  .feature-bench-table {
+    font-size: 0.78rem;
+  }
+  .feature-bench-table th,
+  .feature-bench-table td {
+    padding: 0.3rem 0.4rem;
+  }
 }
 .feature-bench-note {
   margin: 0.45rem 0 0;
