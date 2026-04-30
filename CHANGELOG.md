@@ -6,6 +6,41 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.4.0 — 2026-04-30
+
+### Added — weighted hybrid retrieval
+
+- **Top-rank bonus in RRF fusion.** A document that ranks #1 in any source list gets `+0.05` added once to its fused score; ranks #2–3 get `+0.02`. Bonus is keyed on the best (lowest) rank the doc achieved across all source lists, so it doesn't double-stack. Stops pure RRF from diluting hits that one retriever was confident about. Formula and constants from [qmd 2.1.0](https://github.com/tobi/qmd) (MIT) — same shape as their `reciprocalRankFusion` implementation.
+- **Per-list weights in fusion.** Default keyword × 1.5, semantic × 1.0. With only two source lists and no query expansion, BM25 and the embedder often pick different #1s and produce identical RRF scores; ties broke on dict insertion order, often against the right answer. BM25 is more decisive at hit@1 for short factual queries (the dominant query shape in vault recall), so we let it lead. Tunable via `METALMIND_RRF_KEYWORD_WEIGHT` / `METALMIND_RRF_SEMANTIC_WEIGHT` for workloads that skew semantic.
+- **Deeper fusion overfetch.** Each backend now produces 50 candidates before fusion (was 20 / `k`). Tunable via `METALMIND_RRF_OVERFETCH`. Larger candidate pool means cross-coverage is more likely — fewer single-list-only ties at the top.
+
+### Result on the scaled recall bench (1,000 notes)
+
+- **hit@1 hybrid: 50% → 65%** (+15pp). Three queries flipped from h@2 to h@1.
+- **hit@5 hybrid: 85%** (stable).
+- **hit@1 + rerank: 90%** (flat across every scale 12 → 1,000).
+- **hit@5 + rerank: 90%** (was 85% in v0.3.0; +5pp).
+- Latency unchanged: 43–48 ms median for hybrid across the curve.
+
+### Added — agent template refresh
+
+- **All 15 stamped subagents** (`a11y-reviewer`, `adversary` trio, `architect`, `api-contract-reviewer`, six engineering roles, three reviewers, `qa-engineer`, `security-reviewer`) bumped to `claude-opus-4-7[1m]` and granted `SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet` so they coordinate cleanly when spawned as teammates rather than as solo subagents. Templates also gain the explicit "every communication with the lead must go via SendMessage" rule that local development had been carrying out-of-band — pane-only prose was getting silently dropped.
+- **`using-teams` skill** is now part of the stamp surface. It's the MUST-INVOKE-FIRST gate for `team-debug`, `team-feature`, `team-pr-review`, `team-multi-repo-audit` and any other team-coordination flow. Existing local skill copied verbatim into `cli/templates/claude/skills/using-teams/SKILL.md`. Fresh installs get it; existing users pick it up on next `metalmind stamp`.
+
+### Added — recall hint in the CLAUDE.md block
+
+- Stamped block now tells Claude to retry recall with 2–3 rephrasings if the first hit list is empty. Rephrase-then-union is the cheap-path equivalent of qmd-style query expansion: zero infra, zero additional latency on cold queries that succeed.
+
+### Reverted
+
+- **Position-aware blend in `rerank_hits`.** Briefly shipped during v0.4.0 development (modeled on qmd's pipeline) but reverted before release. With our two-list / no-expansion setup, retrieval's #1 is wrong often enough that the 0.75 retrieval weight blocked the cross-encoder from recovering — every `hyb+rerank` row produced byte-identical ordering to plain `hyb`. The position-blend works in qmd because their pipeline runs ~6 source lists (3 expanded queries × 2 backends), making rank-1 retrieval more reliable. Worth revisiting when query expansion lands.
+
+### Bench guards
+
+- **`bench/recall-v0/run.mjs` now checks `/rerank/status` before the per-question loop.** If `--rerank` was passed but the watcher venv lacks FlagEmbedding, prints a loud `rerank=DISABLED` banner and emits `n/a` in every rerank cell instead of a misleading number. Fixes the failure mode where the dev venv was rebuilt without `[rerank]` and the bench silently mirrored hybrid into the rr column.
+
+---
+
 ## 0.3.0 — 2026-04-24
 
 ### Added — hybrid retrieval (default `tap copper` behavior)

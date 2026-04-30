@@ -62,16 +62,16 @@ metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the
 
 ## Recall quality at scale
 
-Token cost is only half the story — recall has to actually find your note. `v0.3.0` ships **hybrid retrieval** (semantic embedding + local SQLite FTS5 keyword index, fused via Reciprocal Rank Fusion). Measured in [`bench/recall-v0/`](bench/recall-v0/) on 12 hand-authored gold notes plus up to 988 seeded same-domain distractors, 20 paraphrase-ish queries:
+Token cost is only half the story — recall has to actually find your note. `v0.4.0` ships **weighted hybrid retrieval** (semantic embedding + local SQLite FTS5 keyword index, fused via RRF with a top-rank bonus and per-list weights). Measured in [`bench/recall-v0/`](bench/recall-v0/) on 12 hand-authored gold notes plus up to 988 seeded same-domain distractors, 20 paraphrase-ish queries:
 
-| Vault size | sem-only hit@5 | **hybrid hit@5** | **hybrid + rerank hit@1** | median latency (hybrid) |
-|---:|---:|---:|---:|---:|
-| 12 notes | 90% | **100%** | 90% | 66 ms |
-| 100 notes | 75% | **90%** | 90% | 57 ms |
-| 500 notes | 55% | **80%** | 90% | 54 ms |
-| 1,000 notes | 55% | **85%** | 90% | 55 ms |
+| Vault size | sem-only hit@5 | **hybrid hit@1** | **hybrid hit@5** | **+rerank hit@1** | **+rerank hit@5** |
+|---:|---:|---:|---:|---:|---:|
+| 12 notes | 90% | **80%** | **100%** | **90%** | 95% |
+| 100 notes | 75% | **85%** | **90%** | **90%** | 95% |
+| 500 notes | 55% | **80%** | **85%** | **90%** | 90% |
+| 1,000 notes | 55% | **65%** | **85%** | **90%** | 90% |
 
-Hybrid search is the default as of v0.3.0 — it holds recall as the vault grows, which the v0.2.x semantic-only path did not. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query for the hit@1 jump. `--semantic-only` and `--keyword-only` flags let you A/B any query.
+Hybrid is the default. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query and pulls hit@1 to a flat 90% across every scale. `--semantic-only` and `--keyword-only` flags let you A/B any query. Median hybrid latency stays at 43–48 ms across the curve.
 
 ## Who should NOT use metalmind
 

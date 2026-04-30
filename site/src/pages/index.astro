@@ -73,7 +73,7 @@ const description =
             <span>npm install -g metalmind</span>
           </div>
           <div class="install-note">
-            <a class="install-chip install-chip-live" href="https://www.npmjs.com/package/metalmind" target="_blank" rel="noopener">Live on npm · v0.3.0</a>
+            <a class="install-chip install-chip-live" href="https://www.npmjs.com/package/metalmind" target="_blank" rel="noopener">Live on npm · v0.4.0</a>
             <span>Then run <code>metalmind init</code>.</span>
           </div>
           <p class="install-scope">
@@ -180,29 +180,32 @@ const description =
               <div class="feature-bench">
                 <strong>Measured at scale on the recall bench</strong>
                 (<a href="https://github.com/Nikitzu/metalmind/tree/main/bench/recall-v0" target="_blank" rel="noopener">bench/recall-v0/</a>,
-                12 hand-authored gold notes + up to 1,000 seeded same-domain distractors, 20 queries, v0.3.0):
+                12 hand-authored gold notes + up to 1,000 seeded same-domain distractors, 20 queries, v0.4.0):
                 <table class="feature-bench-table">
                   <thead>
                     <tr>
                       <th scope="col">vault</th>
+                      <th scope="col">hit@1 hybrid</th>
                       <th scope="col">hit@5 hybrid</th>
-                      <th scope="col">hit@5 +rerank</th>
                       <th scope="col">hit@1 +rerank</th>
-                      <th scope="col">median latency</th>
+                      <th scope="col">hit@5 +rerank</th>
+                      <th scope="col">median</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr><th scope="row">12 notes</th><td>100%</td><td>95%</td><td>90%</td><td>66 ms</td></tr>
-                    <tr><th scope="row">100 notes</th><td>90%</td><td>95%</td><td>90%</td><td>57 ms</td></tr>
-                    <tr><th scope="row">500 notes</th><td>80%</td><td>90%</td><td>90%</td><td>54 ms</td></tr>
-                    <tr><th scope="row">1,000 notes</th><td>85%</td><td>90%</td><td>90%</td><td>55 ms</td></tr>
+                    <tr><th scope="row">12 notes</th><td>80%</td><td>100%</td><td>90%</td><td>95%</td><td>47 ms</td></tr>
+                    <tr><th scope="row">100 notes</th><td>85%</td><td>90%</td><td>90%</td><td>95%</td><td>47 ms</td></tr>
+                    <tr><th scope="row">500 notes</th><td>80%</td><td>85%</td><td>90%</td><td>90%</td><td>48 ms</td></tr>
+                    <tr><th scope="row">1,000 notes</th><td>65%</td><td>85%</td><td>90%</td><td>90%</td><td>43 ms</td></tr>
                   </tbody>
                 </table>
                 <p class="feature-bench-note">
                   Hybrid fuses semantic embeddings with a local SQLite FTS5 keyword index via
-                  Reciprocal Rank Fusion — recall holds as the vault grows, not just at the
-                  unit-smoke scale. Rerank (<code>--rerank</code>, opt-in) adds a cross-encoder
-                  rescore at the cost of ~2 s per query.
+                  Reciprocal Rank Fusion. v0.4.0 adds a top-rank bonus and per-list weights so
+                  the right answer doesn't get diluted when one retriever is decisive — pure
+                  hybrid hit@1 jumped from 50% to 65% at 1,000 notes vs v0.3.0. Rerank
+                  (<code>--rerank</code>, opt-in) adds a cross-encoder rescore at ~2 s per
+                  query and pulls hit@1 to a flat 90% across every scale.
                 </p>
                 <p class="feature-bench-note">
                   The tax we avoid is the <em>standing</em> tool-schema cost, not the result
