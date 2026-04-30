@@ -27,6 +27,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildScorer as buildBm25Scorer } from './scripts/bm25.mjs';
+import { buildQmdScorer, teardownQmd } from './scripts/qmd.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const QUESTIONS_PATH = join(HERE, 'questions.json');
@@ -257,6 +258,28 @@ async function runScale(scale, port, questions) {
   // FTS5 BM25 — any large divergence points at a tokenizer bug or stale index.
   const bm25Node = await buildBm25Scorer(vault);
 
+  // Build a qmd-backed scorer for the cross-tool comparison column. qmd
+  // runs its own embed + rerank + query-expansion pipeline against the
+  // same gold + distractor set. First-call cost: ~2 GB of GGUF model
+  // downloads on a fresh machine; cached after that. Skipped gracefully
+  // (column reads "n/a") if setup fails.
+  const qmdIndexPath = join(tmpRoot, 'qmd-index.sqlite');
+  const qmdConfigDir = join(tmpRoot, 'qmd-config');
+  process.stdout.write(`[scale=${scale}] qmd: indexing into ${qmdIndexPath}…\n`);
+  const qmdScorer = await buildQmdScorer({
+    vault,
+    indexPath: qmdIndexPath,
+    configDir: qmdConfigDir,
+  });
+  if (qmdScorer.available) {
+    process.stdout.write('[scale=' + scale + '] qmd: ready\n');
+  } else {
+    process.stdout.write(
+      `[scale=${scale}] qmd: DISABLED — ${qmdScorer.errorMessage?.split('\n')[0] ?? 'setup failed'}. Column will be n/a.\n`,
+    );
+  }
+  registerTeardown(() => teardownQmd(qmdIndexPath, qmdConfigDir));
+
   // Each mode gets its own column. Rerank is an orthogonal flag on hybrid.
   const MODES = [
     { key: 'semanticOnly', mode: 'semantic-only', rerank: false, label: 'sem' },
@@ -308,6 +331,20 @@ async function runScale(scale, port, questions) {
       topHits: bmNodeHits,
     };
     marks.push(`bmN=${record.bm25Node.rank ? `h@${record.bm25Node.rank}` : 'MISS'}`);
+
+    if (qmdScorer.available) {
+      const qmdHits = await qmdScorer.query(q.query, K);
+      record.qmd = {
+        rank: hitRank(qmdHits, q.expected),
+        topHits: qmdHits,
+        available: true,
+      };
+      marks.push(`qmd=${record.qmd.rank ? `h@${record.qmd.rank}` : 'MISS'}`);
+    } else {
+      record.qmd = { rank: null, topHits: [], available: false };
+      marks.push('qmd=NA');
+    }
+
     perQ.push(record);
     process.stdout.write(`  ${q.id}  ${marks.join('  ')}  ${q.query}\n`);
   }
@@ -317,6 +354,7 @@ async function runScale(scale, port, questions) {
     collection,
     endpoint,
     rerankAvailable,
+    qmdAvailable: qmdScorer.available,
     summary: summarizeModes(perQ),
     perQ,
   };
@@ -416,6 +454,20 @@ function summarizeModes(perQ) {
         rate: perQ.filter((r) => r.bm25Node?.rank && r.bm25Node.rank <= 5).length / perQ.length,
       },
     },
+    qmd: {
+      hitAt1: {
+        count: perQ.filter((r) => r.qmd?.rank && r.qmd.rank <= 1).length,
+        rate: perQ.filter((r) => r.qmd?.rank && r.qmd.rank <= 1).length / perQ.length,
+      },
+      hitAt3: {
+        count: perQ.filter((r) => r.qmd?.rank && r.qmd.rank <= 3).length,
+        rate: perQ.filter((r) => r.qmd?.rank && r.qmd.rank <= 3).length / perQ.length,
+      },
+      hitAt5: {
+        count: perQ.filter((r) => r.qmd?.rank && r.qmd.rank <= 5).length,
+        rate: perQ.filter((r) => r.qmd?.rank && r.qmd.rank <= 5).length / perQ.length,
+      },
+    },
   };
   for (const k of modeKeys) {
     summary.modes[k] = {
@@ -478,23 +530,23 @@ function renderMultiScaleMd({ meta, perScale }) {
   lines.push('');
   lines.push('## hit@5 by mode and scale');
   lines.push('');
-  lines.push('| scale | sem-only | keyword-only (FTS5) | hybrid (RRF) | hybrid + rerank | BM25 node-impl (sanity) |');
-  lines.push('| ---: | ---: | ---: | ---: | ---: | ---: |');
+  lines.push('| scale | sem-only | keyword-only (FTS5) | hybrid (RRF) | hybrid + rerank | qmd | BM25 node-impl (sanity) |');
+  lines.push('| ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
   for (const s of perScale) {
     const m = s.summary.modes;
     lines.push(
-      `| ${s.scale} | ${pct(m.semanticOnly.hitAt5.rate)} | ${pct(m.keywordOnly.hitAt5.rate)} | ${pct(m.hybrid.hitAt5.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt5.rate) : 'n/a') : '—'} | ${pct(s.summary.bm25Node.hitAt5.rate)} |`,
+      `| ${s.scale} | ${pct(m.semanticOnly.hitAt5.rate)} | ${pct(m.keywordOnly.hitAt5.rate)} | ${pct(m.hybrid.hitAt5.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt5.rate) : 'n/a') : '—'} | ${s.qmdAvailable ? pct(s.summary.qmd.hitAt5.rate) : 'n/a'} | ${pct(s.summary.bm25Node.hitAt5.rate)} |`,
     );
   }
   lines.push('');
   lines.push('## hit@1 by mode and scale');
   lines.push('');
-  lines.push('| scale | sem-only | keyword-only | hybrid | hybrid + rerank | BM25 node |');
-  lines.push('| ---: | ---: | ---: | ---: | ---: | ---: |');
+  lines.push('| scale | sem-only | keyword-only | hybrid | hybrid + rerank | qmd | BM25 node |');
+  lines.push('| ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
   for (const s of perScale) {
     const m = s.summary.modes;
     lines.push(
-      `| ${s.scale} | ${pct(m.semanticOnly.hitAt1.rate)} | ${pct(m.keywordOnly.hitAt1.rate)} | ${pct(m.hybrid.hitAt1.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt1.rate) : 'n/a') : '—'} | ${pct(s.summary.bm25Node.hitAt1.rate)} |`,
+      `| ${s.scale} | ${pct(m.semanticOnly.hitAt1.rate)} | ${pct(m.keywordOnly.hitAt1.rate)} | ${pct(m.hybrid.hitAt1.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt1.rate) : 'n/a') : '—'} | ${s.qmdAvailable ? pct(s.summary.qmd.hitAt1.rate) : 'n/a'} | ${pct(s.summary.bm25Node.hitAt1.rate)} |`,
     );
   }
   lines.push('');
@@ -512,11 +564,11 @@ function renderMultiScaleMd({ meta, perScale }) {
   for (const s of perScale) {
     lines.push(`## scale=${s.scale} per-question ranks`);
     lines.push('');
-    lines.push('| id | sem | keyword | hybrid | hybrid+rr | bm25-node | query |');
-    lines.push('| --- | --- | --- | --- | --- | --- | --- |');
+    lines.push('| id | sem | keyword | hybrid | hybrid+rr | qmd | bm25-node | query |');
+    lines.push('| --- | --- | --- | --- | --- | --- | --- | --- |');
     for (const r of s.perQ) {
       lines.push(
-        `| ${r.id} | ${r.semanticOnly?.rank ?? '—'} | ${r.keywordOnly?.rank ?? '—'} | ${r.hybrid?.rank ?? '—'} | ${r.hybridRerank?.skipped ? 'skip' : r.hybridRerank?.unavailable ? 'n/a' : (r.hybridRerank?.rank ?? '—')} | ${r.bm25Node?.rank ?? '—'} | ${r.query} |`,
+        `| ${r.id} | ${r.semanticOnly?.rank ?? '—'} | ${r.keywordOnly?.rank ?? '—'} | ${r.hybrid?.rank ?? '—'} | ${r.hybridRerank?.skipped ? 'skip' : r.hybridRerank?.unavailable ? 'n/a' : (r.hybridRerank?.rank ?? '—')} | ${r.qmd?.available === false ? 'n/a' : (r.qmd?.rank ?? '—')} | ${r.bm25Node?.rank ?? '—'} | ${r.query} |`,
       );
     }
     lines.push('');
@@ -567,8 +619,9 @@ async function main() {
       const rrCol = meta.rerank
         ? `  rr@5=${s.rerankAvailable ? pct(m.hybridRerank.hitAt5.rate) : 'n/a'}`
         : '';
+      const qmdCol = `  qmd@5=${s.qmdAvailable ? pct(s.summary.qmd.hitAt5.rate) : 'n/a'}`;
       process.stdout.write(
-        `scale=${String(s.scale).padStart(4)}  sem@5=${pct(m.semanticOnly.hitAt5.rate)}  key@5=${pct(m.keywordOnly.hitAt5.rate)}  hyb@5=${pct(m.hybrid.hitAt5.rate)}${rrCol}  bmN@5=${pct(s.summary.bm25Node.hitAt5.rate)}\n`,
+        `scale=${String(s.scale).padStart(4)}  sem@5=${pct(m.semanticOnly.hitAt5.rate)}  key@5=${pct(m.keywordOnly.hitAt5.rate)}  hyb@5=${pct(m.hybrid.hitAt5.rate)}${rrCol}${qmdCol}  bmN@5=${pct(s.summary.bm25Node.hitAt5.rate)}\n`,
       );
     }
 
