@@ -73,6 +73,17 @@ Token cost is only half the story — recall has to actually find your note. `v0
 
 Hybrid is the default. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query. `--semantic-only` and `--keyword-only` flags let you A/B any query. The `BAAI/bge-small-en-v1.5` embedding model is a 30 MB ONNX wheel cached at `~/.cache/fastembed/`.
 
+**Side-by-side with [qmd 2.1.0](https://github.com/tobi/qmd) on the same fixture:**
+
+| Vault size | metalmind hit@1<br>(+rerank) | qmd hit@1 | metalmind hit@5<br>(+rerank) | qmd hit@5 |
+|---:|---:|---:|---:|---:|
+| 12 notes | **90%** | 85% | 95% | **100%** |
+| 100 notes | **90%** | 70% | 95% | **100%** |
+| 500 notes | **90%** | 85% | **95%** | 90% |
+| 1,000 notes | **90%** | 80% | **95%** | 90% |
+
+qmd ships the same shape (BM25 + vector + RRF + rerank) with different defaults — `qwen3-reranker`, a fine-tuned 1.7B query expansion model, GGUF stack, ~2 GB on first run. qmd wins hit@5 at small scales (more recall headroom from query expansion); metalmind wins hit@1 across every scale (better top-of-list precision after the v0.4.0 weighted-RRF fix). Reproduce with `node bench/recall-v0/run.mjs --scales 12,100,500,1000 --rerank` from the repo root.
+
 ## Who should NOT use metalmind
 
 Honest anti-personas — install the wrong tool and you'll bounce in an hour:

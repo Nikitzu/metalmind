@@ -209,6 +209,36 @@ const description =
                   hot path. Rerank (<code>--rerank</code>, opt-in) adds a cross-encoder rescore
                   at ~2 s per query for the +5pp lift to hit@5 = 95%.
                 </p>
+                <details class="feature-bench-compare">
+                  <summary>vs <a href="https://github.com/tobi/qmd" target="_blank" rel="noopener">qmd 2.1.0</a> on the same fixture</summary>
+                  <table class="feature-bench-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">vault</th>
+                        <th scope="col">metalmind hit@1<br /><small>+rerank</small></th>
+                        <th scope="col">qmd hit@1</th>
+                        <th scope="col">metalmind hit@5<br /><small>+rerank</small></th>
+                        <th scope="col">qmd hit@5</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><th scope="row">12 notes</th><td>90%</td><td>85%</td><td>95%</td><td>100%</td></tr>
+                      <tr><th scope="row">100 notes</th><td>90%</td><td>70%</td><td>95%</td><td>100%</td></tr>
+                      <tr><th scope="row">500 notes</th><td>90%</td><td>85%</td><td>95%</td><td>90%</td></tr>
+                      <tr><th scope="row">1,000 notes</th><td>90%</td><td>80%</td><td>95%</td><td>90%</td></tr>
+                    </tbody>
+                  </table>
+                  <p class="feature-bench-note">
+                    qmd ships the same shape (BM25 + vector + RRF + cross-encoder rerank) but
+                    different defaults — <code>qwen3-reranker</code>, a fine-tuned 1.7B query
+                    expansion, GGUF model stack, ~2 GB on first run. The fixture is identical:
+                    same 12 gold + same 988 seeded distractors + same 20 paraphrase queries.
+                    qmd wins hit@5 at small scales (more recall headroom from query expansion);
+                    metalmind wins hit@1 across the curve (better top-of-list precision after
+                    the v0.4.0 weighted-RRF fix). Both are reasonable choices — pick the one
+                    whose shape fits your workflow.
+                  </p>
+                </details>
                 <p class="feature-bench-note">
                   The tax we avoid is the <em>standing</em> tool-schema cost, not the result
                   tokens — hit payloads are billed like any other bash output.
