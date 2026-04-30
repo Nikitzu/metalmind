@@ -33,6 +33,7 @@ import os
 import pathlib
 import sqlite3
 import struct
+import threading
 from typing import Iterable
 
 import sqlite_vec
@@ -67,25 +68,43 @@ class SqliteVecStore:
                 str(pathlib.Path.home() / ".metalmind" / f"vec-{self._collection}.db"),
             )
         self._db_path = pathlib.Path(db_path)
-        self._conn: sqlite3.Connection | None = None
+        # Per-thread connections — sqlite3 forbids sharing a connection
+        # across threads, and the watcher's ThreadingHTTPServer fans
+        # requests out to worker threads. Each thread lazily opens its
+        # own connection; cheap for SQLite (~1 ms).
+        self._tls = threading.local()
+        # Bumped by delete_collection so other threads notice the file
+        # was unlinked and reopen against the fresh path on next use.
+        self._epoch = 0
 
     # --- connection lifecycle ------------------------------------------------
 
     def _open(self) -> sqlite3.Connection:
-        if self._conn is not None:
-            return self._conn
+        conn = getattr(self._tls, "conn", None)
+        epoch = getattr(self._tls, "epoch", -1)
+        if conn is not None and epoch == self._epoch:
+            return conn
+        if conn is not None:
+            try:
+                conn.close()
+            except sqlite3.Error:
+                pass
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(self._db_path))
         conn.enable_load_extension(True)
         sqlite_vec.load(conn)
         conn.enable_load_extension(False)
-        self._conn = conn
+        self._tls.conn = conn
+        self._tls.epoch = self._epoch
         return conn
 
     def close(self) -> None:
-        if self._conn is not None:
-            self._conn.close()
-            self._conn = None
+        # Close the calling thread's connection; other threads' connections
+        # are GC'd when the thread exits. Tests use this to clean up.
+        conn = getattr(self._tls, "conn", None)
+        if conn is not None:
+            conn.close()
+            self._tls.conn = None
 
     # --- VectorStore protocol ------------------------------------------------
 
@@ -182,9 +201,12 @@ class SqliteVecStore:
     def delete_collection(self) -> None:
         # Closing + unlinking the file is the cheapest "drop everything".
         # Subsequent ensure_collection() recreates the schema.
+        # Bump the epoch so any connection still cached on another thread
+        # gets refreshed against the new file on next use.
         self.close()
         if self._db_path.exists():
             self._db_path.unlink()
+        self._epoch += 1
 
     def count(self) -> int:
         if not self.collection_exists():
