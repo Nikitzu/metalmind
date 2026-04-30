@@ -12,6 +12,11 @@ dependencies = [
     # connection.enable_load_extension. ~3 MB, no native build step. v0.5.0
     # makes this the default vector store; Qdrant stays as a legacy backend.
     "sqlite-vec>=0.1.6",
+    # fastembed runs ONNX embedding models in-process. Default model
+    # (BAAI/bge-small-en-v1.5, 384-dim, ~30 MB) auto-downloads to
+    # ~/.cache/fastembed/ on first use. v0.5.0 makes this the default
+    # embedding backend; Ollama stays as a legacy backend.
+    "fastembed>=0.4",
 ]
 
 [project.optional-dependencies]
