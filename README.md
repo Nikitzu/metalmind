@@ -62,16 +62,16 @@ metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the
 
 ## Recall quality at scale
 
-Token cost is only half the story — recall has to actually find your note. `v0.4.0` ships **weighted hybrid retrieval** (semantic embedding + local SQLite FTS5 keyword index, fused via RRF with a top-rank bonus and per-list weights). Measured in [`bench/recall-v0/`](bench/recall-v0/) on 12 hand-authored gold notes plus up to 988 seeded same-domain distractors, 20 paraphrase-ish queries:
+Token cost is only half the story — recall has to actually find your note. `v0.5.0` runs the entire retrieval stack in-process (sqlite-vec for vectors, fastembed for embeddings, FTS5 for keyword) — no Docker, no Ollama daemon. Hybrid retrieval fuses semantic + keyword via RRF with a top-rank bonus and per-list weights. Measured in [`bench/recall-v0/`](bench/recall-v0/) on 12 hand-authored gold notes plus up to 988 seeded same-domain distractors, 20 paraphrase-ish queries:
 
 | Vault size | sem-only hit@5 | **hybrid hit@1** | **hybrid hit@5** | **+rerank hit@1** | **+rerank hit@5** |
 |---:|---:|---:|---:|---:|---:|
-| 12 notes | 90% | **80%** | **100%** | **90%** | 95% |
-| 100 notes | 75% | **85%** | **90%** | **90%** | 95% |
-| 500 notes | 55% | **80%** | **85%** | **90%** | 90% |
-| 1,000 notes | 55% | **65%** | **85%** | **90%** | 90% |
+| 12 notes | 95% | **90%** | **95%** | **90%** | 95% |
+| 100 notes | 95% | **85%** | **95%** | **90%** | 95% |
+| 500 notes | 90% | **85%** | **90%** | **90%** | 95% |
+| 1,000 notes | 90% | **85%** | **85%** | **90%** | 95% |
 
-Hybrid is the default. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query and pulls hit@1 to a flat 90% across every scale. `--semantic-only` and `--keyword-only` flags let you A/B any query. Median hybrid latency stays at 43–48 ms across the curve.
+Hybrid is the default. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query. `--semantic-only` and `--keyword-only` flags let you A/B any query. The `BAAI/bge-small-en-v1.5` embedding model is a 30 MB ONNX wheel cached at `~/.cache/fastembed/`.
 
 ## Who should NOT use metalmind
 
@@ -79,8 +79,7 @@ Honest anti-personas — install the wrong tool and you'll bounce in an hour:
 
 - **You don't use Claude Code.** SessionStart hook, stamped `CLAUDE.md`, MCP fallback — all target Claude Code specifically. Cursor/Codex/Copilot/Gemini are roadmap, not shipped.
 - **You don't use Obsidian.** The vault is the storage layer. No other UI is planned.
-- **You don't want Docker running.** Qdrant + Ollama embed-stack is local but containerized. `sqlite-vec` backend is on the roadmap (removes Docker).
-- **You want a 2-minute install.** The wizard takes ~15 minutes the first time — prereqs, embed-model download, first-index. Worth it for daily users; overkill if you're evaluating.
+- **You want a 30-second install.** The wizard takes a few minutes — Python prereqs, embed-model download (~30 MB), first-index. Worth it for daily users; overkill if you're evaluating.
 - **You're a team of 5+ with shared memory needs.** metalmind is single-dev by design. The *forge* supports many repos per dev; it does not sync vaults between devs.
 
 ## Will this still be around?
@@ -89,7 +88,7 @@ Fair question for any solo-maintainer tool. The sustainability story:
 
 - **Your notes outlive metalmind.** The vault is plain markdown in your own `~/Knowledge/` directory. If this project goes unmaintained tomorrow, you keep everything — Obsidian still opens the files, `grep` still searches them, `git` still versions them. metalmind is the layer that makes Claude use them well, not the layer that holds them hostage.
 - **No cloud, no accounts, no phone-home.** Embeddings, indexing, recall, code graphs — all local. There is no metalmind backend to shut down, no API quota to throttle, no subscription to lapse. The only network call is the one you were already making to Claude.
-- **Reversible in one command.** `metalmind uninstall` stops the watcher, removes Docker containers, strips the sentinel-bounded blocks from your `CLAUDE.md` files (user content outside markers is preserved), and clears shell aliases. Your vault is never touched. Try it — then reinstall if you like it.
+- **Reversible in one command.** `metalmind uninstall` stops the watcher, strips the sentinel-bounded blocks from your `CLAUDE.md` files (user content outside markers is preserved), and clears shell aliases. Your vault is never touched. Try it — then reinstall if you like it.
 - **MIT licensed.** Fork it, vendor it, swap the embedding backend. The architecture decisions are documented (`docs/`, `bench/`, `CHANGELOG.md`) specifically so a contributor — or a future-you — can keep it running.
 
 ## Install
@@ -101,7 +100,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.2.7`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.5.0`.
 
 **From source (for hacking on metalmind itself):**
 
@@ -112,7 +111,7 @@ pnpm install && pnpm build && pnpm link --global
 metalmind init
 ```
 
-The wizard walks six steps: prereq check, vault scaffold, Python engines via `uv tool install`, Docker stack, watcher service (launchd on macOS, systemd on Linux), MCP registration, optional memory routing. See the [install-flow diagram](https://metalmind.mzyx.dev/#demo) for what each step does.
+The wizard walks five steps: prereq check (Python + uv + git + Claude Code), vault scaffold, Python engines via `uv tool install` (sqlite-vec + fastembed bundled), watcher service (launchd on macOS, systemd on Linux), MCP registration, optional memory routing. See the [install-flow diagram](https://metalmind.mzyx.dev/#demo) for what each step does. Pass `--legacy` to opt into the old Qdrant + Ollama Docker stack instead.
 
 ## Requirements
 
@@ -120,8 +119,9 @@ The wizard walks six steps: prereq check, vault scaffold, Python engines via `uv
 
 - macOS or Linux (WSL2 works; native Windows not supported)
 - [Claude Code CLI](https://claude.ai/code) v2.1+
-- [Docker](https://www.docker.com) running
 - Python 3.11+, [uv](https://docs.astral.sh/uv/), git, Node 20+
+
+(`--legacy` mode also requires Docker for the Qdrant + Ollama containers. Default install runs the entire retrieval stack in-process.)
 
 Run `metalmind pulse` (alias: `doctor`) any time to check environment + install state.
 
@@ -158,7 +158,7 @@ One verb, one job. Each engine is swappable:
 
 | Concern | Engine |
 |---|---|
-| Semantic recall | [Ollama](https://ollama.com) + [Qdrant](https://qdrant.tech), `nomic-embed-text`, all local |
+| Semantic recall | [sqlite-vec](https://github.com/asg017/sqlite-vec) + [fastembed](https://github.com/qdrant/fastembed), `BAAI/bge-small-en-v1.5`, all in-process |
 | Vault | [Obsidian](https://obsidian.md) at `~/Knowledge/` |
 | Symbol navigation + rename | [Serena](https://github.com/oraios/serena) (LSP-backed) |
 | Code graph + cross-repo edges | [graphify](https://pypi.org/project/graphifyy/) |

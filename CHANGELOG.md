@@ -6,6 +6,41 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.5.0 — 2026-04-30
+
+### Added — single-binary install (sqlite-vec + fastembed)
+
+Both daemons are gone. `metalmind init` no longer requires Docker or Ollama; the vector store and the embedding model both run in-process inside the Python venv that `uv tool install metalmind-vault-rag` creates. Five prereqs replace seven: Python, uv, git, Claude Code, Node — that's it. Pass `--legacy` to opt back into the Qdrant + Ollama Docker stack.
+
+- **`VectorStore` Protocol** in `metalmind_vault_rag/stores/`. Two impls behind it: `QdrantStore` (legacy) and `SqliteVecStore` (new default). `vec0` virtual table at `~/.metalmind/vec-<col>.db` with cosine distance metric; payloads in a SQLite side-table joined on rowid; per-thread sqlite3 connections so the `ThreadingHTTPServer` doesn't trip the same-thread guard.
+- **`EmbeddingBackend` Protocol** in `metalmind_vault_rag/backends/`. Two impls: `OllamaBackend` (legacy) and `FastEmbedBackend` (new default). Default model `BAAI/bge-small-en-v1.5` (384-dim, ~30 MB ONNX, cached at `~/.cache/fastembed/`). Tunable via `VAULT_EMBED_MODEL`.
+- **`METALMIND_BACKEND=embedded` (default) | `legacy`** picks both at once. Same env var across stores and backends so the two halves can never mismatch.
+- **Auto-backfill on watcher startup**. `_maybe_backfill` detects either store empty + source files present and runs a one-shot reindex. Covers both upgrade paths (v0.4.x → v0.5.0 and the original v0.2.x → v0.3.0+ FTS5 case) in one helper.
+- **Init wizard simplified**. `detectPrereqs` now takes `{ includeDocker }`; default false. Wizard threads the option from `opts.skipDocker` so the Docker check fires only when the legacy stack will actually run.
+
+### Result on the scaled recall bench (1,000 notes)
+
+The new stack outperforms v0.4.0 on every measured dimension because `bge-small-en-v1.5` is a stronger embedding model for English factual retrieval than `nomic-embed-text`:
+
+- **hit@1 hybrid: 65% → 85%** (+20pp). Pure-semantic hit@5 jumped from 55% → 90% just from the model swap.
+- **hit@5 +rerank: 90% → 95%** (+5pp).
+- **Median hybrid latency: 43 ms → 8 ms** — no HTTP RTT on the hot path; everything is in-process SQLite + ONNX.
+
+### Migration notes
+
+Existing v0.4.x users keep their Qdrant collection but it becomes orphaned — the embedding model changed (768-dim nomic → 384-dim bge-small) so vectors aren't cross-compatible. On first watcher startup after `metalmind stamp`, the auto-backfill re-embeds the entire vault into the new sqlite-vec store (~1 min per 1k notes on M1). The old Qdrant container can be removed at leisure (`docker rm metalmind-qdrant`); the `legacy` escape hatch keeps it working if you defer.
+
+### Tests + CI
+
+- Parametric protocol-contract tests for both `VectorStore` and `EmbeddingBackend` in one test file each. 23 tests covering both backends; runs hermetically (no daemons, no model downloads).
+- Vault-rag suite: 16 → 44 tests. CLI suite: 280 → 281.
+
+### Reverted from earlier development
+
+- **Position-aware blend in `rerank_hits`** (briefly explored mid-v0.5.0 dev). With our two-list / no-expansion fusion, retrieval's #1 is wrong often enough that the 0.75 retrieval weight blocked the cross-encoder from recovering — every `hyb+rerank` row produced byte-identical ordering to plain `hyb`. Reverted before release; rerank is back to a pure cross-encoder resort.
+
+---
+
 ## 0.4.0 — 2026-04-30
 
 ### Added — weighted hybrid retrieval
