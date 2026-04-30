@@ -24,7 +24,7 @@ from pathlib import Path
 from watchfiles import watch
 
 from . import http_server
-from .core import COLLECTION, VAULT, fts_row_count, vector_store
+from .core import COLLECTION, VAULT, files_to_index, fts_row_count, vector_store
 from .indexer import reindex_all, reindex_paths
 
 DEBOUNCE_SECONDS = 2.0
@@ -77,55 +77,71 @@ def _md_change(path: str) -> bool:
     return path.endswith(".md") and ".obsidian" not in path and ".metalmind-stack" not in path
 
 
-def _maybe_backfill_fts() -> None:
-    """One-shot FTS5 backfill for upgraders.
+def _maybe_backfill() -> None:
+    """One-shot reindex for upgraders.
 
-    v0.3.0 added a SQLite FTS5 keyword index alongside Qdrant. Users upgrading
-    from v0.2.x have a populated Qdrant collection but an empty FTS5 table —
-    hybrid search would silently degrade to semantic-only until they touched
-    each file manually. Detect the mismatch on startup and rebuild once.
+    Triggers when either the vector store or the FTS5 index is empty
+    while source files exist on disk. Two upgrade paths land here:
 
-    Cheap: at 1000 chunks the rebuild takes seconds. For huge vaults users can
-    set ``VAULT_NO_FTS_BACKFILL=1`` to defer.
+    - v0.4.x → v0.5.0 (Qdrant + Ollama → sqlite-vec + fastembed): the
+      old Qdrant collection becomes orphaned (different embedding model
+      = different vectors). The new sqlite-vec store starts empty;
+      this rebuild fills it from source.
+    - v0.2.x → v0.3.0+ (FTS5 introduced): the older case the original
+      `_maybe_backfill_fts` handled. Same code path now.
+
+    Cheap at typical vault sizes (~1 min for 1000 notes on M1). Set
+    ``VAULT_NO_FTS_BACKFILL=1`` to defer if needed.
     """
     if os.environ.get("VAULT_NO_FTS_BACKFILL") == "1":
         return
     try:
         fts_rows = fts_row_count()
     except Exception as e:
-        print(f"fts backfill: could not read FTS5 row count ({e}); skipping check", flush=True)
+        print(f"backfill: could not read FTS5 row count ({e}); skipping check", flush=True)
         return
-    if fts_rows > 0:
-        return  # already populated, nothing to do
     try:
         store = vector_store()
-        if not store.collection_exists():
-            return  # fresh install, indexer will populate both stores
-        vec_points = store.count()
+        vec_points = store.count() if store.collection_exists() else 0
     except Exception as e:
-        print(f"fts backfill: could not read vector store count ({e}); skipping check", flush=True)
+        print(f"backfill: could not read vector store count ({e}); skipping check", flush=True)
         return
+
+    if vec_points > 0 and fts_rows > 0:
+        return  # both populated — happy path
+
+    files = files_to_index()
+    if not files:
+        return  # empty vault, nothing to do
+
+    reason_bits: list[str] = []
     if vec_points == 0:
-        return  # fresh install; first indexer run will populate both
+        reason_bits.append("vector store empty")
+    if fts_rows == 0:
+        reason_bits.append("FTS5 empty")
     print(
-        f"fts backfill: vector store has {vec_points} points, FTS5 has 0 rows "
-        f"— rebuilding keyword index (one-shot, ~seconds for typical vaults)",
+        f"backfill: {' / '.join(reason_bits)} with {len(files)} source files present "
+        f"— reindexing once (~1 min per 1k notes on M1).",
         flush=True,
     )
     try:
         reindex_all()
     except Exception as e:
         print(
-            f"fts backfill failed: {e}; hybrid search will degrade to semantic-only "
-            f"until you run `metalmind-vault-rag-indexer`",
+            f"backfill failed: {e}; recall will be degraded until you run "
+            f"`metalmind-vault-rag-indexer`",
             flush=True,
         )
+
+
+# Backwards-compatible alias for the old name in case anyone imports it.
+_maybe_backfill_fts = _maybe_backfill
 
 
 def main() -> None:
     _install_log_rotation()
     print(f"watching {VAULT}", flush=True)
-    _maybe_backfill_fts()
+    _maybe_backfill()
     # Fire up the co-hosted HTTP recall endpoint (127.0.0.1 only). If the port
     # is busy or binding fails, watcher keeps working — CLI falls back to stdio.
     http_server.serve_forever()
