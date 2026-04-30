@@ -98,7 +98,7 @@ def test_http_server_search_delegates_to_search_module() -> None:
                 assert resp.status == 200
                 body = json.loads(resp.read().decode("utf-8"))
                 assert body["hits"] == fake_hits
-            m.assert_called_once_with("hello", 3, rerank=False)
+            m.assert_called_once_with("hello", 3, rerank=False, mode="hybrid")
         finally:
             server_obj.shutdown()
             server_obj.server_close()
@@ -120,7 +120,7 @@ def test_http_server_search_forwards_rerank_flag() -> None:
             )
             with urllib.request.urlopen(req, timeout=2) as resp:
                 assert resp.status == 200
-            m.assert_called_once_with("hello", 3, rerank=True)
+            m.assert_called_once_with("hello", 3, rerank=True, mode="hybrid")
         finally:
             server_obj.shutdown()
             server_obj.server_close()

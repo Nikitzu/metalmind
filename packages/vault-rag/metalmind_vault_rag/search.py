@@ -12,6 +12,11 @@ from .rerank import overfetch_k, rerank_hits
 RRF_K = 60
 SEARCH_MODES = ("hybrid", "semantic-only", "keyword-only")
 
+# Documents that rank #1 in any source list get a small additive boost; #2-3
+# get a smaller one. Pure RRF dilutes top hits when expanded queries don't
+# agree with the original; this preserves the "everyone agrees" signal.
+TOP_RANK_BONUS = {1: 0.05, 2: 0.02, 3: 0.02}
+
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 
 
@@ -131,14 +136,26 @@ def _keyword_search(query: str, k: int) -> list[dict]:
 def _rrf_merge(hit_lists: list[list[dict]], k: int) -> list[dict]:
     """Reciprocal Rank Fusion. Each hit list contributes 1/(RRF_K + rank) to
     each unique (file, heading) key. De-dup keeps the first-seen text/score.
-    Ranks, not scores — no calibration between BM25 and cosine."""
+    Ranks, not scores — no calibration between BM25 and cosine.
+
+    Adds a top-rank bonus once per document, keyed on the best (lowest) rank
+    the doc achieved across all source lists. Documents that rank #1 in any
+    list get +0.05; ranks #2-3 get +0.02. Stops pure RRF from diluting hits
+    that one retriever was certain about."""
     merged: dict[tuple[str, str], dict] = {}
     for hits in hit_lists:
         for rank, h in enumerate(hits, 1):
             key = (h["file"], h["heading"])
             if key not in merged:
-                merged[key] = {**h, "rrf": 0.0}
+                merged[key] = {**h, "rrf": 0.0, "top_rank": rank}
+            else:
+                if rank < merged[key]["top_rank"]:
+                    merged[key]["top_rank"] = rank
             merged[key]["rrf"] += 1.0 / (RRF_K + rank)
+    for entry in merged.values():
+        bonus = TOP_RANK_BONUS.get(entry["top_rank"])
+        if bonus:
+            entry["rrf"] += bonus
     ordered = sorted(merged.values(), key=lambda r: r["rrf"], reverse=True)
     # Rewrite score to RRF so downstream code sees a consistent field; keep
     # the original embedder/BM25 score under `prev_score` for debugging.
@@ -148,6 +165,7 @@ def _rrf_merge(hit_lists: list[list[dict]], k: int) -> list[dict]:
         copy["prev_score"] = copy.get("score")
         copy["score"] = round(h["rrf"], 4)
         copy.pop("rrf", None)
+        copy.pop("top_rank", None)
         out.append(copy)
     return out
 

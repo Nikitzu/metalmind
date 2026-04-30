@@ -29,6 +29,20 @@ _RERANKER_FAILED = False  # sticky after load failure, avoids retry spam
 DEFAULT_MODEL = os.environ.get("METALMIND_RERANKER_MODEL", "BAAI/bge-reranker-v2-m3")
 DEFAULT_OVERFETCH = max(1, int(os.environ.get("METALMIND_RERANK_OVERFETCH", "4")))
 
+# Position-aware blend between retrieval rank (1/rank) and the reranker
+# score. High-confidence retrieval at the top is protected from a misfiring
+# reranker; lower ranks defer to the cross-encoder. Without this, a reranker
+# disagreement at rank #1 silently destroys the retrieval signal.
+POSITION_BLEND = ((3, 0.75), (10, 0.60))
+DEFAULT_RETRIEVAL_WEIGHT = 0.40
+
+
+def _retrieval_weight(rank: int) -> float:
+    for threshold, weight in POSITION_BLEND:
+        if rank <= threshold:
+            return weight
+    return DEFAULT_RETRIEVAL_WEIGHT
+
 
 def is_dep_available() -> bool:
     """Is the optional FlagEmbedding dependency importable in this process?
@@ -113,13 +127,18 @@ def rerank_hits(query: str, hits: Sequence[dict], k: int) -> list[dict]:
         _log.warning("reranker.compute_score failed: %r; falling back", e)
         return list(hits)[:k]
 
-    # Ollama-style sorted pair — stable sort keeps embedder order on ties.
-    scored = list(zip(hits, scores))
-    scored.sort(key=lambda pair: pair[1], reverse=True)
-    out: list[dict] = []
-    for h, s in scored[:k]:
+    # Position-aware blend: rrf_position_score = 1/rank, blended with the
+    # reranker score by a rank-dependent weight. Top retrieval positions stay
+    # near the top even when the reranker disagrees; lower positions trust
+    # the cross-encoder more.
+    blended: list[tuple[dict, float]] = []
+    for rank, (h, rer) in enumerate(zip(hits, scores), 1):
+        position_score = 1.0 / rank
+        w_ret = _retrieval_weight(rank)
+        score = w_ret * position_score + (1.0 - w_ret) * float(rer)
         copy = dict(h)
         copy["prev_score"] = copy.get("score")
-        copy["score"] = round(float(s), 4)
-        out.append(copy)
-    return out
+        copy["score"] = round(score, 4)
+        blended.append((copy, score))
+    blended.sort(key=lambda pair: pair[1], reverse=True)
+    return [c for c, _ in blended[:k]]
