@@ -48,3 +48,16 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+  rerank-canary:
+    if: github.event_name == 'push'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install [rerank] extra into local venv
+        working-directory: packages/vault-rag
+        run: uv sync --extra dev --extra rerank
+      - name: Run rerank compat canary
+        working-directory: packages/vault-rag
+        run: uv run --extra dev --extra rerank pytest tests/test_rerank_compat.py -v
