@@ -1,4 +1,5 @@
 """Pure search functions — shared by the MCP server, the HTTP server, and anything else that wants them. No MCP/HTTP coupling here."""
+import os
 import re
 from pathlib import Path
 
@@ -16,6 +17,20 @@ SEARCH_MODES = ("hybrid", "semantic-only", "keyword-only")
 # get a smaller one. Pure RRF dilutes top hits when expanded queries don't
 # agree with the original; this preserves the "everyone agrees" signal.
 TOP_RANK_BONUS = {1: 0.05, 2: 0.02, 3: 0.02}
+
+# Per-backend list weight inside fusion. Keyword (BM25) is more decisive
+# than semantic on short factual queries with literal terms, which is the
+# dominant query shape in vault recall. Without weighting, a wrong-but-
+# plausible semantic #1 ties with the correct keyword #1 (each gets the
+# same single-list bonus) and the tie-break is non-deterministic dict
+# order. Tunable via env in case the workload skews semantic.
+KEYWORD_WEIGHT = float(os.environ.get("METALMIND_RRF_KEYWORD_WEIGHT", "1.5"))
+SEMANTIC_WEIGHT = float(os.environ.get("METALMIND_RRF_SEMANTIC_WEIGHT", "1.0"))
+
+# How many candidates each backend produces before fusion. Larger overfetch
+# means docs are more likely to appear in both lists, reducing single-list
+# ties at the top.
+RRF_OVERFETCH = max(20, int(os.environ.get("METALMIND_RRF_OVERFETCH", "50")))
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 
@@ -133,17 +148,26 @@ def _keyword_search(query: str, k: int) -> list[dict]:
     ]
 
 
-def _rrf_merge(hit_lists: list[list[dict]], k: int) -> list[dict]:
-    """Reciprocal Rank Fusion. Each hit list contributes 1/(RRF_K + rank) to
-    each unique (file, heading) key. De-dup keeps the first-seen text/score.
-    Ranks, not scores — no calibration between BM25 and cosine.
+def _rrf_merge(
+    hit_lists: list[list[dict]], k: int, weights: list[float] | None = None
+) -> list[dict]:
+    """Reciprocal Rank Fusion. Each hit list contributes weight/(RRF_K + rank)
+    to each unique (file, heading) key. De-dup keeps the first-seen
+    text/score. Ranks, not scores — no calibration between BM25 and cosine.
+
+    `weights` (optional) is a per-list multiplier matching `hit_lists` order.
+    Defaults to 1.0 per list. Used to bias fusion toward backends that are
+    more decisive at hit@1 for the workload (e.g. BM25 for short factual
+    queries).
 
     Adds a top-rank bonus once per document, keyed on the best (lowest) rank
     the doc achieved across all source lists. Documents that rank #1 in any
     list get +0.05; ranks #2-3 get +0.02. Stops pure RRF from diluting hits
     that one retriever was certain about."""
+    if weights is None:
+        weights = [1.0] * len(hit_lists)
     merged: dict[tuple[str, str], dict] = {}
-    for hits in hit_lists:
+    for hits, weight in zip(hit_lists, weights):
         for rank, h in enumerate(hits, 1):
             key = (h["file"], h["heading"])
             if key not in merged:
@@ -151,7 +175,7 @@ def _rrf_merge(hit_lists: list[list[dict]], k: int) -> list[dict]:
             else:
                 if rank < merged[key]["top_rank"]:
                     merged[key]["top_rank"] = rank
-            merged[key]["rrf"] += 1.0 / (RRF_K + rank)
+            merged[key]["rrf"] += weight / (RRF_K + rank)
     for entry in merged.values():
         bonus = TOP_RANK_BONUS.get(entry["top_rank"])
         if bonus:
@@ -198,12 +222,14 @@ def search_vault(
     elif mode == "keyword-only":
         hits = _keyword_search(query, fetch)
     else:
-        # Hybrid: overfetch both legs so RRF has enough candidates. Using
-        # `fetch` (already overfetched if rerank) on each leg is intentional
-        # — doubles the candidate pool the cross-encoder rescores.
-        sem = _semantic_search(query, fetch)
-        kw = _keyword_search(query, fetch)
-        hits = _rrf_merge([sem, kw], k=fetch)
+        # Hybrid: overfetch both legs deeply so RRF has enough cross-coverage
+        # to break ties at the top. RRF_OVERFETCH (default 50) is independent
+        # of `fetch` — even a non-rerank k=5 query pulls 50 candidates per
+        # backend before fusion, then truncates to `fetch` after merging.
+        leg_k = max(fetch, RRF_OVERFETCH)
+        sem = _semantic_search(query, leg_k)
+        kw = _keyword_search(query, leg_k)
+        hits = _rrf_merge([sem, kw], k=fetch, weights=[SEMANTIC_WEIGHT, KEYWORD_WEIGHT])
 
     if rerank:
         return rerank_hits(query, hits, k)
