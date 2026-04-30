@@ -128,6 +128,20 @@ export async function checkGit(): Promise<PrereqResult> {
       };
 }
 
-export async function detectPrereqs(): Promise<PrereqResult[]> {
-  return Promise.all([checkClaudeCode(), checkDocker(), checkPython(), checkUv(), checkGit()]);
+export interface DetectPrereqsOptions {
+  /**
+   * Include Docker in the check set. Required by the legacy backend
+   * (Qdrant + Ollama containers); not needed by the embedded backend
+   * (sqlite-vec + fastembed run in-process). Default: false — embedded
+   * is the v0.5.0 install path.
+   */
+  includeDocker?: boolean;
+}
+
+export async function detectPrereqs(
+  opts: DetectPrereqsOptions = {},
+): Promise<PrereqResult[]> {
+  const checks = [checkClaudeCode(), checkPython(), checkUv(), checkGit()];
+  if (opts.includeDocker) checks.push(checkDocker());
+  return Promise.all(checks);
 }

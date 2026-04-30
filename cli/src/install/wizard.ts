@@ -47,7 +47,10 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   intro('metalmind init');
 
   log.step('Checking prerequisites');
-  const prereqs = await detectPrereqs();
+  // Docker is only needed if the user explicitly wants the legacy
+  // Qdrant + Ollama stack. The default v0.5.0 path is sqlite-vec +
+  // fastembed in-process — Python + uv carry the whole load.
+  const prereqs = await detectPrereqs({ includeDocker: !opts.skipDocker });
   const { failing, passed } = summarisePrereqs(prereqs);
   for (const r of prereqs) {
     if (r.ok) log.success(`${r.name.padEnd(14)} ${r.detail}`);

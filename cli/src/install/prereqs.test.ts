@@ -89,17 +89,30 @@ describe('prereqs', () => {
     expect(r.detail).toContain('no python3 variant');
   });
 
-  it('detectPrereqs returns all 5 results', async () => {
+  it('detectPrereqs returns the embedded-backend check set by default', async () => {
     runCommand.mockResolvedValue(mockResult({ stdout: 'ok', ok: true }));
     const { detectPrereqs } = await import('./prereqs.js');
     const results = await detectPrereqs();
-    expect(results).toHaveLength(5);
+    expect(results).toHaveLength(4);
     expect(results.map((r) => r.name)).toEqual([
       'Claude Code',
-      'Docker',
       'Python 3.11+',
       'uv',
       'git',
+    ]);
+  });
+
+  it('detectPrereqs adds Docker when includeDocker=true (legacy backend)', async () => {
+    runCommand.mockResolvedValue(mockResult({ stdout: 'ok', ok: true }));
+    const { detectPrereqs } = await import('./prereqs.js');
+    const results = await detectPrereqs({ includeDocker: true });
+    expect(results).toHaveLength(5);
+    expect(results.map((r) => r.name)).toEqual([
+      'Claude Code',
+      'Python 3.11+',
+      'uv',
+      'git',
+      'Docker',
     ]);
   });
 });

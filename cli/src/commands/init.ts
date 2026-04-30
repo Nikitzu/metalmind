@@ -13,6 +13,11 @@ export interface InitCliOptions {
   noTeams?: boolean;
   memoryRouting?: string;
   skipDocker?: boolean;
+  /**
+   * Opt into the legacy Qdrant + Ollama stack instead of the default
+   * sqlite-vec + fastembed in-process backend. Implies !skipDocker.
+   */
+  legacy?: boolean;
   skipWatcher?: boolean;
   eodHook?: boolean;
   noEodHook?: boolean;
@@ -65,7 +70,14 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     const notifications = resolveBool(cliOpts.notifications, cliOpts.noNotifications);
     if (notifications !== undefined) wizardOpts.notifications = notifications;
 
-    if (cliOpts.skipDocker) wizardOpts.skipDocker = true;
+    // Default v0.5.0 path: skip the Docker stack. The embedded backend
+    // (sqlite-vec + fastembed) doesn't need it. --legacy opts back into
+    // Qdrant + Ollama; --skip-docker still works as an explicit override.
+    if (cliOpts.legacy) {
+      wizardOpts.skipDocker = false;
+    } else {
+      wizardOpts.skipDocker = cliOpts.skipDocker ?? true;
+    }
     if (cliOpts.skipWatcher) wizardOpts.skipWatcher = true;
 
     // --yes fills in every remaining prompt with its default.
