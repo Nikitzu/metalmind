@@ -6,7 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from . import rerank as rerank_mod
-from .core import COLLECTION, VAULT, files_to_index, fts_row_count, qdrant
+from .core import COLLECTION, VAULT, files_to_index, fts_row_count, vector_store
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 STALE_DAYS = 14
@@ -23,7 +23,17 @@ def file_index() -> dict[str, Path]:
 
 def check_duplicates() -> None:
     print("\n== Near-duplicates (cosine > 0.92, cross-file) ==")
-    c = qdrant()
+    # Iterating every stored vector is not part of the VectorStore Protocol —
+    # only the Qdrant backend's `scroll` API supports it cheaply. Skip
+    # gracefully on other backends; this is an opt-in doctor command, not
+    # a smoke check.
+    from .stores.qdrant_store import QdrantStore
+
+    store = vector_store()
+    if not isinstance(store, QdrantStore):
+        print("  skip — duplicate scan is Qdrant-only today (sqlite-vec backend has no scroll API)")
+        return
+    c = store._client  # noqa: SLF001
     points, _ = c.scroll(COLLECTION, limit=10000, with_vectors=True, with_payload=True)
     seen: set[tuple[str, str]] = set()
     hits = 0
@@ -98,23 +108,22 @@ def check_fts_index() -> None:
         print(f"  ERROR: could not read FTS5 ({e})")
         return
     try:
-        c = qdrant()
-        if not c.collection_exists(COLLECTION):
-            print("  fresh install — Qdrant collection does not exist yet (OK)")
+        store = vector_store()
+        if not store.collection_exists():
+            print("  fresh install — vector store collection does not exist yet (OK)")
             return
-        info = c.get_collection(COLLECTION)
-        qdrant_points = getattr(info, "points_count", 0) or 0
+        vec_points = store.count()
     except Exception as e:
-        print(f"  ERROR: could not read Qdrant ({e})")
+        print(f"  ERROR: could not read vector store ({e})")
         return
-    print(f"  Qdrant points: {qdrant_points}")
+    print(f"  Vector points: {vec_points}")
     print(f"  FTS5 rows:     {fts_rows}")
-    if qdrant_points > 0 and fts_rows == 0:
-        print("  WARN: FTS5 empty while Qdrant populated — hybrid search is running semantic-only.")
+    if vec_points > 0 and fts_rows == 0:
+        print("  WARN: FTS5 empty while vector store populated — hybrid search is running semantic-only.")
         print("        Fix: restart the watcher (auto-backfills) or run `metalmind-vault-rag-indexer`.")
-    elif qdrant_points > 0 and fts_rows < qdrant_points // 2:
+    elif vec_points > 0 and fts_rows < vec_points // 2:
         print(
-            f"  WARN: FTS5 has {fts_rows} rows vs {qdrant_points} Qdrant points "
+            f"  WARN: FTS5 has {fts_rows} rows vs {vec_points} vector points "
             "— significant drift. Consider `metalmind-vault-rag-indexer`."
         )
     else:

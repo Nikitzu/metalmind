@@ -42,11 +42,12 @@ class EmbeddingBackend(Protocol):
 def make_backend() -> EmbeddingBackend:
     """Pick the active backend from METALMIND_BACKEND.
 
-    Default is `legacy` (Ollama) during the v0.5.0 development cycle so
-    Slices 1-4 don't change behavior. Slice 5 flips the default to
-    `embedded` (fastembed) once the in-process path has been benched.
+    Default is `embedded` (fastembed, in-process). Set
+    `METALMIND_BACKEND=legacy` to fall back to a local Ollama daemon —
+    kept as an escape hatch for users who want a different model and
+    don't mind running the daemon.
     """
-    backend = os.environ.get("METALMIND_BACKEND", "legacy").lower()
+    backend = os.environ.get("METALMIND_BACKEND", "embedded").lower()
     if backend == "legacy":
         from .ollama_backend import OllamaBackend
 

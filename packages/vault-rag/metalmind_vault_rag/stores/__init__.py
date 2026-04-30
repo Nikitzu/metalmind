@@ -80,13 +80,11 @@ class VectorStore(Protocol):
 def make_store() -> VectorStore:
     """Pick the active store from `METALMIND_BACKEND`.
 
-    Default is `legacy` (Qdrant) during the v0.5.0 development cycle so
-    Slices 1-4 don't change behavior. Slice 5 flips the default to
-    `embedded` (sqlite-vec) once the in-process path is proven on the
-    bench. The escape hatch stays past v0.5.0 in case sqlite-vec hits a
-    ceiling we didn't anticipate.
+    Default is `embedded` (sqlite-vec, in-process). Set
+    `METALMIND_BACKEND=legacy` to fall back to a Qdrant server — kept as
+    an escape hatch in case sqlite-vec hits a ceiling at scale.
     """
-    backend = os.environ.get("METALMIND_BACKEND", "legacy").lower()
+    backend = os.environ.get("METALMIND_BACKEND", "embedded").lower()
     if backend == "legacy":
         from .qdrant_store import QdrantStore
 

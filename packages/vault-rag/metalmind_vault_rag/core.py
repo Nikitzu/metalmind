@@ -5,16 +5,11 @@ import re
 import sqlite3
 import uuid
 
-import httpx
-from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams
+from .backends import EmbeddingBackend, make_backend
+from .stores import VectorStore, make_store
 
-OLLAMA = os.environ.get("VAULT_OLLAMA_URL", "http://localhost:11434")
-QDRANT = os.environ.get("VAULT_QDRANT_URL", "http://localhost:6333")
-MODEL = os.environ.get("VAULT_EMBED_MODEL", "nomic-embed-text")
 COLLECTION = os.environ.get("VAULT_COLLECTION", "vault")
 VAULT = pathlib.Path(os.environ.get("VAULT_PATH", str(pathlib.Path.home() / "Knowledge")))
-DIM = int(os.environ.get("VAULT_EMBED_DIM", "768"))
 MAX_CHUNK_CHARS = int(os.environ.get("VAULT_MAX_CHUNK_CHARS", "3500"))
 
 # FTS5 keyword index lives alongside Qdrant. Same chunk granularity (one row
@@ -28,50 +23,37 @@ FTS_DB_PATH = pathlib.Path(
 )
 
 
-EMBED_BATCH = int(os.environ.get("VAULT_EMBED_BATCH", "64"))
+# Process-lifetime singletons. Constructed lazily on first access so the
+# watcher's startup probe and one-shot CLI scripts don't pay the cost
+# unless they actually need to embed or hit the store.
+_VECTOR_STORE: VectorStore | None = None
+_EMBEDDING_BACKEND: EmbeddingBackend | None = None
+
+
+def vector_store() -> VectorStore:
+    global _VECTOR_STORE
+    if _VECTOR_STORE is None:
+        _VECTOR_STORE = make_store()
+    return _VECTOR_STORE
+
+
+def embedding_backend() -> EmbeddingBackend:
+    global _EMBEDDING_BACKEND
+    if _EMBEDDING_BACKEND is None:
+        _EMBEDDING_BACKEND = make_backend()
+    return _EMBEDDING_BACKEND
 
 
 def embed(texts: list[str]) -> list[list[float]]:
-    """Batch-embed via Ollama's /api/embed. Falls back to legacy /api/embeddings
-    (one call per text) only if the batch endpoint returns 404 — so older
-    Ollama servers still work. 5–10× faster than the old per-text loop."""
-    if not texts:
-        return []
-    out: list[list[float]] = []
-    with httpx.Client(timeout=120) as c:
-        i = 0
-        use_legacy = False
-        while i < len(texts):
-            batch = texts[i : i + EMBED_BATCH]
-            if not use_legacy:
-                r = c.post(f"{OLLAMA}/api/embed", json={"model": MODEL, "input": batch})
-                if r.status_code == 404:
-                    use_legacy = True
-                else:
-                    r.raise_for_status()
-                    out.extend(r.json()["embeddings"])
-                    i += len(batch)
-                    continue
-            # Legacy fallback: one-at-a-time.
-            for t in batch:
-                lr = c.post(f"{OLLAMA}/api/embeddings", json={"model": MODEL, "prompt": t})
-                lr.raise_for_status()
-                out.append(lr.json()["embedding"])
-            i += len(batch)
-    return out
-
-
-def qdrant() -> QdrantClient:
-    return QdrantClient(url=QDRANT)
+    """Thin facade over the active EmbeddingBackend. Kept as a top-level
+    function so older test fixtures and any third-party callers that
+    imported `core.embed` keep working without churn."""
+    return embedding_backend().embed(texts)
 
 
 def ensure_collection() -> None:
-    c = qdrant()
-    if not c.collection_exists(COLLECTION):
-        c.create_collection(
-            COLLECTION,
-            vectors_config=VectorParams(size=DIM, distance=Distance.COSINE),
-        )
+    """Create the active store's collection if absent. Idempotent."""
+    vector_store().ensure_collection()
 
 
 def fts_conn() -> sqlite3.Connection:

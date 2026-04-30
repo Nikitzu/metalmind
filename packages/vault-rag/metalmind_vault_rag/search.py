@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 
-from .core import COLLECTION, VAULT, embed, files_to_index, fts_conn, qdrant
+from .core import COLLECTION, VAULT, embed, files_to_index, fts_conn, vector_store
 from .rerank import overfetch_k, rerank_hits
 
 # RRF k=60 is the standard from Cormack/Clarke/Büttcher (SIGIR 2009); higher
@@ -82,18 +82,19 @@ def _backlink_index() -> dict[str, list[str]]:
 
 
 def _semantic_search(query: str, k: int) -> list[dict]:
-    """Qdrant cosine-similarity top-k. Returns {file, heading, score, text}."""
+    """Cosine-similarity top-k from the active vector store. Returns
+    {file, heading, score, text}. Score is similarity in [-1, 1] for
+    both backends — see VectorStore protocol contract."""
     vec = embed([query])[0]
-    c = qdrant()
-    results = c.query_points(collection_name=COLLECTION, query=vec, limit=k).points
+    hits = vector_store().query(vec, k)
     return [
         {
-            "file": r.payload["file"],
-            "heading": r.payload["heading"],
-            "score": round(r.score, 4),
-            "text": r.payload["text"],
+            "file": h.payload["file"],
+            "heading": h.payload["heading"],
+            "score": round(h.score, 4),
+            "text": h.payload["text"],
         }
-        for r in results
+        for h in hits
     ]
 
 

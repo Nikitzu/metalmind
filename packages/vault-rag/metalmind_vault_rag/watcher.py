@@ -24,7 +24,7 @@ from pathlib import Path
 from watchfiles import watch
 
 from . import http_server
-from .core import COLLECTION, VAULT, fts_row_count, qdrant
+from .core import COLLECTION, VAULT, fts_row_count, vector_store
 from .indexer import reindex_all, reindex_paths
 
 DEBOUNCE_SECONDS = 2.0
@@ -98,18 +98,17 @@ def _maybe_backfill_fts() -> None:
     if fts_rows > 0:
         return  # already populated, nothing to do
     try:
-        c = qdrant()
-        if not c.collection_exists(COLLECTION):
+        store = vector_store()
+        if not store.collection_exists():
             return  # fresh install, indexer will populate both stores
-        info = c.get_collection(COLLECTION)
-        qdrant_points = getattr(info, "points_count", 0) or 0
+        vec_points = store.count()
     except Exception as e:
-        print(f"fts backfill: could not read Qdrant count ({e}); skipping check", flush=True)
+        print(f"fts backfill: could not read vector store count ({e}); skipping check", flush=True)
         return
-    if qdrant_points == 0:
+    if vec_points == 0:
         return  # fresh install; first indexer run will populate both
     print(
-        f"fts backfill: Qdrant has {qdrant_points} points, FTS5 has 0 rows "
+        f"fts backfill: vector store has {vec_points} points, FTS5 has 0 rows "
         f"— rebuilding keyword index (one-shot, ~seconds for typical vaults)",
         flush=True,
     )
