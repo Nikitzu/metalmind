@@ -18,6 +18,23 @@ export interface DeepCheck {
   remediation?: string;
 }
 
+/**
+ * Probe whether the legacy Qdrant + Ollama Docker stack is active. The
+ * default v0.5.0 install runs sqlite-vec + fastembed in-process, so the
+ * docker/qdrant/ollama checks are noise for those users. Returns the
+ * Set of running metalmind container names — empty Set means no stack.
+ */
+async function detectLegacyStack(): Promise<Set<string>> {
+  const res = await runCommand('docker', ['ps', '--format', '{{.Names}}']);
+  if (!res.ok) return new Set();
+  return new Set(
+    res.stdout
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((n) => n === 'metalmind-qdrant' || n === 'metalmind-ollama'),
+  );
+}
+
 export async function checkDockerContainers(): Promise<DeepCheck[]> {
   const res = await runCommand('docker', ['ps', '--format', '{{.Names}}']);
   if (!res.ok) {
@@ -204,13 +221,27 @@ export async function checkClaudeMdSentinel(config: Config): Promise<DeepCheck[]
 }
 
 async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
-  const docker = await checkDockerContainers();
-  const [qdrant, ollama, watcher, http, ...stamps] = await Promise.all([
-    checkQdrantCollection(),
-    checkOllamaModel(),
+  // Only fire the docker/qdrant/ollama probes when the user is actually
+  // on the legacy stack. Default v0.5.0 installs run sqlite-vec +
+  // fastembed in-process; surfacing "metalmind-qdrant: not running" as a
+  // doctor failure for those users would be confusing noise.
+  const legacyContainers = await detectLegacyStack();
+  const onLegacy = legacyContainers.size > 0;
+
+  const [watcher, http, ...stamps] = await Promise.all([
     checkWatcherService(),
     checkRecallHttp(),
     ...(await checkClaudeMdSentinel(config)).map((c) => Promise.resolve(c)),
+  ]);
+
+  if (!onLegacy) {
+    return [watcher!, http!, ...stamps];
+  }
+
+  const docker = await checkDockerContainers();
+  const [qdrant, ollama] = await Promise.all([
+    checkQdrantCollection(),
+    checkOllamaModel(),
   ]);
   return [...docker, qdrant!, ollama!, watcher!, http!, ...stamps];
 }

@@ -42,21 +42,34 @@ The runner:
   - `VAULT_HTTP_PORT=17400` (override with `--port`)
 - waits for `/search` to come up, runs the 20 questions;
 - **tears down on every exit path** (success, error, Ctrl-C, crash):
-  kills the watcher, drops the Qdrant collection, removes the tmp vault.
+  kills the watcher, drops the per-scale collection (sqlite-vec DB file
+  on the embedded backend, `DELETE /collections/<name>` on `--legacy`),
+  removes the tmp vault.
 
 Your real vault (at `~/Knowledge`) and real collection (`vault` on port
 17317) are never touched. Run it a hundred times a day; it leaks nothing.
 
 ### Prerequisites
 
-- Qdrant reachable at `$VAULT_QDRANT_URL` (default `http://localhost:6333`).
-- `metalmind-vault-rag-indexer` + `metalmind-vault-rag-watcher` installed from
-  this repo's `packages/vault-rag/` (the watcher must honor `VAULT_HTTP_PORT`
-  — versions ≥ 0.2.10). Reinstall from local source with:
+- `metalmind-vault-rag-indexer` + `metalmind-vault-rag-watcher` installed
+  from this repo's `packages/vault-rag/` (the watcher must honor
+  `VAULT_HTTP_PORT` — versions ≥ 0.2.0). Reinstall from local source:
 
   ```sh
   uv tool install --force --reinstall ./packages/vault-rag
   ```
+
+  Or, for benching against the source tree without affecting your global
+  install, add `packages/vault-rag/.venv/bin` to PATH:
+
+  ```sh
+  PATH="$PWD/packages/vault-rag/.venv/bin:$PATH" \
+    node bench/recall-v0/run.mjs --scales 12,100,500,1000 --rerank
+  ```
+
+- (`--legacy` only) Qdrant reachable at `$VAULT_QDRANT_URL` (default
+  `http://localhost:6333`). The default embedded backend has no daemon
+  prereq — sqlite-vec runs inside the watcher process.
 
 ## Single-scale (legacy / quick smoke)
 
@@ -92,7 +105,7 @@ Prefer multi-scale mode for any serious run.
 | `METALMIND_BENCH_ENDPOINT` | `$METALMIND_RECALL_HTTP` → `http://127.0.0.1:17317` | Single-scale endpoint. Ignored in multi-scale. |
 | `METALMIND_BENCH_K` | `5` | Top-K to request and score against. |
 | `METALMIND_BENCH_TIMEOUT_MS` | `8000` | Per-query timeout. |
-| `VAULT_QDRANT_URL` | `http://localhost:6333` | Qdrant base URL. Runner hits `DELETE /collections/<name>` on teardown. |
+| `VAULT_QDRANT_URL` | `http://localhost:6333` | (`--legacy` only) Qdrant base URL. Runner hits `DELETE /collections/<name>` on teardown. |
 
 ## Exit code
 

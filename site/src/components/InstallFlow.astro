@@ -16,8 +16,8 @@ const steps: Step[] = [
     label: '01',
     title: 'Prereqs, detected',
     body:
-      'Claude Code, Docker, Python 3.11+, uv, git — each checked with a per-failure remediation. Failing prereqs halt the wizard with a concrete fix.',
-    code: '◆  Claude Code   2.1.114\n◆  Docker        reachable\n◆  Python 3.11+  via python3.12\n◆  uv            0.11.7\n◆  git           2.53.0',
+      'Claude Code, Python 3.11+, uv, git — each checked with a per-failure remediation. Failing prereqs halt the wizard with a concrete fix. Docker is only required when you opt into --legacy.',
+    code: '◆  Claude Code   2.1.114\n◆  Python 3.11+  via python3.12\n◆  uv            0.11.7\n◆  git           2.53.0',
   },
   {
     id: 'vault',
@@ -38,10 +38,10 @@ const steps: Step[] = [
   {
     id: 'stack',
     label: '04',
-    title: 'Local stack',
+    title: 'In-process retrieval stack',
     body:
-      'Qdrant + Ollama start as Docker containers (metalmind-qdrant, metalmind-ollama). nomic-embed-text pulls once. All embeddings stay on your machine.',
-    code: '◇  Starting Docker stack (Qdrant + Ollama)\n◆  stack at ~/Knowledge/.metalmind-stack\n   nomic-embed-text pulled',
+      'sqlite-vec for vectors and fastembed (BAAI/bge-small-en-v1.5) for embeddings live inside the watcher process — no Docker, no daemon. The 30 MB ONNX model downloads once on first index. Pass --legacy to opt into the older Qdrant + Ollama Docker stack instead.',
+    code: '◇  Embedded backend (sqlite-vec + fastembed) — no Docker stack needed\n◆  Python tool venv at ~/.local/share/uv/tools/metalmind-vault-rag\n   model cache at ~/.cache/fastembed/',
   },
   {
     id: 'services',
@@ -56,7 +56,7 @@ const steps: Step[] = [
     label: '06',
     title: 'Ready',
     body:
-      'metalmind pulse verifies the whole chain end-to-end. metalmind uninstall rolls everything back — watcher, containers, MCP entries, settings, aliases — without ever touching your notes.',
+      'metalmind pulse verifies the whole chain end-to-end. metalmind uninstall rolls everything back — watcher, MCP entries, settings, aliases (and Docker containers if you used --legacy) — without ever touching your notes.',
     code: '$ metalmind pulse\n◇  Prerequisites\n◇  Config\n●  flavor:     scadrial\n●  vaultPath:  ~/Knowledge\n●  mcp:        serena, graphify\n└  All systems nominal.',
   },
 ];

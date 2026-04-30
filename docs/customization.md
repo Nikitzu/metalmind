@@ -53,14 +53,18 @@ Re-run `metalmind init` and provide the new path. The wizard is idempotent; it w
 
 ## Changing the embedding model
 
-Default: `nomic-embed-text` (274 MB, 768-dim, fast, good enough for English notes).
+Default: `BAAI/bge-small-en-v1.5` via fastembed (~30 MB ONNX wheel, 384-dim, English-tuned, MTEB-strong). Cached at `~/.cache/fastembed/`.
 
-1. `docker exec metalmind-ollama ollama pull <new-model>`
-2. Set `VAULT_EMBED_MODEL=<new-model>` in your shell and in the launchd/systemd unit env
-3. If the new model has a different dim, set `VAULT_EMBED_DIM=<n>` to match
-4. `metalmind-vault-rag-indexer` — full re-embed (old vectors are incompatible)
+1. Pick a fastembed-compatible model (anything in [`fastembed.TextEmbedding.list_supported_models()`](https://github.com/qdrant/fastembed))
+2. Set `VAULT_EMBED_MODEL=<repo/model>` in your shell and in the launchd/systemd unit env
+3. Set `VAULT_EMBED_DIM=<n>` to the new model's dimension (default 384 matches bge-small)
+4. `metalmind-vault-rag-indexer --wipe` — full re-embed (old vectors are incompatible)
 
-Candidates: `mxbai-embed-large` (1024-dim, better recall, bigger), `snowflake-arctic-embed` (smaller, multilingual).
+Candidates: `BAAI/bge-base-en-v1.5` (768-dim, better recall, ~110 MB), `BAAI/bge-large-en-v1.5` (1024-dim, ~350 MB), `intfloat/multilingual-e5-large` (1024-dim, multilingual).
+
+### Using Ollama instead
+
+If you want to host your own embedding model (custom fine-tune, GPU acceleration, etc.), set `METALMIND_BACKEND=legacy` in the watcher env and re-run `metalmind init --legacy`. The watcher then routes through Ollama (default `nomic-embed-text`, 768-dim) and writes to a Qdrant container instead of sqlite-vec. Same `VAULT_EMBED_MODEL` / `VAULT_EMBED_DIM` knobs apply.
 
 ## Changing folder structure
 
@@ -68,9 +72,9 @@ Edit `cli/templates/vault/CLAUDE.md.block.template`, rebuild the CLI (`pnpm buil
 
 ## Tweaking resource caps
 
-`~/Knowledge/.metalmind-stack/compose.yml` — `mem_limit` and `cpus` per service. Re-run `vault-up` to apply.
+The default embedded backend has no daemon and no caps to tune. The fastembed model loads on first call (~50 MB resident), the watcher process holds it for the session (~150 MB total).
 
-Idle footprint target: ~300 MB. The Ollama model unloads after 1 minute idle (`OLLAMA_KEEP_ALIVE=1m`) and reloads in ~2 seconds when queried.
+(`--legacy` only) Edit `~/Knowledge/.metalmind-stack/compose.yml` — `mem_limit` and `cpus` per service. Re-run `vault-up` to apply. Idle footprint target ~300 MB; the Ollama model unloads after 1 minute idle (`OLLAMA_KEEP_ALIVE=1m`) and reloads in ~2 s when queried.
 
 ## Changing the Serena context
 

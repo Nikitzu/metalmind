@@ -1,8 +1,11 @@
+import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import { teardown } from '../install/teardown.js';
+
+const STACK_COMPOSE_REL = '.metalmind-stack/compose.yml';
 
 export interface UninstallOptions {
   yes?: boolean;
@@ -19,9 +22,17 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
     log.info(`Will remove install configured for vault at ${config.vaultPath}`);
   }
 
+  // Was this a legacy install with the Qdrant + Ollama Docker stack? If so,
+  // surface the Docker-specific prompts and copy. Embedded installs (the
+  // v0.5.0 default) don't have a stack to stop or volumes to delete.
+  const legacyStack =
+    config?.vaultPath !== undefined && existsSync(join(config.vaultPath, STACK_COMPOSE_REL));
+
   log.warn('This will:');
-  log.info('  - stop watcher and Docker stack');
-  log.info('  - remove <vault>/.metalmind-stack/ (stack code, NOT your notes)');
+  log.info(legacyStack ? '  - stop watcher and Docker stack' : '  - stop watcher');
+  if (legacyStack) {
+    log.info('  - remove <vault>/.metalmind-stack/ (stack code, NOT your notes)');
+  }
   log.info('  - remove MCP entries (vault-rag, serena) from ~/.claude.json');
   log.info('  - remove shell aliases + source line from ~/.zshrc and ~/.bashrc');
   log.info(
@@ -87,15 +98,19 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
     }
     removeVaultRag = v;
 
-    const vol = await confirm({
-      message: 'Remove Docker volumes (Qdrant data, Ollama models ~274 MB)?',
-      initialValue: false,
-    });
-    if (isCancel(vol)) {
-      cancel('aborted');
-      return;
+    if (legacyStack) {
+      const vol = await confirm({
+        message: 'Remove Docker volumes (Qdrant data, Ollama models ~274 MB)?',
+        initialValue: false,
+      });
+      if (isCancel(vol)) {
+        cancel('aborted');
+        return;
+      }
+      removeVolumes = vol;
+    } else {
+      removeVolumes = false;
     }
-    removeVolumes = vol;
   }
 
   try {

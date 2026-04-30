@@ -10,18 +10,21 @@
 In a new shell:
 
 ```bash
-vault-status              # should show metalmind-ollama + metalmind-qdrant running
 metalmind pulse --deep    # or: metalmind doctor --deep — end-to-end runtime check
 ```
 
 `metalmind pulse --deep` probes:
 
-- Docker containers (`metalmind-ollama` + `metalmind-qdrant`)
-- Qdrant collection exists and has points
-- Ollama has `nomic-embed-text` pulled
 - Watcher service is loaded (launchd on macOS, systemd --user on Linux)
 - Recall HTTP fast-path reachable at `127.0.0.1:17317`
 - The metalmind-managed blocks are present in `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md`
+- (`--legacy` only) Docker containers `metalmind-ollama` + `metalmind-qdrant`, Qdrant collection populated, Ollama has `nomic-embed-text` pulled
+
+For deeper Python-side smoke checks (FTS5 row count, rerank cross-encoder loadable):
+
+```bash
+metalmind-vault-rag-doctor --rerank --fts
+```
 
 ## Recall latency
 
@@ -48,13 +51,10 @@ Sourced from `~/.metalmind/aliases.sh` via `~/.zshrc` and `~/.bashrc`.
 
 | Alias | What it does |
 |---|---|
-| `vault-up` | Start Docker stack |
-| `vault-down` | Stop Docker stack |
-| `vault-status` | Show container status |
-| `vault-logs` | Tail container logs |
 | `vault-index` | Rebuild full index (`metalmind-vault-rag-indexer`) |
 | `vault-doctor` | Vault hygiene (`metalmind-vault-rag-doctor`) |
 | `vault-watcher-start` / `vault-watcher-stop` / `vault-watcher-status` | Control the watcher service (launchd on macOS, systemd on Linux) |
+| `vault-up` / `vault-down` / `vault-status` / `vault-logs` | (`--legacy` only) Start/stop/inspect the Docker stack |
 
 ## Upgrading metalmind
 
@@ -87,16 +87,19 @@ See [`plugins.md`](plugins.md).
 Run `metalmind burn brass` — this re-applies all managed blocks without touching your custom content.
 
 **Claude Code doesn't recall from the vault**
-Ensure `metalmind-vault-rag-server` is on PATH (`which metalmind-vault-rag-server`). Run `vault-status` — containers must be up. Try `vault-logs` for Ollama / Qdrant errors. Ask Claude to run `Bash: metalmind tap copper "test"` directly to verify the CLI path.
+Ensure `metalmind-vault-rag-server` is on PATH (`which metalmind-vault-rag-server`). Confirm the watcher is running (`vault-watcher-status`). Ask Claude to run `Bash: metalmind tap copper "test"` directly to verify the CLI path. Tail `~/.metalmind/logs/watcher.log` for Python-side errors.
 
 **Watcher not auto-reindexing**
 ```bash
 vault-watcher-status
-tail -f ~/Knowledge/.metalmind-stack/watcher.err
+tail -f ~/.metalmind/logs/watcher.log
 ```
 If the log shows a missing-binary error, run `metalmind burn brass` to re-render the unit file (which re-resolves the watcher binary path via `which`).
 
-**"Connection refused" on port 11434 or 6333**
+**"Connection refused" on port 17317**
+The watcher isn't running or the recall HTTP server failed to bind. `vault-watcher-start` to restart. Tail the log for details.
+
+**(`--legacy` only) "Connection refused" on port 11434 or 6333**
 Docker isn't running, or containers crashed. `vault-up` to restart. `vault-logs` for details.
 
 **Vault path elsewhere**

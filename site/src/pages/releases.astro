@@ -67,6 +67,121 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.5.0</h2>
+            <span class="release-date">2026-04-30</span>
+          </header>
+          <h3>Single-binary install — sqlite-vec + fastembed</h3>
+          <ul>
+            <li>
+              <strong>Both daemons are gone.</strong> <code>metalmind init</code> no longer requires
+              Docker or Ollama. The vector store and the embedding model both run in-process
+              inside the Python venv that <code>uv tool install metalmind-vault-rag</code> creates.
+              Five prereqs replace seven: Python, uv, git, Claude Code, Node — that's it.
+              Pass <code>--legacy</code> to opt back into the Qdrant + Ollama Docker stack.
+            </li>
+            <li>
+              <strong><code>VectorStore</code> Protocol</strong> with two impls: <code>QdrantStore</code>
+              (legacy) and <code>SqliteVecStore</code> (default). <code>vec0</code> virtual table
+              at <code>~/.metalmind/vec-&lt;col&gt;.db</code> with cosine distance metric;
+              payloads in a SQLite side-table joined on rowid; per-thread sqlite3 connections so
+              the <code>ThreadingHTTPServer</code> doesn't trip the same-thread guard.
+            </li>
+            <li>
+              <strong><code>EmbeddingBackend</code> Protocol</strong> with two impls:
+              <code>OllamaBackend</code> (legacy) and <code>FastEmbedBackend</code> (default).
+              Default model <code>BAAI/bge-small-en-v1.5</code> (384-dim, ~30 MB ONNX wheel,
+              cached at <code>~/.cache/fastembed/</code>). Tunable via <code>VAULT_EMBED_MODEL</code>.
+            </li>
+            <li>
+              <strong>Auto-backfill on watcher startup.</strong> Detects either store empty + source
+              files present and runs a one-shot reindex. Covers both upgrade paths (v0.4.x → v0.5.0
+              and the older v0.2.x → v0.3.0+ FTS5 case) in one helper.
+            </li>
+          </ul>
+          <h3>Result on the scaled recall bench (1,000 notes)</h3>
+          <p>
+            The new stack outperforms v0.4.0 on every measured dimension because
+            <code>bge-small-en-v1.5</code> is a stronger embedding model for English factual
+            retrieval than <code>nomic-embed-text</code>:
+          </p>
+          <ul>
+            <li><strong>hit@1 hybrid: 65% → 85%</strong> (+20pp). Pure-semantic hit@5 jumped from 55% → 90% just from the model swap.</li>
+            <li><strong>hit@5 +rerank: 90% → 95%</strong> (+5pp).</li>
+            <li><strong>Median hybrid latency: 43 ms → 8 ms</strong> — no HTTP RTT on the hot path; everything is in-process SQLite + ONNX.</li>
+          </ul>
+          <h3>Migration notes</h3>
+          <p>
+            Existing v0.4.x users keep their Qdrant collection but it becomes orphaned — the
+            embedding model changed (768-dim nomic → 384-dim bge-small) so vectors aren't
+            cross-compatible. On first watcher restart after <code>metalmind stamp</code>, the
+            auto-backfill re-embeds the entire vault into the new sqlite-vec store (~1 min per
+            1k notes on M1). The old Qdrant container can be removed at leisure
+            (<code>docker rm metalmind-qdrant</code>); the <code>--legacy</code> escape hatch keeps
+            it working if you defer.
+          </p>
+        </article>
+
+        <hr class="metal-rule" />
+
+        <article class="release">
+          <header class="release-head">
+            <h2>0.4.0</h2>
+            <span class="release-date">2026-04-30</span>
+          </header>
+          <h3>Weighted hybrid retrieval — closing the hit@1 gap</h3>
+          <ul>
+            <li>
+              <strong>Top-rank bonus in RRF fusion.</strong> Documents that rank #1 in any source
+              list get +0.05 added once to their fused score; ranks #2–3 get +0.02. Bonus is keyed
+              on the best (lowest) rank seen across lists, so it doesn't double-stack. Stops pure
+              RRF from diluting hits one retriever was confident about. Formula adopted from
+              <a href="https://github.com/tobi/qmd">qmd 2.1.0</a> (MIT).
+            </li>
+            <li>
+              <strong>Per-list weights in fusion.</strong> Default keyword × 1.5, semantic × 1.0.
+              With only two source lists and no query expansion, BM25 and the embedder often pick
+              different #1s and produce identical RRF scores; ties broke on dict insertion order,
+              often against the right answer. BM25 is more decisive at hit@1 for short factual
+              queries (the dominant query shape in vault recall), so we let it lead.
+            </li>
+            <li>
+              <strong>Deeper fusion overfetch.</strong> Each backend now produces 50 candidates
+              before fusion (was 20 / k). Larger pool means cross-coverage is more likely — fewer
+              single-list-only ties at the top.
+            </li>
+            <li>
+              <strong>hit@1 hybrid: 50% → 65%</strong> at 1,000 notes (+15pp). Three queries flipped
+              from h@2 to h@1.
+            </li>
+          </ul>
+          <h3>Ecosystem catch-up</h3>
+          <ul>
+            <li>
+              <strong>Agents bumped to <code>claude-opus-4-7</code></strong> across all 15 stamped
+              templates. Tools allowlist gained <code>SendMessage</code>, <code>TaskCreate</code>,
+              <code>TaskUpdate</code>, <code>TaskList</code>, <code>TaskGet</code> so subagents can
+              coordinate cleanly when run as teammates.
+            </li>
+            <li>
+              <strong><code>using-teams</code> skill</strong> is now part of the stamp surface — the
+              MUST-INVOKE-FIRST gate for every team-* command we ship.
+            </li>
+            <li>
+              <strong>Rephrase-on-miss hint</strong> in the stamped CLAUDE.md block. If first recall
+              returns nothing, rephrase 2–3× and union the hits before deciding it's not in the vault.
+            </li>
+            <li>
+              <strong>Bench guards.</strong> Refuses to populate the rerank column when
+              FlagEmbedding is missing — emits <code>n/a</code> instead of a misleading
+              hybrid-mirror. CI canary catches transformers-version drift before it reaches users.
+            </li>
+          </ul>
+        </article>
+
+        <hr class="metal-rule" />
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.3.0</h2>
             <span class="release-date">2026-04-24</span>
           </header>

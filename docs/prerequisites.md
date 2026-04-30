@@ -10,18 +10,9 @@ Tested on macOS 14+ (Apple Silicon; Intel Macs should work) and Ubuntu 22.04+ / 
 
 [obsidian.md](https://obsidian.md/). On first launch, open or create a vault at your chosen path (default `~/Knowledge/`). The installer will add the expected folder structure and a managed block in `CLAUDE.md`.
 
-## Docker
-
-The stack uses two small containers:
-
-- `ollama/ollama` — runs the embedding model
-- `qdrant/qdrant` — stores vectors
-
-Resource caps in `compose.yml`: 1 GB RAM for Ollama, 512 MB for Qdrant. Lower if needed. Make sure Docker is **running** before `metalmind init`.
-
 ## uv
 
-Fast Python package manager from Astral.
+Fast Python package manager from Astral. The wizard uses it to install `metalmind-vault-rag` (and its embedded sqlite-vec + fastembed deps) into an isolated tool venv at `~/.local/share/uv/tools/`.
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -44,8 +35,16 @@ Usually present on macOS and modern Linux. `metalmind init` probes `python3`, `p
 ## Quick check
 
 ```bash
-git --version && docker --version && uv --version && python3 --version && claude --version
-docker info >/dev/null && echo "docker daemon ok"
+git --version && uv --version && python3 --version && claude --version
 ```
 
-If all five print versions and "docker daemon ok" appears — you're ready.
+If all four print versions, you're ready. The default install runs the entire retrieval stack in-process — no Docker, no Ollama daemon.
+
+## Legacy backend (`--legacy`)
+
+If you specifically want the older Qdrant + Ollama Docker stack — useful when you already run Qdrant for other projects, or want to swap in your own Ollama-hosted embedding model — pass `--legacy` to `metalmind init`. That path additionally requires:
+
+- [Docker](https://www.docker.com) running (Docker Desktop on macOS, Docker Engine on Linux)
+- ~1.5 GB free disk for the `qdrant/qdrant` and `ollama/ollama` images plus the `nomic-embed-text` weights
+
+The wizard will set up two containers (`metalmind-qdrant`, `metalmind-ollama`) at `<vault>/.metalmind-stack/` via `docker compose`.

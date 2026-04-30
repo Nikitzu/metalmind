@@ -209,12 +209,12 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   if (vaultRag.installed) log.success('  uv tool install metalmind-vault-rag complete');
 
   if (!opts.skipDocker) {
-    log.step('Starting Docker stack (Qdrant + Ollama)');
+    log.step('Starting Docker stack (Qdrant + Ollama, --legacy mode)');
     const stack = await setupStack({ vaultPath: vault.vaultPath });
     log.success(`  stack at ${stack.stackDir}`);
     if (stack.modelPulled) log.info('  nomic-embed-text pulled');
   } else {
-    log.warn('Skipping Docker stack (opts.skipDocker)');
+    log.info('Embedded backend (sqlite-vec + fastembed) — no Docker stack needed');
   }
 
   if (opts.skipWatcher) {
