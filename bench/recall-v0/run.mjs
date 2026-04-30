@@ -225,6 +225,33 @@ async function runScale(scale, port, questions) {
     );
   }
 
+  // Pre-flight: if the user passed --rerank, the watcher must have the
+  // [rerank] extra installed. Without it, rerank silently falls back to
+  // embedder ordering and the column would mirror hybrid — historically
+  // a misleading "rerank lifts hit@1 to N%" claim. Refuse to populate the
+  // column if the dep is missing; print a single loud line either way.
+  let rerankAvailable = false;
+  if (RERANK) {
+    try {
+      const res = await fetch(`${endpoint}/rerank/status`, { method: 'GET' });
+      if (res.ok) {
+        const body = await res.json();
+        rerankAvailable = Boolean(body.available);
+      }
+    } catch {
+      // leave false — same effect as missing
+    }
+    if (rerankAvailable) {
+      process.stdout.write(`[scale=${scale}] rerank=engaged (cross-encoder loadable)\n`);
+    } else {
+      process.stdout.write(
+        `[scale=${scale}] rerank=DISABLED — FlagEmbedding not installed in the watcher venv.\n` +
+        `  Install with \`uv pip install --python <venv>/bin/python "metalmind-vault-rag[rerank]"\`\n` +
+        `  or \`uv sync --extra rerank\` from packages/vault-rag. The rr column will be left null.\n`,
+      );
+    }
+  }
+
   // Build BM25 scorer over the same tmp vault (in-process, no HTTP).
   // Kept as an independent-implementation sanity check alongside the server's
   // FTS5 BM25 — any large divergence points at a tokenizer bug or stale index.
@@ -249,9 +276,16 @@ async function runScale(scale, port, questions) {
     const marks = [];
     let firstOk = true;
     for (const m of MODES) {
-      if (!RERANK && m.rerank) {
-        record[m.key] = { rank: null, latencyMs: 0, ok: null, skipped: true };
-        marks.push(`${m.label}=SKIP`);
+      if (m.rerank && (!RERANK || !rerankAvailable)) {
+        const reason = !RERANK ? 'SKIP' : 'NA';
+        record[m.key] = {
+          rank: null,
+          latencyMs: 0,
+          ok: null,
+          skipped: !RERANK,
+          unavailable: !rerankAvailable && RERANK,
+        };
+        marks.push(`${m.label}=${reason}`);
         continue;
       }
       const r = await searchOnce(endpoint, q.query, K, m.mode, m.rerank);
@@ -278,7 +312,14 @@ async function runScale(scale, port, questions) {
     process.stdout.write(`  ${q.id}  ${marks.join('  ')}  ${q.query}\n`);
   }
 
-  return { scale, collection, endpoint, summary: summarizeModes(perQ), perQ };
+  return {
+    scale,
+    collection,
+    endpoint,
+    rerankAvailable,
+    summary: summarizeModes(perQ),
+    perQ,
+  };
 }
 
 function runOnce(cmd, env, cwd) {
@@ -442,7 +483,7 @@ function renderMultiScaleMd({ meta, perScale }) {
   for (const s of perScale) {
     const m = s.summary.modes;
     lines.push(
-      `| ${s.scale} | ${pct(m.semanticOnly.hitAt5.rate)} | ${pct(m.keywordOnly.hitAt5.rate)} | ${pct(m.hybrid.hitAt5.rate)} | ${meta.rerank ? pct(m.hybridRerank.hitAt5.rate) : '—'} | ${pct(s.summary.bm25Node.hitAt5.rate)} |`,
+      `| ${s.scale} | ${pct(m.semanticOnly.hitAt5.rate)} | ${pct(m.keywordOnly.hitAt5.rate)} | ${pct(m.hybrid.hitAt5.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt5.rate) : 'n/a') : '—'} | ${pct(s.summary.bm25Node.hitAt5.rate)} |`,
     );
   }
   lines.push('');
@@ -453,7 +494,7 @@ function renderMultiScaleMd({ meta, perScale }) {
   for (const s of perScale) {
     const m = s.summary.modes;
     lines.push(
-      `| ${s.scale} | ${pct(m.semanticOnly.hitAt1.rate)} | ${pct(m.keywordOnly.hitAt1.rate)} | ${pct(m.hybrid.hitAt1.rate)} | ${meta.rerank ? pct(m.hybridRerank.hitAt1.rate) : '—'} | ${pct(s.summary.bm25Node.hitAt1.rate)} |`,
+      `| ${s.scale} | ${pct(m.semanticOnly.hitAt1.rate)} | ${pct(m.keywordOnly.hitAt1.rate)} | ${pct(m.hybrid.hitAt1.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt1.rate) : 'n/a') : '—'} | ${pct(s.summary.bm25Node.hitAt1.rate)} |`,
     );
   }
   lines.push('');
@@ -464,7 +505,7 @@ function renderMultiScaleMd({ meta, perScale }) {
   for (const s of perScale) {
     const m = s.summary.modes;
     lines.push(
-      `| ${s.scale} | ${m.semanticOnly.latencyMs.median.toFixed(0)} | ${m.keywordOnly.latencyMs.median.toFixed(0)} | ${m.hybrid.latencyMs.median.toFixed(0)} | ${meta.rerank ? m.hybridRerank.latencyMs.median.toFixed(0) : '—'} |`,
+      `| ${s.scale} | ${m.semanticOnly.latencyMs.median.toFixed(0)} | ${m.keywordOnly.latencyMs.median.toFixed(0)} | ${m.hybrid.latencyMs.median.toFixed(0)} | ${meta.rerank ? (s.rerankAvailable ? m.hybridRerank.latencyMs.median.toFixed(0) : 'n/a') : '—'} |`,
     );
   }
   lines.push('');
@@ -475,7 +516,7 @@ function renderMultiScaleMd({ meta, perScale }) {
     lines.push('| --- | --- | --- | --- | --- | --- | --- |');
     for (const r of s.perQ) {
       lines.push(
-        `| ${r.id} | ${r.semanticOnly?.rank ?? '—'} | ${r.keywordOnly?.rank ?? '—'} | ${r.hybrid?.rank ?? '—'} | ${r.hybridRerank?.skipped ? 'skip' : (r.hybridRerank?.rank ?? '—')} | ${r.bm25Node?.rank ?? '—'} | ${r.query} |`,
+        `| ${r.id} | ${r.semanticOnly?.rank ?? '—'} | ${r.keywordOnly?.rank ?? '—'} | ${r.hybrid?.rank ?? '—'} | ${r.hybridRerank?.skipped ? 'skip' : r.hybridRerank?.unavailable ? 'n/a' : (r.hybridRerank?.rank ?? '—')} | ${r.bm25Node?.rank ?? '—'} | ${r.query} |`,
       );
     }
     lines.push('');
@@ -523,8 +564,11 @@ async function main() {
     process.stdout.write(`\nResults:\n  ${jsonPath}\n  ${mdPath}\n\n`);
     for (const s of perScale) {
       const m = s.summary.modes;
+      const rrCol = meta.rerank
+        ? `  rr@5=${s.rerankAvailable ? pct(m.hybridRerank.hitAt5.rate) : 'n/a'}`
+        : '';
       process.stdout.write(
-        `scale=${String(s.scale).padStart(4)}  sem@5=${pct(m.semanticOnly.hitAt5.rate)}  key@5=${pct(m.keywordOnly.hitAt5.rate)}  hyb@5=${pct(m.hybrid.hitAt5.rate)}${meta.rerank ? `  rr@5=${pct(m.hybridRerank.hitAt5.rate)}` : ''}  bmN@5=${pct(s.summary.bm25Node.hitAt5.rate)}\n`,
+        `scale=${String(s.scale).padStart(4)}  sem@5=${pct(m.semanticOnly.hitAt5.rate)}  key@5=${pct(m.keywordOnly.hitAt5.rate)}  hyb@5=${pct(m.hybrid.hitAt5.rate)}${rrCol}  bmN@5=${pct(s.summary.bm25Node.hitAt5.rate)}\n`,
       );
     }
 
