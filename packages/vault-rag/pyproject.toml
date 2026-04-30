@@ -8,6 +8,10 @@ dependencies = [
     "qdrant-client>=1.9",
     "mcp>=1.0",
     "watchfiles>=0.22",
+    # sqlite-vec ships a SQLite extension wheel; loaded at runtime via
+    # connection.enable_load_extension. ~3 MB, no native build step. v0.5.0
+    # makes this the default vector store; Qdrant stays as a legacy backend.
+    "sqlite-vec>=0.1.6",
 ]
 
 [project.optional-dependencies]
