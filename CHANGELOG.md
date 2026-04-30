@@ -6,6 +6,46 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.5.1 — 2026-04-30
+
+Polish + bench column release. No watcher-side / Python-side changes — `metalmind-vault-rag` stays at 0.2.0, no re-stamp needed unless you want the cleaner CLI messaging.
+
+### Cleanup — gate Docker/Ollama on `--legacy`
+
+The v0.5.0 release flipped the default install to sqlite-vec + fastembed, but several CLI surfaces still assumed Docker. Fixed:
+
+- **`metalmind doctor --deep`** now skips the `metalmind-qdrant` / `metalmind-ollama` / qdrant-collection / ollama-model checks unless those containers are actually running. Default-install users see four checks (watcher + recall HTTP + sentinels) instead of seven, four of which always failed.
+- **`metalmind uninstall`** hides the "stop watcher and Docker stack" copy and the "Remove Docker volumes (~274 MB)?" prompt when no `<vault>/.metalmind-stack/compose.yml` exists.
+- **`metalmind init`** wizard log now prints `Embedded backend (sqlite-vec + fastembed) — no Docker stack needed` instead of the stale `Skipping Docker stack` warning when running the default path.
+
+### Docs sweep — embedded by default
+
+`docs/prerequisites.md`, `docs/post-install.md`, `docs/customization.md`, `bench/recall-v0/README.md`, the site's `InstallFlow` component — all rewritten to lead with the in-process stack. Docker / Ollama / `nomic-embed-text` references kept only where they're accurate (historical changelog entries, `--legacy` callouts). The site's "Install flow" diagram step 4 went from "Local stack (Qdrant + Ollama containers)" to "In-process retrieval stack (sqlite-vec + fastembed, no Docker)".
+
+### qmd as a bench column
+
+`bench/recall-v0/run.mjs` now runs [qmd 2.1.0](https://github.com/tobi/qmd) alongside the metalmind columns on the same 12 gold + 988 distractor fixture. Adapter at `bench/recall-v0/scripts/qmd.mjs` drives qmd via `npx -y @tobilu/qmd@latest` so the bench has zero global-install commitment. Per-scale isolation needs both `INDEX_PATH` (sqlite DB) and `QMD_CONFIG_DIR` (the YAML collection registry qmd writes to `~/.config/qmd/index.yml` independent of the index file).
+
+Numbers on the shared fixture (4 scales, 20 queries, with rerank):
+
+| metric @ 1,000 notes | metalmind +rerank | qmd 2.1.0 |
+|---|---|---|
+| hit@1 | **90%** | 80% |
+| hit@5 | **95%** | 90% |
+
+| metric @ 100 notes | metalmind +rerank | qmd 2.1.0 |
+|---|---|---|
+| hit@1 | **90%** | 70% |
+| hit@5 | 95% | **100%** |
+
+Both pull ~2 GB of model weights. qmd has more hit@5 headroom at small scales from its fine-tuned 1.7B query expansion; metalmind has consistently better hit@1 across the curve after the v0.4.0 weighted-RRF fix. Side-by-side in the README + on the site landing page.
+
+### Methodology — mem0 doesn't fit a head-to-head bench
+
+`Learnings/mem0-vs-metalmind-shape-mismatch.md` (in the vault, linked from the metalmind MOC) explains why mem0 isn't on the bench: it's LLM-in-the-loop fact extraction, not file retrieval, so the source-document mapping the bench scores against doesn't exist. The fair comparison is positioning, not numbers — covered in that note.
+
+---
+
 ## 0.5.0 — 2026-04-30
 
 ### Added — single-binary install (sqlite-vec + fastembed)
