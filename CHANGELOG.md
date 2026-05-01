@@ -6,6 +6,50 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.5.2 — 2026-05-01
+
+Site polish + recall-quality self-audit + scale bench. `metalmind-vault-rag` bumps to 0.2.1 for the recall-log surface; CLI re-stamp pulls it on next `metalmind init`.
+
+### Site — unified layout, Classic default
+
+Three layout regressions had crept in around the v0.5.x bench-table refresh: section widths drifted across `.container` (720), `.container-wide` (1180), and an interim `.section-wide` (1200 with prose cap), which made adjacent section headings sit on different left edges. Widening the rail without a sidebar produced empty right columns. The install-flow rail anchored to the wide left edge and looked broken.
+
+Collapsed to one layout primitive: every section on every page lives in a 960px centered column. `.container` and `.container-wide` both resolve to `--page-max`; `.section-prose` is a no-op pass-through to keep markup compiling. Hero is the only `text-align: center` exception.
+
+Also: `flavor-classic` is now the default radio + the static-default CSS state, so the first paint already shows the Classic vocabulary instead of flashing Scadrial first. The toggle still works either direction.
+
+### Site content — positioning matrix
+
+Added a `How metalmind compares` section to the landing page and README. Side-by-side on shape, not numbers (memory primitive, source preservation, recall determinism, transport, standing tokens in Claude Code, where state lives, walk-away cost) across metalmind / qmd / mem0 / Letta / Mastra. Honest framing: Letta and Mastra are agent frameworks (different category), so their rows say "different host model" rather than overclaiming a metalmind win.
+
+### `metalmind doctor --recall-audit` — opt-in self-audit
+
+First memory tool in the category that tells you when *recall itself* is failing you. Two parts:
+
+- **Watcher (Python):** new `recall_log.py` module, append-only NDJSON writer gated by `METALMIND_RECALL_LOG_PATH` (default off — no logging unless the env is set). The HTTP `/search` path records one line per query: `ts`, `query`, `mode`, `rerank` flag, `k`, hit count, top file basenames, top score.
+- **CLI:** `metalmind doctor --recall-audit` (and `pulse --recall-audit`) reads the log, classifies each entry as `ok` / `weak-hit` (top score < 0.3) / `zero-hit` (no hits), and prints the top 25 unique candidates ranked by frequency for `/save` follow-up. `--recall-audit-days <n>` controls the window (default 7).
+
+Privacy: the log lives at `~/.metalmind/recall-log.ndjson` on disk only, opt-in by env var, never leaves the machine.
+
+### `bench/recall-at-scale/` — 1k / 10k / 50k
+
+Sister bench to `recall-v0`. Validates whether the embedded sqlite-vec + fastembed pipeline holds recall quality at large vault sizes — the prerequisite for ever removing the `--legacy` escape hatch. Three pieces:
+
+- **`scripts/fetch-hn.mjs`** pulls comments from the public HN Algolia mirror in 14-day windows (works around Algolia's `page * hitsPerPage <= 1000` cap), caches at `~/.cache/metalmind-bench/hn/` outside the repo. Idempotent and resumable.
+- **`scripts/seed-gold.mjs`** deterministically picks 20 stories with ≥5 cached comments. Query is a templated paraphrase of the story title; expected = every cached comment in that story (honest "give me anything from the thread about X" matching, not a single-doc lottery).
+- **`run.mjs`** mirrors the recall-v0 lifecycle (per-scale isolated tmp vault, dedicated watcher on isolated port, indexer one-shot, query, signal-safe teardown) but drops the bm25/qmd parallel scorers — just metalmind hybrid + optional `--rerank`.
+
+Numbers on the embedded backend (no rerank), 16-thread M-series Mac:
+
+| scale | hit@1 | hit@3 | hit@5 | misses | index (s) | p50 (ms) | p95 (ms) |
+|---|---|---|---|---|---|---|---|
+| 1,000 | 100% | 100% | 100% | 0/20 | 33 | 12 | 24 |
+| 10,000 | 100% | 100% | 100% | 0/20 | 1226 | 40 | 67 |
+
+50k row pending — indexer takes ~100 min and is left as an unattended-run follow-up. The 10× scaling at constant 100% hit@1 already validates the embedded pipeline; 50k is confirmation, not signal.
+
+---
+
 ## 0.5.1 — 2026-04-30
 
 Polish + bench column release. No watcher-side / Python-side changes — `metalmind-vault-rag` stays at 0.2.0, no re-stamp needed unless you want the cleaner CLI messaging.

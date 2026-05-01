@@ -8,6 +8,22 @@ vault has 50k notes of plausible noise?"**
 If the small-vault numbers in `recall-v0` are right but this one collapses,
 the embedded-default thesis breaks and `--legacy` shouldn't be removed.
 
+## Results to date
+
+Embedded backend (sqlite-vec + fastembed `BAAI/bge-small-en-v1.5`, 384-dim),
+hybrid mode, no rerank, on a 16-thread M-series Mac:
+
+| scale | hit@1 | hit@3 | hit@5 | misses | index (s) | p50 (ms) | p95 (ms) |
+|---|---|---|---|---|---|---|---|
+| 1,000 | 100% | 100% | 100% | 0/20 | 33 | 12 | 24 |
+| 10,000 | 100% | 100% | 100% | 0/20 | 1226 | 40 | 67 |
+| 50,000 | _pending — indexer takes ~100 min, run with `--scales 50000` separately_ |
+
+Both small scales hit the same 100% top-1 — the embedded retrieval pipeline
+holds up cleanly at 10× the recall-v0 corpus size with sub-100 ms p95
+latency. 50k results land in a follow-up; the framework is here, the
+indexer just needs an unattended hour.
+
 ## Methodology
 
 - **Corpus**: Hacker News comments fetched from the public Algolia mirror

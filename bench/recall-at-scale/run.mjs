@@ -37,7 +37,7 @@ function parseArgs(argv) {
     scales: [1000, 10000, 50000],
     cache: DEFAULT_CACHE,
     port: DEFAULT_PORT,
-    indexTimeoutMs: 30 * 60_000,
+    indexTimeoutMs: 4 * 60 * 60_000,
   };
   for (let i = 2; i < argv.length; i += 1) {
     const a = argv[i];
@@ -205,7 +205,7 @@ async function runScale(scale, port, questions, cache) {
 
   const indexStart = performance.now();
   process.stdout.write(`[scale=${scale}] indexing…\n`);
-  await runOnce('metalmind-vault-rag-indexer', env, tmpRoot, 30 * 60_000);
+  await runOnce('metalmind-vault-rag-indexer', env, tmpRoot, 4 * 60 * 60_000);
   const indexElapsedSec = (performance.now() - indexStart) / 1000;
   process.stdout.write(`[scale=${scale}] indexed in ${indexElapsedSec.toFixed(1)}s\n`);
 

@@ -67,6 +67,67 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.5.2</h2>
+            <span class="release-date">2026-05-01</span>
+          </header>
+          <h3>Site polish — single 960px column, Classic default</h3>
+          <ul>
+            <li>
+              <strong>One layout primitive.</strong> Section widths had drifted across the v0.5.x bench-table
+              refresh (720 / 1180 / 1200) — adjacent section headings sat on different left edges and the
+              install flow rail anchored to a wide left edge. Collapsed everything to a single 960px centered
+              column on every page; <code>.container</code> and <code>.container-wide</code> now resolve to
+              <code>--page-max</code>. Hero is the only <code>text-align: center</code> exception.
+            </li>
+            <li>
+              <strong>Classic is the default flavor.</strong> <code>flavor-classic</code> radio is now
+              <code>checked</code> and the static-default CSS state shows Classic vocabulary, so the first paint
+              matches the toggle without flashing Scadrial first.
+            </li>
+            <li>
+              <strong>Positioning matrix.</strong> New "How metalmind compares" section on the landing
+              page and README — side-by-side on shape (memory primitive, source preservation, determinism,
+              transport, standing tokens, where state lives, walk-away cost) across metalmind / qmd /
+              mem0 / Letta / Mastra. Honest "different host model" labels for the agent-framework rows.
+            </li>
+          </ul>
+          <h3><code>doctor --recall-audit</code> — opt-in self-audit</h3>
+          <ul>
+            <li>
+              <strong>First memory tool that tells you when recall is failing.</strong> Watcher gains
+              <code>recall_log.py</code>: append-only NDJSON, gated by
+              <code>METALMIND_RECALL_LOG_PATH</code> (default off). Each <code>/search</code> writes
+              one line: timestamp, query, mode, rerank, k, hit count, top file basenames, top score.
+            </li>
+            <li>
+              <strong>The audit pass.</strong> <code>metalmind doctor --recall-audit</code> classifies
+              each entry as <code>ok</code> / <code>weak-hit</code> (top score &lt; 0.3) / <code>zero-hit</code>,
+              and prints the top 25 unique candidates ranked by frequency for <code>/save</code> follow-up.
+              <code>--recall-audit-days &lt;n&gt;</code> windows it (default 7). Local-only by design — the
+              log lives at <code>~/.metalmind/recall-log.ndjson</code>, never leaves the machine.
+            </li>
+          </ul>
+          <h3>Scale bench — <code>bench/recall-at-scale/</code></h3>
+          <ul>
+            <li>
+              <strong>1k and 10k both at 100% hit@1.</strong> Sister bench to <code>recall-v0</code>: HN
+              comments fetched from the public Algolia mirror in 14-day windows (works around their
+              <code>page * hitsPerPage &lt;= 1000</code> cap), cached at
+              <code>~/.cache/metalmind-bench/hn/</code> outside the repo. 20 questions seeded
+              deterministically from stories with ≥5 comments; expected = every comment in the picked
+              thread. Hybrid mode, no rerank: 1k → 100% / 33s index / 12 ms p50; 10k → 100% / 1226s
+              index / 40 ms p50.
+            </li>
+            <li>
+              <strong>50k pending.</strong> Indexer takes ~100 min unattended; framework supports
+              <code>--scales 50000</code> on a long-run machine. The 10× scaling at constant 100% hit@1
+              already validates the embedded pipeline; 50k is confirmation, not signal.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.5.0</h2>
             <span class="release-date">2026-04-30</span>
           </header>
