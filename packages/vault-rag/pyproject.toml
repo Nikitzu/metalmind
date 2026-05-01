@@ -1,6 +1,6 @@
 [project]
 name = "metalmind-vault-rag"
-version = "0.2.1"
+version = "0.3.0"
 description = "Obsidian vault RAG service for metalmind — MCP server, watcher, indexer, doctor."
 requires-python = ">=3.11"
 dependencies = [
@@ -23,14 +23,17 @@ dependencies = [
 dev = [
     "pytest>=8.0",
 ]
-# `rerank` pulls torch (~700 MB). Opt-in — the default install stays slim.
-# Users enable it via `uv tool install 'metalmind-vault-rag[rerank]'`.
+# `rerank` is the cross-encoder rescore tier. Opt-in — the default install
+# stays slim. Users enable via `uv tool install 'metalmind-vault-rag[rerank]'`.
+#
+# As of v0.5.2 we run the reranker through onnxruntime + the Rust-backed
+# tokenizers crate, dropping the FlagEmbedding + transformers + torch stack
+# (~2 GB) for ~60 MB of native binaries. The model itself stays the same:
+# BAAI's bge-reranker-v2-m3, served via the Xenova ONNX export.
 rerank = [
-    "FlagEmbedding>=1.3",
-    # transformers 5.x removed XLMRobertaTokenizer.prepare_for_model, which
-    # FlagEmbedding 1.3's reranker still calls — every rerank silently falls
-    # back to embedder ordering. Pin below 5 until FlagEmbedding catches up.
-    "transformers<5",
+    "onnxruntime>=1.17",
+    "tokenizers>=0.15",
+    "huggingface_hub>=0.20",
 ]
 
 [project.scripts]

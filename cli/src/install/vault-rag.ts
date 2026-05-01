@@ -13,8 +13,9 @@ export interface InstallVaultRagOptions {
   templatesDir?: string;
   skipToolInstall?: boolean;
   reinstall?: boolean;
-  /** Python-side optional extras to enable (e.g. `['rerank']` pulls torch +
-   *  FlagEmbedding). Forwarded to `uv tool install` as
+  /** Python-side optional extras to enable (e.g. `['rerank']` pulls
+   *  onnxruntime + tokenizers + huggingface_hub for the cross-encoder
+   *  rescore tier). Forwarded to `uv tool install` as
    *  `metalmind-vault-rag[rerank,...]`. Unknown extras raise at install. */
   extras?: string[];
 }
@@ -59,13 +60,14 @@ async function bundledVaultRagVersion(packageDir: string): Promise<string | null
 }
 
 /** Probe the installed vault-rag venv for the `[rerank]` extra. Returns true
- *  iff FlagEmbedding is importable there — i.e. the user opted into the
- *  heavy rerank tier at some point. Lets `stamp` preserve that state on
- *  upgrade-triggered reinstall instead of silently dropping the extra. */
+ *  iff `onnxruntime` is importable there — i.e. the user opted into the
+ *  rerank tier at some point. Lets `stamp` preserve that state on
+ *  upgrade-triggered reinstall instead of silently dropping the extra.
+ *  (v0.5.2 swapped FlagEmbedding/torch for onnxruntime — same probe shape.) */
 export async function hasRerankExtraInstalled(): Promise<boolean> {
   const res = await runCommand(
     'uv',
-    ['tool', 'run', '--from', VAULT_RAG_PACKAGE, 'python', '-c', 'import FlagEmbedding'],
+    ['tool', 'run', '--from', VAULT_RAG_PACKAGE, 'python', '-c', 'import onnxruntime'],
     { timeoutMs: 15_000 },
   );
   return res.ok;

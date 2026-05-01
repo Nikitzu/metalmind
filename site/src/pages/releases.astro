@@ -67,6 +67,44 @@ const description = 'Release notes and changelog for metalmind — one entry per
 
         <article class="release">
           <header class="release-head">
+            <h2>0.5.3</h2>
+            <span class="release-date">2026-05-01</span>
+          </header>
+          <h3>ONNX reranker — <code>[rerank]</code> extra drops from ~2 GB to ~210 MB</h3>
+          <ul>
+            <li>
+              <strong>~9× smaller install</strong> for the cross-encoder rescore tier.
+              <code>FlagEmbedding</code> + <code>transformers</code> + transitive <code>torch</code>
+              are gone. <code>onnxruntime</code> + <code>tokenizers</code> + <code>huggingface_hub</code>
+              replace them. Same model (BAAI's <code>bge-reranker-v2-m3</code>, served via the
+              <code>onnx-community/bge-reranker-v2-m3-ONNX</code> repo as
+              <code>model_quantized.onnx</code>, ~150 MB).
+            </li>
+            <li>
+              <strong>API unchanged.</strong> <code>rerank.is_dep_available()</code> /
+              <code>rerank.overfetch_k(k)</code> / <code>rerank.rerank_hits(query, hits, k)</code>
+              kept identical signatures. The <code>/rerank/status</code> endpoint, the
+              bench's pre-flight check, and the CLI's auto-bootstrap on first
+              <code>--rerank</code> all work without changes. Hit@K on the recall-v0 fixture
+              is unchanged at 95% (same model, same scoring math).
+            </li>
+            <li>
+              <strong>If you opted into <code>[rerank]</code> previously:</strong> run
+              <code>metalmind stamp</code> (or <code>metalmind init</code> again) — the
+              version bump triggers a force-reinstall of the vault-rag tool venv with the
+              lean deps. About to save you ~1.8 GB on disk.
+            </li>
+            <li>
+              <strong>CI guard:</strong> new canary asserts (a) the ONNX deps import cleanly and
+              (b) <code>torch</code> is NOT importable in a process that only has
+              <code>[rerank]</code> installed — pinned against transitive regressions pulling
+              torch back in.
+            </li>
+          </ul>
+        </article>
+
+        <article class="release">
+          <header class="release-head">
             <h2>0.5.2</h2>
             <span class="release-date">2026-05-01</span>
           </header>

@@ -1,37 +1,43 @@
 """Cross-encoder reranker. Lazy-loaded on first use so the watcher startup
 stays fast and users who never opt-in pay nothing.
 
-Design:
+Design (v0.5.x ONNX path — replaces the FlagEmbedding/torch path):
 - Opt-in via `rerank=True` on search_vault. Off by default.
-- Model: `BAAI/bge-reranker-v2-m3` (multi-lingual, ~500 MB). First call
-  downloads via HuggingFace; subsequent calls are sub-100 ms on CPU for
-  small batches.
-- Overfetch strategy: caller asks for k, we ask Qdrant for max(k*4, 20),
-  re-score, return top k from the re-sorted list. Tune via env
-  `METALMIND_RERANK_OVERFETCH` if needed.
-- Failure mode: if the model can't load (no network, no disk, no
-  FlagEmbedding installed), log once and return the embedder's ordering.
-  Rerank must never be the reason recall fails.
+- Backend: onnxruntime CPU, tokenizers (Rust), huggingface_hub for download.
+  Drops ~2 GB of torch + transformers + FlagEmbedding from the [rerank] extra.
+  Replaces them with ~60 MB of onnxruntime + tokenizers + hub.
+- Model: `onnx-community/bge-reranker-v2-m3-ONNX` (community ONNX export of BAAI's
+  reranker-v2-m3, multi-lingual, ~150 MB quantized). Override with
+  `METALMIND_RERANKER_MODEL` if you want a different ONNX-exported repo.
+- Overfetch strategy: caller asks for k, we ask the store for max(k*4, 20),
+  re-score, return top k from the re-sorted list.
+- Failure mode: if the model can't load (no network, no disk, no ONNX deps
+  installed), log once and return the embedder's ordering. Rerank must
+  never be the reason recall fails.
 """
 
 from __future__ import annotations
 
 import logging
+import math
 import os
 import sys
-from typing import Sequence
+from typing import Any, Sequence
 
 _log = logging.getLogger(__name__)
 
-_RERANKER = None  # lazy — loaded on first call
-_RERANKER_FAILED = False  # sticky after load failure, avoids retry spam
+_SESSION: Any = None
+_TOKENIZER: Any = None
+_FAILED = False
 
-DEFAULT_MODEL = os.environ.get("METALMIND_RERANKER_MODEL", "BAAI/bge-reranker-v2-m3")
+DEFAULT_MODEL = os.environ.get("METALMIND_RERANKER_MODEL", "onnx-community/bge-reranker-v2-m3-ONNX")
+DEFAULT_ONNX_FILE = os.environ.get("METALMIND_RERANKER_ONNX_FILE", "onnx/model_quantized.onnx")
 DEFAULT_OVERFETCH = max(1, int(os.environ.get("METALMIND_RERANK_OVERFETCH", "4")))
+DEFAULT_MAX_LENGTH = int(os.environ.get("METALMIND_RERANK_MAX_LEN", "512"))
 
 
 def is_dep_available() -> bool:
-    """Is the optional FlagEmbedding dependency importable in this process?
+    """Are the optional ONNX-runtime deps importable in this process?
 
     Does NOT trigger a model download — just tells the CLI whether the
     package has been installed with the `[rerank]` extra. Used by the
@@ -40,29 +46,41 @@ def is_dep_available() -> bool:
     user to run a weird `uv tool install ...` command by hand.
     """
     import importlib.util
-    return importlib.util.find_spec("FlagEmbedding") is not None
+
+    return all(
+        importlib.util.find_spec(name) is not None
+        for name in ("onnxruntime", "tokenizers", "huggingface_hub")
+    )
 
 
-def _load_reranker():
-    """Import + construct the reranker once, memoized. Returns None on failure."""
-    global _RERANKER, _RERANKER_FAILED
-    if _RERANKER is not None:
-        return _RERANKER
-    if _RERANKER_FAILED:
+def _sigmoid(x: float) -> float:
+    if x >= 0:
+        ez = math.exp(-x)
+        return 1.0 / (1.0 + ez)
+    ez = math.exp(x)
+    return ez / (1.0 + ez)
+
+
+def _load() -> tuple[Any, Any] | None:
+    """Import + construct session and tokenizer once, memoized. Returns None on failure."""
+    global _SESSION, _TOKENIZER, _FAILED
+    if _SESSION is not None and _TOKENIZER is not None:
+        return _SESSION, _TOKENIZER
+    if _FAILED:
         return None
     try:
-        # FlagEmbedding is a sibling project of BGE — stable cross-encoder
-        # wrapper. Import lazily so users who don't opt into rerank don't
-        # pay the import cost (pulls torch).
-        from FlagEmbedding import FlagReranker  # type: ignore
-    except ImportError:
-        _RERANKER_FAILED = True
+        import onnxruntime
+        from huggingface_hub import hf_hub_download
+        from tokenizers import Tokenizer
+    except ImportError as e:
+        _FAILED = True
         print(
-            "metalmind: --rerank requested but 'FlagEmbedding' is not installed. "
+            f"metalmind: --rerank requested but ONNX deps missing ({e}). "
             "Install with `uv tool install metalmind-vault-rag[rerank]` or drop the flag.",
             file=sys.stderr,
         )
         return None
+
     flavor = (os.environ.get("METALMIND_FLAVOR") or "classic").lower()
     themed = flavor == "scadrial"
     lead = (
@@ -71,26 +89,71 @@ def _load_reranker():
         else "metalmind: reranker warming up"
     )
     print(
-        f"{lead} (first call downloads ~500 MB for '{DEFAULT_MODEL}')…",
+        f"{lead} (first call downloads ~150 MB ONNX model from '{DEFAULT_MODEL}')…",
         file=sys.stderr,
         flush=True,
     )
+
     try:
-        _RERANKER = FlagReranker(DEFAULT_MODEL, use_fp16=True)
-        return _RERANKER
-    except Exception as e:  # pragma: no cover — covers download/disk/OOM
-        _RERANKER_FAILED = True
+        model_path = hf_hub_download(repo_id=DEFAULT_MODEL, filename=DEFAULT_ONNX_FILE)
+        tok_path = hf_hub_download(repo_id=DEFAULT_MODEL, filename="tokenizer.json")
+    except Exception as e:  # pragma: no cover - network/disk issues
+        _FAILED = True
         print(
-            f"metalmind: reranker model '{DEFAULT_MODEL}' failed to load ({e!r}); "
+            f"metalmind: reranker model '{DEFAULT_MODEL}' failed to download ({e!r}); "
             "falling back to embedder ordering.",
             file=sys.stderr,
         )
         return None
 
+    try:
+        tokenizer = Tokenizer.from_file(tok_path)
+        tokenizer.enable_truncation(max_length=DEFAULT_MAX_LENGTH)
+        tokenizer.enable_padding()
+        sess_options = onnxruntime.SessionOptions()
+        threads = int(os.environ.get("METALMIND_RERANK_THREADS", "0"))
+        if threads > 0:
+            sess_options.intra_op_num_threads = threads
+        session = onnxruntime.InferenceSession(
+            model_path,
+            sess_options=sess_options,
+            providers=["CPUExecutionProvider"],
+        )
+    except Exception as e:  # pragma: no cover - corrupt model / OOM
+        _FAILED = True
+        print(
+            f"metalmind: reranker session/tokenizer init failed ({e!r}); "
+            "falling back to embedder ordering.",
+            file=sys.stderr,
+        )
+        return None
+
+    _SESSION = session
+    _TOKENIZER = tokenizer
+    return _SESSION, _TOKENIZER
+
 
 def overfetch_k(k: int) -> int:
-    """How many raw hits to pull from Qdrant when reranking is requested."""
+    """How many raw hits to pull from the store when reranking is requested."""
     return max(k, k * DEFAULT_OVERFETCH, 20)
+
+
+def _score_batch(session: Any, tokenizer: Any, pairs: list[tuple[str, str]]) -> list[float]:
+    """Run a single batch of (query, doc) pairs through the cross-encoder."""
+    import numpy as np
+
+    encs = tokenizer.encode_batch(pairs)
+    ids = np.array([enc.ids for enc in encs], dtype=np.int64)
+    mask = np.array([enc.attention_mask for enc in encs], dtype=np.int64)
+
+    inputs: dict[str, Any] = {"input_ids": ids, "attention_mask": mask}
+    input_names = {i.name for i in session.get_inputs()}
+    if "token_type_ids" in input_names:
+        inputs["token_type_ids"] = np.zeros_like(ids)
+
+    out = session.run(None, inputs)[0]
+    flat = out.reshape(-1).tolist()
+    return [_sigmoid(float(x)) for x in flat]
 
 
 def rerank_hits(query: str, hits: Sequence[dict], k: int) -> list[dict]:
@@ -103,18 +166,18 @@ def rerank_hits(query: str, hits: Sequence[dict], k: int) -> list[dict]:
     """
     if not hits:
         return []
-    reranker = _load_reranker()
-    if reranker is None:
+    loaded = _load()
+    if loaded is None:
         return list(hits)[:k]
+    session, tokenizer = loaded
+
     try:
-        pairs = [[query, h.get("text", "")] for h in hits]
-        scores = reranker.compute_score(pairs, normalize=True)
-    except Exception as e:  # pragma: no cover
-        _log.warning("reranker.compute_score failed: %r; falling back", e)
+        pairs: list[tuple[str, str]] = [(query, str(h.get("text", ""))) for h in hits]
+        scores = _score_batch(session, tokenizer, pairs)
+    except Exception as e:
+        _log.warning("reranker scoring failed: %r; falling back", e)
         return list(hits)[:k]
 
-    # Stable sort by rerank score keeps original order on ties so retrieval
-    # ordering is the deterministic tie-breaker.
     scored = list(zip(hits, scores))
     scored.sort(key=lambda pair: pair[1], reverse=True)
     out: list[dict] = []

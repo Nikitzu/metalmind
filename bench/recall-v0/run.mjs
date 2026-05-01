@@ -246,7 +246,7 @@ async function runScale(scale, port, questions) {
       process.stdout.write(`[scale=${scale}] rerank=engaged (cross-encoder loadable)\n`);
     } else {
       process.stdout.write(
-        `[scale=${scale}] rerank=DISABLED — FlagEmbedding not installed in the watcher venv.\n` +
+        `[scale=${scale}] rerank=DISABLED — ONNX rerank deps not installed in the watcher venv.\n` +
         `  Install with \`uv pip install --python <venv>/bin/python "metalmind-vault-rag[rerank]"\`\n` +
         `  or \`uv sync --extra rerank\` from packages/vault-rag. The rr column will be left null.\n`,
       );

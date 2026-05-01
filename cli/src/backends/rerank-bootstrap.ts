@@ -74,8 +74,8 @@ async function rerankStatus(ep: string): Promise<RerankStatus> {
 }
 
 /** Ensure the `--rerank` recall tier is ready to use on this laptop. If the
- *  Python-side `FlagEmbedding` dep is missing, run the one-time `[rerank]`
- *  extra install and restart the watcher so the new process picks it up.
+ *  Python-side ONNX deps are missing, run the one-time `[rerank]`
+ *  extra install and restart the watcher so the new process picks them up.
  *
  *  Returns `true` when rerank is (or was just made) available. Returns `false`
  *  when the watcher HTTP endpoint is unreachable — caller decides whether to
@@ -96,11 +96,11 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
 
   if (initial === 'stale-watcher') {
     progress(
-      'watcher predates the reranker feature — upgrading the vault-rag package and enabling the extra (one-time ~1.2 GB download)…',
+      'watcher predates the reranker feature — upgrading the vault-rag package and enabling the extra (one-time ~210 MB download)…',
     );
   } else {
     progress(
-      'enabling reranker — one-time install (~1.2 GB: torch + FlagEmbedding + model on first use)…',
+      'enabling reranker — one-time install (~210 MB: onnxruntime + tokenizers + ~150 MB ONNX model on first use)…',
     );
   }
   await installVaultRag({ extras: ['rerank'] });

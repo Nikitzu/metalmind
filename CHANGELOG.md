@@ -6,6 +6,36 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.5.3 — 2026-05-01
+
+ONNX-based reranker. `[rerank]` extra drops from ~2 GB to ~210 MB (~9× smaller install). Same model (BAAI's `bge-reranker-v2-m3`), same scoring shape, same public API on the rerank module — the watcher and the CLI don't notice.
+
+`metalmind-vault-rag` bumps to 0.3.0 (breaking — the `[rerank]` extra changed shape; users with the extra installed need a `metalmind stamp` to get the new deps).
+
+### What changed under the hood
+
+- **Out:** `FlagEmbedding>=1.3` + `transformers<5` + transitive `torch` (~700 MB by itself, ~2 GB total install).
+- **In:** `onnxruntime>=1.17` + `tokenizers>=0.15` + `huggingface_hub>=0.20` (~60 MB total). Native binaries, no Python ML framework dragged in.
+- **Model:** `onnx-community/bge-reranker-v2-m3-ONNX` (HF community ONNX export of the same BAAI model, `model_quantized.onnx`, ~150 MB on first download). Override via `METALMIND_RERANKER_MODEL` and `METALMIND_RERANKER_ONNX_FILE` env vars.
+
+### What stays the same
+
+- `rerank.is_dep_available()` / `rerank.overfetch_k(k)` / `rerank.rerank_hits(query, hits, k)` keep the exact same signatures — the `/rerank/status` endpoint, the bench's pre-flight check, and the CLI's auto-bootstrap on first `--rerank` all work without changes.
+- Recall quality is the same model, so hit@K is unchanged on the bench fixtures (verified at 100 notes: hybrid+rerank still hits @5 = 95%).
+- Failure mode unchanged — when ONNX deps are missing or download fails, rerank silently falls back to embedder ordering. Recall must never fail because rerank failed.
+
+### What you need to do
+
+- **Default install (no `[rerank]`):** nothing — the default install stays slim and never had FlagEmbedding.
+- **You opted into `[rerank]` previously:** run `metalmind stamp` (or `metalmind init` again). The version bump triggers a force-reinstall of the vault-rag tool venv with the new lean deps. About to save you ~1.8 GB on disk.
+
+### Tests + bench
+
+- New CI canary in `tests/test_rerank_compat.py` asserts (a) the ONNX deps import cleanly and (b) `torch` is NOT importable in a process that only has `[rerank]` installed — pinned guard against future transitive regressions pulling torch back in.
+- `bench/recall-v0/` and `bench/recall-at-scale/` runners updated to print the right diagnostic when ONNX rerank deps are missing.
+
+---
+
 ## 0.5.2 — 2026-05-01
 
 Site polish + recall-quality self-audit + scale bench. `metalmind-vault-rag` bumps to 0.2.1 for the recall-log surface; CLI re-stamp pulls it on next `metalmind init`.

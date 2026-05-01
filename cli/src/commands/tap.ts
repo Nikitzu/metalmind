@@ -53,7 +53,7 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
 
   if (opts.rerank) {
     // One-time bootstrap: installs `metalmind-vault-rag[rerank]` and kicks the
-    // watcher so the new process picks up FlagEmbedding. No-op after the first
+    // watcher so the new process picks up onnxruntime. No-op after the first
     // successful call. Falls through silently if the watcher HTTP endpoint is
     // unreachable (stdio MCP fallback still works without rerank).
     const ready = await ensureRerankExtra({
