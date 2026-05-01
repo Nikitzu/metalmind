@@ -7,7 +7,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from . import search
+from . import recall_log, search
 from .indexer import reindex_paths
 
 DEFAULT_HOST = "127.0.0.1"
@@ -57,10 +57,9 @@ class _Handler(BaseHTTPRequestHandler):
                 if not query.strip():
                     self._send_json(400, {"error": "query is required"})
                     return
-                self._send_json(
-                    200,
-                    {"hits": search.search_vault(query, k, rerank=rerank, mode=mode)},
-                )
+                hits = search.search_vault(query, k, rerank=rerank, mode=mode)
+                recall_log.record(query, mode=mode, rerank=rerank, k=k, hits=hits)
+                self._send_json(200, {"hits": hits})
             elif self.path == "/expand":
                 query = str(body.get("query", ""))
                 k = int(body.get("k") or 5)

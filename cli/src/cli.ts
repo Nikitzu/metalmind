@@ -72,12 +72,28 @@ program
   .command('doctor')
   .description('Diagnose installation state (classic alias for `pulse`)')
   .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
-  .action((cmdOpts: { deep?: boolean }) => doctor('doctor', { deep: cmdOpts.deep }));
+  .option('--recall-audit', 'Replay the recall log; surface zero-hit and weak queries as /save candidates')
+  .option('--recall-audit-days <n>', 'Window for --recall-audit (default 7)', (v) => Number(v))
+  .action((cmdOpts: { deep?: boolean; recallAudit?: boolean; recallAuditDays?: number }) =>
+    doctor('doctor', {
+      deep: cmdOpts.deep,
+      recallAudit: cmdOpts.recallAudit,
+      recallAuditDays: cmdOpts.recallAuditDays,
+    }),
+  );
 program
   .command('pulse')
   .description('Pulse-check the install — prereqs, config, MCP state (Seeker)')
   .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
-  .action((cmdOpts: { deep?: boolean }) => doctor('pulse', { deep: cmdOpts.deep }));
+  .option('--recall-audit', 'Replay the recall log; surface zero-hit and weak queries as /save candidates')
+  .option('--recall-audit-days <n>', 'Window for --recall-audit (default 7)', (v) => Number(v))
+  .action((cmdOpts: { deep?: boolean; recallAudit?: boolean; recallAuditDays?: number }) =>
+    doctor('pulse', {
+      deep: cmdOpts.deep,
+      recallAudit: cmdOpts.recallAudit,
+      recallAuditDays: cmdOpts.recallAuditDays,
+    }),
+  );
 program
   .command('uninstall')
   .description('Reversible teardown')

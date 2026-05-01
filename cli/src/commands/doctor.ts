@@ -1,5 +1,5 @@
-import { existsSync } from 'node:fs';
-import { platform } from 'node:os';
+import { existsSync, readFileSync } from 'node:fs';
+import { homedir, platform } from 'node:os';
 import { join } from 'node:path';
 import { intro, log, outro } from '@clack/prompts';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
@@ -9,7 +9,12 @@ import { runCommand } from '../util/exec.js';
 
 export interface DoctorOptions {
   deep?: boolean;
+  recallAudit?: boolean;
+  recallAuditDays?: number;
 }
+
+const DEFAULT_RECALL_LOG_PATH = join(homedir(), '.metalmind', 'recall-log.ndjson');
+const ZERO_HIT_SCORE_FLOOR = 0.3;
 
 export interface DeepCheck {
   name: string;
@@ -246,7 +251,109 @@ async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   return [...docker, qdrant!, ollama!, watcher!, http!, ...stamps];
 }
 
+interface RecallLogEntry {
+  ts: string;
+  query: string;
+  mode: string;
+  rerank: boolean;
+  k: number;
+  hit_count: number;
+  top_files: string[];
+  top_score: number | null;
+}
+
+function parseRecallLog(path: string, sinceMs: number): RecallLogEntry[] {
+  if (!existsSync(path)) return [];
+  const text = readFileSync(path, 'utf8');
+  const out: RecallLogEntry[] = [];
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    try {
+      const e = JSON.parse(line) as RecallLogEntry;
+      const t = Date.parse(e.ts);
+      if (Number.isFinite(t) && t >= sinceMs) out.push(e);
+    } catch {
+      // skip malformed lines
+    }
+  }
+  return out;
+}
+
+function classifyEntry(e: RecallLogEntry): 'zero-hit' | 'weak-hit' | 'ok' {
+  if (e.hit_count === 0) return 'zero-hit';
+  const top = e.top_score;
+  if (typeof top === 'number' && top < ZERO_HIT_SCORE_FLOOR) return 'weak-hit';
+  return 'ok';
+}
+
+async function runRecallAudit(opts: DoctorOptions): Promise<void> {
+  const path = process.env.METALMIND_RECALL_LOG_PATH ?? DEFAULT_RECALL_LOG_PATH;
+  const days = opts.recallAuditDays ?? 7;
+  const sinceMs = Date.now() - days * 86400 * 1000;
+
+  log.step(`Recall audit (last ${days} day(s))`);
+  if (!existsSync(path)) {
+    log.warn(`No recall log at ${path}.`);
+    log.info(
+      'Set `METALMIND_RECALL_LOG_PATH=~/.metalmind/recall-log.ndjson` in the watcher env, ' +
+        'restart the watcher, and run a few queries before re-running this audit.',
+    );
+    return;
+  }
+
+  const entries = parseRecallLog(path, sinceMs);
+  if (entries.length === 0) {
+    log.info(`Log exists at ${path} but no entries within the window.`);
+    return;
+  }
+
+  const buckets = { 'zero-hit': 0, 'weak-hit': 0, ok: 0 };
+  const weak: RecallLogEntry[] = [];
+  for (const e of entries) {
+    const cls = classifyEntry(e);
+    buckets[cls] += 1;
+    if (cls !== 'ok') weak.push(e);
+  }
+
+  log.success(
+    `${entries.length} queries scanned · ok=${buckets.ok} · weak=${buckets['weak-hit']} · zero=${buckets['zero-hit']}`,
+  );
+
+  if (weak.length === 0) {
+    log.success('No weak or zero-hit queries — recall is healthy on the recent window.');
+    return;
+  }
+
+  log.step('Candidates for /save (queries that returned little)');
+  const groups = new Map<string, { query: string; count: number; cls: string }>();
+  for (const e of weak) {
+    const key = e.query.trim().toLowerCase();
+    const cls = classifyEntry(e);
+    const g = groups.get(key);
+    if (g) {
+      g.count += 1;
+      if (cls === 'zero-hit') g.cls = 'zero-hit';
+    } else {
+      groups.set(key, { query: e.query, count: 1, cls });
+    }
+  }
+  const ranked = [...groups.values()].sort((a, b) => b.count - a.count).slice(0, 25);
+  for (const g of ranked) {
+    const tag = g.cls === 'zero-hit' ? '0-hit' : 'weak ';
+    const times = g.count > 1 ? ` (${g.count}×)` : '';
+    log.info(`[${tag}]${times} ${g.query}`);
+  }
+  log.info('');
+  log.info('Workflow: open the relevant note in your vault, refine it, then `/save` ' + 'to surface a future query.');
+}
+
 export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Promise<void> {
+  if (opts.recallAudit) {
+    intro(`metalmind ${invokedAs} --recall-audit`);
+    await runRecallAudit(opts);
+    outro('Audit complete.');
+    return;
+  }
   intro(`metalmind ${invokedAs}${opts.deep ? ' --deep' : ''}`);
 
   log.step('Prerequisites');
