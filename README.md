@@ -84,6 +84,24 @@ Hybrid is the default. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s 
 
 qmd ships the same shape (BM25 + vector + RRF + rerank) with different defaults — `qwen3-reranker`, a fine-tuned 1.7B query expansion model, GGUF stack, ~2 GB on first run. qmd wins hit@5 at small scales (more recall headroom from query expansion); metalmind wins hit@1 across every scale (better top-of-list precision after the v0.4.0 weighted-RRF fix). Reproduce with `node bench/recall-v0/run.mjs --scales 12,100,500,1000 --rerank` from the repo root.
 
+## How metalmind compares
+
+Numbers above are recall on a fixed corpus. The shape comparison — what each tool stores, how the agent reaches it, where the data lives — matters just as much when picking one:
+
+| Dimension | metalmind | [qmd](https://github.com/tobi/qmd) | [mem0](https://mem0.ai) | [Letta](https://www.letta.com) | [Mastra](https://mastra.ai) |
+|---|---|---|---|---|---|
+| Memory primitive | Markdown chunks (file-mapped) | Markdown chunks (file-mapped) | LLM-extracted facts | Managed memory blocks | Threads + working memory |
+| Source preservation | Yes — notes intact | Yes — files intact | No — facts replace docs | Partial — buffer + summaries | Yes — message history |
+| Recall determinism | Deterministic | Deterministic | LLM extracts on every write | LLM mediates updates | Deterministic + LLM summary |
+| How agents call it | Bash → loopback HTTP | Bash CLI (MCP optional) | MCP server or SDK | HTTP server (own runtime) | TS framework API |
+| Standing tokens in Claude Code | ~519 (prose in `CLAUDE.md`) | ~0 (CLI; MCP opt-in) | ~1,319 (3 MCP schemas) | n/a — different host model | n/a — different host model |
+| Where state lives | Local vault + sqlite-vec | Local files + sqlite | Cloud or self-hosted vector DB | Cloud or self-hosted Letta server | Pluggable (pgvector / cloud) |
+| Walk-away cost | Zero — vault is plain markdown | Zero — files stay readable | Export needed; facts ≠ docs | Export needed; data lives in Letta | Depends on chosen store |
+
+**Letta and Mastra are agent frameworks with built-in memory** — different category from metalmind, qmd, and mem0 (which are memory *tools* you bolt onto an existing host). Listed because they show up in "memory for AI" searches; "different host model" rows are honest about the apples-vs-oranges shape, not a metalmind win.
+
+**Pick metalmind** when your notes are the source of truth and you want Claude Code to read them verbatim with zero standing tax. Pick **mem0** for fact extraction from conversations. Pick **Letta** or **Mastra** when you're building agents inside their framework. Pick **qmd** if you want the same shape on a non-Claude host.
+
 ## Who should NOT use metalmind
 
 Honest anti-personas — install the wrong tool and you'll bounce in an hour:
@@ -111,7 +129,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.5.0`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.5.1`.
 
 **From source (for hacking on metalmind itself):**
 

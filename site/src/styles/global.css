@@ -556,6 +556,48 @@ pre {
   color: var(--copper);
 }
 
+.compare-bench {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.compare-bench .bench-note,
+.compare-bench .bench-headline {
+  margin: 0.6rem 0 0 0;
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+.compare-bench .bench-headline {
+  color: var(--fg);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.compare-bench .bench-headline strong {
+  color: var(--copper);
+}
+.compare-table {
+  min-width: 900px;
+  font-size: 0.84rem;
+}
+.compare-table th,
+.compare-table td {
+  padding: 0.5rem 0.55rem;
+  vertical-align: top;
+}
+.compare-table tbody td:last-child,
+.compare-table thead th:last-child {
+  text-align: left;
+  font-variant-numeric: normal;
+}
+.compare-table thead th a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted color-mix(in srgb, var(--copper) 50%, transparent);
+}
+.compare-table thead th a:hover {
+  color: var(--copper);
+}
+
 /* Releases page */
 .release-hero {
   padding-top: 2.5rem;

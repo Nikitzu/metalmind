@@ -73,7 +73,7 @@ const description =
             <span>npm install -g metalmind</span>
           </div>
           <div class="install-note">
-            <a class="install-chip install-chip-live" href="https://www.npmjs.com/package/metalmind" target="_blank" rel="noopener">Live on npm · v0.5.0</a>
+            <a class="install-chip install-chip-live" href="https://www.npmjs.com/package/metalmind" target="_blank" rel="noopener">Live on npm · v0.5.1</a>
             <span>Then run <code>metalmind init</code>.</span>
           </div>
           <p class="install-scope">
@@ -294,6 +294,104 @@ const description =
               <em>"which service calls this handler?"</em> across five repos.
             </div>
           </div>
+        </div>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container" aria-labelledby="compare-title">
+        <h2 id="compare-title">How metalmind compares</h2>
+        <p>
+          Five "memory for AI" tools, side-by-side on the dimensions that actually differ.
+          Recall numbers on a fixed corpus are above; this is the <em>shape</em> comparison —
+          what each tool stores, how the agent reaches it, and where your data lives.
+        </p>
+        <div class="compare-bench">
+          <table class="bench-table compare-table">
+            <thead>
+              <tr>
+                <th scope="col">Dimension</th>
+                <th scope="col">metalmind</th>
+                <th scope="col"><a href="https://github.com/tobi/qmd" target="_blank" rel="noopener">qmd</a></th>
+                <th scope="col"><a href="https://mem0.ai" target="_blank" rel="noopener">mem0</a></th>
+                <th scope="col"><a href="https://www.letta.com" target="_blank" rel="noopener">Letta</a></th>
+                <th scope="col"><a href="https://mastra.ai" target="_blank" rel="noopener">Mastra</a></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="bench-row-highlight">
+                <th scope="row">Memory primitive</th>
+                <td>Markdown chunks (file-mapped)</td>
+                <td>Markdown chunks (file-mapped)</td>
+                <td>LLM-extracted facts</td>
+                <td>Managed memory blocks</td>
+                <td>Threads + working memory</td>
+              </tr>
+              <tr>
+                <th scope="row">Source preservation</th>
+                <td>Yes — notes intact</td>
+                <td>Yes — files intact</td>
+                <td>No — facts replace docs</td>
+                <td>Partial — buffer + summaries</td>
+                <td>Yes — message history</td>
+              </tr>
+              <tr>
+                <th scope="row">Recall determinism</th>
+                <td>Deterministic</td>
+                <td>Deterministic</td>
+                <td>LLM extracts on every write</td>
+                <td>LLM mediates updates</td>
+                <td>Deterministic + LLM summary</td>
+              </tr>
+              <tr>
+                <th scope="row">How agents call it</th>
+                <td>Bash → loopback HTTP</td>
+                <td>Bash CLI (MCP optional)</td>
+                <td>MCP server or SDK</td>
+                <td>HTTP server (own runtime)</td>
+                <td>TS framework API</td>
+              </tr>
+              <tr>
+                <th scope="row">Standing tokens in Claude Code</th>
+                <td>~519 (prose in CLAUDE.md)</td>
+                <td>~0 (CLI; MCP opt-in)</td>
+                <td>~1,319 (3 MCP schemas)</td>
+                <td>n/a — different host model</td>
+                <td>n/a — different host model</td>
+              </tr>
+              <tr>
+                <th scope="row">Where state lives</th>
+                <td>Local Obsidian vault + sqlite-vec</td>
+                <td>Local files + sqlite</td>
+                <td>Cloud or self-hosted vector DB</td>
+                <td>Cloud or self-hosted Letta server</td>
+                <td>Pluggable (pgvector / cloud)</td>
+              </tr>
+              <tr>
+                <th scope="row">Walk-away cost</th>
+                <td>Zero — vault is plain markdown</td>
+                <td>Zero — files stay readable</td>
+                <td>Export needed; facts ≠ docs</td>
+                <td>Export needed; data lives in Letta</td>
+                <td>Depends on chosen store</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="bench-note">
+            Letta and Mastra are <strong>agent frameworks with built-in memory</strong> —
+            a different category from metalmind, qmd, and mem0 (memory <em>tools</em> you bolt
+            onto an existing host). Listed anyway because they surface in "memory for AI"
+            searches; "different host model" rows are honest about the apples-vs-oranges
+            shape, not a metalmind win.
+          </p>
+          <p class="bench-headline">
+            <strong>Pick metalmind</strong> when your notes are the source of truth and you
+            want Claude Code to read them verbatim with zero standing tax. Pick
+            <strong>mem0</strong> for fact extraction from conversations. Pick
+            <strong>Letta</strong> or <strong>Mastra</strong> when you're building agents
+            inside their framework. Pick <strong>qmd</strong> if you want the same shape on
+            a non-Claude host.
+          </p>
         </div>
       </section>
 
