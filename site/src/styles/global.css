@@ -28,8 +28,9 @@
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Geometry */
-  --prose-max: 720px;
-  --wide-max: 1120px;
+  --prose-max: 960px;
+  --wide-max: 960px;
+  --page-max: 960px;
   --radius-sm: 4px;
   --radius-md: 8px;
 }
@@ -152,16 +153,20 @@ pre {
   background: linear-gradient(90deg, transparent, rgba(212, 161, 74, 0.35), transparent);
 }
 
-.container {
-  max-width: var(--prose-max);
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
+/* Single page column — every section lives on the same centered axis. Tables,
+   grids, and the install flow share the same width as prose; nothing left- or
+   right-anchored, no separate rail. The simplest layout that doesn't drift. */
+.container,
 .container-wide {
-  max-width: var(--wide-max);
-  margin: 0 auto;
-  padding: 0 1.5rem;
+  max-width: var(--page-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
+/* .section-prose retained as a pass-through (no behavior) so existing class
+   usage keeps compiling; remove on next pass. */
+.section-prose {}
 
 /* Nav */
 .nav {
@@ -241,7 +246,7 @@ pre {
   font-size: 0.8rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--copper);
+  color: var(--steel);
   margin-bottom: 1.25rem;
   opacity: 0.85;
 }
@@ -402,7 +407,7 @@ pre {
 .feature-title {
   font-family: var(--font-mono);
   font-size: 0.9rem;
-  color: var(--copper);
+  color: var(--steel);
   margin-bottom: 0.5rem;
   letter-spacing: 0.02em;
 }
@@ -576,8 +581,13 @@ pre {
   color: var(--copper);
 }
 .compare-table {
-  min-width: 900px;
+  width: 100%;
   font-size: 0.84rem;
+}
+@media (max-width: 900px) {
+  .compare-table {
+    min-width: 760px;
+  }
 }
 .compare-table th,
 .compare-table td {
@@ -878,42 +888,49 @@ pre {
   font-family: var(--font-mono);
   color: var(--fg-strong);
 }
-.cmd-table td.cmd .classic {
+.cmd-table td.cmd .scadrial {
   display: none;
 }
-.cmd-table td.cmd .scadrial {
+.cmd-table td.cmd .classic {
   display: inline;
 }
 .cmd-table td.desc {
   color: var(--fg-muted);
 }
-
-body:has(#flavor-classic:checked) .cmd-table td.cmd .scadrial {
-  display: none;
-}
-body:has(#flavor-classic:checked) .cmd-table td.cmd .classic {
-  display: inline;
-}
-body:has(#flavor-classic:checked) .cmd-table td.metal {
+.cmd-table td.metal {
   color: var(--steel);
 }
 
-/* Global flavor-swap utilities (applies anywhere on the page) */
-.scadrial-only {
+body:has(#flavor-scadrial:checked) .cmd-table td.cmd .classic {
+  display: none;
+}
+body:has(#flavor-scadrial:checked) .cmd-table td.cmd .scadrial {
   display: inline;
+}
+body:has(#flavor-scadrial:checked) .cmd-table td.metal {
+  color: var(--copper);
+}
+
+/* Global flavor-swap utilities (Classic is default; Scadrial toggles in) */
+.scadrial-only {
+  display: none;
 }
 .classic-only {
-  display: none;
-}
-body:has(#flavor-classic:checked) .scadrial-only {
-  display: none;
-}
-body:has(#flavor-classic:checked) .classic-only {
   display: inline;
 }
-body:has(#flavor-classic:checked) .hero-eyebrow,
-body:has(#flavor-classic:checked) .feature-title {
+body:has(#flavor-scadrial:checked) .scadrial-only {
+  display: inline;
+}
+body:has(#flavor-scadrial:checked) .classic-only {
+  display: none;
+}
+.hero-eyebrow,
+.feature-title {
   color: var(--steel);
+}
+body:has(#flavor-scadrial:checked) .hero-eyebrow,
+body:has(#flavor-scadrial:checked) .feature-title {
+  color: var(--copper);
 }
 
 /* How it works diagram */
