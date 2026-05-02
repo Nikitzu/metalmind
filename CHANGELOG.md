@@ -6,6 +6,16 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.5.6 — 2026-05-02
+
+### Fixed
+
+- **`metalmind init --yes` no longer silently disables agent teams.** In 0.5.5 the `--yes` default for teams was `false` while the interactive prompt's default was `true`. After 0.5.5 made `applyAgentTeams({ enable: false })` actively *clear* the keys (rather than just skip writing), passing `--yes` to a working setup wiped the agent-teams config out of `~/.claude/settings.json`. Default is now `true` to match the interactive prompt and the other `--yes` defaults (`vaultGit`, `autoInstallUv`). Use `--no-teams` to opt out explicitly.
+
+If you ran `metalmind init --yes` on 0.5.5 and noticed your team setup stopped working, re-run `metalmind init --yes` on 0.5.6 (or `metalmind init --yes --teams` on 0.5.5) — the keys come back idempotently.
+
+---
+
 ## 0.5.5 — 2026-05-02
 
 Fresh-laptop fixes. Anyone who hit the prereq wall, the `init`-from-`/` crash, or the dead agent-teams flag in 0.5.4 should upgrade.

@@ -97,7 +97,7 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
       wizardOpts.graphify ??= true;
       wizardOpts.flavor ??= 'scadrial';
       wizardOpts.memoryRouting ??= 'vault-only';
-      wizardOpts.enableTeams ??= false;
+      wizardOpts.enableTeams ??= true;
       wizardOpts.eodHook ??= true;
       wizardOpts.notifications ??= process.platform === 'darwin';
       wizardOpts.vaultGit ??= true;
