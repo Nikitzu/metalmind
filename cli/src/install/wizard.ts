@@ -261,7 +261,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     const result = await installGraphify();
     if (result.alreadyInstalled) log.info('  graphify already on PATH — skipped install');
     if (result.installed) log.success('  uv tool install graphifyy complete');
-    if (result.claudeWired) log.info('  graphify claude install wired MCP + PreToolUse hook');
+    if (result.claudeWired) log.info('  graphify claude install wired PreToolUse hook (no $HOME stamp)');
+    if (result.legacyHomeStampRemoved)
+      log.info('  cleaned legacy graphify stamp from ~/CLAUDE.md');
     graphifyHookWired = result.claudeWired;
   }
 

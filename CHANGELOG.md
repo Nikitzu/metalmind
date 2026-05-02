@@ -6,6 +6,15 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.5.7 — 2026-05-02
+
+### Fixed
+
+- **`graphify claude install` no longer pollutes `~/CLAUDE.md`.** Earlier metalmind versions ran the command with cwd = `$HOME`, which caused graphify to write a `~/CLAUDE.md` stamp. Claude Code walks parent directories looking for `CLAUDE.md`, so a file at `$HOME` injects graphify-specific instructions ("read `graphify-out/GRAPH_REPORT.md`", etc.) into every session under `$HOME` — including unrelated repos that don't even have a graphify graph. metalmind now spawns graphify from a throwaway temp directory; the useful side-effect (the conditional `PreToolUse` hook in `~/.claude/settings.json`, which only fires when `graphify-out/graph.json` exists in the cwd) still gets wired correctly. The `--no-graphify` opt-out is unchanged.
+- **Legacy cleanup on every `init`.** If you have a stale `~/CLAUDE.md` containing only a `## graphify` section from an earlier metalmind version, it gets removed automatically. If the file has other content alongside the graphify block, only the graphify section is stripped — the rest is preserved.
+
+---
+
 ## 0.5.6 — 2026-05-02
 
 ### Fixed

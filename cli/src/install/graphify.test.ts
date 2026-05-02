@@ -1,4 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { existsSync } from 'node:fs';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommandResult } from '../util/exec.js';
 
 const runCommand = vi.hoisted(() =>
@@ -42,11 +46,14 @@ describe('graphify install', () => {
     expect(runCommand.mock.calls[1]?.[1]).toEqual(['tool', 'install', 'graphifyy']);
     expect(runCommand.mock.calls[3]?.[0]).toBe('graphify');
     expect(runCommand.mock.calls[3]?.[1]).toEqual(['claude', 'install']);
-    // cwd must be pinned to $HOME — graphify's claude install writes CLAUDE.md
-    // into the inherited cwd, and `/` (read-only on macOS) breaks it.
+    // cwd must be a throwaway temp dir, NOT $HOME — graphify stamps a
+    // CLAUDE.md in cwd, and we don't want that file at $HOME polluting
+    // every Claude Code session in any subfolder of home.
     const claudeInstallOpts = runCommand.mock.calls[3]?.[2] as { cwd?: string } | undefined;
     expect(claudeInstallOpts?.cwd).toBeTruthy();
     expect(claudeInstallOpts?.cwd).not.toBe('/');
+    expect(claudeInstallOpts?.cwd).not.toBe(process.env.HOME);
+    expect(claudeInstallOpts?.cwd).toMatch(/metalmind-graphify-/);
   });
 
   it('skips uv tool install when graphify already on PATH', async () => {
@@ -94,6 +101,62 @@ describe('graphify install', () => {
     expect(result.installed).toBe(true);
     expect(result.claudeWired).toBe(false);
     expect(runCommand).toHaveBeenCalledTimes(2);
+});
+
+describe('cleanLegacyHomeClaudeMdStamp', () => {
+  let tmp: string;
+
+  beforeEach(async () => {
+    tmp = await mkdtemp(join(tmpdir(), 'metalmind-cleanup-'));
+  });
+
+  afterEach(async () => {
+    await rm(tmp, { recursive: true, force: true });
+  });
+
+  it('returns false when ~/CLAUDE.md does not exist', async () => {
+    const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
+    const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
+    expect(removed).toBe(false);
+  });
+
+  it('returns false when file exists but has no graphify section', async () => {
+    await writeFile(join(tmp, 'CLAUDE.md'), '# my notes\nrandom content\n', 'utf8');
+    const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
+    const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
+    expect(removed).toBe(false);
+    const after = await readFile(join(tmp, 'CLAUDE.md'), 'utf8');
+    expect(after).toContain('# my notes');
+  });
+
+  it('deletes the file when it only contains the graphify section', async () => {
+    await writeFile(
+      join(tmp, 'CLAUDE.md'),
+      '## graphify\n\nThis project has a graphify knowledge graph at graphify-out/.\n',
+      'utf8',
+    );
+    const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
+    const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
+    expect(removed).toBe(true);
+    expect(existsSync(join(tmp, 'CLAUDE.md'))).toBe(false);
+  });
+
+  it('strips only the graphify section, preserves other user content', async () => {
+    await writeFile(
+      join(tmp, 'CLAUDE.md'),
+      '# My personal notes\n\nKept text\n\n## graphify\n\nThis project has a graphify knowledge graph at graphify-out/.\n\n## Another section\n\nAlso kept\n',
+      'utf8',
+    );
+    const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
+    const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
+    expect(removed).toBe(true);
+    const after = await readFile(join(tmp, 'CLAUDE.md'), 'utf8');
+    expect(after).toContain('# My personal notes');
+    expect(after).toContain('Kept text');
+    expect(after).toContain('## Another section');
+    expect(after).toContain('Also kept');
+    expect(after).not.toContain('graphify');
+  });
   });
 
   it('uninstall runs graphify claude uninstall then uv tool uninstall', async () => {
