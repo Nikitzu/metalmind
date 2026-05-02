@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommandResult } from '../util/exec.js';
 
 const runCommand = vi.hoisted(() =>
-  vi.fn<(cmd: string, args?: string[], opts?: { timeoutMs?: number }) => Promise<CommandResult>>(),
+  vi.fn<
+    (
+      cmd: string,
+      args?: string[],
+      opts?: { timeoutMs?: number; cwd?: string },
+    ) => Promise<CommandResult>
+  >(),
 );
 
 vi.mock('../util/exec.js', () => ({ runCommand }));
@@ -36,6 +42,11 @@ describe('graphify install', () => {
     expect(runCommand.mock.calls[1]?.[1]).toEqual(['tool', 'install', 'graphifyy']);
     expect(runCommand.mock.calls[3]?.[0]).toBe('graphify');
     expect(runCommand.mock.calls[3]?.[1]).toEqual(['claude', 'install']);
+    // cwd must be pinned to $HOME — graphify's claude install writes CLAUDE.md
+    // into the inherited cwd, and `/` (read-only on macOS) breaks it.
+    const claudeInstallOpts = runCommand.mock.calls[3]?.[2] as { cwd?: string } | undefined;
+    expect(claudeInstallOpts?.cwd).toBeTruthy();
+    expect(claudeInstallOpts?.cwd).not.toBe('/');
   });
 
   it('skips uv tool install when graphify already on PATH', async () => {

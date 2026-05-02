@@ -1,3 +1,4 @@
+import { homedir } from 'node:os';
 import { runCommand } from '../util/exec.js';
 
 export const GRAPHIFY_PACKAGE = 'graphifyy';
@@ -69,7 +70,13 @@ export async function installGraphify(
         `graphify ${version} is too old (need ${GRAPHIFY_MIN_VERSION}+). Run \`uv tool upgrade graphifyy\` and re-run metalmind init.`,
       );
     }
-    const res = await runCommand(GRAPHIFY_BIN, ['claude', 'install'], { timeoutMs: 30_000 });
+    // graphify claude install stamps a CLAUDE.md in the inherited cwd. Pin it
+    // to $HOME so a user running `metalmind init` from `/` (or any unwritable
+    // directory) doesn't hit OSError: Read-only file system: 'CLAUDE.md'.
+    const res = await runCommand(GRAPHIFY_BIN, ['claude', 'install'], {
+      timeoutMs: 30_000,
+      cwd: homedir(),
+    });
     if (!res.ok) {
       throw new Error(`graphify claude install failed: ${res.stderr || res.stdout}`);
     }
@@ -85,7 +92,10 @@ export async function uninstallGraphify(): Promise<{
 }> {
   let claudeUnwired = false;
   if (await isGraphifyInstalled()) {
-    const unwire = await runCommand(GRAPHIFY_BIN, ['claude', 'uninstall'], { timeoutMs: 30_000 });
+    const unwire = await runCommand(GRAPHIFY_BIN, ['claude', 'uninstall'], {
+      timeoutMs: 30_000,
+      cwd: homedir(),
+    });
     claudeUnwired = unwire.ok;
   }
   const uninstall = await runCommand('uv', ['tool', 'uninstall', GRAPHIFY_PACKAGE], {

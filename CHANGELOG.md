@@ -6,6 +6,29 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.5.5 — 2026-05-02
+
+Fresh-laptop fixes. Anyone who hit the prereq wall, the `init`-from-`/` crash, or the dead agent-teams flag in 0.5.4 should upgrade.
+
+### Fixed
+
+- **Agent teams now actually enable.** Previously `--teams` (and the wizard prompt) wrote `teammateMode: "auto"` to `~/.claude.json`. That's the wrong file *and* the wrong value. Per the [official docs](https://code.claude.com/docs/en/agent-teams), agent teams require **both** keys, and **both** live in `~/.claude/settings.json`:
+  ```json
+  { "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" }, "teammateMode": "tmux" }
+  ```
+  metalmind now writes both, idempotently, and `metalmind uninstall` clears both. Users who previously said yes to teams will need to re-run `metalmind init` (or `metalmind stamp`) to pick up the working config.
+- **`graphify claude install` no longer crashes when run from a read-only cwd.** Running `metalmind init` from `/` (or any directory the user can't write) made `graphify claude install` try to write `/CLAUDE.md`, hitting `OSError: Read-only file system`. The graphify spawn is now pinned to `$HOME` so the stamp lands in `~/CLAUDE.md` regardless of where you ran the wizard from.
+
+### Added
+
+- **uv auto-install in `init`.** uv is the only metalmind prereq with a sanctioned one-line installer. When it's missing, the wizard now prompts to run `curl -LsSf https://astral.sh/uv/install.sh | sh`, then prepends `~/.local/bin` to `PATH` for the rest of the install so the freshly-installed binary is found without restarting the shell. Skipped via `--no-auto-install-uv`. Default-yes under `--yes`.
+
+### Notes
+
+- `~/.claude.json` may still have a stale `teammateMode` from older metalmind releases. We don't strip it — Claude Code historically mirrored the field there, and removing user state we no longer manage is the wrong default. The authoritative copy is in `settings.json`.
+
+---
+
 ## 0.5.4 — 2026-05-02
 
 Quality-of-life pass on `init` and `doctor`. No behaviour change for existing installs.

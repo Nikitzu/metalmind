@@ -70,20 +70,17 @@ describe('MCP registration', () => {
     expect(data.mcpServers?.serena?.env?.SERENA_USAGE_REPORTING).toBe('false');
   });
 
-  it('sets teammateMode when enableTeams and absent', async () => {
-    const result = await registerMcpServers({ enableTeams: true, claudeJsonPath });
-
-    expect(result.teammateModeSet).toBe(true);
+  it('does not write teammateMode to ~/.claude.json (lives in settings.json now)', async () => {
+    await registerMcpServers({ claudeJsonPath });
     const data = await readJson(claudeJsonPath);
-    expect(data.teammateMode).toBe('auto');
+    expect(data.teammateMode).toBeUndefined();
   });
 
-  it('preserves existing teammateMode', async () => {
+  it('leaves any pre-existing teammateMode in ~/.claude.json untouched', async () => {
+    // Older Claude Code clients used to mirror teammateMode here. Don't strip
+    // user state we no longer manage — just leave it alone.
     await writeFile(claudeJsonPath, JSON.stringify({ teammateMode: 'manual' }), 'utf8');
-
-    const result = await registerMcpServers({ enableTeams: true, claudeJsonPath });
-
-    expect(result.teammateModeSet).toBe(false);
+    await registerMcpServers({ claudeJsonPath });
     const data = await readJson(claudeJsonPath);
     expect(data.teammateMode).toBe('manual');
   });

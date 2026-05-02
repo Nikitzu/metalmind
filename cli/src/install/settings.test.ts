@@ -3,9 +3,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  AGENT_TEAMS_ENV_KEY,
+  applyAgentTeams,
   applyMemoryRouting,
   applyMetalmindSessionStartHook,
   type ClaudeSettings,
+  clearAgentTeams,
   clearMemoryRouting,
   clearMetalmindSessionStartHook,
 } from './settings.js';
@@ -71,6 +74,89 @@ describe('settings', () => {
 
     it('returns false when file does not exist', async () => {
       const changed = await clearMemoryRouting(join(tmp, 'nope.json'));
+      expect(changed).toBe(false);
+    });
+  });
+
+  describe('applyAgentTeams', () => {
+    it('sets env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 and teammateMode=tmux on enable', async () => {
+      const result = await applyAgentTeams({ settingsPath, enable: true });
+
+      expect(result.changed).toBe(true);
+      expect(result.envSet).toBe(true);
+      expect(result.teammateModeSet).toBe(true);
+      const data = await readJson(settingsPath);
+      expect(data.env?.[AGENT_TEAMS_ENV_KEY]).toBe('1');
+      expect(data.teammateMode).toBe('tmux');
+    });
+
+    it('is idempotent when both keys are already set', async () => {
+      await applyAgentTeams({ settingsPath, enable: true });
+      const second = await applyAgentTeams({ settingsPath, enable: true });
+      expect(second.changed).toBe(false);
+      expect(second.envSet).toBe(false);
+      expect(second.teammateModeSet).toBe(false);
+    });
+
+    it('preserves other env vars and other settings on enable', async () => {
+      await writeFile(
+        settingsPath,
+        JSON.stringify({
+          env: { OTHER_VAR: 'keep-me' },
+          permissions: { allow: ['*'] },
+        }),
+        'utf8',
+      );
+      await applyAgentTeams({ settingsPath, enable: true });
+      const data = await readJson(settingsPath);
+      expect(data.env?.OTHER_VAR).toBe('keep-me');
+      expect(data.env?.[AGENT_TEAMS_ENV_KEY]).toBe('1');
+      expect(data.permissions).toEqual({ allow: ['*'] });
+    });
+
+    it('removes both keys on disable, leaves other env intact', async () => {
+      await writeFile(
+        settingsPath,
+        JSON.stringify({
+          env: { [AGENT_TEAMS_ENV_KEY]: '1', OTHER_VAR: 'keep-me' },
+          teammateMode: 'tmux',
+        }),
+        'utf8',
+      );
+      const result = await applyAgentTeams({ settingsPath, enable: false });
+      expect(result.changed).toBe(true);
+      const data = await readJson(settingsPath);
+      expect(data.env?.OTHER_VAR).toBe('keep-me');
+      expect(data.env?.[AGENT_TEAMS_ENV_KEY]).toBeUndefined();
+      expect(data.teammateMode).toBeUndefined();
+    });
+
+    it('does not strip a non-tmux teammateMode the user set themselves on disable', async () => {
+      await writeFile(
+        settingsPath,
+        JSON.stringify({ teammateMode: 'in-process' }),
+        'utf8',
+      );
+      const result = await applyAgentTeams({ settingsPath, enable: false });
+      expect(result.changed).toBe(false);
+      const data = await readJson(settingsPath);
+      expect(data.teammateMode).toBe('in-process');
+    });
+  });
+
+  describe('clearAgentTeams', () => {
+    it('removes our keys and reports changed=true', async () => {
+      await applyAgentTeams({ settingsPath, enable: true });
+      const changed = await clearAgentTeams(settingsPath);
+      expect(changed).toBe(true);
+      const data = await readJson(settingsPath);
+      expect(data.teammateMode).toBeUndefined();
+      expect(data.env?.[AGENT_TEAMS_ENV_KEY]).toBeUndefined();
+    });
+
+    it('returns false when nothing to clear', async () => {
+      await writeFile(settingsPath, JSON.stringify({}), 'utf8');
+      const changed = await clearAgentTeams(settingsPath);
       expect(changed).toBe(false);
     });
   });

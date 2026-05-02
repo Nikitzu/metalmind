@@ -20,7 +20,6 @@ export interface ClaudeJson {
 
 export interface RegisterMcpOptions {
   serena?: boolean;
-  enableTeams?: boolean;
   claudeJsonPath?: string;
 }
 
@@ -28,7 +27,6 @@ export interface RegisterMcpResult {
   claudeJsonPath: string;
   added: string[];
   skipped: string[];
-  teammateModeSet: boolean;
 }
 
 export interface UnregisterMcpOptions {
@@ -87,15 +85,9 @@ export async function registerMcpServers(opts: RegisterMcpOptions): Promise<Regi
     }
   }
 
-  let teammateModeSet = false;
-  if (opts.enableTeams && !data.teammateMode) {
-    data.teammateMode = 'auto';
-    teammateModeSet = true;
-  }
-
   await writeClaudeJson(claudeJsonPath, data);
 
-  return { claudeJsonPath, added, skipped, teammateModeSet };
+  return { claudeJsonPath, added, skipped };
 }
 
 export async function unregisterMcpServers(

@@ -8,7 +8,7 @@ import { uninstallGraphify } from './graphify.js';
 import { unregisterMcpServers } from './mcp.js';
 import { uninstallOutputStyle } from './output-style.js';
 import { uninstallSerena } from './serena.js';
-import { clearMemoryRouting, clearMetalmindSessionStartHook } from './settings.js';
+import { clearAgentTeams, clearMemoryRouting, clearMetalmindSessionStartHook } from './settings.js';
 import { STACK_SUBDIR, stopStack } from './stack.js';
 import { METALMIND_HOOK_FILENAME } from './templates.js';
 import { uninstallVaultRag } from './vault-rag.js';
@@ -56,6 +56,7 @@ export interface TeardownResult {
   configRemoved: boolean;
   vaultRagUninstalled: boolean;
   memoryRoutingCleared: boolean;
+  agentTeamsCleared: boolean;
   sessionStartHook: { registrationCleared: boolean; scriptRemoved: boolean };
   claudeMdBlocks: { global: SentinelRemoveAction; vault: SentinelRemoveAction };
 }
@@ -76,6 +77,7 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
     configRemoved: false,
     vaultRagUninstalled: false,
     memoryRoutingCleared: false,
+    agentTeamsCleared: false,
     sessionStartHook: { registrationCleared: false, scriptRemoved: false },
     claudeMdBlocks: { global: 'no-file', vault: 'no-file' },
   };
@@ -120,6 +122,7 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
   const { claudeDir, settingsPath } = opts;
 
   result.memoryRoutingCleared = await clearMemoryRouting(settingsPath);
+  result.agentTeamsCleared = await clearAgentTeams(settingsPath);
   result.sessionStartHook.registrationCleared = await clearMetalmindSessionStartHook(settingsPath);
   const hookScriptPath = join(claudeDir, 'hooks', METALMIND_HOOK_FILENAME);
   if (existsSync(hookScriptPath)) {

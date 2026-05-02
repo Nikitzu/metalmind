@@ -6,8 +6,9 @@ import { installGraphify } from './graphify.js';
 import { registerMcpServers } from './mcp.js';
 import { type FlavorChoice, installOutputStyle } from './output-style.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
+import { installUv, UV_INSTALL_COMMAND } from './uv.js';
 import { installSerena } from './serena.js';
-import { applyMemoryRouting, applyMetalmindSessionStartHook } from './settings.js';
+import { applyAgentTeams, applyMemoryRouting, applyMetalmindSessionStartHook } from './settings.js';
 import { setupStack } from './stack.js';
 import {
   appendGlobalGitignore,
@@ -31,6 +32,7 @@ export interface RunWizardOptions {
   eodHook?: boolean;
   notifications?: boolean;
   vaultGit?: boolean;
+  autoInstallUv?: boolean;
 }
 
 function checkCancelled<T>(value: T | symbol, label: string): asserts value is T {
@@ -52,8 +54,38 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   // Docker is only needed if the user explicitly wants the legacy
   // Qdrant + Ollama stack. The default v0.5.0 path is sqlite-vec +
   // fastembed in-process — Python + uv carry the whole load.
-  const prereqs = await detectPrereqs({ includeDocker: !opts.skipDocker });
-  const { failing, passed } = summarisePrereqs(prereqs);
+  let prereqs = await detectPrereqs({ includeDocker: !opts.skipDocker });
+  let summary = summarisePrereqs(prereqs);
+
+  // uv has the only sanctioned one-line installer of any prereq. Offer to
+  // run it inline so a fresh laptop doesn't bounce off the prereq wall.
+  const uvFailing = summary.failing.find((r) => r.name === 'uv');
+  if (uvFailing) {
+    let runIt: boolean;
+    if (opts.autoInstallUv !== undefined) {
+      runIt = opts.autoInstallUv;
+    } else {
+      const answer = await confirm({
+        message: `uv not found — install it now via the official Astral installer? (\`${UV_INSTALL_COMMAND}\`)`,
+        initialValue: true,
+      });
+      checkCancelled(answer, 'uv auto-install prompt');
+      runIt = answer;
+    }
+    if (runIt) {
+      log.step('Installing uv');
+      const result = await installUv();
+      if (result.installed) {
+        log.success(`  uv installed at ${result.binPath}`);
+        if (result.pathPrepended) log.info('  prepended ~/.local/bin to PATH for this session');
+        prereqs = await detectPrereqs({ includeDocker: !opts.skipDocker });
+        summary = summarisePrereqs(prereqs);
+      } else {
+        log.error(`  uv installer failed: ${result.stderr ?? 'unknown error'}`);
+      }
+    }
+  }
+
   for (const r of prereqs) {
     if (r.ok) log.success(`${r.name.padEnd(14)} ${r.detail}`);
     else {
@@ -61,8 +93,10 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       if (r.remediation) log.info(`  → ${r.remediation}`);
     }
   }
-  if (failing.length > 0) {
-    outro(`${failing.length} prereq(s) failing. Fix them and re-run. ${passed} passing.`);
+  if (summary.failing.length > 0) {
+    outro(
+      `${summary.failing.length} prereq(s) failing. Fix them and re-run. ${summary.passed} passing.`,
+    );
     throw new Error('prereqs failed');
   }
 
@@ -266,13 +300,23 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     }
   }
 
-  log.step('Registering MCP servers (serena/teams)');
-  const mcp = await registerMcpServers({
-    serena,
-    enableTeams,
-  });
+  log.step('Registering MCP servers (serena)');
+  const mcp = await registerMcpServers({ serena });
   if (mcp.added.length > 0) log.success(`  added: ${mcp.added.join(', ')}`);
   if (mcp.skipped.length > 0) log.info(`  already present: ${mcp.skipped.join(', ')}`);
+
+  log.step('Configuring agent teams');
+  const teams = await applyAgentTeams({ enable: enableTeams });
+  if (teams.changed) {
+    if (enableTeams) {
+      if (teams.envSet) log.success(`  set env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 in ${teams.settingsPath}`);
+      if (teams.teammateModeSet) log.success(`  set teammateMode="tmux" in ${teams.settingsPath}`);
+    } else {
+      log.info(`  cleared agent-teams keys from ${teams.settingsPath}`);
+    }
+  } else {
+    log.info(enableTeams ? '  agent teams already enabled' : '  agent teams already disabled');
+  }
 
   log.step('Applying memory routing');
   const mem = await applyMemoryRouting({ disableNative: memoryRouting === 'vault-only' });

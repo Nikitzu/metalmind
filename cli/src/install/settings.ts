@@ -5,6 +5,8 @@ import { dirname, join } from 'node:path';
 
 export const DEFAULT_SETTINGS_PATH = join(homedir(), '.claude', 'settings.json');
 export const DISABLE_AUTO_MEMORY_KEY = 'CLAUDE_CODE_DISABLE_AUTO_MEMORY';
+export const AGENT_TEAMS_ENV_KEY = 'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS';
+export const AGENT_TEAMS_TEAMMATE_MODE = 'tmux';
 export const METALMIND_HOOK_MARKER = 'metalmind-session-start.sh';
 
 export interface ClaudeHookEntry {
@@ -20,7 +22,20 @@ export interface ClaudeHookGroup {
 export interface ClaudeSettings {
   env?: Record<string, string>;
   hooks?: Record<string, ClaudeHookGroup[]>;
+  teammateMode?: string;
   [key: string]: unknown;
+}
+
+export interface AgentTeamsOptions {
+  settingsPath?: string;
+  enable: boolean;
+}
+
+export interface AgentTeamsResult {
+  settingsPath: string;
+  changed: boolean;
+  envSet: boolean;
+  teammateModeSet: boolean;
 }
 
 export interface MemoryRoutingOptions {
@@ -80,6 +95,56 @@ export async function applyMemoryRouting(opts: MemoryRoutingOptions): Promise<Me
 
   if (changed) await writeSettings(settingsPath, data);
   return { settingsPath, changed, priorValue };
+}
+
+/**
+ * Wire (or unwire) Claude Code agent teams in ~/.claude/settings.json.
+ * Per the official docs (code.claude.com/docs/en/agent-teams), both keys
+ * live in settings.json — env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 to
+ * enable the feature, and teammateMode="tmux" to drive iTerm2/tmux split
+ * panes. Idempotent: a second call with the same `enable` is a no-op.
+ */
+export async function applyAgentTeams(opts: AgentTeamsOptions): Promise<AgentTeamsResult> {
+  const settingsPath = opts.settingsPath ?? DEFAULT_SETTINGS_PATH;
+  const data = await readSettings(settingsPath);
+  const env = data.env ?? {};
+  let envSet = false;
+  let teammateModeSet = false;
+
+  if (opts.enable) {
+    if (env[AGENT_TEAMS_ENV_KEY] !== '1') {
+      env[AGENT_TEAMS_ENV_KEY] = '1';
+      data.env = env;
+      envSet = true;
+    }
+    if (data.teammateMode !== AGENT_TEAMS_TEAMMATE_MODE) {
+      data.teammateMode = AGENT_TEAMS_TEAMMATE_MODE;
+      teammateModeSet = true;
+    }
+  } else {
+    if (AGENT_TEAMS_ENV_KEY in env) {
+      delete env[AGENT_TEAMS_ENV_KEY];
+      if (Object.keys(env).length === 0) delete data.env;
+      else data.env = env;
+      envSet = true;
+    }
+    if (data.teammateMode === AGENT_TEAMS_TEAMMATE_MODE) {
+      delete data.teammateMode;
+      teammateModeSet = true;
+    }
+  }
+
+  const changed = envSet || teammateModeSet;
+  if (changed) await writeSettings(settingsPath, data);
+  return { settingsPath, changed, envSet, teammateModeSet };
+}
+
+export async function clearAgentTeams(settingsPath?: string): Promise<boolean> {
+  const result = await applyAgentTeams({
+    settingsPath: settingsPath ?? DEFAULT_SETTINGS_PATH,
+    enable: false,
+  });
+  return result.changed;
 }
 
 export async function clearMemoryRouting(settingsPath?: string): Promise<boolean> {

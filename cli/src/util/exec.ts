@@ -10,7 +10,12 @@ export interface CommandResult {
 export async function runCommand(
   cmd: string,
   args: string[] = [],
-  opts: { timeoutMs?: number; inheritStdio?: boolean } = {},
+  opts: {
+    timeoutMs?: number;
+    inheritStdio?: boolean;
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+  } = {},
 ): Promise<CommandResult> {
   try {
     const result = await execa(cmd, args, {
@@ -18,6 +23,8 @@ export async function runCommand(
       timeout: opts.timeoutMs === 0 ? undefined : (opts.timeoutMs ?? 5000),
       reject: false,
       stripFinalNewline: true,
+      ...(opts.cwd ? { cwd: opts.cwd } : {}),
+      ...(opts.env ? { env: opts.env } : {}),
       // When the caller wants live output (long-running claude sessions etc.),
       // inherit stdio so the user sees progress + can Ctrl-C cleanly.
       ...(opts.inheritStdio ? { stdio: 'inherit' as const } : {}),

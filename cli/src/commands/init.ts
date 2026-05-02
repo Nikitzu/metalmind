@@ -25,6 +25,8 @@ export interface InitCliOptions {
   noNotifications?: boolean;
   git?: boolean;
   noGit?: boolean;
+  autoInstallUv?: boolean;
+  noAutoInstallUv?: boolean;
 }
 
 function isFlavor(v: string): v is 'scadrial' | 'classic' {
@@ -73,6 +75,8 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     if (notifications !== undefined) wizardOpts.notifications = notifications;
     const vaultGit = resolveBool(cliOpts.git, cliOpts.noGit);
     if (vaultGit !== undefined) wizardOpts.vaultGit = vaultGit;
+    const autoInstallUv = resolveBool(cliOpts.autoInstallUv, cliOpts.noAutoInstallUv);
+    if (autoInstallUv !== undefined) wizardOpts.autoInstallUv = autoInstallUv;
 
     // Default v0.5.0 path: skip the Docker stack. The embedded backend
     // (sqlite-vec + fastembed) doesn't need it. --legacy opts back into
@@ -97,6 +101,7 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
       wizardOpts.eodHook ??= true;
       wizardOpts.notifications ??= process.platform === 'darwin';
       wizardOpts.vaultGit ??= true;
+      wizardOpts.autoInstallUv ??= true;
     }
 
     await runWizard(wizardOpts);
