@@ -1,6 +1,7 @@
 import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/prompts';
 import { type Config, writeConfig } from '../config.js';
 import { installAliases } from './aliases.js';
+import { setupVaultGit } from './git.js';
 import { installGraphify } from './graphify.js';
 import { registerMcpServers } from './mcp.js';
 import { type FlavorChoice, installOutputStyle } from './output-style.js';
@@ -29,6 +30,7 @@ export interface RunWizardOptions {
   memoryRouting?: 'vault-only' | 'both';
   eodHook?: boolean;
   notifications?: boolean;
+  vaultGit?: boolean;
 }
 
 function checkCancelled<T>(value: T | symbol, label: string): asserts value is T {
@@ -175,6 +177,19 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     notifications = answer;
   }
 
+  let vaultGit: boolean;
+  if (opts.vaultGit !== undefined) {
+    vaultGit = opts.vaultGit;
+  } else {
+    const answer = await confirm({
+      message:
+        'Track the vault in git? (versioning + multi-device sync via your own remote — skipped cleanly if it is already a repo)',
+      initialValue: true,
+    });
+    checkCancelled(answer, 'Vault git prompt');
+    vaultGit = answer;
+  }
+
   log.step('Setting up vault');
   const vault = await setupVault({ vaultPath: vaultPathInput, flavor });
   log.success(`Vault at ${vault.vaultPath}`);
@@ -184,6 +199,19 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   else if (vault.claudeMdAction === 'updated')
     log.info('  refreshed metalmind block in vault CLAUDE.md');
   if (vault.createdFolders.length > 0) log.info(`  created: ${vault.createdFolders.join(', ')}`);
+
+  if (vaultGit) {
+    log.step('Tracking vault in git');
+    const git = await setupVaultGit({ vaultPath: vault.vaultPath, enable: true });
+    if (git.action === 'initialized') log.success(`  git init at ${vault.vaultPath}`);
+    else if (git.action === 'already-tracked') log.info('  vault was already a git repo — skipped init');
+    if (git.gitignoreAction === 'created') log.info('  wrote .gitignore');
+    else if (git.gitignoreAction === 'inserted') log.info('  inserted metalmind block into .gitignore');
+    else if (git.gitignoreAction === 'updated') log.info('  refreshed metalmind block in .gitignore');
+    if (git.initialCommit) log.info('  made initial commit');
+    if (git.commitWarning) log.warn(`  initial commit skipped: ${git.commitWarning}`);
+    log.info('  add a remote with: git -C ' + vault.vaultPath + ' remote add origin <url>');
+  }
 
   if (serena) {
     log.step('Installing Serena');

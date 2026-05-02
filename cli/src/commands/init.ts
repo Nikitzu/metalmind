@@ -23,6 +23,8 @@ export interface InitCliOptions {
   noEodHook?: boolean;
   notifications?: boolean;
   noNotifications?: boolean;
+  git?: boolean;
+  noGit?: boolean;
 }
 
 function isFlavor(v: string): v is 'scadrial' | 'classic' {
@@ -69,6 +71,8 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     if (eodHook !== undefined) wizardOpts.eodHook = eodHook;
     const notifications = resolveBool(cliOpts.notifications, cliOpts.noNotifications);
     if (notifications !== undefined) wizardOpts.notifications = notifications;
+    const vaultGit = resolveBool(cliOpts.git, cliOpts.noGit);
+    if (vaultGit !== undefined) wizardOpts.vaultGit = vaultGit;
 
     // Default v0.5.0 path: skip the Docker stack. The embedded backend
     // (sqlite-vec + fastembed) doesn't need it. --legacy opts back into
@@ -92,6 +96,7 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
       wizardOpts.enableTeams ??= false;
       wizardOpts.eodHook ??= true;
       wizardOpts.notifications ??= process.platform === 'darwin';
+      wizardOpts.vaultGit ??= true;
     }
 
     await runWizard(wizardOpts);

@@ -6,6 +6,7 @@ import { CONFIG_PATH, type Config, readConfig } from '../config.js';
 import { detectPrereqs } from '../install/prereqs.js';
 import { OLLAMA_CONTAINER } from '../install/stack.js';
 import { runCommand } from '../util/exec.js';
+import { detectObsidian } from '../util/obsidian.js';
 
 export interface DoctorOptions {
   deep?: boolean;
@@ -383,6 +384,14 @@ export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Pr
     log.info(`mcp:            ${config.mcp.registered.join(', ') || '(none)'}`);
     log.info(`hooks.claude:   ${config.hooks.claudeCode}`);
     log.info(`forge.groups:   ${Object.keys(config.forge.groups).join(', ') || '(none)'}`);
+
+    const obsidian = await detectObsidian();
+    if (obsidian.found) {
+      log.info(`obsidian:       detected (${obsidian.location})`);
+    } else {
+      log.info('obsidian:       not detected — vault works without it');
+      log.info(`  install hint: ${obsidian.installHint}`);
+    }
   }
 
   let deepFailed = 0;

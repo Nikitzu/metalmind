@@ -64,6 +64,8 @@ program
   .option('--no-eod-hook', 'Skip end-of-day hook in /save')
   .option('--notifications', 'Enable macOS flare/notify commands in /save (default: prompt)')
   .option('--no-notifications', 'Disable macOS flare/notify commands in /save')
+  .option('--git', 'Track the vault in git (init + .gitignore + initial commit)')
+  .option('--no-git', 'Skip vault git tracking')
   .option('--skip-docker', 'Skip Docker stack setup (useful when stack is already running)')
   .option('--legacy', 'Opt into the Qdrant + Ollama backend instead of the embedded sqlite-vec + fastembed default')
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')

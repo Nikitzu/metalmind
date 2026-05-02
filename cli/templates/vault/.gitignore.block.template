@@ -1,0 +1,14 @@
+# Obsidian per-machine state — keep portable settings in sync, leave layout local
+.obsidian/workspace
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+
+# Obsidian trash
+.trash/
+
+# metalmind local artefacts (if they ever land inside the vault)
+.metalmind/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

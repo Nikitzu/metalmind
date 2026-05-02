@@ -6,6 +6,27 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.5.4 — 2026-05-02
+
+Quality-of-life pass on `init` and `doctor`. No behaviour change for existing installs.
+
+### Added
+
+- **Vault git tracking in `init`.** New prompt asks whether to track the vault as a git repo. On yes, runs `git init`, writes a sentinel-bounded `.gitignore` block (Obsidian per-machine state, trash, sqlite cache files), and makes an initial commit. Idempotent — re-running `init` on an already-tracked vault only refreshes the managed `.gitignore` block. Never touches remotes; prints the `git remote add origin <url>` hint so the user picks the host.
+- **CLI flags:** `--git` / `--no-git` on `metalmind init`. Default-yes under `--yes`.
+- **Obsidian detection in `doctor`.** Informational line in the Config block: detects `Obsidian.app` on macOS (`/Applications` and `~/Applications`), `~/.config/obsidian` / Flatpak / snap on Linux, and AppData paths on Windows. Never blocks, never fails — prints a platform-appropriate install hint when not found. metalmind doesn't install Obsidian and doesn't intend to: the vault is plain markdown, Obsidian is one viewer of many.
+
+### Why these two together
+
+If you've ever rebuilt a dev laptop you know the answer: a vault you've been editing for months should not start its life on the new machine as an un-versioned folder, and `metalmind doctor` should tell you whether you have a GUI to view it with. Both are 30-second tasks that nobody does.
+
+### What stays the same
+
+- Existing installs are unaffected — `init` is the only entry point that prompts for git tracking, and re-running it on a tracked vault is a no-op except for the managed `.gitignore` block.
+- No changes to `metalmind-vault-rag` (still 0.3.0). No re-embed.
+
+---
+
 ## 0.5.3 — 2026-05-01
 
 ONNX-based reranker. `[rerank]` extra drops from ~2 GB to ~210 MB (~9× smaller install). Same model (BAAI's `bge-reranker-v2-m3`), same scoring shape, same public API on the rerank module — the watcher and the CLI don't notice.
