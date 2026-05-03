@@ -39,6 +39,18 @@ export function renderSkillSentinels(
   return out.replace(/\n{3,}/g, '\n\n');
 }
 
+// Skill bundles can carry parallel branches for both flavours of metalmind
+// (e.g. persona labels in `synod`). At install time we keep the chosen
+// flavour's branch and discard the other entirely, so the file on disk is
+// flavour-pure — no runtime branching needed.
+export function renderFlavorSentinels(source: string, flavor: 'scadrial' | 'classic'): string {
+  const otherFlavor = flavor === 'scadrial' ? 'classic' : 'scadrial';
+  let out = source;
+  out = out.replace(SENTINEL_BLOCK_RE(`flavor-${otherFlavor}`), '\n');
+  out = out.replace(SENTINEL_COMMENT_RE(`flavor-${flavor}`), '\n');
+  return out.replace(/\n{3,}/g, '\n\n');
+}
+
 export interface CopyClaudeTemplatesResult {
   copied: string[];
 }
@@ -113,21 +125,37 @@ async function copyDir(
   return { copied };
 }
 
-async function copyTreeRecursive(srcDir: string, destDir: string): Promise<void> {
+async function copyTreeRecursive(
+  srcDir: string,
+  destDir: string,
+  render?: Renderer,
+): Promise<void> {
   await mkdir(destDir, { recursive: true });
   const entries = await readdir(srcDir, { withFileTypes: true });
   for (const entry of entries) {
     const srcPath = join(srcDir, entry.name);
     const destPath = join(destDir, entry.name);
     if (entry.isDirectory()) {
-      await copyTreeRecursive(srcPath, destPath);
+      await copyTreeRecursive(srcPath, destPath, render);
     } else if (entry.isFile()) {
-      await copyFile(srcPath, destPath);
+      // Render only markdown — binary skill assets (icons, fonts) must be
+      // copied byte-for-byte. The renderer is a no-op on files without
+      // sentinel/placeholder markup, so it's safe to apply universally.
+      if (render && entry.name.endsWith('.md')) {
+        const raw = await readFile(srcPath, 'utf8');
+        await writeFile(destPath, render(raw), 'utf8');
+      } else {
+        await copyFile(srcPath, destPath);
+      }
     }
   }
 }
 
-async function copySkillBundles(srcDir: string, destDir: string): Promise<{ copied: string[] }> {
+async function copySkillBundles(
+  srcDir: string,
+  destDir: string,
+  render?: Renderer,
+): Promise<{ copied: string[] }> {
   if (!existsSync(srcDir)) return { copied: [] };
   await mkdir(destDir, { recursive: true });
   const copied: string[] = [];
@@ -136,7 +164,7 @@ async function copySkillBundles(srcDir: string, destDir: string): Promise<{ copi
     if (!entry.isDirectory()) continue;
     const skillSrc = join(srcDir, entry.name);
     const skillDest = join(destDir, entry.name);
-    await copyTreeRecursive(skillSrc, skillDest);
+    await copyTreeRecursive(skillSrc, skillDest, render);
     copied.push(entry.name);
   }
   return { copied };
@@ -148,13 +176,15 @@ export async function copyClaudeTemplates(
   const templatesDir = opts.templatesDir ?? getTemplatesDir();
   const claudeDir = opts.claudeDir ?? DEFAULT_CLAUDE_DIR;
   const srcRoot = join(templatesDir, 'claude');
-  const recall = recallCommand(opts.flavor ?? 'scadrial');
+  const flavor = opts.flavor ?? 'scadrial';
+  const recall = recallCommand(flavor);
   const eodHook = opts.eodHook ?? true;
   const notifications = opts.notifications ?? true;
 
   const renderRecall: Renderer = (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall);
   const renderSave: Renderer = (raw) =>
     renderSkillSentinels(renderRecall(raw), { eodHook, notifications });
+  const renderSkill: Renderer = (raw) => renderFlavorSentinels(renderRecall(raw), flavor);
 
   const rules = await copyDir(
     join(srcRoot, 'rules'),
@@ -174,7 +204,11 @@ export async function copyClaudeTemplates(
     (name) => name === 'save.md' || (opts.withTeams === true && name.startsWith('team-')),
     (name) => (name === 'save.md' ? renderSave : null),
   );
-  const skills = await copySkillBundles(join(srcRoot, 'skills'), join(claudeDir, 'skills'));
+  const skills = await copySkillBundles(
+    join(srcRoot, 'skills'),
+    join(claudeDir, 'skills'),
+    renderSkill,
+  );
 
   return {
     copied: [

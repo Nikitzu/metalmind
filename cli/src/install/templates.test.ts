@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CommandResult } from '../util/exec.js';
-import { renderSkillSentinels } from './templates.js';
+import { renderFlavorSentinels, renderSkillSentinels } from './templates.js';
 
 const runCommand = vi.hoisted(() =>
   vi.fn<(cmd: string, args?: string[], opts?: { timeoutMs?: number }) => Promise<CommandResult>>(),
@@ -343,5 +343,117 @@ describe('renderSkillSentinels', () => {
     expect(out).not.toContain('## EOD');
     expect(out).toContain('Header');
     expect(out).toContain('Footer');
+  });
+});
+
+describe('renderFlavorSentinels', () => {
+  const src = [
+    '<!-- metalmind:flavor-classic:start -->',
+    '# The Adversary',
+    '<!-- metalmind:flavor-classic:end -->',
+    '<!-- metalmind:flavor-scadrial:start -->',
+    '# Kelsier',
+    '<!-- metalmind:flavor-scadrial:end -->',
+    '',
+    'Body content shared by both flavours.',
+    '',
+  ].join('\n');
+
+  it('keeps the scadrial label when flavor=scadrial', () => {
+    const out = renderFlavorSentinels(src, 'scadrial');
+    expect(out).toContain('# Kelsier');
+    expect(out).not.toContain('# The Adversary');
+    expect(out).not.toContain('metalmind:flavor');
+    expect(out).toContain('Body content shared by both flavours.');
+  });
+
+  it('keeps the classic label when flavor=classic', () => {
+    const out = renderFlavorSentinels(src, 'classic');
+    expect(out).toContain('# The Adversary');
+    expect(out).not.toContain('# Kelsier');
+    expect(out).not.toContain('metalmind:flavor');
+    expect(out).toContain('Body content shared by both flavours.');
+  });
+
+  it('leaves files without flavour sentinels unchanged in substance', () => {
+    const plain = '# Just a plain skill file\n\nNothing flavour-specific here.\n';
+    expect(renderFlavorSentinels(plain, 'scadrial')).toBe(plain);
+    expect(renderFlavorSentinels(plain, 'classic')).toBe(plain);
+  });
+});
+
+describe('copyClaudeTemplates skill bundles', () => {
+  let tmp: string;
+  let templatesDir: string;
+  let claudeDir: string;
+
+  beforeEach(async () => {
+    tmp = await mkdtemp(join(tmpdir(), 'metalmind-skills-'));
+    templatesDir = join(tmp, 'templates');
+    claudeDir = join(tmp, '.claude');
+    const claudeSrc = join(templatesDir, 'claude');
+    // Minimum scaffold the existing copy paths expect
+    await mkdir(join(claudeSrc, 'rules'), { recursive: true });
+    await mkdir(join(claudeSrc, 'agents'), { recursive: true });
+    await mkdir(join(claudeSrc, 'commands'), { recursive: true });
+    await writeFile(join(claudeSrc, 'commands', 'save.md'), '# save\n', 'utf8');
+    // The skill bundle under test
+    await mkdir(join(claudeSrc, 'skills', 'synod', 'personas'), { recursive: true });
+    await writeFile(
+      join(claudeSrc, 'skills', 'synod', 'SKILL.md'),
+      '# synod\n\nrecall via {{RECALL_CMD}}\n',
+      'utf8',
+    );
+    await writeFile(
+      join(claudeSrc, 'skills', 'synod', 'personas', 'adversary.md'),
+      [
+        '<!-- metalmind:flavor-classic:start -->',
+        '# The Adversary',
+        '<!-- metalmind:flavor-classic:end -->',
+        '<!-- metalmind:flavor-scadrial:start -->',
+        '# Kelsier',
+        '<!-- metalmind:flavor-scadrial:end -->',
+        '',
+        'Persona body.',
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+  });
+
+  afterEach(async () => {
+    await rm(tmp, { recursive: true, force: true });
+  });
+
+  it('bakes the scadrial label into the persona file when flavor=scadrial', async () => {
+    const { copyClaudeTemplates } = await import('./templates.js');
+    await copyClaudeTemplates({ templatesDir, claudeDir, flavor: 'scadrial' });
+
+    const personaPath = join(claudeDir, 'skills', 'synod', 'personas', 'adversary.md');
+    const onDisk = await readFile(personaPath, 'utf8');
+    expect(onDisk).toContain('# Kelsier');
+    expect(onDisk).not.toContain('# The Adversary');
+    expect(onDisk).not.toContain('metalmind:flavor');
+  });
+
+  it('bakes the classic label into the persona file when flavor=classic', async () => {
+    const { copyClaudeTemplates } = await import('./templates.js');
+    await copyClaudeTemplates({ templatesDir, claudeDir, flavor: 'classic' });
+
+    const personaPath = join(claudeDir, 'skills', 'synod', 'personas', 'adversary.md');
+    const onDisk = await readFile(personaPath, 'utf8');
+    expect(onDisk).toContain('# The Adversary');
+    expect(onDisk).not.toContain('# Kelsier');
+    expect(onDisk).not.toContain('metalmind:flavor');
+  });
+
+  it('substitutes {{RECALL_CMD}} inside skill files based on flavor', async () => {
+    const { copyClaudeTemplates } = await import('./templates.js');
+    await copyClaudeTemplates({ templatesDir, claudeDir, flavor: 'classic' });
+
+    const skillPath = join(claudeDir, 'skills', 'synod', 'SKILL.md');
+    const onDisk = await readFile(skillPath, 'utf8');
+    expect(onDisk).toContain('metalmind recall');
+    expect(onDisk).not.toContain('{{RECALL_CMD}}');
   });
 });

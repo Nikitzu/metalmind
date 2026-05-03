@@ -37,6 +37,7 @@ import {
 } from './commands/scribe.js';
 import { stamp } from './commands/stamp.js';
 import { type StoreOptions, store } from './commands/store.js';
+import { synod } from './commands/synod.js';
 import { type TapOptions, tap } from './commands/tap.js';
 import { uninstall } from './commands/uninstall.js';
 
@@ -69,14 +70,20 @@ program
   .option('--auto-install-uv', 'Auto-install uv via the official Astral installer if missing')
   .option('--no-auto-install-uv', 'Never run the uv installer; bail if uv missing')
   .option('--skip-docker', 'Skip Docker stack setup (useful when stack is already running)')
-  .option('--legacy', 'Opt into the Qdrant + Ollama backend instead of the embedded sqlite-vec + fastembed default')
+  .option(
+    '--legacy',
+    'Opt into the Qdrant + Ollama backend instead of the embedded sqlite-vec + fastembed default',
+  )
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
   .action((cmdOpts) => init(cmdOpts));
 program
   .command('doctor')
   .description('Diagnose installation state (classic alias for `pulse`)')
   .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
-  .option('--recall-audit', 'Replay the recall log; surface zero-hit and weak queries as /save candidates')
+  .option(
+    '--recall-audit',
+    'Replay the recall log; surface zero-hit and weak queries as /save candidates',
+  )
   .option('--recall-audit-days <n>', 'Window for --recall-audit (default 7)', (v) => Number(v))
   .action((cmdOpts: { deep?: boolean; recallAudit?: boolean; recallAuditDays?: number }) =>
     doctor('doctor', {
@@ -89,7 +96,10 @@ program
   .command('pulse')
   .description('Pulse-check the install — prereqs, config, MCP state (Seeker)')
   .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
-  .option('--recall-audit', 'Replay the recall log; surface zero-hit and weak queries as /save candidates')
+  .option(
+    '--recall-audit',
+    'Replay the recall log; surface zero-hit and weak queries as /save candidates',
+  )
   .option('--recall-audit-days <n>', 'Window for --recall-audit (default 7)', (v) => Number(v))
   .action((cmdOpts: { deep?: boolean; recallAudit?: boolean; recallAuditDays?: number }) =>
     doctor('pulse', {
@@ -501,6 +511,13 @@ program
   .command('debug <bug>')
   .description('Classic alias: dispatch team-debug via Claude Code')
   .action(burnZinc);
+
+program
+  .command('synod <question>')
+  .description(
+    "Convene the synod — 7 personas debate a decision, return a structured verdict (Classic) or summon Kelsier's crew (Scadrial). Spawns Claude Code with the synod skill.",
+  )
+  .action((question: string) => synod(question));
 
 program
   .command('verbose')

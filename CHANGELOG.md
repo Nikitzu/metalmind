@@ -6,6 +6,15 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.6.0 — 2026-05-03
+
+### Added
+
+- **`synod` skill + `metalmind synod <question>` command.** Convenes a 7-persona deliberative council to debate substantive engineering and strategic decisions — architecture choices, technology bets, large refactors, build-vs-buy calls, team/process changes — and also non-engineering judgement calls (career, business, life). Each persona is spawned as a parallel subagent (Adversary, Strategist, Scientist, Visionary, Engineer, Philosopher, Humanist), the main agent synthesises a structured verdict (position, confidence %, 3 critical risks, 5 next steps, minority report). Pulls vault context via `{{RECALL_CMD}}` before debating; proposes persisting the verdict via `metalmind scribe` after. Carved out from `code-review`, `team-debug`, `ai-dev-tool-analyzer`, and `brainstorming` for *tactical* work (a single PR, one bug, comparing two specific libs, in-flight implementation) — synod is for the questions that affect the next 6 months, not the next 60 minutes. The CLI command shells out to `claude -p` so it works from a plain terminal.
+- **Scadrial flavour for `synod`.** Personas ship as Kelsier's crew when `metalmind init` is run with `--flavor scadrial` (default): Kelsier, Breeze, Sazed, Vin, Clubs, Ham, Dockson. Classic flavour keeps the generic role names. Selection is install-time via the new `renderFlavorSentinels` substitution in `cli/src/install/templates.ts` — the chosen branch is baked into the persona files on disk; the other branch is stripped entirely. No runtime flavour detection inside the skill.
+
+---
+
 ## 0.5.7 — 2026-05-02
 
 ### Fixed
