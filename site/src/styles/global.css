@@ -261,6 +261,11 @@ pre {
   line-height: 1.35;
   letter-spacing: 0.005em;
 }
+.hero-lead code {
+  font-size: 0.78em;
+  padding: 0.05em 0.3em;
+  vertical-align: 0.04em;
+}
 .hero-tagline {
   margin-top: 1rem;
   font-size: 1.05rem;
@@ -1002,4 +1007,226 @@ footer {
   html {
     scroll-behavior: auto;
   }
+}
+
+/* Hero proof line — single tweetable claim under the lead */
+.hero-proof {
+  margin-top: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  color: var(--fg-muted);
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  justify-content: center;
+  align-items: baseline;
+  padding: 0.7rem 1.1rem;
+  background: color-mix(in srgb, var(--copper) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--copper) 25%, transparent);
+  border-radius: var(--radius-md);
+  max-width: 44rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+.hero-proof strong {
+  color: var(--copper);
+  font-weight: 600;
+}
+.hero-proof a {
+  color: var(--copper);
+  margin-left: 0.25rem;
+}
+
+/* Copy-to-clipboard button on the install code block */
+.install-cmd {
+  flex: 1;
+}
+.install-copy {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  margin-left: 0.4rem;
+  color: var(--fg-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.install-copy:hover {
+  color: var(--copper);
+  border-color: var(--copper-dim);
+}
+.install-copy.copied {
+  color: var(--copper);
+  border-color: var(--copper);
+}
+
+/* Stars badge sits next to the GitHub button in the hero */
+.btn-stars {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s;
+}
+.btn-stars:hover {
+  border-color: var(--copper-dim);
+}
+.btn-stars img {
+  display: block;
+  height: 18px;
+}
+
+/* Proof band — two side-by-side proof cards directly under the hero */
+.proof-band {
+  margin: 2.5rem auto 0;
+  padding: 0 1rem;
+}
+.proof-title {
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--fg-muted);
+  font-weight: 500;
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.01em;
+}
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  max-width: 920px;
+  margin: 0 auto;
+}
+.proof-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.proof-card:hover {
+  border-color: var(--copper-dim);
+  transform: translateY(-1px);
+}
+.proof-card-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+.proof-card-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+.proof-card-table th,
+.proof-card-table td {
+  padding: 0.32rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+.proof-card-table thead th {
+  color: var(--fg-muted);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.proof-card-table tbody th {
+  color: var(--fg);
+  font-weight: 500;
+}
+.proof-card-table tbody td {
+  text-align: right;
+  color: var(--fg);
+}
+.proof-card-table tr.bench-row-highlight th,
+.proof-card-table tr.bench-row-highlight td {
+  color: var(--copper);
+  font-weight: 600;
+}
+.proof-card-table tr:last-child th,
+.proof-card-table tr:last-child td {
+  border-bottom: none;
+}
+.proof-card-headline {
+  font-size: 0.86rem;
+  color: var(--fg-muted);
+  line-height: 1.45;
+}
+.proof-card-headline strong {
+  color: var(--copper);
+}
+.proof-card-foot {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--steel);
+  letter-spacing: 0.05em;
+  margin-top: 0.15rem;
+}
+.proof-card:hover .proof-card-foot {
+  color: var(--copper);
+}
+
+/* Skill manifest — what lands in ~/.claude/ when you init */
+.skill-manifest {
+  margin-top: 2.25rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.skill-manifest-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--steel);
+  margin-bottom: 0.6rem;
+}
+.skill-manifest-lead {
+  margin: 0 0 0.85rem;
+  font-size: 0.92rem;
+  color: var(--fg-muted);
+  line-height: 1.55;
+}
+.skill-manifest-tree {
+  margin: 0 0 0.85rem;
+  padding: 0.85rem 1rem;
+  background: color-mix(in srgb, var(--copper) 5%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--copper) 55%, transparent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--fg);
+  overflow-x: auto;
+}
+.skill-manifest-opt {
+  color: var(--steel);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+.skill-manifest-opt code {
+  color: var(--copper);
+  background: transparent;
+  padding: 0;
+}
+.skill-manifest-foot {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  line-height: 1.55;
 }

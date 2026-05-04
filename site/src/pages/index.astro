@@ -1,12 +1,15 @@
 ---
+import cliPkg from '../../../cli/package.json';
 import CommandsTable from '../components/CommandsTable.astro';
 import FlavorToggle from '../components/FlavorToggle.astro';
 import InstallFlow from '../components/InstallFlow.astro';
 import '../styles/global.css';
 
-const title = 'metalmind — unified CLI for Obsidian vault, code graph, and cross-repo intelligence';
+const version = cliPkg.version;
+
+const title = 'metalmind — zero-MCP-tax memory for Claude Code, in your own Obsidian vault';
 const description =
-  'Token-efficient, privacy-first Claude Code companion. Obsidian vault capture + local semantic recall, Serena LSP navigation, graphify code graphs, and a cross-repo forge — under one themed CLI.';
+  'Persistent memory for Claude Code that costs zero tool-schema tokens. Plain-markdown vault you own, sub-100ms recall, single-binary install, reversible to zero. Plus a cross-repo code graph, vault-CRUD for agents, and a 7-persona deliberation skill.';
 ---
 
 <!doctype html>
@@ -45,20 +48,14 @@ const description =
       <section class="hero container" aria-labelledby="hero-title">
         <div class="hero-eyebrow">
           <span class="scadrial-only">Scadrial · Keeper</span>
-          <span class="classic-only">Knowledge · CLI</span>
+          <span class="classic-only">Memory · Claude Code</span>
         </div>
         <h1 id="hero-title">metalmind</h1>
         <p class="hero-lead">
-          <span class="scadrial-only">A metalmind for Claude. Store decisions in copper. Tap them when you need them.</span>
-          <span class="classic-only">Persistent memory for Claude. Save decisions. Recall them when you need them.</span>
-        </p>
-        <p class="hero-flavor-note scadrial-only">
-          <em>Scadrial flavor:</em> commands are named after Mistborn Era&nbsp;1 metals —
-          <strong>copper</strong> stores memory, <strong>bronze</strong> reads the code graph,
-          <strong>iron/steel</strong> navigate and rename symbols. Prefer plain verbs?
-          Switch to <label for="flavor-classic" class="inline-toggle">Classic</label> in the top-right
-          — every themed command has a plain alias (<code>tap copper</code> ↔ <code>recall</code>,
-          <code>burn bronze</code> ↔ <code>graph</code>, etc.) and both always work at the CLI.
+          Memory for <a href="https://claude.ai/code">Claude Code</a> that costs
+          <strong>zero tool-schema tokens</strong> per session, lives in your own
+          <a href="https://obsidian.md">Obsidian</a> vault, and survives every
+          <code>claude</code> ending.
         </p>
         <p class="hero-tagline">
           Every <code>claude</code> invocation is a first meeting. Yesterday's architectural call,
@@ -67,23 +64,84 @@ const description =
           without burning context tokens on tool schemas to do it.
         </p>
 
+        <p class="hero-proof">
+          <strong>~519</strong> standing tokens on a cold session.
+          <span class="hero-proof-vs">mem0 costs <strong>~1,319</strong>.</span>
+          <span class="hero-proof-vs">Native <code>/memory</code> costs <strong>~1</strong>.</span>
+          <a href="#anti-mcp-title">Measured →</a>
+        </p>
+
         <div id="install">
           <div class="install-block" aria-label="Install command">
             <span class="prompt">$</span>
-            <span>npm install -g metalmind</span>
+            <span class="install-cmd" id="install-cmd">npm install -g metalmind</span>
+            <button type="button" class="install-copy" data-copy-target="install-cmd" aria-label="Copy install command">copy</button>
           </div>
           <div class="install-note">
-            <a class="install-chip install-chip-live" href="https://www.npmjs.com/package/metalmind" target="_blank" rel="noopener">Live on npm · v0.5.3</a>
+            <a class="install-chip install-chip-live" href={`https://www.npmjs.com/package/metalmind/v/${version}`} target="_blank" rel="noopener">Live on npm · v{version}</a>
             <span>Then run <code>metalmind init</code>.</span>
           </div>
           <p class="install-scope">
-            Today, metalmind only supports <a href="https://claude.ai/code">Claude Code</a>.
-            Cursor, Codex, Copilot, and Gemini CLI are on the roadmap.
+            <strong>MIT · local-only · no cloud · no accounts · reversible in one command.</strong>
+            Claude Code today; Cursor / Codex / Copilot / Gemini on the roadmap.
           </p>
         </div>
 
         <div class="hero-actions">
           <a class="btn" href="https://github.com/Nikitzu/metalmind">view on GitHub →</a>
+          <a class="btn-stars" href="https://github.com/Nikitzu/metalmind" aria-label="GitHub stars">
+            <img src="https://img.shields.io/github/stars/Nikitzu/metalmind?style=flat-square&color=d4a14a&labelColor=10141b&label=stars" alt="GitHub stars" />
+          </a>
+        </div>
+
+        <p class="hero-flavor-note scadrial-only">
+          <em>Scadrial flavor:</em> commands are named after Mistborn Era&nbsp;1 metals —
+          <strong>copper</strong> stores memory, <strong>bronze</strong> reads the code graph,
+          <strong>iron/steel</strong> navigate and rename symbols. Prefer plain verbs?
+          Switch to <label for="flavor-classic" class="inline-toggle">Classic</label> in the top-right
+          — every themed command has a plain alias (<code>tap copper</code> ↔ <code>recall</code>,
+          <code>burn bronze</code> ↔ <code>graph</code>, etc.) and both always work at the CLI.
+        </p>
+      </section>
+
+      <section class="proof-band container-wide" aria-labelledby="proof-title">
+        <h2 id="proof-title" class="proof-title">Two charts. The whole pitch.</h2>
+        <div class="proof-grid">
+          <a class="proof-card" href="#anti-mcp-title">
+            <div class="proof-card-eyebrow">Standing token tax · cold session</div>
+            <table class="proof-card-table">
+              <tbody>
+                <tr class="bench-row-highlight"><th scope="row">metalmind</th><td>~519</td></tr>
+                <tr><th scope="row">native <code>/memory</code></th><td>~1</td></tr>
+                <tr><th scope="row">metalmind <small>(stdio MCP)</small></th><td>~157</td></tr>
+                <tr><th scope="row">mem0</th><td>~1,319</td></tr>
+              </tbody>
+            </table>
+            <div class="proof-card-headline">
+              <strong>~2.5×</strong> lower than mem0 as shipped ·
+              <strong>~8.4×</strong> lower MCP-vs-MCP.
+            </div>
+            <div class="proof-card-foot">bench/mcp-tax-v0/ →</div>
+          </a>
+          <a class="proof-card" href="#beyond-title">
+            <div class="proof-card-eyebrow">Recall quality · 12 gold + N distractors</div>
+            <table class="proof-card-table">
+              <thead>
+                <tr><th scope="col">vault</th><th scope="col">hit@1<br /><small>+rerank</small></th><th scope="col">hit@5<br /><small>+rerank</small></th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">12 notes</th><td>90%</td><td>95%</td></tr>
+                <tr><th scope="row">100 notes</th><td>90%</td><td>95%</td></tr>
+                <tr><th scope="row">500 notes</th><td>90%</td><td>95%</td></tr>
+                <tr class="bench-row-highlight"><th scope="row">1,000 notes</th><td>90%</td><td>95%</td></tr>
+              </tbody>
+            </table>
+            <div class="proof-card-headline">
+              <strong>Hit@5 = 95%</strong> at 1k notes ·
+              median <strong>8 ms</strong>, no HTTP RTT on the hot path.
+            </div>
+            <div class="proof-card-foot">bench/recall-v0/ →</div>
+          </a>
         </div>
       </section>
 
@@ -91,7 +149,10 @@ const description =
         <span class="page-toc-label">On this page</span>
         <ul>
           <li><a href="#thesis-title">what it's for</a></li>
-          <li><a href="#beyond-title">what it adds</a></li>
+          <li><a href="#beyond-title">memory</a></li>
+          <li><a href="#code-intel-title">code intelligence</a></li>
+          <li><a href="#workflow-title">workflow</a></li>
+          <li><a href="#compare-title">how it compares</a></li>
           <li><a href="#anti-mcp-title">why CLI, not MCP</a></li>
           <li><a href="#anti-persona-title">not for you?</a></li>
           <li><a href="#sustainability-title">sustainability</a></li>
@@ -151,11 +212,11 @@ const description =
       <hr class="metal-rule" />
 
       <section class="container section-prose" aria-labelledby="beyond-title">
-        <h2 id="beyond-title">What it adds</h2>
+        <h2 id="beyond-title">Memory</h2>
         <p>
-          Persistent memory that survives your <code>claude</code> ending. One CLI, one verb per
-          concern. Code-graph capabilities live on a <a href="/forge">dedicated forge page</a> —
-          same project, separate pitch.
+          The headline job. Save once, recall forever, with zero standing tax on Claude's context
+          window. Recall is a <code>Bash</code> command hitting a loopback HTTP server in your
+          watcher process — no MCP tool, no per-session schema bloat.
         </p>
         <div class="features">
           <div class="feature">
@@ -171,79 +232,14 @@ const description =
             <div class="feature-title">Recall without the MCP token tax</div>
             <div class="feature-body">
               <code><span class="scadrial-only">tap copper "&lt;query&gt;"</span><span class="classic-only">recall "&lt;query&gt;"</span></code>
-              is a Bash call, not an MCP tool — zero schema bloat per session. Most memory tools
-              silently inject a handful of tool schemas — often heavily over-specified — into
-              every Claude Code session before you've typed a prompt. <a href="#anti-mcp-title">Measured:</a>
-              metalmind costs ~2.5× less than mem0 as shipped. We stamp the command into your <code>CLAUDE.md</code> so Claude reaches for
-              it naturally. <code>--deep</code> follows backlinks; <code>--expand</code> returns
-              hits plus the surrounding graph.
-              <div class="feature-bench">
-                <strong>Measured at scale on the recall bench</strong>
-                (<a href="https://github.com/Nikitzu/metalmind/tree/main/bench/recall-v0" target="_blank" rel="noopener">bench/recall-v0/</a>,
-                12 hand-authored gold notes + up to 1,000 seeded same-domain distractors, 20 queries, v0.5.0):
-                <table class="feature-bench-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">vault</th>
-                      <th scope="col">hit@1 hybrid</th>
-                      <th scope="col">hit@5 hybrid</th>
-                      <th scope="col">hit@1 +rerank</th>
-                      <th scope="col">hit@5 +rerank</th>
-                      <th scope="col">median</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><th scope="row">12 notes</th><td>90%</td><td>95%</td><td>90%</td><td>95%</td><td>6 ms</td></tr>
-                    <tr><th scope="row">100 notes</th><td>85%</td><td>95%</td><td>90%</td><td>95%</td><td>7 ms</td></tr>
-                    <tr><th scope="row">500 notes</th><td>85%</td><td>90%</td><td>90%</td><td>95%</td><td>7 ms</td></tr>
-                    <tr><th scope="row">1,000 notes</th><td>85%</td><td>85%</td><td>90%</td><td>95%</td><td>8 ms</td></tr>
-                  </tbody>
-                </table>
-                <p class="feature-bench-note">
-                  v0.5.0 runs the entire retrieval stack in-process — sqlite-vec for vectors,
-                  fastembed (<code>BAAI/bge-small-en-v1.5</code>) for embeddings, FTS5 for
-                  keyword. No Docker, no Ollama daemon. Hybrid hit@1 holds 85% at every scale;
-                  switching to <code>bge-small-en-v1.5</code> from the previous
-                  <code>nomic-embed-text</code> lifted pure-semantic hit@5 at 1,000 notes from
-                  55% to 90%. Median hybrid latency dropped 43 ms → 8 ms — no HTTP RTT on the
-                  hot path. Rerank (<code>--rerank</code>, opt-in) adds a cross-encoder rescore
-                  at ~2 s per query for the +5pp lift to hit@5 = 95%.
-                </p>
-                <details class="feature-bench-compare">
-                  <summary>vs <a href="https://github.com/tobi/qmd" target="_blank" rel="noopener">qmd 2.1.0</a> on the same fixture</summary>
-                  <table class="feature-bench-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">vault</th>
-                        <th scope="col">metalmind hit@1<br /><small>+rerank</small></th>
-                        <th scope="col">qmd hit@1</th>
-                        <th scope="col">metalmind hit@5<br /><small>+rerank</small></th>
-                        <th scope="col">qmd hit@5</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr><th scope="row">12 notes</th><td>90%</td><td>85%</td><td>95%</td><td>100%</td></tr>
-                      <tr><th scope="row">100 notes</th><td>90%</td><td>70%</td><td>95%</td><td>100%</td></tr>
-                      <tr><th scope="row">500 notes</th><td>90%</td><td>85%</td><td>95%</td><td>90%</td></tr>
-                      <tr><th scope="row">1,000 notes</th><td>90%</td><td>80%</td><td>95%</td><td>90%</td></tr>
-                    </tbody>
-                  </table>
-                  <p class="feature-bench-note">
-                    qmd ships the same shape (BM25 + vector + RRF + cross-encoder rerank) but
-                    different defaults — <code>qwen3-reranker</code>, a fine-tuned 1.7B query
-                    expansion, GGUF model stack, ~2 GB on first run. The fixture is identical:
-                    same 12 gold + same 988 seeded distractors + same 20 paraphrase queries.
-                    qmd wins hit@5 at small scales (more recall headroom from query expansion);
-                    metalmind wins hit@1 across the curve (better top-of-list precision after
-                    the v0.4.0 weighted-RRF fix). Both are reasonable choices — pick the one
-                    whose shape fits your workflow.
-                  </p>
-                </details>
-                <p class="feature-bench-note">
-                  The tax we avoid is the <em>standing</em> tool-schema cost, not the result
-                  tokens — hit payloads are billed like any other bash output.
-                </p>
-              </div>
+              is a Bash call, not an MCP tool. We stamp the command into your <code>CLAUDE.md</code>
+              so Claude reaches for it naturally. <code>--deep</code> follows backlinks;
+              <code>--expand</code> returns hits plus the surrounding graph; <code>--list-recent N</code>
+              browses the most recently modified notes without a query. Sub-100ms loopback HTTP on
+              the hot path; stdio MCP as the always-available fallback.
+              See the <a href="#anti-mcp-title">full MCP-tax breakdown</a> and the
+              <a href="https://github.com/Nikitzu/metalmind/tree/main/bench/recall-v0" target="_blank" rel="noopener">recall bench</a>
+              (incl. <a href="https://github.com/tobi/qmd" target="_blank" rel="noopener">qmd</a> column) for the numbers.
             </div>
           </div>
           <div class="feature">
@@ -259,16 +255,104 @@ const description =
             </div>
           </div>
           <div class="feature">
+            <div class="feature-title">Session-start awareness without nagging</div>
+            <div class="feature-body">
+              metalmind installs a Claude Code SessionStart hook plus a top-of-file block in
+              <code>~/.claude/CLAUDE.md</code> with explicit WHEN→DO triggers, so every new
+              <code>claude</code> session discovers the vault on its own — no "did you check
+              memory?" prompting. Re-stamp anytime with
+              <code><span class="scadrial-only">burn brass</span><span class="classic-only">stamp</span></code>
+              after an upgrade. Doctor's <code>--recall-audit</code> replays the opt-in query log to
+              surface zero-hit queries — the first memory tool that tells you when it's failing you.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container section-prose" aria-labelledby="code-intel-title">
+        <h2 id="code-intel-title">Code intelligence</h2>
+        <p>
+          The vault is half the picture. metalmind also gives Claude eyes on your code — across
+          repos, with route-level edges other tools can't see. Each engine swaps independently;
+          your muscle memory doesn't move.
+        </p>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-title">
+              Cross-repo code graph
+              <span class="feature-badge"><a href="/forge">forge →</a></span>
+            </div>
+            <div class="feature-body">
+              <code><span class="scadrial-only">burn bronze "&lt;q&gt;" --forge &lt;group&gt;</span><span class="classic-only">graph "&lt;q&gt;" --group &lt;group&gt;</span></code>
+              queries every repo in a forge group. HTTP-route-match edges connect caller → handler
+              <em>across services</em> in three tiers: OpenAPI specs on the metalmind shelf (never
+              inside your repos), Java RestTemplate/WebClient/Feign callers, and URL literals as an
+              opt-in fallback. Every inferred edge carries
+              <code>INFERRED_NAME</code> / <code>INFERRED_ROUTE</code> / <code>INFERRED_URL_LITERAL</code>
+              provenance so Claude can trust-grade what it reads.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Symbol-aware navigation and rename</div>
+            <div class="feature-body">
+              <code><span class="scadrial-only">burn iron &lt;symbol&gt;</span><span class="classic-only">symbol &lt;symbol&gt;</span></code>
+              returns a symbol's neighbors — who calls it, what it calls, its module.
+              <code><span class="scadrial-only">burn steel &lt;old&gt; &lt;new&gt;</span><span class="classic-only">rename &lt;old&gt; &lt;new&gt;</span></code>
+              drives a coordinated rename through Serena's LSP backend. Zero-LLM per query. One verb
+              per concern.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">Team-debug dispatched with context</div>
+            <div class="feature-body">
+              <code><span class="scadrial-only">burn zinc "&lt;bug&gt;"</span><span class="classic-only">debug "&lt;bug&gt;"</span></code>
+              hands a bug to the <code>/team-debug</code> skill with the code graph already
+              primed — the team agents start with the cross-repo context, not cold.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container section-prose" aria-labelledby="workflow-title">
+        <h2 id="workflow-title">Workflow that compounds back into the vault</h2>
+        <p>
+          The things you'd do anyway — daily planning, big architectural debates — captured back
+          into the vault as plain markdown. Tomorrow's session starts with today's reasoning, not
+          a blank page.
+        </p>
+        <div class="features">
+          <div class="feature">
             <div class="feature-title">Daily notes that roll themselves forward</div>
             <div class="feature-body">
               <code><span class="scadrial-only">atium new | add</span><span class="classic-only">daily new | add</span></code>
               creates or appends to <code>Daily/YYYY-MM-DD.md</code> with checkbox action items.
-              <code><span class="scadrial-only">metalmind routine install eod</span><span class="classic-only">metalmind routine install eod</span></code>
-              schedules a launchd agent at 17:30 Mon–Fri that runs
-              <code>atium new --date next-workday --from &lt;today&gt;</code> and archives today's
-              note via <code><span class="scadrial-only">gold</span><span class="classic-only">scribe archive</span></code>.
+              <code>metalmind routine install eod</code> schedules a launchd agent at 17:30 Mon–Fri
+              that runs <code>atium new --date next-workday --from &lt;today&gt;</code> and archives
+              today's note via
+              <code><span class="scadrial-only">gold</span><span class="classic-only">scribe archive</span></code>.
               Unchecked <code>- [ ]</code> items move forward; <code>- [x]</code> stays behind. No
-              manual EOD ritual, no hand-rolled cron — the primitives all compose through the CLI.
+              manual EOD ritual, no hand-rolled cron — the primitives compose through the CLI.
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-title">
+              Synod — convene a council on the big calls
+              <span class="feature-badge"><span class="install-chip install-chip-live" style="text-transform:none;letter-spacing:0;font-size:0.65rem;">v0.6.0</span></span>
+            </div>
+            <div class="feature-body">
+              <code>metalmind synod "&lt;question&gt;"</code> spawns 7 expert personas
+              (<span class="scadrial-only">Kelsier, Breeze, Sazed, Vin, Clubs, Ham, Dockson</span><span class="classic-only">Adversary, Strategist, Scientist, Visionary, Engineer, Philosopher, Humanist</span>)
+              in parallel via Claude Code, then synthesizes a verdict — position, confidence %,
+              3 critical risks, 5 next steps, minority report from the strongest dissenter. Pulls
+              vault context first; proposes persisting the verdict via
+              <code><span class="scadrial-only">scribe</span><span class="classic-only">note</span></code>
+              after. The deliberation goes <em>back into the vault</em> so the next time the
+              question surfaces, you don't re-debate it. For decisions that affect the next 6
+              months, not the next 60 minutes.
             </div>
           </div>
           <div class="feature">
@@ -281,19 +365,36 @@ const description =
               afterthought.
             </div>
           </div>
-          <div class="feature feature-sibling">
-            <div class="feature-title">
-              And: cross-repo code graph
-              <span class="feature-badge"><a href="/forge">forge →</a></span>
-            </div>
-            <div class="feature-body">
-              metalmind also ships a graphify-backed cross-repo code graph with HTTP-route-match
-              edges, OpenAPI-shelf-driven route extraction, symbol navigation, coordinated rename,
-              and team-debug dispatch. Different job from memory — so it has
-              <a href="/forge">its own page</a>. Use the forge if Claude needs to answer
-              <em>"which service calls this handler?"</em> across five repos.
-            </div>
-          </div>
+        </div>
+
+        <div class="skill-manifest" aria-label="Installed Claude Code skills and commands">
+          <div class="skill-manifest-eyebrow">What lands in <code>~/.claude/</code></div>
+          <p class="skill-manifest-lead">
+            <code>metalmind init</code> doesn't just give you a CLI — it installs a curated layer of
+            Claude Code skills and slash commands tuned for the vault. Each one teaches Claude
+            <em>when</em> and <em>how</em> to reach for the memory below it.
+          </p>
+          <pre class="skill-manifest-tree"><code>~/.claude/skills/
+  save                  capture the session's key insight into the vault
+  synod                 7-persona deliberation on architecture-class decisions
+  writing-vault-notes   teach Claude vault conventions (OFM, scribe, MOCs)
+  using-teams           coordinate multi-agent teams (TeamCreate / SendMessage)
+  obsidian-markdown     Obsidian-flavoured-markdown reference for note bodies
+
+~/.claude/commands/
+  /save                 alias of the save skill — one-tap end-of-session capture
+
+~/.claude/commands/  <span class="skill-manifest-opt">opt-in via <code>metalmind init --with-teams</code></span>
+  /team-feature         architect-led team to design + implement a feature
+  /team-debug           3–5 adversaries debate a bug via competing hypotheses
+  /team-pr-review       4 reviewers parallel-audit a PR (sec / api / perf / conv)
+  /team-multi-repo-audit  one reviewer per repo, parallel cross-repo audit</code></pre>
+          <p class="skill-manifest-foot">
+            All of them are installed via sentinel-bounded blocks and removed cleanly by
+            <code>metalmind uninstall</code> — your existing skills and commands are untouched.
+            Re-stamp after an upgrade with
+            <code><span class="scadrial-only">burn brass</span><span class="classic-only">stamp</span></code>.
+          </p>
         </div>
       </section>
 
@@ -552,5 +653,27 @@ const description =
       <p style="margin-top:0.25rem;opacity:0.6;">Built on <a href="https://obsidian.md">Obsidian</a>, <a href="https://github.com/asg017/sqlite-vec">sqlite-vec</a>, <a href="https://github.com/qdrant/fastembed">fastembed</a>, <a href="https://github.com/oraios/serena">Serena</a>, <a href="https://pypi.org/project/graphifyy/">graphify</a>.</p>
     </footer>
 
+    <script>
+      for (const btn of document.querySelectorAll<HTMLButtonElement>('.install-copy')) {
+        btn.addEventListener('click', async () => {
+          const targetId = btn.dataset.copyTarget;
+          if (!targetId) return;
+          const target = document.getElementById(targetId);
+          if (!target?.textContent) return;
+          try {
+            await navigator.clipboard.writeText(target.textContent.trim());
+            const original = btn.textContent;
+            btn.textContent = 'copied';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              btn.textContent = original;
+              btn.classList.remove('copied');
+            }, 1500);
+          } catch {
+            /* clipboard unavailable — silently no-op */
+          }
+        });
+      }
+    </script>
   </body>
 </html>
