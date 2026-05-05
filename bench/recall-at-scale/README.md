@@ -1,5 +1,7 @@
 # recall-at-scale — recall quality + latency at 1k / 10k / 50k
 
+> Benchmark for the **memory** module of the [metalmind standard library](../../README.md#whats-in-the-standard-library) — at scale.
+
 Sister bench to [`bench/recall-v0/`](../recall-v0/). Where `recall-v0` answers
 "is recall any good on a hand-authored 12-note vault?", `recall-at-scale`
 answers **"does the embedded sqlite-vec + fastembed stack hold up when the

@@ -1,5 +1,7 @@
 # mcp-tax-v0 — first-turn token tax bench
 
+> Benchmark backing the foundational rule of the [metalmind standard library](../../README.md#whats-in-the-standard-library): every module must clear **zero standing MCP-schema tax**.
+
 **Claim on the landing page:** *"Most memory tools silently inject 3–5 tool schemas into every Claude Code session before you've typed a prompt."*
 **What this bench measures:** how many tokens each memory system costs you on a cold session, before any user turn.
 

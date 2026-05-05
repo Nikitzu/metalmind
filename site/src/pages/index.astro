@@ -52,16 +52,18 @@ const description =
         </div>
         <h1 id="hero-title">metalmind</h1>
         <p class="hero-lead">
-          Memory for <a href="https://claude.ai/code">Claude Code</a> that costs
-          <strong>zero tool-schema tokens</strong> per session, lives in your own
-          <a href="https://obsidian.md">Obsidian</a> vault, and survives every
-          <code>claude</code> ending.
+          The missing standard library for <a href="https://claude.ai/code">Claude Code</a> —
+          memory, code intelligence, daily workflow, deliberation — at
+          <strong>zero standing tool-schema tokens</strong>. Local, integrated, reversible.
         </p>
         <p class="hero-tagline">
           Every <code>claude</code> invocation is a first meeting. Yesterday's architectural call,
           the reason you rejected that library, the 40-minute debug you just finished — gone by
-          tomorrow. metalmind is the place Claude stores things, and the way Claude gets them back —
-          without burning context tokens on tool schemas to do it.
+          tomorrow. <strong>Memory</strong> is the headline. <strong>Code intelligence</strong>
+          (cross-repo graphs, symbol nav, coordinated rename), <strong>daily workflow</strong>
+          (action-item carry-forward, EOD routines), and <strong>deliberation</strong>
+          (a 7-persona synod for hard calls) ship with it — every module integrated through one
+          vault, one CLI, one stamped <code>CLAUDE.md</code> rule.
         </p>
 
         <p class="hero-proof">
@@ -149,6 +151,7 @@ const description =
         <span class="page-toc-label">On this page</span>
         <ul>
           <li><a href="#thesis-title">what it's for</a></li>
+          <li><a href="#stdlib-title">standard library</a></li>
           <li><a href="#beyond-title">memory</a></li>
           <li><a href="#code-intel-title">code intelligence</a></li>
           <li><a href="#workflow-title">workflow</a></li>
@@ -206,6 +209,74 @@ const description =
           context, no historical lookback needed. Below the break-even, it's simpler and free.
           metalmind earns its install cost when you've got more to remember than a single
           <code>CLAUDE.md</code> can cheaply hold.
+        </p>
+      </section>
+
+      <hr class="metal-rule" />
+
+      <section class="container section-prose" aria-labelledby="stdlib-title">
+        <h2 id="stdlib-title">What's in the standard library</h2>
+        <p>
+          metalmind is six integrated modules — each closes a gap Claude Code itself doesn't fill,
+          all share state through the vault, and none of them register an MCP tool schema.
+        </p>
+        <ul class="thesis-list">
+          <li>
+            <strong>Memory.</strong>
+            <code><span class="scadrial-only">tap copper</span><span class="classic-only">recall</span></code> /
+            <code><span class="scadrial-only">store copper</span><span class="classic-only">save</span></code> /
+            <code>scribe</code> — recall + save + vault CRUD. The headline module; the rest of the
+            library compounds back into it.
+          </li>
+          <li>
+            <strong>Code intelligence.</strong>
+            <code><span class="scadrial-only">forge</span><span class="classic-only">group</span></code> /
+            <code><span class="scadrial-only">burn bronze</span><span class="classic-only">graph</span></code> /
+            <code><span class="scadrial-only">burn iron</span><span class="classic-only">symbol</span></code> /
+            <code><span class="scadrial-only">burn steel</span><span class="classic-only">rename</span></code> —
+            cross-repo graph with HTTP-route edges, symbol-aware navigation, coordinated rename
+            through Serena's LSP. Things Claude Code can't do alone. Detail on the
+            <a href="/forge">forge page</a>.
+          </li>
+          <li>
+            <strong>Daily workflow.</strong>
+            <code><span class="scadrial-only">atium</span><span class="classic-only">daily</span></code> /
+            <code><span class="scadrial-only">gold</span><span class="classic-only">archive</span></code> /
+            <code>routine install eod</code> — daily-note action-items with
+            <code>--from</code> carry-forward, one-shot archive, launchd-backed Mon–Fri EOD
+            carry-and-archive. Planning that survives the session.
+          </li>
+          <li>
+            <strong>Deliberation.</strong>
+            <code><span class="scadrial-only">synod</span><span class="classic-only">synod</span></code> —
+            convene a 7-persona deliberative council for the questions that affect the next 6 months,
+            not the next 60 minutes. Spawned as parallel subagents, synthesised into a structured verdict.
+          </li>
+          <li>
+            <strong>Desktop integration.</strong>
+            <code><span class="scadrial-only">flare</span><span class="classic-only">notify</span></code> —
+            macOS banner / dialog / sticky notifications wired into the EOD routine and into
+            <code>/save</code>. The OS-glue layer.
+          </li>
+          <li>
+            <strong>Health.</strong>
+            <code><span class="scadrial-only">pulse</span><span class="classic-only">doctor</span></code>
+            — install verification plus <code>--recall-audit</code> (the first memory tool that tells
+            you when recall is failing you).
+          </li>
+        </ul>
+        <p>
+          <strong>The rules that keep the library honest</strong> — every module must clear all four:
+        </p>
+        <ol class="thesis-list">
+          <li>Zero standing MCP-schema tax in Claude Code.</li>
+          <li>Reversible to zero — <code>metalmind uninstall</code> never touches your notes.</li>
+          <li>No accounts, no cloud, no third-party services.</li>
+          <li>Closes a gap Claude Code itself doesn't fill — no duplication of host primitives.</li>
+        </ol>
+        <p>
+          This bar names the moat in negative. It refuses, by construction, anything that would
+          make metalmind a chat assistant, a cloud-sync product, or a hosted memory service.
         </p>
       </section>
 
@@ -413,6 +484,7 @@ const description =
               <tr>
                 <th scope="col">Dimension</th>
                 <th scope="col">metalmind</th>
+                <th scope="col">native <code>/memory</code></th>
                 <th scope="col"><a href="https://github.com/tobi/qmd" target="_blank" rel="noopener">qmd</a></th>
                 <th scope="col"><a href="https://mem0.ai" target="_blank" rel="noopener">mem0</a></th>
                 <th scope="col"><a href="https://www.letta.com" target="_blank" rel="noopener">Letta</a></th>
@@ -423,6 +495,7 @@ const description =
               <tr class="bench-row-highlight">
                 <th scope="row">Memory primitive</th>
                 <td>Markdown chunks (file-mapped)</td>
+                <td>Markdown text in <code>CLAUDE.md</code> (per-project)</td>
                 <td>Markdown chunks (file-mapped)</td>
                 <td>LLM-extracted facts</td>
                 <td>Managed memory blocks</td>
@@ -431,6 +504,7 @@ const description =
               <tr>
                 <th scope="row">Source preservation</th>
                 <td>Yes — notes intact</td>
+                <td>Yes — text intact</td>
                 <td>Yes — files intact</td>
                 <td>No — facts replace docs</td>
                 <td>Partial — buffer + summaries</td>
@@ -439,6 +513,7 @@ const description =
               <tr>
                 <th scope="row">Recall determinism</th>
                 <td>Deterministic</td>
+                <td>N/A — text always-loaded</td>
                 <td>Deterministic</td>
                 <td>LLM extracts on every write</td>
                 <td>LLM mediates updates</td>
@@ -447,6 +522,7 @@ const description =
               <tr>
                 <th scope="row">How agents call it</th>
                 <td>Bash → loopback HTTP</td>
+                <td>Always loaded into context</td>
                 <td>Bash CLI (MCP optional)</td>
                 <td>MCP server or SDK</td>
                 <td>HTTP server (own runtime)</td>
@@ -455,14 +531,25 @@ const description =
               <tr>
                 <th scope="row">Standing tokens in Claude Code</th>
                 <td>~519 (prose in CLAUDE.md)</td>
+                <td>Full <code>CLAUDE.md</code> per session, per repo</td>
                 <td>~0 (CLI; MCP opt-in)</td>
                 <td>~1,319 (3 MCP schemas)</td>
                 <td>n/a — different host model</td>
                 <td>n/a — different host model</td>
               </tr>
               <tr>
+                <th scope="row">Cross-repo</th>
+                <td>Yes — one vault, every project</td>
+                <td>No — scoped per repo</td>
+                <td>Yes — one config, every project</td>
+                <td>Yes — cloud-mediated</td>
+                <td>Yes — Letta server</td>
+                <td>Yes — store-dependent</td>
+              </tr>
+              <tr>
                 <th scope="row">Where state lives</th>
                 <td>Local Obsidian vault + sqlite-vec</td>
+                <td>Local — <code>CLAUDE.md</code> in repo</td>
                 <td>Local files + sqlite</td>
                 <td>Cloud or self-hosted vector DB</td>
                 <td>Cloud or self-hosted Letta server</td>
@@ -472,6 +559,7 @@ const description =
                 <th scope="row">Walk-away cost</th>
                 <td>Zero — vault is plain markdown</td>
                 <td>Zero — files stay readable</td>
+                <td>Zero — files stay readable</td>
                 <td>Export needed; facts ≠ docs</td>
                 <td>Export needed; data lives in Letta</td>
                 <td>Depends on chosen store</td>
@@ -479,11 +567,12 @@ const description =
             </tbody>
           </table>
           <p class="bench-note">
-            Letta and Mastra are <strong>agent frameworks with built-in memory</strong> —
-            a different category from metalmind, qmd, and mem0 (memory <em>tools</em> you bolt
-            onto an existing host). Listed anyway because they surface in "memory for AI"
-            searches; "different host model" rows are honest about the apples-vs-oranges
-            shape, not a metalmind win.
+            <strong>Native <code>/memory</code></strong> (text in <code>CLAUDE.md</code>) is the
+            zero-install baseline every Claude Code user already has. metalmind earns its install cost
+            once knowledge crosses repo boundaries — the row that flips is "Cross-repo".
+            <strong>Letta</strong> and <strong>Mastra</strong> are agent frameworks with built-in memory
+            — a different category from metalmind / qmd / mem0 (memory <em>tools</em> you bolt onto an
+            existing host). Listed anyway because they surface in "memory for AI" searches.
           </p>
           <p class="bench-headline">
             <strong>Pick metalmind</strong> when your notes are the source of truth and you

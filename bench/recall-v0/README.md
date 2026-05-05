@@ -1,5 +1,7 @@
 # recall-v0 — recall quality + latency bench
 
+> Benchmark for the **memory** module of the [metalmind standard library](../../README.md#whats-in-the-standard-library).
+
 Measures hit@K and latency of the HTTP recall endpoint (`/search`) against a
 fictional drone-company vault. Two modes:
 

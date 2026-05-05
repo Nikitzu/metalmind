@@ -1,6 +1,8 @@
 # metalmind CLI
 
-The Node/TypeScript CLI that drives `metalmind init`, `pulse`, `tap copper`, `burn bronze`, etc. Published as the [`metalmind`](https://www.npmjs.com/package/metalmind) npm package (imminent).
+The Node/TypeScript CLI that drives every module of the **metalmind standard library for Claude Code** — memory, code intelligence, daily workflow, deliberation, desktop integration, health. Published as the [`metalmind`](https://www.npmjs.com/package/metalmind) npm package.
+
+Every module ships through a single CLI surface so they share installer state, sentinel-bounded stamping discipline, and the watcher's loopback-HTTP fast-path. This is the package that owns wiring all of that together.
 
 **For users**: see the repo root [`README.md`](../README.md). This file is for hacking on the CLI.
 

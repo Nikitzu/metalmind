@@ -6,6 +6,59 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.7.0 — 2026-05-05
+
+### Changed — repositioned as the Claude Code standard library
+
+metalmind isn't "memory for Claude Code with extra workflow features bolted on." It's six integrated modules, each closing a gap Claude Code itself doesn't fill. **Memory** is the headline because it's the most legible benchmark and the most universal need. **Code intelligence** (cross-repo graph, symbol nav, coordinated rename), **daily workflow** (atium / gold / EOD routine), **deliberation** (synod), **desktop integration** (flare), and **health** (pulse, recall-audit) ship with it. The integration is the moat.
+
+This release is the positioning shift — no behaviour changes, no breaking changes, no code touched in `cli/src/` or `packages/vault-rag/`. The four-rule honesty bar that keeps the library from drifting into a kitchen sink is now stated explicitly:
+
+1. Zero standing MCP-schema tax in Claude Code.
+2. Reversible to zero — `metalmind uninstall` never touches your notes.
+3. No accounts, no cloud, no third-party services.
+4. Closes a gap Claude Code itself doesn't fill — no duplication of host primitives.
+
+### What changed (content only)
+
+- **Site landing page** (`site/src/pages/index.astro`):
+  - Hero copy reframed: *"the missing standard library for Claude Code"*.
+  - New **What's in the standard library** section after *What it's actually for*, listing the six modules + the four-rule bar.
+  - Page TOC includes the new section.
+  - **`/memory` column added** to the *How metalmind compares* matrix, with a new **Cross-repo** row that flips the comparison cleanly: native `/memory` is the zero-install baseline; metalmind earns its install cost once knowledge crosses repo boundaries.
+
+- **Repo-root `README.md`**:
+  - Hero paragraph reframed to match the site.
+  - New **What's in the standard library** module table + four-rule bar.
+  - **`## What it adds`** restructured into module sections (`### Memory`, `### Code intelligence`, `### Daily workflow`, `### Deliberation`, `### Desktop integration`, `### Health`) — same content, organised by module instead of a flat bullet list.
+  - **`/memory` column added** to the comparison matrix; new *Cross-repo* row.
+  - Docs section links the two new docs (architecture, cookbook).
+
+- **`cli/README.md`**: one-paragraph intro that frames the CLI as the surface every module ships through. Internal contributors share the framing.
+
+- **`bench/recall-v0/README.md`, `bench/mcp-tax-v0/README.md`, `bench/recall-at-scale/README.md`**: each gets a one-line callout placing it in the standard-library framing (*memory module*, or in the case of mcp-tax, *the foundational rule*).
+
+- **`docs/architecture.md`** *(new)*: single-page architectural overview — six modules, four pieces of shared state (vault / sentinel-bounded stamps / watcher + recall HTTP / CLI), how they wire together, and the criteria for adding a new module. Includes an ASCII diagram.
+
+- **`docs/cookbook.md`** *(new)*: opinionated patterns for using metalmind well. v0 covers three sections — *Writing a vault note Claude will find* (frontmatter discipline, kind:slug shortcuts, MOC linking, anti-patterns), *Recall hygiene* (when `--deep` vs `--expand`, the 2–3 rephrasings rule, reading the recall log), and *What lives where* (per-folder intent + the decision question). Two sections deferred to a v1 cookbook (*Migrating from mem0/Letta/Notion*, *Scaling past 10k notes*).
+
+### What didn't change
+
+- **No code touched.** `cli/src/`, `packages/vault-rag/`, all tests pass unchanged. 317/317 tests green; typecheck clean; site build clean.
+- **No new commands.** Every existing verb still works exactly as before.
+- **No breaking changes.** Existing scripts, existing skill templates, existing stamped blocks all keep their contracts.
+- **No version bump in `metalmind-vault-rag`.** Stays at 0.3.0.
+
+### Migration
+
+Run `metalmind stamp` after upgrade — but no template content changes between v0.6.2 and v0.7.0, so the stamp is a no-op for stamped files. The new docs (`docs/architecture.md`, `docs/cookbook.md`) ship in the npm tarball and are linked from the README.
+
+### Why a medior-version bump for a content-only release
+
+The standard-library framing is a real product-positioning shift you'll want a public marker for. Every module-naming and the four-rule bar are now things future contributors will reference. A patch (0.6.3) would imply "tiny fix"; this is a deliberate repositioning — last-digit bump would understate it.
+
+---
+
 ## 0.6.2 — 2026-05-05
 
 ### Fixed — vault `CLAUDE.md` block aligned with the global block
