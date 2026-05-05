@@ -1,5 +1,6 @@
 import { access, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, relative } from 'node:path';
+import { type DateArg, resolveDate } from './daily.js';
 
 export type ScribeKind =
   | 'plan'
@@ -36,14 +37,25 @@ export interface CreateOpts {
   project?: string;
   tags?: string[];
   slug?: string;
+  /** Explicit acknowledgement of a non-today daily-note date. Required for
+   *  any daily-targeted mutating op when target date ≠ today. Accepts the
+   *  same shape as `metalmind atium`: today | tomorrow | next-workday |
+   *  YYYY-MM-DD. */
+  date?: DateArg;
   moc?: boolean;
   dryRun?: boolean;
+}
+
+export interface DailyDateOpts {
+  /** See {@link CreateOpts.date}. */
+  date?: DateArg;
 }
 
 export interface PatchOpts {
   section: string;
   body: string;
   occurrence?: number;
+  date?: DateArg;
   dryRun?: boolean;
 }
 
@@ -58,6 +70,38 @@ export function slugify(s: string): string {
 
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+const DAILY_FILE_RE = /Daily[/\\](\d{4}-\d{2}-\d{2})\.md$/;
+
+function dailyDateFromPath(abs: string): string | null {
+  const m = DAILY_FILE_RE.exec(abs);
+  return m?.[1] ?? null;
+}
+
+export function assertDailyDateAck(
+  abs: string,
+  dateArg: DateArg | undefined,
+  now: Date,
+  action: string,
+): void {
+  const fileDate = dailyDateFromPath(abs);
+  if (!fileDate) return;
+  const today = isoDate(now);
+  if (fileDate === today) return;
+  if (dateArg !== undefined) {
+    const resolved = resolveDate(dateArg, now);
+    if (resolved === fileDate) return;
+    throw new Error(
+      `--date '${dateArg}' resolves to ${resolved}, but target daily note is ${fileDate}. ` +
+        `Pass --date ${fileDate} to acknowledge the target date explicitly.`,
+    );
+  }
+  throw new Error(
+    `refusing to ${action} daily note for ${fileDate} (today is ${today}). ` +
+      `Pass --date ${fileDate} to acknowledge the target date explicitly, or use ` +
+      `'metalmind atium add --date ${fileDate}' (canonical path for daily action items).`,
+  );
 }
 
 export function resolveNotePath(input: string, vaultRoot: string): string {
@@ -75,8 +119,8 @@ export function resolveNotePath(input: string, vaultRoot: string): string {
   return join(vaultRoot, input);
 }
 
-function filenameFor(kind: ScribeKind, slug: string, now: Date): string {
-  if (kind === 'daily') return `${isoDate(now)}.md`;
+function filenameFor(kind: ScribeKind, slug: string, now: Date, dailyDate?: string): string {
+  if (kind === 'daily') return `${dailyDate ?? isoDate(now)}.md`;
   if (kind === 'plan') return `${isoDate(now)}-${slug}.md`;
   return `${slug}.md`;
 }
@@ -181,16 +225,29 @@ export async function scribeCreate(
   ctx: ScribeOpts,
 ): Promise<{ path: string; relPath: string; created: boolean }> {
   const now = ctx.now ? ctx.now() : new Date();
-  if (opts.kind === 'daily' && opts.slug && opts.slug !== isoDate(now)) {
-    throw new Error(
-      `scribe create --kind daily hardcodes today's date for the filename; --slug '${opts.slug}' would be dropped. Use 'metalmind atium new --date ${opts.slug}' (or 'metalmind daily new --date ${opts.slug}') for non-today daily notes.`,
-    );
+  let dailyDate: string | undefined;
+  if (opts.kind === 'daily') {
+    const today = isoDate(now);
+    if (opts.date !== undefined) {
+      dailyDate = resolveDate(opts.date, now);
+      if (opts.slug && opts.slug !== dailyDate) {
+        throw new Error(
+          `--slug '${opts.slug}' conflicts with --date '${opts.date}' (resolves to ${dailyDate}). ` +
+            `Drop --slug for daily kind — --date is the canonical knob for the target date.`,
+        );
+      }
+    } else if (opts.slug && opts.slug !== today) {
+      throw new Error(
+        `for kind=daily on a non-today date, use --date '${opts.slug}' to acknowledge it explicitly, ` +
+          `or 'metalmind atium new --date ${opts.slug}' (canonical path for future daily notes).`,
+      );
+    }
   }
   const slug = opts.slug ? slugify(opts.slug) : slugify(opts.title);
   if (!slug && opts.kind !== 'daily')
     throw new Error('could not derive slug from title; pass --slug');
   const dir = join(ctx.vaultRoot, KIND_DIRS[opts.kind]);
-  const filename = filenameFor(opts.kind, slug, now);
+  const filename = filenameFor(opts.kind, slug, now, dailyDate);
   const abs = join(dir, filename);
   const relPath = relative(ctx.vaultRoot, abs);
 
@@ -231,13 +288,14 @@ export async function scribeUpdate(
   notePath: string,
   body: string,
   ctx: ScribeOpts,
-  opts: { dryRun?: boolean } = {},
+  opts: { dryRun?: boolean; date?: DateArg } = {},
 ): Promise<{ path: string }> {
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
+  const now = ctx.now ? ctx.now() : new Date();
+  assertDailyDateAck(abs, opts.date, now, 'update');
   if (opts.dryRun) return { path: abs };
   const raw = await readFile(abs, 'utf8');
-  const now = ctx.now ? ctx.now() : new Date();
   const bumped = rewriteFrontmatterField(raw, 'updated', isoDate(now));
   const appended = `${bumped.trimEnd()}\n\n${body.trim()}\n`;
   await writeFile(abs, appended, 'utf8');
@@ -251,6 +309,8 @@ export async function scribePatch(
 ): Promise<{ path: string }> {
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
+  const now = ctx.now ? ctx.now() : new Date();
+  assertDailyDateAck(abs, opts.date, now, 'patch');
   const raw = await readFile(abs, 'utf8');
   const headingRe = new RegExp(
     `^##\\s+${opts.section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`,
@@ -272,7 +332,6 @@ export async function scribePatch(
   const end = nextHeading < 0 ? raw.length : afterHeading + nextHeading;
   const replaced = `${raw.slice(0, afterHeading)}\n\n${opts.body.trim()}\n${raw.slice(end)}`;
   if (opts.dryRun) return { path: abs };
-  const now = ctx.now ? ctx.now() : new Date();
   const bumped = rewriteFrontmatterField(replaced, 'updated', isoDate(now));
   await writeFile(abs, bumped, 'utf8');
   return { path: abs };
@@ -281,10 +340,12 @@ export async function scribePatch(
 export async function scribeDelete(
   notePath: string,
   ctx: ScribeOpts,
-  opts: { hard?: boolean; dryRun?: boolean } = {},
+  opts: { hard?: boolean; dryRun?: boolean; date?: DateArg } = {},
 ): Promise<{ path: string; to?: string }> {
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
+  const now = ctx.now ? ctx.now() : new Date();
+  assertDailyDateAck(abs, opts.date, now, 'delete');
   if (opts.dryRun) return { path: abs };
   if (opts.hard) {
     await rm(abs);
@@ -292,7 +353,7 @@ export async function scribeDelete(
   }
   const trashDir = join(ctx.vaultRoot, '.trash');
   await mkdir(trashDir, { recursive: true });
-  const stamp = (ctx.now ? ctx.now() : new Date()).toISOString().replace(/[:.]/g, '-');
+  const stamp = now.toISOString().replace(/[:.]/g, '-');
   const dest = join(trashDir, `${stamp}__${basename(abs)}`);
   await rename(abs, dest);
   const relPath = relative(ctx.vaultRoot, abs);
@@ -304,17 +365,18 @@ export async function scribeDelete(
 export async function scribeArchive(
   notePath: string,
   ctx: ScribeOpts,
-  opts: { dryRun?: boolean } = {},
+  opts: { dryRun?: boolean; date?: DateArg } = {},
 ): Promise<{ path: string; to: string }> {
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
+  const now = ctx.now ? ctx.now() : new Date();
+  assertDailyDateAck(abs, opts.date, now, 'archive');
   const archiveRoot = join(ctx.vaultRoot, 'Archive');
   const rel = relative(ctx.vaultRoot, abs);
   const dest = join(archiveRoot, rel);
   if (opts.dryRun) return { path: abs, to: dest };
   await mkdir(dirname(dest), { recursive: true });
   const raw = await readFile(abs, 'utf8');
-  const now = ctx.now ? ctx.now() : new Date();
   const withStatus = rewriteFrontmatterField(raw, 'status', 'archived');
   const bumped = rewriteFrontmatterField(withStatus, 'updated', isoDate(now));
   await writeFile(dest, bumped, 'utf8');
@@ -446,13 +508,16 @@ export async function scribeRename(
   from: string,
   to: string,
   ctx: ScribeOpts,
-  opts: { dryRun?: boolean } = {},
+  opts: { dryRun?: boolean; date?: DateArg } = {},
 ): Promise<RenameResult> {
   const absFrom = resolveNotePath(from, ctx.vaultRoot);
   if (!(await exists(absFrom))) throw new Error(`source note not found: ${absFrom}`);
   const absTo = resolveNotePath(to, ctx.vaultRoot);
   if (absFrom === absTo) throw new Error('from and to resolve to the same path');
   if (await exists(absTo)) throw new Error(`destination already exists: ${absTo}`);
+  const renameNow = ctx.now ? ctx.now() : new Date();
+  assertDailyDateAck(absFrom, opts.date, renameNow, 'rename');
+  assertDailyDateAck(absTo, opts.date, renameNow, 'rename');
 
   const oldRel = relative(ctx.vaultRoot, absFrom).replace(/\.md$/, '');
   const newRel = relative(ctx.vaultRoot, absTo).replace(/\.md$/, '');
@@ -473,8 +538,7 @@ export async function scribeRename(
   if (!opts.dryRun) {
     await mkdir(dirname(absTo), { recursive: true });
     const raw = await readFile(absFrom, 'utf8');
-    const now = ctx.now ? ctx.now() : new Date();
-    const bumped = rewriteFrontmatterField(raw, 'updated', isoDate(now));
+    const bumped = rewriteFrontmatterField(raw, 'updated', isoDate(renameNow));
     await writeFile(absTo, bumped, 'utf8');
     await rm(absFrom);
   }

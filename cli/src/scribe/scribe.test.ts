@@ -276,3 +276,119 @@ describe('scribe CRUD', () => {
     await expect(readFile(join(vault, 'Learnings/nothing.md'), 'utf8')).rejects.toBeTruthy();
   });
 });
+
+describe('daily-date guard', () => {
+  let vault: string;
+
+  beforeEach(async () => {
+    vault = await mkdtemp(join(tmpdir(), 'mm-vault-'));
+  });
+  afterEach(async () => {
+    await rm(vault, { recursive: true, force: true });
+  });
+
+  it('create daily with --date tomorrow lands the file at tomorrow.md', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const res = await scribeCreate(
+      { kind: 'daily', title: 'plan-ahead', body: 'x', date: 'tomorrow' },
+      ctx,
+    );
+    expect(res.relPath).toBe('Daily/2026-04-22.md');
+  });
+
+  it('create daily with --date YYYY-MM-DD ≠ today is accepted explicitly', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const res = await scribeCreate(
+      { kind: 'daily', title: 'x', body: 'b', date: '2026-04-25' },
+      ctx,
+    );
+    expect(res.relPath).toBe('Daily/2026-04-25.md');
+  });
+
+  it('create daily errors when --slug conflicts with --date', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await expect(
+      scribeCreate(
+        { kind: 'daily', title: 'x', body: 'b', slug: '2026-04-22', date: '2026-04-25' },
+        ctx,
+      ),
+    ).rejects.toThrow(/conflicts with --date/);
+  });
+
+  it('update on a future-dated daily note refuses without --date', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await scribeCreate(
+      { kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' },
+      ctx,
+    );
+    await expect(
+      scribeUpdate('daily:2026-04-25', 'more', ctx),
+    ).rejects.toThrow(/refusing to update daily note for 2026-04-25.*atium add --date 2026-04-25/s);
+  });
+
+  it('update on a future-dated daily note accepts matching --date', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await scribeCreate(
+      { kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' },
+      ctx,
+    );
+    await scribeUpdate('daily:2026-04-25', 'more', ctx, { date: '2026-04-25' });
+    const raw = await readFile(join(vault, 'Daily/2026-04-25.md'), 'utf8');
+    expect(raw).toContain('more');
+  });
+
+  it('update with mismatched --date prints both dates in the error', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await scribeCreate(
+      { kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' },
+      ctx,
+    );
+    await expect(
+      scribeUpdate('daily:2026-04-25', 'more', ctx, { date: '2026-04-26' }),
+    ).rejects.toThrow(/--date '2026-04-26' resolves to 2026-04-26.*target daily note is 2026-04-25/s);
+  });
+
+  it('patch on future-dated daily refuses without --date', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await scribeCreate(
+      { kind: 'daily', title: 'plan-ahead', body: '## A\n\none', date: '2026-04-25' },
+      ctx,
+    );
+    await expect(
+      scribePatch('daily:2026-04-25', { section: 'A', body: 'two' }, ctx),
+    ).rejects.toThrow(/refusing to patch/);
+  });
+
+  it('archive on future-dated daily refuses without --date', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await scribeCreate(
+      { kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' },
+      ctx,
+    );
+    await expect(scribeArchive('daily:2026-04-25', ctx)).rejects.toThrow(
+      /refusing to archive daily note for 2026-04-25/,
+    );
+  });
+
+  it('today daily is unaffected — no --date needed for update or patch', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await scribeCreate({ kind: 'daily', title: 'morning', body: '## A\n\nseed' }, ctx);
+    await scribeUpdate('daily:2026-04-21', 'more', ctx);
+    const afterUpdate = await readFile(join(vault, 'Daily/2026-04-21.md'), 'utf8');
+    expect(afterUpdate).toContain('more');
+    await scribePatch('daily:2026-04-21', { section: 'A', body: 'fresh' }, ctx);
+    const afterPatch = await readFile(join(vault, 'Daily/2026-04-21.md'), 'utf8');
+    expect(afterPatch).toContain('fresh');
+  });
+
+  it('non-daily notes are unaffected by the guard', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate(
+      { kind: 'learning', title: 't', body: 'seed', project: 'p' },
+      ctx,
+    );
+    await scribeUpdate(path, 'tail', ctx);
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('tail');
+  });
+});

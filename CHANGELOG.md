@@ -6,6 +6,55 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.6.1 — 2026-05-05
+
+### Fixed — stamped rules no longer contradict the metalmind CLI contract
+
+The stamped rule surface (top-of-file `CLAUDE.md` block, `/save` skill, `writing-vault-notes` skill, daily-note flow) had drifted from the actual CLI behaviour in nine places. Each gap was a way for an agent reading the rules to either bypass metalmind ("write directly with `Write`") or hit a silent footgun ("wrote a daily note for the wrong date"). This release closes all nine and adds the one CLI-side guard the rule surface now depends on.
+
+#### Fixed + Breaking — scribe daily-date guard
+
+Every mutating `metalmind scribe` verb (`create`, `update`, `patch`, `delete`, `archive`, `rename`) now **refuses** to touch a daily note (`Daily/YYYY-MM-DD.md`) when the target date ≠ today, unless `--date <today|tomorrow|next-workday|YYYY-MM-DD>` is passed to acknowledge the target date explicitly. The error names today, names the resolved target, and prints the exact flag invocation that would have worked. For daily action items the canonical path remains `metalmind atium add --date <date>`.
+
+Previously: `scribe update daily:2026-05-06` either silently succeeded or failed with a generic `note not found`, with no signal that today was the intended target. **Breaking** for any script that relied on the silent behaviour — the migration is mechanical: if your script genuinely targets a non-today daily note, add `--date <YYYY-MM-DD>`. If it didn't, the new error tells you the bug existed already. There is no flag to opt out of the guard — silent footguns hide behind flags.
+
+#### Stamped-rule contradictions fixed
+
+`cli/templates/claude/CLAUDE.md.block.template` (top-of-file block stamped into every install's `~/.claude/CLAUDE.md`):
+
+1. **Verb list was incomplete and mixed mutating with read-only.** Previously listed `<create|update|patch|delete|archive|list|show>` and claimed "all verbs support `--dry-run`" — but `rename` was missing, and `list`/`show` are read-only (no `--dry-run`). Now: mutating verbs and read-only verbs are split into separate bullets; `rename` is included; `--dry-run` claim is scoped correctly.
+2. **Folder list was missing `Plans/` and `MOCs/`.** Both are valid scribe kinds (`plan:`, `moc:`); the canonical folder list now includes them.
+3. **Daily-date contract was absent.** New paragraph names the guard, documents `--date`, and points at `metalmind atium add` as the canonical path for daily action items.
+4. **Daily-shortcut example was missing.** Examples now show `daily:2026-04-21` alongside `learning:` / `plan:`, with a callout that non-today dates need `--date`.
+5. **"No `Write` fallback" rule was only in `/save`.** Lifted into the top-of-file block — every Claude Code session reads `CLAUDE.md`; only the `/save` flow reads `save.md`. The rule now lives where it's most needed: "if no metalmind command fits your target, **stop and surface the gap** — do not reach for `Write` as a fallback."
+6. **Hardcoded `~/Knowledge/` path.** Replaced with `{{VAULT_PATH}}` placeholder so the stamped rule is correct for users with non-default vault locations.
+
+`cli/templates/claude/commands/save.md`:
+
+7. **Daily routing was ambiguous.** "Append to today's daily log" line didn't say which tool to use. Now spells out: `metalmind atium add` for action items, `scribe update daily:<today>` for prose; non-today requires `--date` on both surfaces.
+
+`cli/templates/claude/skills/writing-vault-notes/SKILL.md`:
+
+8. **Write-surface table conflated daily and non-daily.** The table now has separate rows for "Note CRUD — mutating" / "Note CRUD — read-only" / "Daily action items (canonical)" / "Daily prose for non-today date" — matching the actual CLI surfaces an agent reaches for.
+9. **Old "future daily notes go through atium, scribe errors on --slug" paragraph was stale** (only described half the contract). Replaced with the full daily-date guard paragraph: which verbs refuse, which flag overrides, which surface is canonical for which intent.
+
+### What changed
+
+- `cli/src/scribe/scribe.ts` — added `assertDailyDateAck`, threaded `date?: DateArg` through `CreateOpts`, `scribeUpdate`, `scribePatch`, `scribeDelete`, `scribeArchive`, `scribeRename`. `scribeCreate` for `kind=daily` now accepts `--date` to land the file at a non-today date; `--slug` for kind=daily errors with a pointer to `--date` or `metalmind atium new`.
+- `cli/src/cli.ts` — `--date <date>` flag added to `scribe create | update | patch | delete | archive | rename` (and classic aliases under `note`). Help text shared via a single description string.
+- Three template rewrites described above.
+- Tests: `cli/src/scribe/scribe.test.ts` adds 9 cases under `describe('daily-date guard')` covering create-with-date, update-without-ack-refuses, mismatched-date error shape, patch/archive guard paths, today-still-works, and non-daily-unaffected.
+
+### Site/README drift fix
+
+Bumped the `current release` reference in `README.md` to v0.6.1 (was lagging at v0.5.3 since the v0.5.4–v0.6.0 batch). The site already pulls from `cli/package.json`.
+
+### Migration
+
+Run `metalmind stamp` after upgrade so the rule and skill templates propagate to every existing install. Scripts that hit a daily note via scribe for non-today dates will start erroring; the error message prints the exact fix.
+
+---
+
 ## 0.6.0 — 2026-05-03
 
 ### Added

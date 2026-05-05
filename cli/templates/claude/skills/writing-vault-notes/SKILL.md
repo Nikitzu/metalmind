@@ -19,8 +19,10 @@ Out of scope: Obsidian Bases (`.base`), JSON Canvas (`.canvas`), plugin-specific
 
 | Intent | Scadrial | Classic |
 |---|---|---|
-| Note CRUD (create/update/patch/delete/archive/rename/list/show) | `metalmind scribe <verb>` | `metalmind note <verb>` |
-| Daily-note ops for today or a future date | `metalmind atium new\|add` | `metalmind daily new\|add` |
+| Note CRUD — mutating (create / update / patch / delete / archive / rename) | `metalmind scribe <verb>` | `metalmind note <verb>` |
+| Note CRUD — read-only (list / show) | `metalmind scribe list\|show` | `metalmind note list\|show` |
+| Daily action items (canonical for daily checklists) | `metalmind atium new\|add --date <date>` | `metalmind daily new\|add --date <date>` |
+| Daily prose for non-today date | `metalmind scribe update daily:<YYYY-MM-DD> --date <YYYY-MM-DD>` | `metalmind note update daily:<YYYY-MM-DD> --date <YYYY-MM-DD>` |
 | Archive a note (one-shot) | `metalmind gold <kind:slug>` | `metalmind scribe archive <kind:slug>` |
 | Desktop notification (macOS) | `metalmind flare banner\|dialog\|sticky` | `metalmind notify banner\|dialog\|sticky` |
 
@@ -28,7 +30,7 @@ Both names always work — prefer whichever the user's `CLAUDE.md` suggests. If 
 
 **`metalmind scribe` stamps frontmatter.** When piping a body through `scribe create|update|patch`, emit the body only — no `---` YAML block. Scribe writes `tags`, `created`, `updated`, `project`, `status` based on flags and the `kind:slug` target.
 
-**Future daily notes go through `atium`/`daily`, not `scribe create --kind daily`.** `scribe create --kind daily` hardcodes today's filename; passing a different `--slug` errors. For tomorrow or any other date, use `metalmind atium new --date <today|tomorrow|next-workday|YYYY-MM-DD>` (or the `daily` classic alias).
+**Daily notes for non-today dates require explicit `--date`.** Every mutating scribe verb (`create`, `update`, `patch`, `delete`, `archive`, `rename`) refuses to touch `Daily/YYYY-MM-DD.md` when the resolved date ≠ today, unless you pass `--date <today|tomorrow|next-workday|YYYY-MM-DD>` to acknowledge the target date explicitly. The error names the resolved date and prints the exact flag invocation that would have worked. **Canonical path for adding action items to a future daily note is `metalmind atium add --date <date>`** — scribe is for prose; atium is for daily checklists. For prose into a future daily, `scribe update daily:YYYY-MM-DD --date YYYY-MM-DD` is acceptable when the date is intentional.
 
 **Valid `kind:` prefixes** (these are the only ones — passing anything else throws `unknown kind`):
 

@@ -27,7 +27,7 @@ Decide the right folder based on content:
 - `Learnings/` — reusable engineering patterns, language tricks, tooling insights
 - `Personal/` — personal thoughts, non-work notes
 - `Memory/` — agent feedback / preference notes
-- `Daily/YYYY-MM-DD.md` — append to today's daily log when the insight is time-bound
+- `Daily/YYYY-MM-DD.md` — append to today's daily log when the insight is time-bound (use `metalmind atium add` for action items; `metalmind scribe update daily:<today>` for prose). For non-today dates, scribe requires `--date <YYYY-MM-DD>` and atium takes `--date` directly.
 - `Inbox/` — if unsure, park here for later triage
 
 ## How to save

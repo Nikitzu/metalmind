@@ -46,6 +46,7 @@ export async function scribeCreateCmd(
     project?: string;
     tags?: string;
     slug?: string;
+    date?: string;
     body?: string;
     moc?: boolean;
     dryRun?: boolean;
@@ -64,6 +65,7 @@ export async function scribeCreateCmd(
           .map((t) => t.trim())
           .filter(Boolean),
         slug: opts.slug,
+        date: opts.date,
         moc: opts.moc,
         dryRun: opts.dryRun,
       },
@@ -77,12 +79,15 @@ export async function scribeCreateCmd(
 
 export async function scribeUpdateCmd(
   notePath: string,
-  opts: { body?: string; dryRun?: boolean },
+  opts: { body?: string; date?: string; dryRun?: boolean },
 ): Promise<void> {
   try {
     const body = opts.body ?? (await readStdin());
     if (!body.trim()) throw new Error('empty body — pipe content on stdin or pass --body');
-    const res = await scribeUpdate(notePath, body, await ctx(), { dryRun: opts.dryRun });
+    const res = await scribeUpdate(notePath, body, await ctx(), {
+      date: opts.date,
+      dryRun: opts.dryRun,
+    });
     log.success(`${opts.dryRun ? 'would update' : 'updated'} ${res.path}`);
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
@@ -91,7 +96,7 @@ export async function scribeUpdateCmd(
 
 export async function scribePatchCmd(
   notePath: string,
-  opts: { section: string; body?: string; occurrence?: string; dryRun?: boolean },
+  opts: { section: string; body?: string; occurrence?: string; date?: string; dryRun?: boolean },
 ): Promise<void> {
   try {
     const body = opts.body ?? (await readStdin());
@@ -99,7 +104,7 @@ export async function scribePatchCmd(
     const occurrence = opts.occurrence ? Number.parseInt(opts.occurrence, 10) : undefined;
     const res = await scribePatch(
       notePath,
-      { section: opts.section, body, occurrence, dryRun: opts.dryRun },
+      { section: opts.section, body, occurrence, date: opts.date, dryRun: opts.dryRun },
       await ctx(),
     );
     log.success(`${opts.dryRun ? 'would patch' : 'patched'} ## ${opts.section} in ${res.path}`);
@@ -110,11 +115,12 @@ export async function scribePatchCmd(
 
 export async function scribeDeleteCmd(
   notePath: string,
-  opts: { hard?: boolean; dryRun?: boolean },
+  opts: { hard?: boolean; date?: string; dryRun?: boolean },
 ): Promise<void> {
   try {
     const res = await scribeDelete(notePath, await ctx(), {
       hard: opts.hard,
+      date: opts.date,
       dryRun: opts.dryRun,
     });
     if (opts.hard) log.success(`${opts.dryRun ? 'would hard-delete' : 'hard-deleted'} ${res.path}`);
@@ -129,10 +135,13 @@ export async function scribeDeleteCmd(
 
 export async function scribeArchiveCmd(
   notePath: string,
-  opts: { dryRun?: boolean },
+  opts: { date?: string; dryRun?: boolean },
 ): Promise<void> {
   try {
-    const res = await scribeArchive(notePath, await ctx(), { dryRun: opts.dryRun });
+    const res = await scribeArchive(notePath, await ctx(), {
+      date: opts.date,
+      dryRun: opts.dryRun,
+    });
     log.success(`${opts.dryRun ? 'would archive' : 'archived'} ${res.path} → ${res.to}`);
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
@@ -162,10 +171,13 @@ export async function scribeListCmd(opts: { project?: string; kind?: string }): 
 export async function scribeRenameCmd(
   from: string,
   to: string,
-  opts: { dryRun?: boolean },
+  opts: { date?: string; dryRun?: boolean },
 ): Promise<void> {
   try {
-    const res = await scribeRename(from, to, await ctx(), { dryRun: opts.dryRun });
+    const res = await scribeRename(from, to, await ctx(), {
+      date: opts.date,
+      dryRun: opts.dryRun,
+    });
     const verb = opts.dryRun ? 'would rename' : 'renamed';
     log.success(
       `${verb} ${res.from} → ${res.to} (${res.backlinksRewritten} backlink${res.backlinksRewritten === 1 ? '' : 's'} in ${res.filesTouched.length} file${res.filesTouched.length === 1 ? '' : 's'})`,

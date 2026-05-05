@@ -299,6 +299,9 @@ const groupCmd = program.command('group').description('Classic alias: cross-repo
 attachForgeSubcommands(groupCmd);
 
 function attachScribeSubcommands(parent: Command): void {
+  const dateFlagDescription =
+    'Acknowledge a non-today daily-note date (today | tomorrow | next-workday | YYYY-MM-DD). ' +
+    'Required when target is Daily/<date>.md and date ≠ today.';
   parent
     .command('create <title>')
     .description('Create a vault note with frontmatter + MOC linking. Body read from stdin.')
@@ -309,6 +312,7 @@ function attachScribeSubcommands(parent: Command): void {
     .option('--project <slug>', 'Project slug (drives MOC linking via frontmatter)')
     .option('--tags <csv>', 'Comma-separated tags')
     .option('--slug <slug>', 'Override derived slug')
+    .option('--date <date>', dateFlagDescription)
     .option('--body <body>', 'Body inline (otherwise read from stdin)')
     .option('--no-moc', 'Skip appending a link to the project MOC')
     .option('--dry-run', 'Preview only')
@@ -317,6 +321,7 @@ function attachScribeSubcommands(parent: Command): void {
     .command('update <note>')
     .description('Append body to an existing note and bump updated:. Accepts kind:slug shortcut.')
     .option('--body <body>', 'Body inline (otherwise read from stdin)')
+    .option('--date <date>', dateFlagDescription)
     .option('--dry-run', 'Preview only')
     .action((note: string, cmdOpts) => scribeUpdateCmd(note, cmdOpts));
   parent
@@ -325,17 +330,20 @@ function attachScribeSubcommands(parent: Command): void {
     .requiredOption('--section <heading>', 'Section heading without the ## prefix')
     .option('--body <body>', 'Body inline (otherwise read from stdin)')
     .option('--occurrence <n>', '1-indexed occurrence when section appears multiple times')
+    .option('--date <date>', dateFlagDescription)
     .option('--dry-run', 'Preview only')
     .action((note: string, cmdOpts) => scribePatchCmd(note, cmdOpts));
   parent
     .command('delete <note>')
     .description('Soft-delete (move to .trash/). --hard to actually remove.')
     .option('--hard', 'Hard delete instead of moving to .trash/')
+    .option('--date <date>', dateFlagDescription)
     .option('--dry-run', 'Preview only')
     .action((note: string, cmdOpts) => scribeDeleteCmd(note, cmdOpts));
   parent
     .command('archive <note>')
     .description('Move to Archive/ and set status: archived. MOC links preserved.')
+    .option('--date <date>', dateFlagDescription)
     .option('--dry-run', 'Preview only')
     .action((note: string, cmdOpts) => scribeArchiveCmd(note, cmdOpts));
   parent
@@ -351,8 +359,9 @@ function attachScribeSubcommands(parent: Command): void {
   parent
     .command('rename <from> <to>')
     .description('Rename a note and rewrite all wikilink backlinks across the vault.')
+    .option('--date <date>', dateFlagDescription)
     .option('--dry-run', 'Preview changes without writing')
-    .action((from: string, to: string, cmdOpts: { dryRun?: boolean }) =>
+    .action((from: string, to: string, cmdOpts: { date?: string; dryRun?: boolean }) =>
       scribeRenameCmd(from, to, cmdOpts),
     );
 }
