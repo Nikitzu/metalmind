@@ -9,7 +9,7 @@ const modules = [
   { key: 'flare',   classic: 'desktop',      scadrial: 'brass',   classicVerb: 'notify',     scadrialVerb: 'flare',       color: 'var(--metal-brass)',  angle: 150 },
   { key: 'pulse',   classic: 'health',       scadrial: 'iron',    classicVerb: 'doctor',     scadrialVerb: 'pulse',       color: 'var(--metal-iron)',   angle: 210 },
 ];
-const r = 170;
+const r = 150;
 function pos(angle: number) {
   return {
     x: 240 + r * Math.cos(angle * Math.PI / 180),
@@ -17,8 +17,9 @@ function pos(angle: number) {
   };
 }
 ---
-<div class="sys-diagram" aria-label="metalmind module diagram">
-  <svg viewBox="0 0 480 480" width="100%" height="100%">
+<div class="sys-diagram-wrap">
+  <div class="sys-diagram" aria-label="metalmind module diagram">
+    <svg viewBox="0 0 480 480" width="100%" height="100%">
     <defs>
       <radialGradient id="vault-glow" cx="0.5" cy="0.5" r="0.5">
         <stop offset="0" stop-color="var(--accent)" stop-opacity="0.35" />
@@ -30,9 +31,9 @@ function pos(angle: number) {
       </pattern>
     </defs>
     <rect width="480" height="480" fill="url(#sys-grid)" opacity="0.6"/>
-    <circle cx="240" cy="240" r="170" fill="none" stroke="var(--line)" stroke-dasharray="2 6" opacity="0.5" />
-    <circle cx="240" cy="240" r="120" fill="none" stroke="var(--line)" stroke-dasharray="2 6" opacity="0.4" />
-    <circle cx="240" cy="240" r="100" fill="url(#vault-glow)" />
+    <circle cx="240" cy="240" r="150" fill="none" stroke="var(--line)" stroke-dasharray="2 6" opacity="0.5" />
+    <circle cx="240" cy="240" r="105" fill="none" stroke="var(--line)" stroke-dasharray="2 6" opacity="0.4" />
+    <circle cx="240" cy="240" r="90"  fill="url(#vault-glow)" />
 
     {modules.map((m) => {
       const { x, y } = pos(m.angle);
@@ -45,33 +46,49 @@ function pos(angle: number) {
     })}
 
     <g>
-      <circle cx="240" cy="240" r="48" fill="var(--bg-elev-2)" stroke="var(--accent)" stroke-width="1.2" />
-      <text x="240" y="234" text-anchor="middle" fill="var(--ink)" font-family="var(--font-display)" font-size="18">vault</text>
+      <circle cx="240" cy="240" r="42" fill="var(--bg-elev-2)" stroke="var(--accent)" stroke-width="1.2" />
+      <text x="240" y="236" text-anchor="middle" fill="var(--ink)" font-family="var(--font-display)" font-size="17">vault</text>
       <text x="240" y="254" text-anchor="middle" fill="var(--ink-faint)" font-family="var(--font-mono)" font-size="9" letter-spacing="0.1em">~/Knowledge/</text>
     </g>
 
     {modules.map((m, i) => {
       const { x, y } = pos(m.angle);
+      // For nodes in the south hemisphere (angle between 30 and 150),
+      // put the metal label below and the verb label above so neither
+      // bleeds past the SVG bottom edge.
+      const south = m.angle > 30 && m.angle < 150;
+      const metalY = south ? y + 48 : y - 38;
+      const verbY  = south ? y - 38 : y + 48;
       return (
         <g class="sys-node">
-          <circle cx={x} cy={y} r="32" fill="var(--bg-elev)" stroke={m.color} stroke-width="1.2" />
+          <circle cx={x} cy={y} r="28" fill="var(--bg-elev)" stroke={m.color} stroke-width="1.2" />
           <circle cx={x} cy={y} r="6" fill={m.color} opacity="0.6">
             <animate attributeName="r" values="6;9;6" dur={`${2.5 + i * 0.4}s`} repeatCount="indefinite" />
           </circle>
           {/* labels — render both, CSS toggles */}
-          <text x={x} y={y - 42} text-anchor="middle" fill="var(--ink)" font-family="var(--font-mono)" font-size="11" class="lang-classic">{m.classic}</text>
-          <text x={x} y={y - 42} text-anchor="middle" fill="var(--ink)" font-family="var(--font-mono)" font-size="11" class="lang-scadrial">{m.scadrial}</text>
-          <text x={x} y={y + 50} text-anchor="middle" fill="var(--ink-faint)" font-family="var(--font-mono)" font-size="9" letter-spacing="0.05em" class="lang-classic">{m.classicVerb}</text>
-          <text x={x} y={y + 50} text-anchor="middle" fill="var(--ink-faint)" font-family="var(--font-mono)" font-size="9" letter-spacing="0.05em" class="lang-scadrial">{m.scadrialVerb}</text>
+          <text x={x} y={metalY} text-anchor="middle" fill="var(--ink)" font-family="var(--font-mono)" font-size="11" class="lang-classic">{m.classic}</text>
+          <text x={x} y={metalY} text-anchor="middle" fill="var(--ink)" font-family="var(--font-mono)" font-size="11" class="lang-scadrial">{m.scadrial}</text>
+          <text x={x} y={verbY} text-anchor="middle" fill="var(--ink-faint)" font-family="var(--font-mono)" font-size="9" letter-spacing="0.05em" class="lang-classic">{m.classicVerb}</text>
+          <text x={x} y={verbY} text-anchor="middle" fill="var(--ink-faint)" font-family="var(--font-mono)" font-size="9" letter-spacing="0.05em" class="lang-scadrial">{m.scadrialVerb}</text>
         </g>
       );
     })}
-  </svg>
-  <div class="sys-caption mono">six modules · one vault · zero schema tax</div>
+    </svg>
+  </div>
 </div>
 
 <style>
-  /* SVG-scoped lang toggles (Astro scopes selectors automatically; need to break out) */
+  .sys-diagram-wrap {
+    max-width: 540px;
+    margin-left: auto;
+  }
+  .sys-diagram-wrap .sys-diagram {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    margin-left: 0;
+    overflow: visible;
+  }
+  /* SVG-scoped lang toggles */
   :global([data-lang="scadrial"]) .sys-diagram .lang-classic { display: none; }
   :global(:root:not([data-lang="scadrial"])) .sys-diagram .lang-scadrial { display: none; }
 </style>

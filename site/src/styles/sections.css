@@ -70,6 +70,41 @@
   color: var(--ink-faint);
 }
 
+/* MODULES — pill nav (direct links) */
+.mod-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-6);
+}
+.mod-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+.mod-pill:hover {
+  color: var(--ink);
+  border-color: var(--mod-color);
+  background: color-mix(in oklch, var(--mod-color) 5%, var(--bg-elev));
+  transform: translateY(-1px);
+}
+.mod-pill-dot {
+  width: 7px; height: 7px;
+  border-radius: 999px;
+  background: var(--mod-color);
+  box-shadow: 0 0 8px var(--mod-color);
+}
+
 /* MODULES GRID */
 .mod-grid {
   display: grid;

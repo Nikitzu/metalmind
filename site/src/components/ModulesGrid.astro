@@ -90,8 +90,17 @@ const modules = [
     <div class="section-head">
       <div class="eyebrow">§ The six modules</div>
       <h2>One library. Six closed gaps.</h2>
-      <p>Each module shares state through one vault, one CLI, one stamped <span class="kbd">CLAUDE.md</span> rule. None registers an MCP tool schema. None duplicates a Claude Code primitive.</p>
+      <p>Each module shares state through one vault, one CLI, one stamped <span class="kbd">CLAUDE.md</span> rule. None registers an MCP tool schema. None duplicates a Claude Code primitive. <strong>Click any module below for the deep dive.</strong></p>
     </div>
+
+    <nav class="mod-pills" aria-label="Module pages">
+      {modules.map((m) => (
+        <a href={m.href} class="mod-pill" style={`--mod-color: var(--metal-${m.metal})`}>
+          <span class="mod-pill-dot"></span>
+          <span class="lang-classic">{m.classic}</span><span class="lang-scadrial">{m.scadrial}</span>
+        </a>
+      ))}
+    </nav>
 
     <div class="mod-grid">
       {modules.map((m) => (
