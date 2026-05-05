@@ -1,0 +1,29 @@
+---
+interface Props {
+  metal: string;
+  eyebrow: string;
+  /** Alternate eyebrow when scadrial vocab is active. Optional — falls back to `eyebrow`. */
+  eyebrowScadrial?: string;
+  title: string;
+  sub: string;
+}
+const { metal, eyebrow, eyebrowScadrial, title, sub } = Astro.props;
+---
+<section class="page-hero" style={`--mod-color: var(--metal-${metal})`}>
+  <div class="container">
+    <div class="page-hero-eyebrow">
+      <span class="mod-dot"></span>
+      <span class="mono">{metal}</span>
+      <span class="page-hero-sep">·</span>
+      {eyebrowScadrial ? (
+        <>
+          <span class="mono lang-classic">{eyebrow}</span><span class="mono lang-scadrial">{eyebrowScadrial}</span>
+        </>
+      ) : (
+        <span class="mono">{eyebrow}</span>
+      )}
+    </div>
+    <h1 class="display page-hero-title">{title}</h1>
+    <p class="page-hero-sub">{sub}</p>
+  </div>
+</section>

@@ -1,0 +1,47 @@
+---
+---
+<section id="install">
+  <div class="container">
+    <div class="install-grid">
+      <div>
+        <div class="eyebrow">§ Install</div>
+        <h2 class="display install-h">Five steps. A few minutes. Reversible to zero.</h2>
+        <ol class="install-steps">
+          <li><span class="mono accent-text">01</span> <strong>Prereq check</strong> — Python, uv, git, Claude Code v2.1+</li>
+          <li><span class="mono accent-text">02</span> <strong>Vault scaffold</strong> — at <span class="kbd">~/Knowledge/</span> or wherever you point it</li>
+          <li><span class="mono accent-text">03</span> <strong>Python engines</strong> — sqlite-vec + fastembed via <span class="kbd">uv tool install</span></li>
+          <li><span class="mono accent-text">04</span> <strong>Watcher</strong> — launchd on macOS, systemd --user on Linux</li>
+          <li><span class="mono accent-text">05</span> <strong>MCP fallback + memory routing</strong> — optional, opt-in</li>
+        </ol>
+        <a class="btn btn-ghost install-doc" href="https://github.com/Nikitzu/metalmind/blob/main/docs/post-install.md" target="_blank" rel="noopener">Read the full install flow →</a>
+      </div>
+
+      <div class="install-term term">
+        <div class="term-bar">
+          <div class="term-dot"></div>
+          <div class="term-dot"></div>
+          <div class="term-dot"></div>
+          <div class="term-title mono">install</div>
+        </div>
+        <div class="term-body">
+          <div><span class="meta"># 1. install the cli</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">npm install -g</span> <span class="arg">metalmind</span></div>
+          <div>&nbsp;</div>
+          <div><span class="meta"># 2. run the wizard</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">metalmind init</span></div>
+          <div><span class="ok">✓</span> prereqs · <span class="ok">✓</span> vault · <span class="ok">✓</span> engines</div>
+          <div><span class="ok">✓</span> watcher · <span class="ok">✓</span> mcp · <span class="ok">✓</span> stamped</div>
+          <div>&nbsp;</div>
+          <div><span class="meta"># 3. verify</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">metalmind pulse</span></div>
+          <div><span class="ok">✓ all green</span> <span class="meta">— claude knows your vault</span></div>
+          <div>&nbsp;</div>
+          <div><span class="meta"># later, change your mind?</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">metalmind uninstall</span></div>
+          <div><span class="warn">i</span> stopped watcher · stripped sentinels · cleared aliases</div>
+          <div><span class="ok">✓</span> your vault is untouched.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

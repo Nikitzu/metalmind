@@ -1,0 +1,60 @@
+---
+const taxBars = [
+  { label: 'metalmind (loopback)',          val: 519,   hi: true,  w: 519 / 1319 * 100 },
+  { label: 'metalmind (stdio fallback)',    val: 157,   hi: false, w: 157 / 1319 * 100 },
+  { label: 'Claude native /memory',         val: 1,     hi: false, w: 1   / 1319 * 100 },
+  { label: 'mem0 (mcp)',                    val: 1319,  hi: false, w: 100 },
+];
+const recallRows = [
+  { vault: '12 notes',     mm: '90%', qmd: '85%' },
+  { vault: '100 notes',    mm: '90%', qmd: '70%' },
+  { vault: '500 notes',    mm: '90%', qmd: '85%' },
+  { vault: '1,000 notes',  mm: '90%', qmd: '80%' },
+];
+---
+<section id="proof">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">§ Proof, not promises</div>
+      <h2>Two benches we keep honest.</h2>
+      <p>Reproducible numbers from <span class="kbd">bench/recall-v0/</span> and <span class="kbd">bench/mcp-tax-v0/</span> in the repo. Run them yourself.</p>
+    </div>
+
+    <div class="proof-grid">
+      <div class="proof-card">
+        <div class="proof-eyebrow mono">— mcp-tax-v0</div>
+        <h3 class="proof-h display">First-turn token cost</h3>
+        <p class="proof-sub">Standing tool-schema tax on a cold session, before you've typed a prompt.</p>
+        <div class="bars">
+          {taxBars.map((b) => (
+            <div class="bar-row">
+              <div class="bar-label mono">{b.label}</div>
+              <div class="bar-track">
+                <div class={`bar-fill${b.hi ? ' bar-hi' : ''}`} style={`width: ${b.w}%`}></div>
+              </div>
+              <div class="bar-val mono">{b.val.toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+        <div class="proof-foot mono">~8.4× lower than mem0 on apples-to-apples MCP</div>
+      </div>
+
+      <div class="proof-card">
+        <div class="proof-eyebrow mono">— recall-v0</div>
+        <h3 class="proof-h display">Recall quality at scale</h3>
+        <p class="proof-sub">hit@1 with rerank, on hand-authored gold notes plus same-domain distractors.</p>
+        <table class="proof-table mono">
+          <thead>
+            <tr><th>vault</th><th>metalmind</th><th>qmd 2.1.0</th></tr>
+          </thead>
+          <tbody>
+            {recallRows.map((r) => (
+              <tr><td>{r.vault}</td><td class="accent-text">{r.mm}</td><td>{r.qmd}</td></tr>
+            ))}
+          </tbody>
+        </table>
+        <div class="proof-foot mono">hybrid RRF · sqlite-vec · fastembed bge-small</div>
+      </div>
+    </div>
+  </div>
+</section>

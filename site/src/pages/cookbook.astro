@@ -1,0 +1,133 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PageCTA from '../components/PageCTA.astro';
+
+const title = 'Cookbook · metalmind';
+const description = 'Opinionated patterns for using metalmind well — writing notes Claude finds, recall hygiene, what lives where.';
+---
+<BaseLayout title={title} description={description}>
+  <PageHero
+    metal="copper"
+    eyebrow="cookbook"
+    title="How to use metalmind well."
+    sub="The README + --help cover what every command does. This page covers how to use them well — the patterns that compound, the anti-patterns that don't, the daily disciplines that turn the vault from a junk drawer into a knowledge graph Claude actually finds things in."
+  />
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ 01 — writing</div>
+        <h2>Writing a vault note Claude will find.</h2>
+        <p>A note recall can find quickly is one that's <em>aligned</em> on three axes: title, frontmatter, and graph position. Default to all three.</p>
+      </div>
+
+      <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Frontmatter discipline (the biggest single lever)</h3>
+      <p style="color: var(--ink-mute); max-width: 64ch;">
+        <span class="kbd">metalmind scribe</span> stamps frontmatter automatically when you pipe a body through it — but the fields you pass on the command line shape how recall treats the note for the rest of its life.
+      </p>
+      <ul class="anti-list" style="margin-top: var(--space-4)">
+        <li><strong>--project &lt;slug&gt;</strong> is the strongest discoverability signal. Notes with <span class="kbd">project: foo</span> auto-link to <span class="kbd">Work/MOCs/foo.md</span> and surface together. Use a slug, not a label. One project per note.</li>
+        <li><strong>--tags a,b,c</strong> for cross-cutting <em>themes</em>, not categories. <span class="kbd">caching</span>, <span class="kbd">auth</span>, <span class="kbd">regression-postmortem</span> are tags. Three focused tags beat ten generic ones.</li>
+        <li><strong>--kind</strong> picks the folder. See <a class="inline" href="#what-lives-where">What lives where</a>.</li>
+      </ul>
+
+      <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Title and first line</h3>
+      <p style="color: var(--ink-mute); max-width: 64ch;">The title is the H1. The first sentence is the highest-weighted text the embedder sees. Both should carry the topic.</p>
+
+      <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Anti-patterns</h3>
+      <ul class="anti-list">
+        <li><strong>Orphan notes.</strong> A note that nothing links to and that has no project is invisible to graph traversal. Either link from a MOC, give it a project, or accept it's a one-off you may never find.</li>
+        <li><strong>Duplicate notes.</strong> The most expensive failure mode. Always recall first. If &gt;50% overlap with an existing note, <span class="kbd">scribe update</span> it instead of forking a new one.</li>
+        <li><strong>Inline frontmatter when piping through scribe.</strong> Scribe stamps automatically. If your body starts with <span class="kbd">---</span>, you'll end up with two — and the second one wins, silently overriding your fields.</li>
+        <li><strong>Long notes with multiple topics.</strong> One note = one topic. If a single note answers three questions, recall returns it for all three with weak-but-not-best scores. Split.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ 02 — recall</div>
+        <h2>Recall hygiene.</h2>
+        <p>Default <span class="kbd">tap copper</span> covers 90% of cases — start there. When it doesn't, escalate deliberately rather than reflexively.</p>
+      </div>
+
+      <table class="proof-table mono" style="margin-top: var(--space-5)">
+        <thead>
+          <tr><th>flag</th><th>use when</th><th>cost</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>(none)</td><td>Default. Right answer 90% of the time.</td><td>~8 ms median</td></tr>
+          <tr><td>--deep</td><td>One hit looks right but you want adjacent context. Walks backlinks one hop.</td><td>One round-trip; +1 hop tokens.</td></tr>
+          <tr><td>--expand</td><td>Researching a topic broadly — hits + linked-context graph.</td><td>Heavier; every linked note loaded.</td></tr>
+          <tr><td>--rerank</td><td>Top-of-list precision matters more than latency. Cross-encoder rescore.</td><td>~2 s per query; first call downloads ~150 MB.</td></tr>
+          <tr><td>--list-recent N</td><td>"What was I working on yesterday?" — no query, just recent files.</td><td>Cheap — file-mtime scan.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="display" style="font-size: 22px; margin-top: var(--space-8); margin-bottom: var(--space-3);">The 2–3 rephrasings rule</h3>
+      <p style="color: var(--ink-mute); max-width: 64ch;">
+        The retriever is a single embedding pass over your phrasing. If the vault uses different wording, one query will miss. Rephrase 2–3 times — literal, then domain-term, then acronym↔spelled-out, then verb↔noun — and union the hits before deciding nothing is there. <strong>One miss is not a miss.</strong>
+      </p>
+
+      <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Reading the recall log</h3>
+      <p style="color: var(--ink-mute); max-width: 64ch;">
+        Set <span class="kbd">METALMIND_RECALL_LOG_PATH=~/.metalmind/recall-log.ndjson</span>, then run <span class="kbd">metalmind doctor --recall-audit</span>. Output: top 25 unique candidates ranked by frequency, classified <span class="kbd">ok</span> / <span class="kbd">weak-hit</span> / <span class="kbd">zero-hit</span>. Local-only by design.
+      </p>
+    </div>
+  </section>
+
+  <section id="what-lives-where">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ 03 — what lives where</div>
+        <h2>Folder by intent, not by project.</h2>
+        <p>Project affiliation lives in the <span class="kbd">project:</span> frontmatter field. Folders are about <em>what kind of thing</em> the note is.</p>
+      </div>
+
+      <table class="proof-table mono" style="margin-top: var(--space-5)">
+        <thead>
+          <tr><th>folder</th><th>kind</th><th>what goes here</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Plans/</td>     <td>plan</td>      <td>Implementation plans, dated filename. Flat — no per-project subfolders.</td></tr>
+          <tr><td>Learnings/</td> <td>learning</td>  <td>Durable cross-session lessons. The "I will never again..." file. Evergreen.</td></tr>
+          <tr><td>Work/</td>      <td>work</td>      <td>Project-scoped decisions, architecture, design. Free-form filename.</td></tr>
+          <tr><td>Work/MOCs/</td> <td>moc</td>       <td>One Map-of-Content per project. The curated index + Dataview fallback.</td></tr>
+          <tr><td>Daily/</td>     <td>daily</td>     <td>Time-bound journal. Action items via atium. <strong>Promote insights to Learnings.</strong></td></tr>
+          <tr><td>Inbox/</td>     <td>inbox</td>     <td>Triage bucket. &gt;14 days untouched → /save proposes triage.</td></tr>
+          <tr><td>Memory/</td>    <td>memory</td>    <td>Model-managed context. Migrated native memory. Mostly read-only.</td></tr>
+          <tr><td>Personal/</td>  <td>personal</td>  <td>Non-work. Kept separate so work-recall doesn't surface personal notes.</td></tr>
+          <tr><td>Archive/</td>   <td>—</td>         <td>Shipped or superseded. Recall still searches here (with rank penalty).</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="display" style="font-size: 22px; margin-top: var(--space-8); margin-bottom: var(--space-3);">The decision question</h3>
+      <p style="color: var(--ink-mute); max-width: 64ch;">When you're about to write a note, ask:</p>
+      <ol class="install-steps" style="margin-top: var(--space-4)">
+        <li><span class="mono accent-text">01</span> Is this a <strong>decision (durable)</strong> or a <strong>logbook entry (time-bound)</strong>? Decision → Plans / Learnings / Work. Logbook → Daily.</li>
+        <li><span class="mono accent-text">02</span> Is this insight <strong>project-specific</strong> or <strong>generalisable</strong>? Project → Work. Generalisable → Learnings.</li>
+        <li><span class="mono accent-text">03</span> Will I (or another engineer) benefit from this <strong>in a year</strong>? Yes → write it well, link it from the MOC, give it real frontmatter. No → maybe Inbox for triage, or skip writing entirely.</li>
+      </ol>
+      <p style="color: var(--ink-mute); max-width: 64ch; margin-top: var(--space-4)">
+        If you can't answer those three in 30 seconds, the note isn't ready to write yet. Recall the topic first — the existing note (if any) tells you the shape.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ More</div>
+        <h2>The full cookbook lives in the repo.</h2>
+        <p>The version above is the v0 — three highest-impact patterns. The repo cookbook adds <em>migrating from mem0 / Letta / Notion</em> and <em>scaling past 10k notes</em>, with worked examples per pattern.</p>
+      </div>
+      <p>
+        <a class="btn btn-ghost" href="https://github.com/Nikitzu/metalmind/blob/main/docs/cookbook.md" target="_blank" rel="noopener">Read the full cookbook on GitHub →</a>
+      </p>
+    </div>
+  </section>
+
+  <PageCTA heading="Use it well, and the vault becomes the moat." />
+</BaseLayout>

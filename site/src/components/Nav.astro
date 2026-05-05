@@ -1,0 +1,22 @@
+---
+import Logo from './Logo.astro';
+import Switchers from './Switchers.astro';
+---
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand">
+      <Logo size={26} />
+      <span>metalmind</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="/#modules">Modules</a>
+      <a class="nav-link" href="/#proof">Proof</a>
+      <a class="nav-link" href="/#compare">Compare</a>
+      <a class="nav-link" href="/#install">Install</a>
+      <a class="nav-link" href="/cookbook">Cookbook</a>
+      <a class="nav-link" href="https://github.com/Nikitzu/metalmind" target="_blank" rel="noopener">GitHub</a>
+      <Switchers />
+      <a class="nav-cta" href="/#install">npm i -g metalmind</a>
+    </div>
+  </div>
+</nav>

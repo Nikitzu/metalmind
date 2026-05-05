@@ -1,0 +1,143 @@
+/* user switchers — theme + vocab — live in nav, persist via localStorage */
+
+.mm-switchers {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 6px;
+}
+
+/* vocab segmented control */
+.mm-vocab-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  isolation: isolate;
+}
+.mm-vocab-track {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  width: calc(50% - 3px);
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--accent) 22%, transparent),
+    color-mix(in oklch, var(--accent) 8%, transparent)
+  );
+  border: 1px solid color-mix(in oklch, var(--accent) 40%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, var(--accent) 40%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--accent) 6%, transparent);
+  transition: transform 0.28s cubic-bezier(0.4, 0.0, 0.2, 1.2), background 0.2s;
+  z-index: 0;
+}
+:root[data-lang="scadrial"] .mm-vocab-track { transform: translateX(100%); }
+:root:not([data-lang="scadrial"]) .mm-vocab-track { transform: translateX(0); }
+
+.mm-vocab-option {
+  position: relative;
+  z-index: 1;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 5px 14px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  border-radius: 999px;
+  transition: color 0.18s;
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  min-width: 76px;
+  text-align: center;
+}
+.mm-vocab-option:hover { color: var(--ink-mute); }
+:root:not([data-lang="scadrial"]) .mm-vocab-option[data-vocab="classic"]   { color: var(--ink); }
+:root[data-lang="scadrial"] .mm-vocab-option[data-vocab="scadrial"]         { color: var(--ink); }
+
+/* theme toggle */
+.mm-theme-switch {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.mm-theme-track {
+  position: relative;
+  width: 52px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 7px;
+  color: var(--ink-faint);
+  transition: background 0.2s, border-color 0.2s;
+  overflow: hidden;
+}
+.mm-theme-switch:hover .mm-theme-track {
+  border-color: color-mix(in oklch, var(--accent) 60%, var(--line));
+}
+.mm-theme-icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  transition: color 0.2s, opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+.mm-theme-icon-sun, .mm-theme-icon-moon { color: var(--ink-faint); }
+
+[data-theme="light"] .mm-theme-icon-sun  { color: var(--accent); transform: scale(1.1); }
+:root:not([data-theme="light"]) .mm-theme-icon-moon { color: var(--accent); transform: scale(1.1); }
+
+.mm-theme-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--accent) 95%, white),
+    color-mix(in oklch, var(--accent) 75%, black)
+  );
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--accent) 40%, transparent),
+    0 2px 8px color-mix(in oklch, var(--accent) 30%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1.2);
+  z-index: 0;
+}
+:root:not([data-theme="light"]) .mm-theme-thumb { transform: translateX(26px); }
+[data-theme="light"] .mm-theme-thumb { transform: translateX(0); }
+
+.mm-vocab-option:focus-visible,
+.mm-theme-switch:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+@media (max-width: 720px) {
+  .mm-vocab-option { min-width: 0; padding: 5px 10px; }
+}
+@media (max-width: 560px) {
+  .mm-switchers { gap: 6px; }
+  .mm-vocab-switch { display: none; }
+}

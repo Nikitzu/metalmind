@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PageCTA from '../components/PageCTA.astro';
+import TermSwap from '../components/TermSwap.astro';
+
+const title = 'Daily — workflow that survives Friday · metalmind';
+const description = 'A daily-note workflow that carries unchecked items forward and archives itself at 17:30. Mon–Fri launchd routine.';
+
+const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+---
+<BaseLayout title={title} description={description}>
+  <PageHero
+    metal="atium"
+    eyebrow="daily · archive · routine"
+    eyebrowScadrial="atium · gold · routine"
+    title="The action items that carry themselves forward."
+    sub="A daily-note workflow that survives Friday-to-Monday context loss. Unchecked items roll over automatically. Today's note archives itself at 17:30 sharp."
+  />
+
+  <section>
+    <div class="container">
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">01</div>
+          <h3 class="display feat-h">Carry-forward</h3>
+          <p>
+            <TermSwap classic="daily new" scadrial="atium new" mono />
+            <span class="kbd">--from yesterday</span> seeds tomorrow's note with every unchecked item from yesterday's. No more re-typing the same TODO three days running.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">02</div>
+          <h3 class="display feat-h">One-shot archive</h3>
+          <p>
+            <TermSwap classic="archive" scadrial="gold" mono />
+            <span class="kbd">{`<note>`}</span> moves a note to <span class="kbd">Archive/</span> and stamps <span class="kbd">status: archived</span> in one verb. No drag-and-drop.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">03</div>
+          <h3 class="display feat-h">EOD launchd routine</h3>
+          <p><span class="kbd">routine install eod</span> registers a Mon–Fri 17:30 launchd agent that carries unchecked items to the next workday and archives today's daily. Reverses with one command.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ A week in the routine</div>
+        <h2>Friday closes itself out. Monday picks itself up.</h2>
+      </div>
+      <div class="week-grid">
+        {days.map((d, i) => (
+          <div class="week-cell">
+            <div class="week-day mono">{d}</div>
+            <div class="week-time mono">17:30</div>
+            <div class="week-line week-carry">↓ carry to next workday</div>
+            <div class="week-line week-archive">⤓ archive today</div>
+            {i === 4 && <div class="week-note mono">Mon picks up here</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <PageCTA heading="Stop re-typing yesterday's TODOs." />
+</BaseLayout>

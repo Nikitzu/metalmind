@@ -1,0 +1,44 @@
+---
+import Logo from './Logo.astro';
+import cliPkg from '../../../cli/package.json';
+const version = cliPkg.version;
+---
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="/" class="brand"><Logo size={26} /><span>metalmind</span></a>
+        <p class="footer-tag">The missing standard library for Claude Code.</p>
+        <p class="footer-meta mono">MIT · v{version} · local-first</p>
+      </div>
+      <div class="footer-col">
+        <div class="footer-h mono">Modules</div>
+        <a href="/memory">Memory</a>
+        <a href="/forge">Forge</a>
+        <a href="/synod">Synod</a>
+        <a href="/daily">Daily</a>
+        <a href="/brass">Desktop</a>
+        <a href="/iron">Health</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-h mono">Docs</div>
+        <a href="/cookbook">Cookbook</a>
+        <a href="https://github.com/Nikitzu/metalmind/blob/main/docs/architecture.md" target="_blank" rel="noopener">Architecture</a>
+        <a href="https://github.com/Nikitzu/metalmind/blob/main/docs/prerequisites.md" target="_blank" rel="noopener">Prerequisites</a>
+        <a href="https://github.com/Nikitzu/metalmind/blob/main/docs/post-install.md" target="_blank" rel="noopener">Post-install</a>
+        <a href="https://github.com/Nikitzu/metalmind/blob/main/docs/customization.md" target="_blank" rel="noopener">Customization</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-h mono">Source</div>
+        <a href="https://github.com/Nikitzu/metalmind" target="_blank" rel="noopener">GitHub</a>
+        <a href={`https://www.npmjs.com/package/metalmind/v/${version}`} target="_blank" rel="noopener">npm</a>
+        <a href="https://github.com/Nikitzu/metalmind/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG</a>
+        <a href="/releases">Releases</a>
+      </div>
+    </div>
+    <div class="footer-bottom mono">
+      <span>© {new Date().getFullYear()} · MIT</span>
+      <span>Inspired by Brandon Sanderson's Mistborn Era 1. Not affiliated.</span>
+    </div>
+  </div>
+</footer>

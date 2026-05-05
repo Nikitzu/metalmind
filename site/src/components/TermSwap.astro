@@ -1,0 +1,25 @@
+---
+interface Props {
+  classic: string;
+  scadrial: string;
+  /** Render in monospace */
+  mono?: boolean;
+  /** Show the alternate as a chip ("aka tap copper") */
+  showAlt?: boolean;
+}
+const { classic, scadrial, mono = false, showAlt = false } = Astro.props;
+const cls = mono ? 'mono' : '';
+---
+{showAlt ? (
+  <span class="term-swap">
+    <span class={`term-swap-primary lang-classic ${cls}`}>{classic}</span>
+    <span class={`term-swap-primary lang-scadrial ${cls}`}>{scadrial}</span>
+    <span class="term-swap-alt mono lang-classic" aria-hidden>aka {scadrial}</span>
+    <span class="term-swap-alt mono lang-scadrial" aria-hidden>aka {classic}</span>
+  </span>
+) : (
+  <>
+    <span class={`lang-classic ${cls}`}>{classic}</span>
+    <span class={`lang-scadrial ${cls}`}>{scadrial}</span>
+  </>
+)}

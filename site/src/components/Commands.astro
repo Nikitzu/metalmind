@@ -1,0 +1,41 @@
+---
+const verbs = [
+  { c: 'recall',          s: 'tap copper',     metal: 'copper' },
+  { c: 'save',            s: 'store copper',   metal: 'copper' },
+  { c: 'graph',           s: 'burn bronze',    metal: 'bronze' },
+  { c: 'symbol',          s: 'burn iron',      metal: 'iron' },
+  { c: 'rename',          s: 'burn steel',     metal: 'steel' },
+  { c: 'debug',           s: 'burn zinc',      metal: 'zinc' },
+  { c: 'reindex',         s: 'burn pewter',    metal: 'pewter' },
+  { c: 'stamp',           s: 'burn brass',     metal: 'brass' },
+  { c: 'daily new',       s: 'atium new',      metal: 'atium' },
+  { c: 'scribe archive',  s: 'gold',           metal: 'gold' },
+  { c: 'note',            s: 'scribe',         metal: 'copper' },
+  { c: 'synod',           s: 'synod',          metal: 'steel' },
+  { c: 'notify',          s: 'flare',          metal: 'brass' },
+  { c: 'doctor',          s: 'pulse',          metal: 'iron' },
+  { c: 'uninstall',       s: 'burn aluminum',  metal: 'aluminum' },
+];
+---
+<section id="commands">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">§ Periodic table of verbs</div>
+      <h2>Every command does one job.</h2>
+      <p>Themed Scadrial verbs and classic aliases — both always resolve. Pick a flavor at <span class="kbd">init</span>; theming is cosmetic.</p>
+    </div>
+    <div class="verb-grid">
+      {verbs.map((v) => (
+        <div class="verb-cell" style={`--mod-color: var(--metal-${v.metal})`}>
+          <div class="verb-metal mono">{v.metal}</div>
+          <div class="verb-primary mono">
+            <span class="lang-classic">{v.c}</span><span class="lang-scadrial">{v.s}</span>
+          </div>
+          <div class="verb-alt mono">
+            <span class="lang-classic">aka {v.s}</span><span class="lang-scadrial">aka {v.c}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

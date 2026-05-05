@@ -1,0 +1,102 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PageCTA from '../components/PageCTA.astro';
+import TermSwap from '../components/TermSwap.astro';
+
+const title = 'Desktop — macOS bridge · metalmind';
+const description = 'Native macOS banner / dialog / sticky notifications, wired into agent hooks. The notch knows when Claude needs you.';
+---
+<BaseLayout title={title} description={description}>
+  <PageHero
+    metal="brass"
+    eyebrow="notify · desktop"
+    eyebrowScadrial="burn brass · flare"
+    title="The notch knows when Claude needs you. The headphones know when it's done."
+    sub="Brass is metalmind's macOS desktop bridge — native banners, modal dialogs, sticky notifications, and (optional) audio cues that fire from agent hooks the moment work stalls or completes."
+  />
+
+  <section>
+    <div class="container">
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">01</div>
+          <h3 class="display feat-h">Three intensities</h3>
+          <p>
+            <TermSwap classic="notify banner" scadrial="flare banner" mono />
+            for ambient progress,
+            <TermSwap classic="notify dialog" scadrial="flare dialog" mono />
+            when Claude needs your input,
+            <TermSwap classic="notify sticky" scadrial="flare sticky" mono />
+            when the agent is blocked and won't proceed without you.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">02</div>
+          <h3 class="display feat-h">Notch-native</h3>
+          <p>Banners route through macOS's native UserNotifications API — they dock into the notch on M-series MacBooks instead of stealing focus.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">03</div>
+          <h3 class="display feat-h">Hook-driven</h3>
+          <p>A Stop hook fires a banner when Claude finishes; a PreToolUse hook escalates to a dialog when an agent is about to run a destructive command. Zero polling.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">04</div>
+          <h3 class="display feat-h">Audio cues</h3>
+          <p>Optional <span class="kbd">--sound</span> flag plays a short cue (chime / pulse / submarine) so you can step away from the screen and still hear when Claude needs you back.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ The three banner shapes</div>
+        <h2>Loud enough to notice. Quiet enough to ignore.</h2>
+      </div>
+      <div class="brass-grid">
+        <div class="brass-card brass-banner">
+          <div class="brass-frame">
+            <div class="brass-notch"></div>
+            <div class="brass-bubble">
+              <div class="brass-dot"></div>
+              <div class="brass-stack">
+                <div class="brass-app mono">metalmind</div>
+                <div class="brass-msg">Tests passed · 142 / 142 green</div>
+              </div>
+            </div>
+          </div>
+          <div class="brass-cap mono">banner — ambient</div>
+        </div>
+        <div class="brass-card brass-dialog">
+          <div class="brass-window">
+            <div class="brass-window-bar">
+              <div class="brass-tl"></div><div class="brass-tl"></div><div class="brass-tl"></div>
+            </div>
+            <div class="brass-window-body">
+              <div class="brass-h">Claude is about to run:</div>
+              <div class="kbd brass-cmd">rm -rf node_modules</div>
+              <div class="brass-actions">
+                <button class="brass-btn brass-btn-ghost mono">cancel</button>
+                <button class="brass-btn brass-btn-primary mono">approve</button>
+              </div>
+            </div>
+          </div>
+          <div class="brass-cap mono">dialog — input required</div>
+        </div>
+        <div class="brass-card brass-sticky">
+          <div class="brass-pin">
+            <div class="brass-pin-h mono">⏸ blocked</div>
+            <div class="brass-pin-msg">Synod awaiting your tiebreaker on persona convergence.</div>
+            <div class="brass-pin-meta mono">8m ago · stays until you act</div>
+          </div>
+          <div class="brass-cap mono">sticky — won't dismiss</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <PageCTA heading="Get out of the loop. Stay in the loop." />
+</BaseLayout>

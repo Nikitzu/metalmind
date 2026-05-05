@@ -1,0 +1,124 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PageCTA from '../components/PageCTA.astro';
+
+const title = 'Synod — deliberation · metalmind';
+const description = 'A 7-persona deliberative council, spawned in parallel, synthesised into a structured verdict. For decisions that affect the next 6 months — not the next 60 minutes.';
+
+const personasClassic = [
+  { name: 'Adversary',   role: 'red team',         line: 'Where does this break?' },
+  { name: 'Strategist',  role: 'long horizon',     line: 'What does this commit us to?' },
+  { name: 'Scientist',   role: 'evidence',         line: 'What\'s the data say?' },
+  { name: 'Visionary',   role: 'ambition',         line: 'What\'s the audacious play?' },
+  { name: 'Engineer',    role: 'feasibility',      line: 'How does this actually ship?' },
+  { name: 'Philosopher', role: 'first principles', line: 'What should we want?' },
+  { name: 'Humanist',    role: 'second-order',     line: 'Who is hurt by this?' },
+];
+const personasScadrial = [
+  { name: 'Kelsier',  role: 'the survivor',     line: 'What\'s the audacious play?' },
+  { name: 'Vin',      role: 'the skeptic',      line: 'What are we missing?' },
+  { name: 'Sazed',    role: 'the scholar',      line: 'What does history say?' },
+  { name: 'Elend',    role: 'the idealist',     line: 'What should we want?' },
+  { name: 'Marsh',    role: 'the engineer',     line: 'How does this actually ship?' },
+  { name: 'Dockson',  role: 'the operator',     line: 'Who pays for it tomorrow?' },
+  { name: 'OreSeur',  role: 'the loyal critic', line: 'Who is hurt by this?' },
+];
+---
+<BaseLayout title={title} description={description}>
+  <PageHero
+    metal="steel"
+    eyebrow="synod"
+    title="Seven minds. One verdict. For decisions that outlive the next sprint."
+    sub="The synod is metalmind's deliberative council — seven personas spawned as parallel Claude Code subagents, each with its own context window, debating the question and synthesizing a structured verdict. For decisions that affect the next 6 months, not the next 60 minutes."
+  />
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ The seven seats</div>
+        <h2>Each persona owns one question.</h2>
+        <p>Switch the vocabulary toggle in the nav to see Kelsier's crew take the same seats.</p>
+      </div>
+
+      <div class="synod-table lang-classic">
+        {personasClassic.map((p, i) => (
+          <div class="synod-seat">
+            <div class="synod-num mono">{String(i + 1).padStart(2, '0')}</div>
+            <div class="synod-name display">{p.name}</div>
+            <div class="synod-role mono">{p.role}</div>
+            <div class="synod-line">"{p.line}"</div>
+          </div>
+        ))}
+      </div>
+      <div class="synod-table lang-scadrial">
+        {personasScadrial.map((p, i) => (
+          <div class="synod-seat">
+            <div class="synod-num mono">{String(i + 1).padStart(2, '0')}</div>
+            <div class="synod-name display">{p.name}</div>
+            <div class="synod-role mono">{p.role}</div>
+            <div class="synod-line">"{p.line}"</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ The verdict</div>
+        <h2>Structured. Auditable. No mush.</h2>
+        <p>Every synod returns the same shape — a position, a confidence percentage, three risks, five next steps, and a minority report when the council can't agree.</p>
+      </div>
+
+      <div class="verdict-card">
+        <div class="verdict-head">
+          <div class="mono verdict-q">› metalmind synod "should we adopt nats over kafka?"</div>
+          <div class="verdict-meta mono">7 personas · 4m 12s · convergence 0.78</div>
+        </div>
+        <div class="verdict-body">
+          <div class="verdict-row">
+            <div class="verdict-k mono">position</div>
+            <div class="verdict-v">Adopt NATS for inter-service messaging in the billing/notif boundary; keep Kafka for the analytics pipeline.</div>
+          </div>
+          <div class="verdict-row">
+            <div class="verdict-k mono">confidence</div>
+            <div class="verdict-v"><span class="conf-bar"><span style="width:78%"></span></span> 78%</div>
+          </div>
+          <div class="verdict-row">
+            <div class="verdict-k mono">risks</div>
+            <div class="verdict-v">
+              <ul>
+                <li>JetStream durability semantics differ from Kafka log compaction.</li>
+                <li>Operational maturity in your team is lower than for Kafka.</li>
+                <li>Migration of in-flight messages requires a cutover window.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="verdict-row">
+            <div class="verdict-k mono">next 5</div>
+            <div class="verdict-v">
+              <ol>
+                <li>Spike: NATS JetStream with the billing → notif edge in staging.</li>
+                <li>Define retention + replay policy explicitly.</li>
+                <li>Run the existing chaos suite against the new transport.</li>
+                <li>Write the rollback playbook before the cutover.</li>
+                <li>Re-convene synod after 30 days of staging traffic.</li>
+              </ol>
+            </div>
+          </div>
+          <div class="verdict-row">
+            <div class="verdict-k mono">minority</div>
+            <div class="verdict-v">Adversary holds: at current scale, the cost of any migration outweighs throughput wins. Revisit only if Kafka ops bill exceeds 2× NATS estimated TCO.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <PageCTA
+    heading="For the call you'll regret making alone."
+    sub="Not 'should I rename this var.' Not 'what dependency should I add.' The architectural calls. The hiring calls. The ones where being wrong is expensive."
+  />
+</BaseLayout>

@@ -1,0 +1,15 @@
+---
+// Inline pre-paint script that reads localStorage and applies data-theme + data-lang
+// to <html> BEFORE first paint. Prevents the dark→light (or scadrial→classic) flash
+// on subsequent navigations.
+---
+<script is:inline>
+  (function () {
+    try {
+      var t = localStorage.getItem('mm-theme');
+      var l = localStorage.getItem('mm-lang');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+      if (l) document.documentElement.setAttribute('data-lang', l);
+    } catch (e) {}
+  })();
+</script>

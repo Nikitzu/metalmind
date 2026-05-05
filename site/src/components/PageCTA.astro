@@ -1,0 +1,19 @@
+---
+interface Props {
+  heading: string;
+  sub?: string;
+}
+const { heading, sub } = Astro.props;
+---
+<section>
+  <div class="container">
+    <div class="page-cta">
+      <h2 class="display">{heading}</h2>
+      {sub && <p class="hero-sub">{sub}</p>}
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="/#install"><span class="mono">$</span>&nbsp;npm i -g metalmind</a>
+        <a class="btn btn-ghost" href="/">← Back to overview</a>
+      </div>
+    </div>
+  </div>
+</section>

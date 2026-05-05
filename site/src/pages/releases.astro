@@ -1,977 +1,145 @@
 ---
-import FlavorToggle from '../components/FlavorToggle.astro';
-import '../styles/global.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import cliPkg from '../../../cli/package.json';
+const version = cliPkg.version;
 
-const title = 'metalmind — releases';
+const title = 'Releases · metalmind';
 const description = 'Release notes and changelog for metalmind — one entry per tag.';
+
+// Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
+const releases = [
+  {
+    tag: '0.7.0',
+    date: '2026-05-05',
+    headline: 'Repositioned as the Claude Code standard library',
+    summary: 'Six modules — memory, code intelligence, daily workflow, deliberation, desktop integration, health — share state through one vault, one CLI, one stamped CLAUDE.md rule. Memory stays the headline; the rest is the moat. New site, new comparison-matrix rows, new Architecture + Cookbook docs.',
+    tag_kind: 'changed',
+  },
+  {
+    tag: '0.6.2',
+    date: '2026-05-05',
+    headline: 'Vault CLAUDE.md aligned with global block',
+    summary: 'Closed four contradictions between the vault stamped block and the global one (folder list, write contract, raw-Write rule, MOC location).',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.6.1',
+    date: '2026-05-05',
+    headline: 'Stamped rules no longer contradict the CLI contract',
+    summary: 'Scribe daily-date guard (Fixed + Breaking) — every mutating scribe verb refuses non-today daily writes without --date. Plus eight stamped-rule contradictions closed across CLAUDE.md.block.template, save.md, and writing-vault-notes/SKILL.md.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.6.0',
+    date: '2026-05-03',
+    headline: 'Synod skill + metalmind synod command',
+    summary: 'A 7-persona deliberative council debate. Each persona spawns as a parallel subagent, the main agent synthesises a structured verdict (position, confidence %, 3 risks, 5 next steps, minority report).',
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.5.7',
+    date: '2026-05-02',
+    headline: 'graphify no longer pollutes ~/CLAUDE.md',
+    summary: 'graphify claude install was running with cwd=$HOME, dropping a graphify stamp at ~/CLAUDE.md that injected unrelated instructions into every session under $HOME. Now spawns from a temp directory; legacy stale stamps are stripped on every init.',
+    tag_kind: 'fixed',
+  },
+];
 ---
-
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#07090c" />
-    <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:url" content="https://metalmind.mzyx.dev/releases" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title}</title>
-  </head>
-  <body>
-    <header class="nav">
-      <div class="nav-inner">
-        <div class="nav-brand">
-          <a href="/" style="color:inherit;text-decoration:none;">
-            <span class="nav-brand-accent">∴</span>&nbsp;metalmind
-          </a>
-        </div>
-        <nav class="nav-links" aria-label="Primary">
-          <a href="/forge">forge</a>
-          <a href="/releases" aria-current="page">releases</a>
-          <a href="https://github.com/Nikitzu/metalmind">github</a>
-        </nav>
-        <div class="nav-flavor">
-          <FlavorToggle />
-        </div>
+<BaseLayout title={title} description={description}>
+  <section class="page-hero" style="--mod-color: var(--metal-copper)">
+    <div class="container">
+      <div class="page-hero-eyebrow">
+        <span class="mod-dot"></span>
+        <span class="mono">releases</span>
+        <span class="page-hero-sep">·</span>
+        <span class="mono">v{version}</span>
       </div>
-    </header>
+      <h1 class="display page-hero-title">Release notes.</h1>
+      <p class="page-hero-sub">
+        One entry per tag. Recent highlights below — the full CHANGELOG with every entry, breaking-change migration notes, and bench numbers lives in the repo.
+      </p>
+      <p style="margin-top: var(--space-4)">
+        <a class="btn btn-ghost" href="https://github.com/Nikitzu/metalmind/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Full CHANGELOG on GitHub →</a>
+      </p>
+    </div>
+  </section>
 
-    <main>
-      <section class="container hero release-hero" aria-labelledby="release-title">
-        <div class="hero-eyebrow">
-          <span class="scadrial-only">Scadrial · Records</span>
-          <span class="classic-only">Change log</span>
-        </div>
-        <h1 id="release-title">Releases</h1>
-        <p class="hero-tagline">
-          One entry per tag. The canonical source is <a
-            href="https://github.com/Nikitzu/metalmind/blob/main/CHANGELOG.md"
-            target="_blank"
-            rel="noopener"
-          ><code>CHANGELOG.md</code></a> in the repo — this page mirrors it.
-          Each version is published on <a
-            href="https://www.npmjs.com/package/metalmind"
-            target="_blank"
-            rel="noopener"
-          >npm</a> with sigstore provenance (OIDC trusted publisher).
-        </p>
-      </section>
-
-      <hr class="metal-rule" />
-
-      <section class="container section-prose releases-body" aria-label="Changelog entries">
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.5.3</h2>
-            <span class="release-date">2026-05-01</span>
-          </header>
-          <h3>ONNX reranker — <code>[rerank]</code> extra drops from ~2 GB to ~210 MB</h3>
-          <ul>
-            <li>
-              <strong>~9× smaller install</strong> for the cross-encoder rescore tier.
-              <code>FlagEmbedding</code> + <code>transformers</code> + transitive <code>torch</code>
-              are gone. <code>onnxruntime</code> + <code>tokenizers</code> + <code>huggingface_hub</code>
-              replace them. Same model (BAAI's <code>bge-reranker-v2-m3</code>, served via the
-              <code>onnx-community/bge-reranker-v2-m3-ONNX</code> repo as
-              <code>model_quantized.onnx</code>, ~150 MB).
-            </li>
-            <li>
-              <strong>API unchanged.</strong> <code>rerank.is_dep_available()</code> /
-              <code>rerank.overfetch_k(k)</code> / <code>rerank.rerank_hits(query, hits, k)</code>
-              kept identical signatures. The <code>/rerank/status</code> endpoint, the
-              bench's pre-flight check, and the CLI's auto-bootstrap on first
-              <code>--rerank</code> all work without changes. Hit@K on the recall-v0 fixture
-              is unchanged at 95% (same model, same scoring math).
-            </li>
-            <li>
-              <strong>If you opted into <code>[rerank]</code> previously:</strong> run
-              <code>metalmind stamp</code> (or <code>metalmind init</code> again) — the
-              version bump triggers a force-reinstall of the vault-rag tool venv with the
-              lean deps. About to save you ~1.8 GB on disk.
-            </li>
-            <li>
-              <strong>CI guard:</strong> new canary asserts (a) the ONNX deps import cleanly and
-              (b) <code>torch</code> is NOT importable in a process that only has
-              <code>[rerank]</code> installed — pinned against transitive regressions pulling
-              torch back in.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.5.2</h2>
-            <span class="release-date">2026-05-01</span>
-          </header>
-          <h3>Site polish — single 960px column, Classic default</h3>
-          <ul>
-            <li>
-              <strong>One layout primitive.</strong> Section widths had drifted across the v0.5.x bench-table
-              refresh (720 / 1180 / 1200) — adjacent section headings sat on different left edges and the
-              install flow rail anchored to a wide left edge. Collapsed everything to a single 960px centered
-              column on every page; <code>.container</code> and <code>.container-wide</code> now resolve to
-              <code>--page-max</code>. Hero is the only <code>text-align: center</code> exception.
-            </li>
-            <li>
-              <strong>Classic is the default flavor.</strong> <code>flavor-classic</code> radio is now
-              <code>checked</code> and the static-default CSS state shows Classic vocabulary, so the first paint
-              matches the toggle without flashing Scadrial first.
-            </li>
-            <li>
-              <strong>Positioning matrix.</strong> New "How metalmind compares" section on the landing
-              page and README — side-by-side on shape (memory primitive, source preservation, determinism,
-              transport, standing tokens, where state lives, walk-away cost) across metalmind / qmd /
-              mem0 / Letta / Mastra. Honest "different host model" labels for the agent-framework rows.
-            </li>
-          </ul>
-          <h3><code>doctor --recall-audit</code> — opt-in self-audit</h3>
-          <ul>
-            <li>
-              <strong>First memory tool that tells you when recall is failing.</strong> Watcher gains
-              <code>recall_log.py</code>: append-only NDJSON, gated by
-              <code>METALMIND_RECALL_LOG_PATH</code> (default off). Each <code>/search</code> writes
-              one line: timestamp, query, mode, rerank, k, hit count, top file basenames, top score.
-            </li>
-            <li>
-              <strong>The audit pass.</strong> <code>metalmind doctor --recall-audit</code> classifies
-              each entry as <code>ok</code> / <code>weak-hit</code> (top score &lt; 0.3) / <code>zero-hit</code>,
-              and prints the top 25 unique candidates ranked by frequency for <code>/save</code> follow-up.
-              <code>--recall-audit-days &lt;n&gt;</code> windows it (default 7). Local-only by design — the
-              log lives at <code>~/.metalmind/recall-log.ndjson</code>, never leaves the machine.
-            </li>
-          </ul>
-          <h3>Scale bench — <code>bench/recall-at-scale/</code></h3>
-          <ul>
-            <li>
-              <strong>1k and 10k both at 100% hit@1.</strong> Sister bench to <code>recall-v0</code>: HN
-              comments fetched from the public Algolia mirror in 14-day windows (works around their
-              <code>page * hitsPerPage &lt;= 1000</code> cap), cached at
-              <code>~/.cache/metalmind-bench/hn/</code> outside the repo. 20 questions seeded
-              deterministically from stories with ≥5 comments; expected = every comment in the picked
-              thread. Hybrid mode, no rerank: 1k → 100% / 33s index / 12 ms p50; 10k → 100% / 1226s
-              index / 40 ms p50.
-            </li>
-            <li>
-              <strong>50k pending.</strong> Indexer takes ~100 min unattended; framework supports
-              <code>--scales 50000</code> on a long-run machine. The 10× scaling at constant 100% hit@1
-              already validates the embedded pipeline; 50k is confirmation, not signal.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.5.0</h2>
-            <span class="release-date">2026-04-30</span>
-          </header>
-          <h3>Single-binary install — sqlite-vec + fastembed</h3>
-          <ul>
-            <li>
-              <strong>Both daemons are gone.</strong> <code>metalmind init</code> no longer requires
-              Docker or Ollama. The vector store and the embedding model both run in-process
-              inside the Python venv that <code>uv tool install metalmind-vault-rag</code> creates.
-              Five prereqs replace seven: Python, uv, git, Claude Code, Node — that's it.
-              Pass <code>--legacy</code> to opt back into the Qdrant + Ollama Docker stack.
-            </li>
-            <li>
-              <strong><code>VectorStore</code> Protocol</strong> with two impls: <code>QdrantStore</code>
-              (legacy) and <code>SqliteVecStore</code> (default). <code>vec0</code> virtual table
-              at <code>~/.metalmind/vec-&lt;col&gt;.db</code> with cosine distance metric;
-              payloads in a SQLite side-table joined on rowid; per-thread sqlite3 connections so
-              the <code>ThreadingHTTPServer</code> doesn't trip the same-thread guard.
-            </li>
-            <li>
-              <strong><code>EmbeddingBackend</code> Protocol</strong> with two impls:
-              <code>OllamaBackend</code> (legacy) and <code>FastEmbedBackend</code> (default).
-              Default model <code>BAAI/bge-small-en-v1.5</code> (384-dim, ~30 MB ONNX wheel,
-              cached at <code>~/.cache/fastembed/</code>). Tunable via <code>VAULT_EMBED_MODEL</code>.
-            </li>
-            <li>
-              <strong>Auto-backfill on watcher startup.</strong> Detects either store empty + source
-              files present and runs a one-shot reindex. Covers both upgrade paths (v0.4.x → v0.5.0
-              and the older v0.2.x → v0.3.0+ FTS5 case) in one helper.
-            </li>
-          </ul>
-          <h3>Result on the scaled recall bench (1,000 notes)</h3>
-          <p>
-            The new stack outperforms v0.4.0 on every measured dimension because
-            <code>bge-small-en-v1.5</code> is a stronger embedding model for English factual
-            retrieval than <code>nomic-embed-text</code>:
-          </p>
-          <ul>
-            <li><strong>hit@1 hybrid: 65% → 85%</strong> (+20pp). Pure-semantic hit@5 jumped from 55% → 90% just from the model swap.</li>
-            <li><strong>hit@5 +rerank: 90% → 95%</strong> (+5pp).</li>
-            <li><strong>Median hybrid latency: 43 ms → 8 ms</strong> — no HTTP RTT on the hot path; everything is in-process SQLite + ONNX.</li>
-          </ul>
-          <h3>Migration notes</h3>
-          <p>
-            Existing v0.4.x users keep their Qdrant collection but it becomes orphaned — the
-            embedding model changed (768-dim nomic → 384-dim bge-small) so vectors aren't
-            cross-compatible. On first watcher restart after <code>metalmind stamp</code>, the
-            auto-backfill re-embeds the entire vault into the new sqlite-vec store (~1 min per
-            1k notes on M1). The old Qdrant container can be removed at leisure
-            (<code>docker rm metalmind-qdrant</code>); the <code>--legacy</code> escape hatch keeps
-            it working if you defer.
-          </p>
-        </article>
-
-        <hr class="metal-rule" />
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.4.0</h2>
-            <span class="release-date">2026-04-30</span>
-          </header>
-          <h3>Weighted hybrid retrieval — closing the hit@1 gap</h3>
-          <ul>
-            <li>
-              <strong>Top-rank bonus in RRF fusion.</strong> Documents that rank #1 in any source
-              list get +0.05 added once to their fused score; ranks #2–3 get +0.02. Bonus is keyed
-              on the best (lowest) rank seen across lists, so it doesn't double-stack. Stops pure
-              RRF from diluting hits one retriever was confident about. Formula adopted from
-              <a href="https://github.com/tobi/qmd">qmd 2.1.0</a> (MIT).
-            </li>
-            <li>
-              <strong>Per-list weights in fusion.</strong> Default keyword × 1.5, semantic × 1.0.
-              With only two source lists and no query expansion, BM25 and the embedder often pick
-              different #1s and produce identical RRF scores; ties broke on dict insertion order,
-              often against the right answer. BM25 is more decisive at hit@1 for short factual
-              queries (the dominant query shape in vault recall), so we let it lead.
-            </li>
-            <li>
-              <strong>Deeper fusion overfetch.</strong> Each backend now produces 50 candidates
-              before fusion (was 20 / k). Larger pool means cross-coverage is more likely — fewer
-              single-list-only ties at the top.
-            </li>
-            <li>
-              <strong>hit@1 hybrid: 50% → 65%</strong> at 1,000 notes (+15pp). Three queries flipped
-              from h@2 to h@1.
-            </li>
-          </ul>
-          <h3>Ecosystem catch-up</h3>
-          <ul>
-            <li>
-              <strong>Agents bumped to <code>claude-opus-4-7</code></strong> across all 15 stamped
-              templates. Tools allowlist gained <code>SendMessage</code>, <code>TaskCreate</code>,
-              <code>TaskUpdate</code>, <code>TaskList</code>, <code>TaskGet</code> so subagents can
-              coordinate cleanly when run as teammates.
-            </li>
-            <li>
-              <strong><code>using-teams</code> skill</strong> is now part of the stamp surface — the
-              MUST-INVOKE-FIRST gate for every team-* command we ship.
-            </li>
-            <li>
-              <strong>Rephrase-on-miss hint</strong> in the stamped CLAUDE.md block. If first recall
-              returns nothing, rephrase 2–3× and union the hits before deciding it's not in the vault.
-            </li>
-            <li>
-              <strong>Bench guards.</strong> Refuses to populate the rerank column when
-              FlagEmbedding is missing — emits <code>n/a</code> instead of a misleading
-              hybrid-mirror. CI canary catches transformers-version drift before it reaches users.
-            </li>
-          </ul>
-        </article>
-
-        <hr class="metal-rule" />
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.3.0</h2>
-            <span class="release-date">2026-04-24</span>
-          </header>
-          <h3>Hybrid retrieval — default <code>tap copper</code> behavior</h3>
-          <ul>
-            <li>
-              <strong>SQLite FTS5 keyword index</strong> lives alongside Qdrant at
-              <code>~/.metalmind/fts-&lt;collection&gt;.db</code>. The indexer writes both stores in
-              lockstep; the watcher keeps them in sync on every file change. Porter tokenizer
-              (English stemming), chunk-level granularity matching Qdrant points.
-            </li>
-            <li>
-              <strong>Reciprocal Rank Fusion</strong> (<code>k=60</code>) merges semantic and keyword
-              hits by rank, so BM25's unbounded scores and cosine similarity's [0, 1] range never
-              need calibration. On the scaled recall bench (12 gold + 988 same-domain distractors,
-              20 queries): hit@5 at 1,000 notes goes <strong>55% → 85%</strong> (hybrid) and
-              <strong>hit@1 → 90%</strong> with <code>--rerank</code>.
-            </li>
-            <li>
-              <strong>New <code>mode</code> param</strong> on <code>POST /search</code>:
-              <code>hybrid</code> (default), <code>semantic-only</code>, or <code>keyword-only</code>.
-              Clients that omit <code>mode</code> get hybrid automatically.
-            </li>
-            <li>
-              <strong>FTS5 auto-backfill</strong> on watcher startup. Detects the Qdrant-populated
-              / FTS5-empty state every v0.2.x upgrader lands in, rebuilds the keyword index once,
-              then resumes watching. <code>VAULT_NO_FTS_BACKFILL=1</code> defers for huge vaults.
-            </li>
-            <li>
-              <strong><code>VAULT_HTTP_PORT</code> env var</strong> on the loopback recall server.
-              Defaults to <code>17317</code> (unchanged). Lets multi-vault setups pick a free port.
-            </li>
-          </ul>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong><code>--rerank</code> was silently falling back to embedder-only ordering</strong>
-              for anyone who installed the <code>[rerank]</code> extra with transformers ≥ 5.
-              FlagEmbedding 1.3 calls <code>XLMRobertaTokenizer.prepare_for_model</code>, which was
-              removed in transformers 5. The server logged the <code>AttributeError</code> at WARN
-              level and returned the unreranked top-K — no visible error at the CLI. Pinned
-              <code>transformers&lt;5</code> in the <code>rerank</code> extra. Discovered running the
-              scaled bench: rerank on vs off produced byte-identical hit@K, which is exactly what
-              surfaced it.
-            </li>
-            <li>
-              <strong><code>metalmind stamp</code> now upgrades the Python package</strong> when the
-              bundled vault-rag version differs from the installed one. Previously stamp
-              short-circuited on "already installed" regardless of version, so CLI upgrades
-              silently failed to ship Python-side fixes. Preserves the <code>[rerank]</code> extra
-              across reinstall by probing <code>FlagEmbedding</code> importability in the tool venv.
-            </li>
-          </ul>
-          <h3>Added — doctor smoke checks</h3>
-          <ul>
-            <li>
-              <code>metalmind-vault-rag-doctor --rerank</code> runs a cross-encoder call with a
-              known hit list and verifies <code>prev_score</code> is populated on the top result.
-              Catches the silent-fallback class of bugs — model missing, tokenizer version drift,
-              OOM — that would otherwise look like "rerank is on" while returning unreranked hits.
-            </li>
-            <li>
-              <code>metalmind-vault-rag-doctor --fts</code> reports Qdrant points vs FTS5 rows.
-              Warns when FTS5 is empty while Qdrant is populated (stuck in pre-upgrade state) or
-              when row counts have drifted significantly.
-            </li>
-          </ul>
-          <h3>Bench</h3>
-          <ul>
-            <li>
-              <strong><code>bench/recall-v0/</code> scaled mode.</strong>
-              <code>--scales 12,100,500,1000</code> assembles an isolated tmp vault + dedicated
-              Qdrant collection + dedicated port per scale, indexes, queries, tears down —
-              idempotent on Ctrl-C / crash / normal exit. Four modes measured side-by-side at
-              every scale: <code>semantic-only</code>, <code>keyword-only</code>, <code>hybrid</code>,
-              <code>hybrid+rerank</code>, plus a pure-Node BM25 sanity column.
-            </li>
-            <li>
-              <strong>Seeded distractor generator</strong> (<code>mulberry32</code>, 16 topic
-              templates of same-domain Quillfly content that never overlaps with gold). 1,000 notes
-              are deterministic from seed; the distractor files themselves are gitignored — running
-              the generator produces byte-identical fixtures.
-            </li>
-          </ul>
-          <h3>Upgrade notes</h3>
-          <ul>
-            <li>
-              <strong><code>npm upgrade metalmind &amp;&amp; metalmind stamp</code> is sufficient.</strong>
-              <code>stamp</code> detects the version bump, force-reinstalls the Python package with
-              the <code>transformers&lt;5</code> pin, and the watcher auto-backfills FTS5 on next
-              start. No manual <code>uv tool install --force</code> needed.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.9</h2>
-            <span class="release-date">2026-04-24</span>
-          </header>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong><code>metalmind routine install eod</code> / <code>routine remove eod</code>.</strong>
-              Launchd-backed end-of-day routine on macOS. At 17:30 Mon–Fri by default it runs
-              <code>atium new --date next-workday --from &lt;today&gt;</code> then archives today's
-              daily via <code>gold</code>. <code>--time HH:MM</code> overrides the schedule. Plist
-              lives at <code>~/Library/LaunchAgents/com.metalmind.routine.eod.plist</code>; logs at
-              <code>~/Library/Logs/metalmind-eod.&#123;log,err&#125;</code>. First routine shipped under the
-              <code>metalmind routine</code> umbrella.
-            </li>
-          </ul>
-          <h3>Changed</h3>
-          <ul>
-            <li>
-              <strong><code>atium new</code> and <code>atium add</code> emit <code>- [ ]</code> checkbox bullets</strong>
-              instead of plain <code>-&nbsp;item</code>. Makes carry-forward explicit: unchecked
-              boxes are "move me tomorrow"; <code>[x]</code> is "done, leave behind."
-            </li>
-            <li>
-              <strong><code>atium new --from</code> loosened to treat plain <code>- item</code> bullets as unchecked too.</strong>
-              The EOD routine can migrate pre-v0.2.9 daily notes without forcing users to retrofit
-              every file. <code>- [x] done</code> is still correctly excluded.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.8</h2>
-            <span class="release-date">2026-04-24</span>
-          </header>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong><code>atium new | add</code> (Scadrial) / <code>daily new | add</code> (classic).</strong>
-              Future-facing daily-note ops. <code>atium new --date today|tomorrow|next-workday|YYYY-MM-DD</code>
-              creates a daily note with an empty <code>## Action Items</code> section. <code>--from &lt;prev-date&gt;</code>
-              carries only unchecked <code>- [ ]</code> items from a prior note. <code>atium add "&lt;item&gt;" --date &lt;date&gt;</code>
-              appends a bullet, creating the file + section if missing. Closes the gap that let agents reach
-              for raw <code>Write</code> to create future-dated daily notes.
-            </li>
-            <li>
-              <strong><code>gold &lt;note&gt;</code> (Scadrial).</strong> One-shot archive shortcut at top level —
-              equivalent to <code>scribe archive</code> but with the "burning gold reveals past selves" metaphor
-              surfaced where it belongs.
-            </li>
-            <li>
-              <strong><code>flare banner | dialog | sticky</code> (Scadrial) / <code>notify ...</code> (classic).</strong>
-              macOS desktop notifications via <code>osascript</code>. Notification Center banner, modal dialog,
-              or a persistent Stickies note. Linux/Windows support: planned adapter.
-            </li>
-          </ul>
-          <h3>Changed</h3>
-          <ul>
-            <li>
-              <strong><code>scribe create --kind daily --slug X</code> now errors when X ≠ today</strong>, pointing
-              at <code>metalmind atium new --date X</code>. Before, the <code>--slug</code> was silently dropped
-              and the note filed under today's date, producing the silent filename mismatch that motivated this
-              release.
-            </li>
-            <li>
-              <strong><code>/save</code> skill rewritten.</strong> The "write via Write tool" fallback is gone —
-              it taught agents to bypass metalmind the moment scribe couldn't express a target. Replaced with
-              "stop and surface the gap." The skill now carries a Scadrial/classic command table so agents know
-              both names for every vault op. Added an <strong>end-of-day hook</strong>: between 16:00–18:00 local,
-              Claude offers to push pending items into the next-workday daily via <code>atium add --date next-workday</code>
-              and fires a <code>flare banner</code> confirmation.
-            </li>
-            <li>
-              <strong><code>writing-vault-notes</code> skill</strong> gets the same Scadrial/classic table and drops
-              the "Write directly when scribe can't" escape hatch.
-            </li>
-            <li>
-              <strong><code>scribe create --kind</code> help text</strong> now lists all 8 valid kinds. <code>memory</code>
-              and <code>personal</code> shipped in 0.2.7 but were missing from <code>--help</code>.
-            </li>
-          </ul>
-          <h3>Install wizard</h3>
-          <ul>
-            <li>
-              <strong>Two new opt-out prompts.</strong> <code>init</code> now asks "End-of-day hook in /save?"
-              (default yes) and "Fire macOS notifications?" (default yes on macOS, skipped elsewhere). Answers
-              persist to <code>~/.metalmind/config.json</code> under <code>skills</code>. <code>metalmind stamp</code>
-              re-reads them on upgrade.
-            </li>
-            <li>
-              <strong>Flag parity:</strong> <code>--eod-hook</code>/<code>--no-eod-hook</code> and
-              <code>--notifications</code>/<code>--no-notifications</code> for scripted installs.
-            </li>
-            <li>
-              <strong>Conditional skill rendering.</strong> <code>/save</code> template wraps optional blocks
-              with sentinel comments; <code>copyClaudeTemplates</code> strips blocks whose flag is false. Users
-              who decline never see the EOD prompt or the notify command in their skill.
-            </li>
-          </ul>
-          <h3>Removed (breaking, pre-1.0)</h3>
-          <ul>
-            <li>
-              <strong><code>metalmind wipe</code></strong> classic alias dropped. Three paths to uninstall
-              (<code>uninstall</code> + <code>burn aluminum</code> + <code>wipe</code>) was docs noise.
-              <code>uninstall</code> (classic) and <code>burn aluminum</code> (Scadrial) both remain.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.7</h2>
-            <span class="release-date">2026-04-22</span>
-          </header>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong><code>memory:</code> and <code>personal:</code> kind-prefixes.</strong>
-              Both folders existed in the vault (<code>Memory/</code>,
-              <code>Personal/</code>) and the <code>writing-vault-notes</code> skill
-              already listed them, but <code>scribe</code> rejected them with
-              <code>unknown kind</code>. Another Claude session hit this live.
-              <code>KIND_DIRS</code> now covers all eight intent folders.
-            </li>
-          </ul>
-          <h3>Changed</h3>
-          <ul>
-            <li>
-              <strong><code>writing-vault-notes</code> skill hardened.</strong> Now opens
-              with "Every vault operation goes through <code>metalmind scribe &lt;verb&gt;</code>"
-              so agents don't waste a turn on <code>metalmind show</code>. Adds an
-              explicit table of all valid <code>kind:</code> prefixes so agents can see
-              the full set without trial-and-error.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.6</h2>
-            <span class="release-date">2026-04-22</span>
-          </header>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong><code>scribe patch</code> regex dropped parenthesized headings.</strong>
-              The metacharacter-escape character class had one backslash too many —
-              <code>\]</code> inside the regex literal parsed as literal <code>\</code>
-              followed by the closing <code>]</code>, ending the class early. Net effect:
-              every section heading with <code>(</code>, <code>)</code>, <code>.</code>,
-              or any other metacharacter failed silently with "section not found", forcing
-              a fallback to raw edits and eroding the
-              scribe-is-the-only-writer contract. Fix at
-              <code>cli/src/scribe/scribe.ts:240</code> drops one backslash. Regression
-              test covers a heading with both parens and a dot.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.5</h2>
-            <span class="release-date">2026-04-22</span>
-          </header>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong><code>writing-vault-notes</code> skill</strong>, auto-installed to
-              <code>~/.claude/skills/</code> via <code>metalmind stamp</code>. Clean-room
-              Obsidian Flavored Markdown reference (wikilinks, embeds, callouts, block refs,
-              tasks, highlights) plus metalmind-specific conventions: <code>scribe</code>
-              stamps frontmatter so bodies stay frontmatter-free,
-              <code>[[kind:slug]]</code> wikilink shortcuts, folder-by-intent over
-              per-project subdirs. Loads on demand — only the name + description enter the
-              standing session context (~60 tokens); the full body loads only when the
-              skill triggers on a note-writing task. Existing users need to re-run
-              <code>metalmind stamp</code> to pick it up.
-            </li>
-          </ul>
-          <h3>Changed</h3>
-          <ul>
-            <li>
-              <strong><code>copyClaudeTemplates</code> now copies skill bundles.</strong>
-              New <code>copySkillBundles</code> helper recursively mirrors every directory
-              under <code>cli/templates/claude/skills/</code> into
-              <code>~/.claude/skills/</code>, so future skills drop in without touching the
-              install pipeline.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.4</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong>Rerank warmup folded into bootstrap.</strong> 0.2.3 installed the
-              extra + restarted the watcher, but the first real <code>--rerank</code> query
-              then timed out at the CLI's 6 s HTTP cap while the fresh watcher process
-              downloaded the ~500 MB model — silently falling back to stdio (embedder
-              ordering, not reranked). Bootstrap now issues a throwaway rerank warmup
-              against <code>/search</code> after restart, absorbing the model download
-              into the already-explicit setup phase. HTTP timeout for rerank calls lifted
-              to 90 s for headroom.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.3</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong><code>uv tool install</code> syntax for the rerank extra.</strong>
-              <code>--from &lt;path&gt; metalmind-vault-rag[rerank]</code> is not valid uv
-              syntax. Switched to the positional <code>&lt;path&gt;[rerank]</code> form when
-              extras are requested; the no-extras path stays on <code>--from &lt;path&gt;
-              metalmind-vault-rag</code>. Caught live on first bootstrap run.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.2</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong>Rerank bootstrap now handles stale Python packages.</strong> Older
-              watcher versions don't expose <code>/rerank/status</code>; a 404 response
-              used to be misread as "watcher unreachable" and the bootstrap silently
-              skipped. 0.2.2 distinguishes 404 (package predates the endpoint — run the
-              <code>[rerank]</code> reinstall, which also upgrades the package) from
-              connection-refused (no watcher running — stay hands-off).
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.1</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <p>
-            UX fix on top of 0.2.0: stop asking users to run a weird-looking
-            <code>uv tool install</code> by hand. First
-            <code><span class="scadrial-only">metalmind tap copper --rerank</span><span class="classic-only">metalmind recall --rerank</span></code>
-            now bootstraps itself.
-          </p>
-          <h3>Changed</h3>
-          <ul>
-            <li>
-              <strong>Reranker bootstrap is now auto-on-first-use.</strong> When you run
-              <code><span class="scadrial-only">tap copper --rerank</span><span class="classic-only">recall --rerank</span></code>,
-              the CLI probes a new
-              <code>/rerank/status</code> endpoint on the watcher. If
-              <code>FlagEmbedding</code> is missing, the CLI runs the
-              <code>[rerank]</code> extra install itself, restarts the watcher
-              (<code>launchctl</code> on macOS, <code>systemctl</code> on Linux), polls until
-              the new process is ready, then proceeds with the rerank call. One-time
-              ~1.2 GB download; zero-friction from then on.
-            </li>
-            <li>
-              <code>installVaultRag</code> (internal) gains an <code>extras</code> option;
-              watcher restart extracted into <code>watcher-restart.ts</code> for reuse.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.2.0</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <p>
-            Minor-rev bump: new recall tier, new optional dep group, Linux-real CI coverage, and
-            a landing-page positioning split. Nothing removed; everything opt-in.
-          </p>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong>Reranker tier (<code><span class="scadrial-only">tap copper --rerank</span><span class="classic-only">recall --rerank</span></code>).</strong> Cross-encoder
-              (<code>BAAI/bge-reranker-v2-m3</code>) overfetches 4× from Qdrant and re-scores
-              before returning top-k. Closes the <strong>hit@1=70% → hit@5=90%</strong> gap the
-              recall-v0 bench exposed. Opt-in; first call downloads ~500 MB. Graceful
-              fallback if the dep is absent; themed first-load message when
-              <code>METALMIND_FLAVOR=scadrial</code>. <em>(0.2.0 required a manual uv
-              install — 0.2.1 bootstraps automatically. See 0.2.1 below.)</em>
-            </li>
-            <li>
-              <strong><code>bench/recall-v0/ --rerank</code>.</strong> Same runner, rerank mode
-              bumps timeout to 180 s for first-call warmup and records mode in the meta block.
-            </li>
-            <li>
-              <strong>Linux CI matrix.</strong> <code>.github/workflows/ci.yml</code> runs tests
-              on macOS + Ubuntu for every PR and push. <code>publish.yml</code> stays pinned to
-              macOS — release pipeline is intentionally not gated on Linux CI.
-            </li>
-            <li>
-              <strong><code>/forge</code> site page.</strong> Dedicated pitch for the cross-repo
-              code-graph story — tiers of confidence, three-tier route extraction, commands
-              table, anti-persona. Closes item #8 from the 2026-04-20 product analysis.
-            </li>
-          </ul>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong>Forge cache: spec-mtime invalidation.</strong> Route + merged-graph caches
-              were fingerprinted only against <code>graphify-out/graph.json</code> mtime.
-              Editing a spec via <code>forge capture-spec</code> silently returned stale edges.
-              Per-repo fingerprint is now <code>max(graphMtime, shelfSpecMtime)</code>.
-            </li>
-          </ul>
-          <h3>Changed</h3>
-          <ul>
-            <li>
-              <strong>Homepage slimmed to memory.</strong> Four forge-related feature cards
-              collapsed into one dashed sibling card linking to <a href="/forge"><code>/forge</code></a>.
-              No features removed — only repositioned.
-            </li>
-            <li>
-              <strong><code>teardown()</code> internal signature.</strong> <code>claudeDir</code>
-              and <code>settingsPath</code> now required (no silent fallback to real
-              <code>~/.claude</code>). Private API.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.11</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong>Vanishing stamped block bug.</strong> <code>teardown()</code> defaulted
-              <code>claudeDir</code> to the real <code>~/.claude</code> when tests forgot to pass
-              one, causing every <code>pnpm test</code> run to strip the metalmind managed block
-              from the user's <code>~/.claude/CLAUDE.md</code> and delete the session-start hook.
-              <code>claudeDir</code> and <code>settingsPath</code> are now required options — any
-              future test that omits them fails at the type level, not at the data-loss level.
-            </li>
-          </ul>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong><code>bench/mcp-tax-v0/</code></strong> — reproducible first-turn token-tax
-              bench vs mem0, metalmind's stdio MCP fallback, and Claude Code native
-              <code>/memory</code>. <code>pnpm bench:mcp-tax</code> prints a copy-paste markdown
-              table; runs via Anthropic <code>count_tokens</code> when
-              <code>ANTHROPIC_API_KEY</code> is set, falls back to char/4 approximation otherwise.
-              Headline: <strong>~2.5× lower</strong> than mem0 as shipped, <strong>~8.4× lower</strong>
-              on the apples-to-apples MCP comparison.
-            </li>
-          </ul>
-          <h3>Changed</h3>
-          <ul>
-            <li>
-              <strong>README + site</strong> surface forge (three-tier route extraction), steel
-              (rename), zinc (team-debug), and scribe (vault CRUD) as first-class features alongside
-              copper. New anti-persona section explicitly lists who should <em>not</em> install
-              metalmind.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.10</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong>Warm-path orphan-cache prune.</strong>
-              <code>pruneOrphanRouteCaches()</code> was only wired into
-              <code>buildMergedGraph</code> — <code>loadOrBuildMerged</code> short-circuits on a
-              warm merged cache, so orphan entries at <code>~/.metalmind/forge/routes/*.json</code>
-              persisted across runs even after the source repo was deleted. Moved the prune call
-              up into <code>loadOrBuildMerged</code> so it fires on every invocation.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.9</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong>Tier 3 URL-literal route extraction</strong> (opt-in via
-              <code>--include-literals</code>). Scans ~15 text extensions for path-shaped string
-              literals as a last-resort fallback when OpenAPI specs and Java caller parsers miss.
-              Every edge carries <code>INFERRED_URL_LITERAL</code> provenance. Noise filter drops
-              static asset extensions.
-            </li>
-            <li>
-              <strong>CI Node 24 opt-in</strong> via
-              <code>FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true</code> in the publish workflow.
-              Keeps the pipeline unblocked through 2026-09-16.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.8</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong>Orphan route-cache pruning.</strong> First pass:
-              <code>pruneOrphanRouteCaches()</code> now runs at the top of
-              <code>buildMergedGraph</code>, deleting cache entries whose source repo is missing.
-              One-time cleanup of 33 stale entries from the local shelf.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.7</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong><code>metalmind release-check</code></strong> — pre-tag preflight. Working
-              tree clean, on main, version sync between CLI and global install, tests pass, build
-              passes, doctor clean, stamped block present in <code>~/.claude/CLAUDE.md</code>.
-              <code>--skip-tests --skip-build</code> for speed during debugging.
-            </li>
-            <li>
-              <strong><code>metalmind scribe rename</code> + backlink rewriting.</strong> Moves a
-              vault note to a new kind/slug and rewrites every
-              <code>[[wikilink]]</code> reference across the vault.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.6</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong>Forge Tier 1 — language-agnostic OpenAPI route extraction.</strong> Reads
-              specs from a metalmind-managed shelf at
-              <code>~/.metalmind/specs/&lt;repo&gt;.&#123;yaml,json&#125;</code> — never from
-              inside the target repo. Satisfies the "single-dev tool, zero repo pollution"
-              constraint. <code>metalmind forge capture-spec &lt;repo&gt; &lt;url-or-file&gt;</code>
-              seeds the shelf.
-            </li>
-            <li>
-              <strong>Forge Tier 2 — Java caller extraction.</strong> Regex-based parser for
-              <code>RestTemplate</code> (getForObject/postForEntity/exchange),
-              <code>WebClient</code> fluent chains, and <code>Feign</code> clients
-              (<code>@GetMapping</code> inside <code>@FeignClient</code>). Cross-repo
-              <code>INFERRED_ROUTE</code> edges now link Java callers to handlers in any target
-              language.
-            </li>
-            <li>
-              <strong><code>metalmind scribe</code></strong> (alias: <code>note</code>) — vault
-              note CRUD. Full flow: <code>create · update · patch · delete · archive · list · show</code>.
-              Stamps frontmatter, picks the right folder from <code>kind</code>, auto-links the
-              project MOC, supports <code>--dry-run</code> on every verb, accepts
-              <code>kind:slug</code> shortcuts. Soft-delete by default.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.5</h2>
-            <span class="release-date">2026-04-21</span>
-          </header>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong>graphify subcommand rename.</strong> graphify removed
-              <code>analyze</code>; metalmind was still calling it. Switched all call sites to
-              <code>graphify update</code>.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.4</h2>
-            <span class="release-date">2026-04-20</span>
-          </header>
-          <h3>Changed</h3>
-          <ul>
-            <li>
-              <strong>Flat <code>~/Knowledge/Plans/</code> layout.</strong> Plans are no longer
-              nested by project subdirectory — all plan notes live flat in <code>Plans/</code>,
-              grouped by <code>project:</code> frontmatter and a per-project MOC in
-              <code>Work/MOCs/&lt;project&gt;.md</code>.
-            </li>
-            <li>
-              <strong>MOC template scaffold</strong> — <code>metalmind init</code> now seeds a
-              starter Map-of-Content template.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.3</h2>
-            <span class="release-date">2026-04-20</span>
-          </header>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong>OIDC trusted-publisher release pipeline.</strong> Publishes to npm via OIDC
-              + sigstore provenance on every <code>v*.*.*</code> tag. No
-              <code>NPM_TOKEN</code> secret required.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.1</h2>
-            <span class="release-date">2026-04-20</span>
-          </header>
-          <h3>Fixed</h3>
-          <ul>
-            <li>
-              <strong><code>metalmind --version</code></strong> now reads from
-              <code>package.json</code> (was a hard-coded string). Prevents version-drift
-              between <code>npm view metalmind version</code> and local CLI output.
-            </li>
-          </ul>
-          <h3>Added</h3>
-          <ul>
-            <li>
-              <strong><code>bench/recall-v0/</code></strong> — reproducible recall-quality bench.
-              Current: hit@5 = 90%, hit@3 = 85%, hit@1 = 70%; latency median 45 ms / p95 87 ms.
-            </li>
-          </ul>
-        </article>
-
-        <article class="release">
-          <header class="release-head">
-            <h2>0.1.0</h2>
-            <span class="release-date">2026-04-20</span>
-          </header>
-          <p>Initial public release.</p>
-          <ul>
-            <li>One themed CLI (Scadrial verbs + Classic aliases).
-              <code>metalmind init</code> drives the whole install;
-              <code>metalmind uninstall</code> reverses it — never touches your notes.</li>
-            <li>Loopback-HTTP recall at <code>127.0.0.1:17317</code> as the default transport;
-              stdio-MCP as always-available fallback.</li>
-            <li>SessionStart hook + stamped <code>CLAUDE.md</code> block teach Claude Code when to
-              recall, without injecting MCP tool schemas.</li>
-            <li>Per-repo code graphs via graphify; cross-repo merge in the metalmind
-              <em>forge</em> with <code>INFERRED_NAME</code> edges.</li>
-            <li>Serena LSP backs <code>burn iron</code> (symbol navigation) and
-              <code>burn steel</code> (coordinated rename).</li>
-            <li><code>burn zinc</code> dispatches to the <code>/team-debug</code> skill with the
-              code graph pre-primed.</li>
-          </ul>
-        </article>
-
-      </section>
-    </main>
-
-    <footer>
-      <div class="footer-badges">
-        <a href="https://github.com/Nikitzu/metalmind/blob/main/LICENSE">
-          <img src="https://img.shields.io/badge/license-MIT-93b1d0?style=flat-square&labelColor=10141b" alt="MIT license" />
-        </a>
-        <a href="https://github.com/Nikitzu/metalmind">
-          <img src="https://img.shields.io/github/stars/Nikitzu/metalmind?style=flat-square&color=d4a14a&labelColor=10141b" alt="GitHub stars" />
-        </a>
+  <section>
+    <div class="container">
+      <div class="release-list">
+        {releases.map((r) => (
+          <article class="release-entry">
+            <header class="release-head">
+              <a class="release-tag mono" href={`https://github.com/Nikitzu/metalmind/releases/tag/v${r.tag}`} target="_blank" rel="noopener">v{r.tag}</a>
+              <span class="release-date mono">{r.date}</span>
+              <span class={`release-kind release-kind-${r.tag_kind} mono`}>{r.tag_kind}</span>
+            </header>
+            <h2 class="display release-h">{r.headline}</h2>
+            <p class="release-sum">{r.summary}</p>
+          </article>
+        ))}
       </div>
-      <p>Inspired by Brandon Sanderson's Mistborn Era 1 novels. Not affiliated.</p>
-    </footer>
+    </div>
+  </section>
+</BaseLayout>
 
-  </body>
-</html>
+<style>
+  .release-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .release-entry {
+    padding: var(--space-5) var(--space-5) var(--space-6);
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    border-left: 3px solid var(--accent);
+  }
+  .release-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+  }
+  .release-tag {
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+    text-decoration: none;
+    background: color-mix(in oklch, var(--accent) 10%, transparent);
+    border: 1px solid color-mix(in oklch, var(--accent) 30%, transparent);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+  }
+  .release-tag:hover { filter: brightness(1.1); }
+  .release-date { font-size: 12px; color: var(--ink-faint); letter-spacing: 0.05em; }
+  .release-kind {
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line-strong);
+    color: var(--ink-faint);
+  }
+  .release-kind-added { color: var(--metal-copper); border-color: color-mix(in oklch, var(--metal-copper) 35%, transparent); }
+  .release-kind-fixed { color: var(--metal-brass); border-color: color-mix(in oklch, var(--metal-brass) 35%, transparent); }
+  .release-kind-changed { color: var(--metal-steel); border-color: color-mix(in oklch, var(--metal-steel) 35%, transparent); }
+  .release-h {
+    font-size: clamp(22px, 2.2vw, 28px);
+    font-weight: 400;
+    margin: 0 0 var(--space-3);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .release-sum {
+    margin: 0;
+    color: var(--ink-mute);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+</style>

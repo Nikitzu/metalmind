@@ -1,0 +1,100 @@
+---
+// Two switchers — theme (dark/light) + vocab (classic/scadrial).
+// State persisted in localStorage; applied as data attributes on <html>.
+// Both pure CSS-driven for visual state once the data-attribute lands.
+---
+<div class="mm-switchers">
+  <div class="mm-vocab-switch" role="radiogroup" aria-label="Vocabulary">
+    <span class="mm-vocab-track" aria-hidden="true"></span>
+    <button
+      type="button"
+      role="radio"
+      class="mm-vocab-option"
+      data-vocab="classic"
+      aria-checked="true"
+      title="Plain English commands (recall, save, graph…)"
+    >Classic</button>
+    <button
+      type="button"
+      role="radio"
+      class="mm-vocab-option"
+      data-vocab="scadrial"
+      aria-checked="false"
+      title="Mistborn-themed aliases (tap copper, store copper, burn bronze…)"
+    >Scadrial</button>
+  </div>
+  <button
+    type="button"
+    class="mm-theme-switch"
+    role="switch"
+    aria-checked="true"
+    aria-label="Toggle theme"
+  >
+    <span class="mm-theme-track" aria-hidden="true">
+      <span class="mm-theme-icon mm-theme-icon-sun">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+      </span>
+      <span class="mm-theme-icon mm-theme-icon-moon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"></path>
+        </svg>
+      </span>
+      <span class="mm-theme-thumb"></span>
+    </span>
+  </button>
+</div>
+
+<script is:inline>
+  (function () {
+    var STORE_THEME = 'mm-theme';
+    var STORE_LANG  = 'mm-lang';
+
+    var html = document.documentElement;
+    function read(k, fb) { try { return localStorage.getItem(k) || fb; } catch (e) { return fb; } }
+    function write(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+    var theme = read(STORE_THEME, 'dark');
+    var lang  = read(STORE_LANG,  'classic');
+    html.setAttribute('data-theme', theme);
+    html.setAttribute('data-lang',  lang);
+
+    function applyTheme(v) {
+      html.setAttribute('data-theme', v);
+      write(STORE_THEME, v);
+      document.querySelectorAll('.mm-theme-switch').forEach(function (b) {
+        b.setAttribute('aria-checked', String(v === 'dark'));
+      });
+    }
+    function applyLang(v) {
+      html.setAttribute('data-lang', v);
+      write(STORE_LANG, v);
+      document.querySelectorAll('.mm-vocab-option').forEach(function (b) {
+        b.setAttribute('aria-checked', String(b.dataset.vocab === v));
+      });
+    }
+
+    // initial sync of aria-state
+    document.querySelectorAll('.mm-theme-switch').forEach(function (b) {
+      b.setAttribute('aria-checked', String(theme === 'dark'));
+      b.addEventListener('click', function () {
+        var current = html.getAttribute('data-theme') || 'dark';
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+      });
+    });
+    document.querySelectorAll('.mm-vocab-option').forEach(function (b) {
+      b.setAttribute('aria-checked', String(b.dataset.vocab === lang));
+      b.addEventListener('click', function () {
+        applyLang(b.dataset.vocab);
+      });
+    });
+
+    // sync across tabs
+    window.addEventListener('storage', function (e) {
+      if (e.key === STORE_THEME && e.newValue) applyTheme(e.newValue);
+      if (e.key === STORE_LANG  && e.newValue) applyLang(e.newValue);
+    });
+  })();
+</script>

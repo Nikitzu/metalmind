@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PageCTA from '../components/PageCTA.astro';
+import TermSwap from '../components/TermSwap.astro';
+
+const title = 'Memory · metalmind';
+const description = 'Save once, recall in 45ms median, zero standing tool-schema tax. Plain markdown in your own Obsidian vault.';
+---
+<BaseLayout title={title} description={description}>
+  <PageHero
+    metal="copper"
+    eyebrow="recall · save"
+    eyebrowScadrial="tap copper · store copper"
+    title="The headline. The thing the rest of the library compounds back into."
+    sub="Save once. Recall in 45 ms median. Zero standing tool-schema tax. Your notes stay plain markdown in your own Obsidian vault — Claude reads them verbatim, not as LLM-extracted summaries."
+  />
+
+  <section>
+    <div class="container">
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">01</div>
+          <h3 class="display feat-h">Save once</h3>
+          <p>
+            <TermSwap classic="save" scadrial="store copper" mono />
+            deposits a decision into your local Obsidian vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">02</div>
+          <h3 class="display feat-h">Recall, no MCP tax</h3>
+          <p>
+            <TermSwap classic="recall" scadrial="tap copper" mono />
+            is a Bash call, not an MCP tool. Zero schema bloat per session. A loopback HTTP server inside the watcher handles calls in sub-100 ms; stdio MCP is the always-on fallback.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">03</div>
+          <h3 class="display feat-h">Session-start awareness</h3>
+          <p>A SessionStart hook plus a stamped block in <span class="kbd">~/.claude/CLAUDE.md</span> teach Claude when to recall — no "did you check memory?" prompting, ever.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">04</div>
+          <h3 class="display feat-h">Vault writes without drift</h3>
+          <p>
+            <TermSwap classic="note" scadrial="scribe" mono />
+            is the CRUD interface agents use instead of raw Write. It stamps frontmatter, picks the right folder, auto-links the project MOC, and rewrites <span class="kbd">[[wikilinks]]</span> across the vault on rename.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ Recall benchmarks</div>
+        <h2>Quality holds at scale.</h2>
+        <p>Hybrid retrieval (semantic + BM25 fused via RRF, with optional cross-encoder rerank). Measured on hand-authored gold notes plus same-domain distractors.</p>
+      </div>
+      <table class="proof-table mono memory-table">
+        <thead>
+          <tr><th>vault size</th><th>hybrid hit@1</th><th>hybrid hit@5</th><th>+rerank hit@1</th><th>+rerank hit@5</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>12 notes</td><td>90%</td><td>95%</td><td class="accent-text">90%</td><td>95%</td></tr>
+          <tr><td>100 notes</td><td>85%</td><td>95%</td><td class="accent-text">90%</td><td>95%</td></tr>
+          <tr><td>500 notes</td><td>85%</td><td>90%</td><td class="accent-text">90%</td><td>95%</td></tr>
+          <tr><td>1,000 notes</td><td>85%</td><td>85%</td><td class="accent-text">90%</td><td>95%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <PageCTA heading="Claude never meets you cold again." />
+</BaseLayout>

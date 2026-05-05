@@ -1,0 +1,125 @@
+---
+import TermSwap from './TermSwap.astro';
+
+const modules = [
+  {
+    metal: 'copper',
+    href: '/memory',
+    classic: 'Memory',
+    scadrial: 'Copper',
+    tag: 'headline',
+    desc: 'Recall, save, vault CRUD. The rest of the library compounds back into it.',
+    stat: '45ms median · 90% hit@5',
+    verbs: [
+      { c: 'recall', s: 'tap copper' },
+      { c: 'save', s: 'store copper' },
+      { c: 'note', s: 'scribe' },
+    ],
+  },
+  {
+    metal: 'bronze',
+    href: '/forge',
+    classic: 'Code intelligence',
+    scadrial: 'Bronze',
+    tag: 'forge',
+    desc: 'Cross-repo graph with HTTP-route edges. Symbol nav and coordinated rename through Serena\'s LSP.',
+    stat: 'Serena · graphify',
+    verbs: [
+      { c: 'graph', s: 'burn bronze' },
+      { c: 'symbol', s: 'burn iron' },
+      { c: 'rename', s: 'burn steel' },
+    ],
+  },
+  {
+    metal: 'atium',
+    href: '/daily',
+    classic: 'Daily workflow',
+    scadrial: 'Atium',
+    tag: 'routine',
+    desc: 'Action items that carry themselves forward. One-shot archive. Mon–Fri EOD launchd routine.',
+    stat: 'launchd · systemd',
+    verbs: [
+      { c: 'daily new', s: 'atium new' },
+      { c: 'archive', s: 'gold' },
+      { c: 'routine install eod', s: 'routine install eod' },
+    ],
+  },
+  {
+    metal: 'steel',
+    href: '/synod',
+    classic: 'Deliberation',
+    scadrial: 'Steel',
+    tag: 'synod',
+    desc: 'Seven-persona deliberative council, spawned in parallel, synthesized into a structured verdict.',
+    stat: 'for the next 6 months — not 60 minutes',
+    verbs: [
+      { c: 'synod', s: 'synod' },
+    ],
+  },
+  {
+    metal: 'brass',
+    href: '/brass',
+    classic: 'Desktop',
+    scadrial: 'Brass',
+    tag: 'macOS',
+    desc: 'Banner / dialog / sticky notifications, wired into the EOD routine and the /save skill.',
+    stat: 'macOS native',
+    verbs: [
+      { c: 'notify banner', s: 'flare banner' },
+      { c: 'notify dialog', s: 'flare dialog' },
+      { c: 'notify sticky', s: 'flare sticky' },
+    ],
+  },
+  {
+    metal: 'iron',
+    href: '/iron',
+    classic: 'Health',
+    scadrial: 'Iron',
+    tag: 'doctor',
+    desc: 'End-to-end install check. The first memory tool that tells you when recall is failing you.',
+    stat: 'self-auditing',
+    verbs: [
+      { c: 'doctor', s: 'pulse' },
+      { c: 'doctor --recall-audit', s: 'pulse --recall-audit' },
+    ],
+  },
+];
+---
+<section id="modules">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">§ The six modules</div>
+      <h2>One library. Six closed gaps.</h2>
+      <p>Each module shares state through one vault, one CLI, one stamped <span class="kbd">CLAUDE.md</span> rule. None registers an MCP tool schema. None duplicates a Claude Code primitive.</p>
+    </div>
+
+    <div class="mod-grid">
+      {modules.map((m) => (
+        <a href={m.href} class="mod-card" style={`--mod-color: var(--metal-${m.metal})`}>
+          <header class="mod-head">
+            <div class="mod-metal">
+              <span class="mod-dot"></span>
+              <span class="mono">{m.metal}</span>
+            </div>
+            <span class="mod-tag mono">{m.tag}</span>
+          </header>
+          <h3 class="mod-name display">
+            <TermSwap classic={m.classic} scadrial={m.scadrial} />
+          </h3>
+          <p class="mod-desc">{m.desc}</p>
+          <div class="mod-verbs">
+            {m.verbs.map((v) => (
+              <code class="mod-verb">
+                <TermSwap classic={v.c} scadrial={v.s} />
+              </code>
+            ))}
+          </div>
+          <footer class="mod-foot mono">
+            <span>{m.stat}</span>
+            <span class="mod-foot-arrow">→</span>
+          </footer>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

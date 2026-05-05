@@ -1,0 +1,41 @@
+---
+// Short cookbook teaser — three highest-impact patterns. Full cookbook lives at /cookbook.
+const highlights = [
+  {
+    num: '01',
+    title: 'Write notes Claude finds',
+    body: 'Frontmatter discipline first: project: is the strongest discoverability signal. Tags are cross-cutting themes, not categories. Use kind:slug shortcuts so renames don\'t break references. Recall before writing — duplicates are the most expensive mistake.',
+  },
+  {
+    num: '02',
+    title: 'Recall hygiene',
+    body: 'Default tap copper covers 90% of cases — start there. Escalate to --deep when one hit is right but you want adjacent context, --expand for broad research. If two rephrasings still miss, you genuinely don\'t have the note — write it.',
+  },
+  {
+    num: '03',
+    title: 'What lives where',
+    body: 'Plans/ for implementation plans (dated), Learnings/ for durable cross-session lessons, Work/ for project-scoped decisions. Daily/ is a logbook, not a knowledge base — promote insights to Learnings/ when you spot them.',
+  },
+];
+---
+<section id="cookbook">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">§ How to use it well</div>
+      <h2>Three patterns that compound.</h2>
+      <p>The cookbook lives in the repo. Three highest-impact patterns first; the rest follows the same shape.</p>
+    </div>
+    <div class="cookbook-grid">
+      {highlights.map((h) => (
+        <div class="cookbook-card">
+          <div class="cookbook-num">{h.num}</div>
+          <h3 class="cookbook-h">{h.title}</h3>
+          <p>{h.body}</p>
+        </div>
+      ))}
+    </div>
+    <div class="cookbook-foot">
+      <a class="btn btn-ghost" href="/cookbook">Read the full cookbook →</a>
+    </div>
+  </div>
+</section>
