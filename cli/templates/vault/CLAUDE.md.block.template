@@ -4,9 +4,9 @@ Personal Obsidian vault. Claude persists insights via the `/save` skill and reca
 
 ## Folders
 
-`Work/` · `Personal/` · `Learnings/` · `Daily/` (YYYY-MM-DD.md) · `Inbox/` (triage bucket) · `Archive/` (stale) · `Memory/` (migrated native memory).
+`Plans/` (dated, flat) · `Work/` · `Work/MOCs/` · `Learnings/` · `Daily/` (YYYY-MM-DD.md) · `Inbox/` (triage bucket) · `Memory/` (migrated native memory) · `Personal/` · `Archive/` (stale).
 
-MOCs live at `<Folder>/MOCs/<topic>.md` and index all notes on that topic.
+MOCs live at `Work/MOCs/<project>.md` and index all notes on that project. Project affiliation is in the `project:` frontmatter field, not the folder — no per-project subfolders.
 
 ## Note conventions
 
@@ -27,10 +27,11 @@ MOCs live at `<Folder>/MOCs/<topic>.md` and index all notes on that topic.
 5. `Grep` — only for exact string matches.
 6. `Glob` — only for file-pattern listing.
 
-**Writing**:
+**Writing** (full contract lives in the global stamped block — this section names the vault-local rules only):
 
-- Write only to `Inbox/`, `Daily/`, or a note the user names.
+- Every vault write goes through `metalmind scribe <verb>` / `metalmind atium` / `metalmind gold` — **never raw `Write`/`Edit`** on vault files. If no metalmind command fits, stop and surface the gap.
 - Propose the note (path + draft) before writing — never save silently.
+- Daily notes for non-today dates require `--date <YYYY-MM-DD>` (scribe) or live under `metalmind atium` (canonical for daily action items).
 - Never touch `Welcome.md` or `.obsidian/`.
 
 **Inbox/ files untouched >14 days** → propose triage on next `/save`.

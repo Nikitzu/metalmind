@@ -6,6 +6,31 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.6.2 — 2026-05-05
+
+### Fixed — vault `CLAUDE.md` block aligned with the global block
+
+v0.6.1 closed the contradictions between the **global** stamped block (`~/.claude/CLAUDE.md`) and the CLI contract, but missed the **vault** stamped block (`<vault>/CLAUDE.md`). The two stamped surfaces ended up contradicting each other in four places. v0.6.2 closes the gap.
+
+#### Vault-template contradictions fixed
+
+`cli/templates/vault/CLAUDE.md.block.template`:
+
+1. **Folders list mismatched the global block.** Vault listed `Work/ · Personal/ · Learnings/ · Daily/ · Inbox/ · Archive/ · Memory/` — missing `Plans/` and `Work/MOCs/`. Global (post-v0.6.1) lists all nine. Aligned.
+2. **Direct contradiction on where writes are allowed.** Vault block said "Write only to `Inbox/`, `Daily/`, or a note the user names." Global block (post-v0.6.1) says scribe handles all CRUD across every kind. The vault rule was overly restrictive and predated scribe-as-only-write-tool. Replaced with: every vault write goes through metalmind (scribe / atium / gold); no raw `Write`/`Edit`; if no command fits, stop and surface the gap.
+3. **No reference to scribe in the vault `Writing` section.** The section title was literally `Writing` with the verb `Write` and never named scribe. Now references the metalmind write surface and points at the global block for the full contract.
+4. **MOC location contradiction.** Vault said "MOCs live at `<Folder>/MOCs/<topic>.md`" (per-folder). Global says "matching MOC at `Work/MOCs/<project>.md`; no per-project subfolders." Aligned to the global rule.
+
+### Migration
+
+Run `metalmind stamp` after upgrade so the vault block in `<vault>/CLAUDE.md` picks up the new contract. The managed sentinel block is rewritten in place; user content outside the markers is preserved.
+
+### Site/README drift fix
+
+Bumped `current release` reference in `README.md` to v0.6.2.
+
+---
+
 ## 0.6.1 — 2026-05-05
 
 ### Fixed — stamped rules no longer contradict the metalmind CLI contract
