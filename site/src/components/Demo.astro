@@ -1,0 +1,53 @@
+---
+// 30-second recall demo — asciinema-player on a self-hosted .cast.
+---
+<section id="demo">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">§ See it in 30 seconds</div>
+      <h2>Cold session. Old decision. One bash call.</h2>
+      <p>Fresh terminal. Claude has zero context. The stamped <span class="kbd">CLAUDE.md</span> rule teaches it to reach for <span class="kbd">tap copper</span> on its own — sub-100ms loopback HTTP, no MCP tool registered, the answer comes from your vault verbatim.</p>
+    </div>
+    <div class="demo-player-wrap">
+      <div id="recall-demo-player"></div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3/dist/bundle/asciinema-player.min.js" is:inline></script>
+<script is:inline>
+  (function () {
+    function mount() {
+      var el = document.getElementById('recall-demo-player');
+      if (!el || !window.AsciinemaPlayer) return;
+      window.AsciinemaPlayer.create('/demos/recall.cast', el, {
+        autoPlay: true,
+        loop: true,
+        idleTimeLimit: 1.5,
+        theme: 'dracula',
+        fit: 'width',
+        terminalFontFamily: 'JetBrains Mono, ui-monospace, monospace',
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mount);
+    } else {
+      mount();
+    }
+  })();
+</script>
+
+<style>
+  .demo-player-wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: #0a0907;
+    box-shadow: 0 24px 80px -30px rgba(0,0,0,0.7);
+  }
+  .demo-player-wrap :global(.ap-player) {
+    border-radius: var(--radius-lg);
+  }
+</style>
