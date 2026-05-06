@@ -384,8 +384,9 @@ export async function removeCodexPrefixRules(
 // using-teams is deliberately excluded — depends on CC's TeamCreate tool
 // which Codex doesn't have.
 //
-// The `save` skill is added in Phase 2 (Task 2.1) once the shared save-body
-// partial is extracted.
+// The `save` skill wraps `cli/templates/.shared/save-body.md` via the
+// {{> ...}} partial-include preprocessor in templates.ts so its body stays
+// byte-equal to CC's `commands/save.md` body section.
 
 export const METALMIND_CODEX_SKILLS = ['writing-vault-notes', 'synod', 'save'] as const;
 export type MetalmindCodexSkill = (typeof METALMIND_CODEX_SKILLS)[number];
@@ -549,7 +550,22 @@ export async function addCodexMcpServer(
   }
   if (list.some((entry) => entry.name === name)) {
     // Stale entry pointing elsewhere — remove first so we can re-add cleanly.
-    await runCommand(codexBin, ['mcp', 'remove', name]);
+    // We surface the remove failure as part of the add error if the subsequent
+    // add fails; otherwise the stale-remove failure is benign (Codex sometimes
+    // returns non-zero on remove of an entry it then accepts as overwritten).
+    const removeRes = await runCommand(codexBin, ['mcp', 'remove', name]);
+    if (!removeRes.ok) {
+      // Surface as throw context only if the add also fails below.
+      const addRes = await runCommand(codexBin, ['mcp', 'add', name, '--url', url]);
+      if (!addRes.ok) {
+        throw new Error(
+          `codex mcp add failed (after stale-remove also failed: ${
+            removeRes.stderr || removeRes.stdout
+          }): ${addRes.stderr || addRes.stdout}`,
+        );
+      }
+      return { name, url, action: 'added' };
+    }
   }
   const res = await runCommand(codexBin, ['mcp', 'add', name, '--url', url]);
   if (!res.ok) {
