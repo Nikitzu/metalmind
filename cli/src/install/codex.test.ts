@@ -1,9 +1,10 @@
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  addCodexMcpServer,
   applyCodexHooksJson,
   applyCodexNetworkAccess,
   clearCodexAgentsMd,
@@ -13,6 +14,7 @@ import {
   copyCodexPrefixRules,
   copyCodexSkills,
   removeCodexHookScript,
+  removeCodexMcpServer,
   removeCodexPrefixRules,
   removeCodexSkills,
   stampCodexAgentsMd,
@@ -648,5 +650,106 @@ describe('removeCodexSkills', () => {
     expect(existsSync(join(codexDir, 'skills', 'writing-vault-notes'))).toBe(false);
     expect(existsSync(join(codexDir, 'skills', 'synod'))).toBe(false);
     expect(existsSync(userSkillDir)).toBe(true);
+  });
+});
+
+// Fake codex binary for MCP-wrapper tests. Returns canned `mcp list --json`
+// payloads so we can exercise the idempotency, replace-stale, and not-found
+// paths without depending on a real codex install.
+async function makeFakeCodex(behavior: {
+  listOutput: string;
+  listExitCode: 0 | 1;
+  /** When true, mcp add/remove fail; lets us test error propagation. */
+  addRemoveFail?: boolean;
+}): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), 'mm-fake-codex-'));
+  const script = join(dir, 'codex');
+  const failExit = behavior.addRemoveFail ? '1' : '0';
+  // Use a here-doc literal; bash 3 (macOS default) handles this fine.
+  const body = `#!/bin/bash
+sub="$1"; verb="$2"
+if [ "$sub" = "mcp" ] && [ "$verb" = "list" ]; then
+  if [ "$3" = "--json" ]; then
+    cat <<'JSON'
+${behavior.listOutput}
+JSON
+    exit ${behavior.listExitCode}
+  fi
+fi
+if [ "$sub" = "mcp" ] && { [ "$verb" = "add" ] || [ "$verb" = "remove" ]; }; then
+  exit ${failExit}
+fi
+exit 0
+`;
+  await writeFile(script, body, 'utf8');
+  await chmod(script, 0o755);
+  return script;
+}
+
+describe('addCodexMcpServer', () => {
+  it('returns codex-not-found when `codex mcp list` fails (binary missing or broken)', async () => {
+    const codexBin = await makeFakeCodex({ listOutput: '', listExitCode: 1 });
+    const result = await addCodexMcpServer({ codexBin });
+    expect(result.action).toBe('codex-not-found');
+  });
+
+  it('returns already-present when entry matches name+url', async () => {
+    const codexBin = await makeFakeCodex({
+      listOutput: '[{"name":"metalmind","url":"http://127.0.0.1:17317/mcp"}]',
+      listExitCode: 0,
+    });
+    const result = await addCodexMcpServer({ codexBin });
+    expect(result.action).toBe('already-present');
+  });
+
+  it('returns added when no entry exists', async () => {
+    const codexBin = await makeFakeCodex({ listOutput: '[]', listExitCode: 0 });
+    const result = await addCodexMcpServer({ codexBin });
+    expect(result.action).toBe('added');
+    expect(result.url).toBe('http://127.0.0.1:17317/mcp');
+  });
+
+  it('replaces stale entry pointing at a different url', async () => {
+    const codexBin = await makeFakeCodex({
+      listOutput: '[{"name":"metalmind","url":"http://stale:9999/mcp"}]',
+      listExitCode: 0,
+    });
+    const result = await addCodexMcpServer({ codexBin });
+    expect(result.action).toBe('added');
+  });
+
+  it('throws when `codex mcp add` fails', async () => {
+    const codexBin = await makeFakeCodex({
+      listOutput: '[]',
+      listExitCode: 0,
+      addRemoveFail: true,
+    });
+    await expect(addCodexMcpServer({ codexBin })).rejects.toThrow(/codex mcp add failed/);
+  });
+});
+
+describe('removeCodexMcpServer', () => {
+  it('returns codex-not-found when `codex mcp list` fails', async () => {
+    const codexBin = await makeFakeCodex({ listOutput: '', listExitCode: 1 });
+    const result = await removeCodexMcpServer({ codexBin });
+    expect(result.action).toBe('codex-not-found');
+  });
+
+  it('returns absent when entry not registered', async () => {
+    const codexBin = await makeFakeCodex({
+      listOutput: '[{"name":"other","url":"http://example/x"}]',
+      listExitCode: 0,
+    });
+    const result = await removeCodexMcpServer({ codexBin });
+    expect(result.action).toBe('absent');
+  });
+
+  it('returns removed when entry was registered', async () => {
+    const codexBin = await makeFakeCodex({
+      listOutput: '[{"name":"metalmind","url":"http://127.0.0.1:17317/mcp"}]',
+      listExitCode: 0,
+    });
+    const result = await removeCodexMcpServer({ codexBin });
+    expect(result.action).toBe('removed');
   });
 });
