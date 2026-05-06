@@ -168,6 +168,7 @@ describe('doctor deep checks', () => {
         memoryRouting: 'vault-only',
         skills: { eodHook: true, notifications: true },
         forge: { groups: {} },
+        hosts: ['claude'],
       };
     });
 

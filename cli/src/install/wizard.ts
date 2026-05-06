@@ -389,6 +389,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     hooks: { claudeCode: graphifyHookWired },
     forge: { groups: {} },
     skills: { eodHook, notifications },
+    // hosts is finalized in the host-prompt branch added by Task 3.1; until
+    // then, default to ['claude'] since v0.7.x always installed CC.
+    hosts: ['claude'],
   };
   await writeConfig(config);
   log.success('Wrote ~/.metalmind/config.json');
