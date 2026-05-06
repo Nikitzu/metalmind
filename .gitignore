@@ -36,3 +36,6 @@ cli/templates/vault-rag-pkg/
 bench/recall-v0/fake-vault-distractors/
 bench/recall-v0/results/*
 !bench/recall-v0/results/.gitkeep
+
+# Working spec for in-flight branch (lives in metalmind vault, not git)
+SPEC.md
