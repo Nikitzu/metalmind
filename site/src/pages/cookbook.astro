@@ -119,9 +119,41 @@ const description = 'Opinionated patterns for using metalmind well — writing n
   <section>
     <div class="container">
       <div class="section-head">
+        <div class="eyebrow">§ 04 — codex cli</div>
+        <h2>Running metalmind on Codex CLI.</h2>
+        <p>v0.8.0 makes Codex CLI a first-class metalmind host alongside Claude Code. The model gets the same recall-first behaviour with the same headline rule (zero standing MCP-schema tax, bare-bash recall as the default path).</p>
+      </div>
+
+      <p style="color: var(--ink-mute); max-width: 64ch; margin-top: var(--space-4)">
+        <span class="kbd">metalmind init</span> shows a multi-select of detected hosts (<span class="kbd">~/.claude/</span>, <span class="kbd">~/.codex/</span>) and stamps only what you choose. It writes seven things into <span class="kbd">~/.codex/</span>: a sentinel-bounded block in <span class="kbd">AGENTS.md</span>, a SessionStart hook entry in <span class="kbd">hooks.json</span> reusing the same hook script Claude Code uses, a <span class="kbd">[sandbox_workspace_write] network_access = true</span> block in <span class="kbd">config.toml</span> (without it Codex's default sandbox blocks loopback to the watcher), a <span class="kbd">rules/metalmind.rules</span> file pre-approving the <span class="kbd">metalmind</span> command surface so the first recall doesn't ask for permission, and three skills (<span class="kbd">writing-vault-notes</span>, <span class="kbd">synod</span>, <span class="kbd">save</span>).
+      </p>
+
+      <p style="color: var(--ink-mute); max-width: 64ch; margin-top: var(--space-4)">
+        We never write to <span class="kbd">~/.codex/memories/</span> (Codex's native memory; orthogonal) or <span class="kbd">~/.codex/rules/default.rules</span> (Codex's user-acceptance log). Everything stamped is sentinel-bounded or in metalmind-named files; <span class="kbd">metalmind uninstall</span> round-trips cleanly.
+      </p>
+
+      <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Opt-in MCP server</h3>
+      <p style="color: var(--ink-mute); max-width: 64ch;">
+        Default install registers no MCP server — bare <span class="kbd">metalmind tap copper "..."</span> via the model's shell tool keeps the standing token cost at zero. Pass <span class="kbd">--with-mcp</span> if you want the explicit-tool-call shape (~150–400 tokens per turn for the schema; same trade-off Claude Code's stdio MCP fallback offers).
+      </p>
+
+      <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Codex desktop app — coming in v1.1</h3>
+      <p style="color: var(--ink-mute); max-width: 64ch;">
+        v0.8.0 covers the Codex CLI (<span class="kbd">codex</span> in your terminal). The desktop app (<span class="kbd">codex app</span>) is on the v1.1 roadmap — pending verification that it shares <span class="kbd">~/.codex/</span> storage and that the model has a shell-exec primitive there.
+      </p>
+
+      <p style="margin-top: var(--space-5)">
+        <a class="btn btn-ghost" href="https://github.com/Nikitzu/metalmind/blob/main/docs/cookbook-codex.md" target="_blank" rel="noopener">Codex cookbook on GitHub →</a>
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
         <div class="eyebrow">§ More</div>
         <h2>The full cookbook lives in the repo.</h2>
-        <p>The version above is the v0 — three highest-impact patterns. The repo cookbook adds <em>migrating from mem0 / Letta / Notion</em> and <em>scaling past 10k notes</em>, with worked examples per pattern.</p>
+        <p>The version above covers the four highest-impact patterns. The repo cookbook adds <em>migrating from mem0 / Letta / Notion</em> and <em>scaling past 10k notes</em>, with worked examples per pattern.</p>
       </div>
       <p>
         <a class="btn btn-ghost" href="https://github.com/Nikitzu/metalmind/blob/main/docs/cookbook.md" target="_blank" rel="noopener">Read the full cookbook on GitHub →</a>

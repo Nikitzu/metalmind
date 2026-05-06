@@ -6,6 +6,62 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.0 — 2026-05-06
+
+### Added — Codex CLI is now a first-class metalmind host
+
+`metalmind init --host codex` (or selecting "Codex CLI" in the new multi-select prompt) stamps Codex with the same recall-first behaviour Claude Code gets. The seven artifacts:
+
+- `~/.codex/AGENTS.md` — sentinel-bounded recall instructions Codex injects on every turn (wrapped in `<INSTRUCTIONS>`).
+- `~/.codex/hooks.json` SessionStart entry + `~/.codex/hooks/metalmind-session-start.sh` — **reuses the existing CC hook script verbatim**. Codex's hook payload (JSON shape, `additionalContext` field) is byte-identical to Claude Code's, verified via the openai/codex Rust binary strings + the CC→Codex migration logic in `app-server/src/config/external_agent_config.rs`.
+- `~/.codex/config.toml` `[sandbox_workspace_write] network_access = true` (sentinel-bounded) — Codex's default workspace-write sandbox blocks loopback; without this stamp, every recall fails with a sandbox network proxy denial.
+- `~/.codex/rules/metalmind.rules` — Starlark `prefix_rule(...)` allows for the entire metalmind CLI surface, so the first recall in a fresh Codex workspace doesn't hit an escalation prompt. Verified path against `codex-rs/core/src/exec_policy.rs:51,575,763,988`.
+- `~/.codex/skills/{writing-vault-notes,synod,save}/` — same skill discipline as CC; Codex's SKILL.md frontmatter is identical.
+
+### Added — opt-in `--with-mcp` for Codex MCP registration
+
+Default install registers no MCP server in Codex (zero standing token cost — matches the v0.7.0 site headline). Users who want explicit tool-call ergonomics pass `--with-mcp` to run `codex mcp add metalmind --url http://127.0.0.1:17317/mcp`. Trade-offs documented in `docs/cookbook-codex.md`.
+
+### Added — host multi-select prompt
+
+`metalmind init` and `metalmind stamp` always show a multi-select of detected hosts (`~/.claude/`, `~/.codex/`) so newly-installed hosts surface for opt-in. Decision: never silently dual-install. `--host claude|codex|both` bypasses the prompt; `--no-prompt` reuses the previously-chosen set (CI / scripted re-stamps).
+
+### Added — `metalmind doctor --deep` per-host check matrix
+
+`runDeepChecks` gates per host. New `checkCodexInstall` returns 6 (or 7 with MCP) DeepCheck entries: AGENTS.md sentinel · hook script · hooks.json registration · network_access · prefix rules · skills · (optional) MCP server. CC checks unchanged.
+
+### Added — `metalmind uninstall` round-trips Codex
+
+Detects Codex install footprint from `config.hosts` OR from on-disk sentinel files (best-effort cleanup). Pre-confirm summary names every Codex artifact that will be removed; explicit "Will NOT touch" callout for `~/.codex/memories` and `~/.codex/rules/default.rules`. After uninstall, `grep -r metalmind ~/.codex/` returns empty (excluding `default.rules`, which is Codex-managed).
+
+### Changed — `/save` body extracted to a shared partial
+
+`cli/templates/.shared/save-body.md` is the new single source of truth for the save workflow. Both CC's `commands/save.md` (slash command, keeps `$ARGUMENTS` tail) and Codex's `skills/save/SKILL.md` (description-triggered skill) source from it via a `{{> .shared/save-body.md}}` preprocessor. Snapshot test (`save-snapshot.test.ts`) asserts CC `save.md` is byte-identical to v0.7.x output. Codex/CC body byte-equality test asserts the partial sources match in both consumers.
+
+### Changed — Codex skill rendering applies flavor + skill sentinels
+
+Bug fix introduced in Phase 1 development: `copyCodexSkills` now runs `renderFlavorSentinels` and `renderSkillSentinels` through the render chain. Previously synod's `flavor-classic` / `flavor-scadrial` sentinel pairs were both written to disk. Tests assert the strip in both directions.
+
+### Boundaries
+
+- metalmind never writes to `~/.codex/memories/` (Codex's native memory; orthogonal).
+- metalmind never touches `~/.codex/rules/default.rules` (Codex's user-acceptance log — Codex appends to it when you click "Allow + Remember" in the TUI).
+- using-teams skill remains CC-only (depends on TeamCreate tool that Codex doesn't have).
+- **Codex desktop app** (`codex app`) is on the v1.1 roadmap; v0.8.0 covers Codex CLI only.
+
+### Behaviour changes
+
+- `Config` schema gains `hosts: ('claude' | 'codex')[]`. v0.7.x configs migrate to `['claude']` on first read via Zod `.default(['claude'])`. Existing CC-only users see no behavioural change until they re-stamp.
+- `metalmind stamp` now re-prompts for hosts on every invocation (decision A: always show). `--no-prompt` skips and reuses `config.hosts`.
+
+### Reference
+
+- Vault plan: `Plans/2026-05-06-codex-host-integration-impl.md` — full implementation plan
+- Vault plan: `Plans/2026-05-06-2026-05-06-metalmind-codex-host-integration.md` — research record (Codex surfaces, prefix_rule path discovery)
+- Cookbook: [`docs/cookbook-codex.md`](docs/cookbook-codex.md)
+
+---
+
 ## 0.7.0 — 2026-05-05
 
 ### Changed — repositioned as the Claude Code standard library
