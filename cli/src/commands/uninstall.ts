@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts';
 import { readConfig } from '../config.js';
+import { DEFAULT_CODEX_DIR, uninstallCodex } from '../install/codex.js';
 import { teardown } from '../install/teardown.js';
 
 const STACK_COMPOSE_REL = '.metalmind-stack/compose.yml';
@@ -28,6 +29,17 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
   const legacyStack =
     config?.vaultPath !== undefined && existsSync(join(config.vaultPath, STACK_COMPOSE_REL));
 
+  // Detect Codex install footprint: either config says so, or our sentinel
+  // files exist on disk. The latter handles the case where ~/.metalmind/
+  // config.json got deleted but our codex stamps survive (best-effort
+  // cleanup path).
+  const codexAgentsPath = join(DEFAULT_CODEX_DIR, 'AGENTS.md');
+  const codexRulesPath = join(DEFAULT_CODEX_DIR, 'rules', 'metalmind.rules');
+  const codexInstalled =
+    (config?.hosts.includes('codex') ?? false) ||
+    existsSync(codexAgentsPath) ||
+    existsSync(codexRulesPath);
+
   log.warn('This will:');
   log.info(legacyStack ? '  - stop watcher and Docker stack' : '  - stop watcher');
   if (legacyStack) {
@@ -41,10 +53,15 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
   log.info(
     '  - remove the SessionStart hook script + its entry in ~/.claude/settings.json (other hooks preserved)',
   );
+  if (codexInstalled) {
+    log.info(
+      '  - strip Codex stamps from ~/.codex/ (AGENTS.md sentinel, hooks.json entry, hook script, network_access block, metalmind.rules, our skills); also `codex mcp remove metalmind` if registered',
+    );
+  }
   log.info('  - optionally uninstall the metalmind-vault-rag uv tool (prompt)');
   log.info('  - delete ~/.metalmind/config.json');
   log.info(
-    'Will NOT touch: your notes, ~/.claude/agents, ~/.claude/rules, custom content in your CLAUDE.md files',
+    'Will NOT touch: your notes, ~/.claude/agents, ~/.claude/rules, custom content in your CLAUDE.md files, ~/.codex/memories, ~/.codex/rules/default.rules',
   );
 
   let removeSerena: boolean;
@@ -114,6 +131,20 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
   }
 
   try {
+    if (codexInstalled) {
+      const codex = await uninstallCodex({ removeMcp: true });
+      if (codex.agentsMd) log.success('Stripped metalmind block from ~/.codex/AGENTS.md');
+      if (codex.hooksJson) log.success('Removed SessionStart entry from ~/.codex/hooks.json');
+      if (codex.hookScript) log.success('Deleted ~/.codex/hooks/metalmind-session-start.sh');
+      if (codex.networkAccess) log.success('Stripped network_access block from ~/.codex/config.toml');
+      if (codex.prefixRules) log.success('Deleted ~/.codex/rules/metalmind.rules');
+      if (codex.skills.length > 0)
+        log.success(`Removed Codex skills: ${codex.skills.join(', ')}`);
+      if (codex.mcp === 'removed') log.success('codex mcp remove metalmind succeeded');
+      else if (codex.mcp === 'codex-not-found')
+        log.info('codex binary not on PATH — skipped MCP unregister (no-op since not registered)');
+    }
+
     const claudeDir = join(homedir(), '.claude');
     const result = await teardown({
       claudeDir,

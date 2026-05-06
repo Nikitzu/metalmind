@@ -1,8 +1,17 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { join } from 'node:path';
 import { intro, log, outro } from '@clack/prompts';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
+import {
+  DEFAULT_CODEX_DIR,
+  DEFAULT_CODEX_MCP_NAME,
+  DEFAULT_METALMIND_HTTP_URL,
+  METALMIND_CODEX_HOOK_FILENAME,
+  METALMIND_CODEX_SKILLS,
+  METALMIND_RULES_FILENAME,
+} from '../install/codex.js';
 import { detectPrereqs } from '../install/prereqs.js';
 import { OLLAMA_CONTAINER } from '../install/stack.js';
 import { runCommand } from '../util/exec.js';
@@ -226,6 +235,175 @@ export async function checkClaudeMdSentinel(config: Config): Promise<DeepCheck[]
   return results;
 }
 
+/**
+ * Codex per-host deep checks: AGENTS.md sentinel, hooks.json registration,
+ * sandbox network_access, prefix rules, skills, optional MCP server.
+ * Only invoked when config.hosts.includes('codex'); skipped otherwise.
+ */
+export async function checkCodexInstall(opts: {
+  codexDir?: string;
+  checkMcp?: boolean;
+} = {}): Promise<DeepCheck[]> {
+  const codexDir = opts.codexDir ?? DEFAULT_CODEX_DIR;
+  const out: DeepCheck[] = [];
+
+  // 1. AGENTS.md sentinel
+  const agentsPath = join(codexDir, 'AGENTS.md');
+  if (existsSync(agentsPath)) {
+    const content = await readFile(agentsPath, 'utf8');
+    const present = content.includes('<!-- metalmind:codex:agents:begin -->');
+    out.push({
+      name: 'codex-agents-md',
+      ok: present,
+      detail: present ? 'sentinel block present' : 'sentinel block missing',
+      remediation: present ? undefined : 'Run `metalmind stamp --host codex` to re-stamp.',
+    });
+  } else {
+    out.push({
+      name: 'codex-agents-md',
+      ok: false,
+      detail: 'AGENTS.md not stamped',
+      remediation: 'Run `metalmind stamp --host codex`.',
+    });
+  }
+
+  // 2. SessionStart hook (script + hooks.json entry)
+  const hookScriptPath = join(codexDir, 'hooks', METALMIND_CODEX_HOOK_FILENAME);
+  out.push({
+    name: 'codex-hook-script',
+    ok: existsSync(hookScriptPath),
+    detail: existsSync(hookScriptPath) ? hookScriptPath : 'missing',
+    remediation: existsSync(hookScriptPath)
+      ? undefined
+      : 'Run `metalmind stamp --host codex`.',
+  });
+
+  const hooksJsonPath = join(codexDir, 'hooks.json');
+  if (existsSync(hooksJsonPath)) {
+    try {
+      const data = JSON.parse(await readFile(hooksJsonPath, 'utf8')) as {
+        hooks?: { SessionStart?: Array<{ hooks?: Array<{ command?: string }> }> };
+      };
+      const groups = data?.hooks?.SessionStart ?? [];
+      const ours = groups.find((g) =>
+        g.hooks?.some((h) => typeof h?.command === 'string' && h.command.includes(METALMIND_CODEX_HOOK_FILENAME)),
+      );
+      out.push({
+        name: 'codex-hooks-json',
+        ok: ours !== undefined,
+        detail: ours !== undefined ? 'SessionStart entry registered' : 'SessionStart entry missing',
+        remediation: ours !== undefined ? undefined : 'Run `metalmind stamp --host codex`.',
+      });
+    } catch (err) {
+      out.push({
+        name: 'codex-hooks-json',
+        ok: false,
+        detail: `parse error: ${err instanceof Error ? err.message : String(err)}`,
+        remediation: 'Inspect ~/.codex/hooks.json for invalid JSON.',
+      });
+    }
+  } else {
+    out.push({
+      name: 'codex-hooks-json',
+      ok: false,
+      detail: 'hooks.json absent',
+      remediation: 'Run `metalmind stamp --host codex`.',
+    });
+  }
+
+  // 3. Sandbox network_access
+  const configTomlPath = join(codexDir, 'config.toml');
+  if (existsSync(configTomlPath)) {
+    const content = await readFile(configTomlPath, 'utf8');
+    const ok =
+      content.includes('# metalmind:codex:network:begin') &&
+      content.includes('network_access = true');
+    out.push({
+      name: 'codex-network-access',
+      ok,
+      detail: ok ? 'sentinel block present + network_access=true' : 'sentinel missing or value wrong',
+      remediation: ok ? undefined : 'Run `metalmind stamp --host codex`.',
+    });
+  } else {
+    out.push({
+      name: 'codex-network-access',
+      ok: false,
+      detail: 'config.toml absent',
+      remediation: 'Run `metalmind stamp --host codex`.',
+    });
+  }
+
+  // 4. Prefix rules
+  const rulesPath = join(codexDir, 'rules', METALMIND_RULES_FILENAME);
+  if (existsSync(rulesPath)) {
+    const content = await readFile(rulesPath, 'utf8');
+    const ok = content.includes('prefix_rule(["metalmind", "tap"]');
+    out.push({
+      name: 'codex-prefix-rules',
+      ok,
+      detail: ok ? rulesPath : 'malformed (no metalmind tap allow)',
+      remediation: ok ? undefined : 'Run `metalmind stamp --host codex`.',
+    });
+  } else {
+    out.push({
+      name: 'codex-prefix-rules',
+      ok: false,
+      detail: 'metalmind.rules absent',
+      remediation: 'Run `metalmind stamp --host codex`.',
+    });
+  }
+
+  // 5. Skills
+  const skillsRoot = join(codexDir, 'skills');
+  const present = METALMIND_CODEX_SKILLS.filter((s) => existsSync(join(skillsRoot, s, 'SKILL.md')));
+  out.push({
+    name: 'codex-skills',
+    ok: present.length === METALMIND_CODEX_SKILLS.length,
+    detail:
+      present.length === METALMIND_CODEX_SKILLS.length
+        ? present.join(', ')
+        : `missing: ${METALMIND_CODEX_SKILLS.filter((s) => !present.includes(s)).join(', ')}`,
+    remediation:
+      present.length === METALMIND_CODEX_SKILLS.length
+        ? undefined
+        : 'Run `metalmind stamp --host codex`.',
+  });
+
+  // 6. MCP (only when --check-mcp / --deep, since it spawns a subprocess)
+  if (opts.checkMcp) {
+    const res = await runCommand('codex', ['mcp', 'list', '--json']);
+    if (!res.ok) {
+      out.push({
+        name: 'codex-mcp',
+        ok: false,
+        detail: 'codex binary not on PATH (or `mcp list` failed)',
+        remediation: 'Install Codex CLI: https://github.com/openai/codex',
+      });
+    } else {
+      try {
+        const list = JSON.parse(res.stdout) as Array<{ name: string; url?: string }>;
+        const ours = list.find((e) => e.name === DEFAULT_CODEX_MCP_NAME);
+        const ok = ours !== undefined && ours.url === DEFAULT_METALMIND_HTTP_URL;
+        out.push({
+          name: 'codex-mcp',
+          ok,
+          detail: ours
+            ? `${DEFAULT_CODEX_MCP_NAME} → ${ours.url ?? '(no url)'}`
+            : 'metalmind MCP server not registered (opt-in via --with-mcp)',
+        });
+      } catch {
+        out.push({
+          name: 'codex-mcp',
+          ok: false,
+          detail: 'codex mcp list returned non-JSON',
+        });
+      }
+    }
+  }
+
+  return out;
+}
+
 async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   // Only fire the docker/qdrant/ollama probes when the user is actually
   // on the legacy stack. Default v0.5.0 installs run sqlite-vec +
@@ -234,14 +412,16 @@ async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   const legacyContainers = await detectLegacyStack();
   const onLegacy = legacyContainers.size > 0;
 
-  const [watcher, http, ...stamps] = await Promise.all([
-    checkWatcherService(),
-    checkRecallHttp(),
-    ...(await checkClaudeMdSentinel(config)).map((c) => Promise.resolve(c)),
-  ]);
+  const installClaude = config.hosts.includes('claude');
+  const installCodex = config.hosts.includes('codex');
+
+  const stamps = installClaude ? await checkClaudeMdSentinel(config) : [];
+  const codexChecks = installCodex ? await checkCodexInstall({ checkMcp: true }) : [];
+
+  const [watcher, http] = await Promise.all([checkWatcherService(), checkRecallHttp()]);
 
   if (!onLegacy) {
-    return [watcher!, http!, ...stamps];
+    return [watcher, http, ...stamps, ...codexChecks];
   }
 
   const docker = await checkDockerContainers();
@@ -249,7 +429,7 @@ async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
     checkQdrantCollection(),
     checkOllamaModel(),
   ]);
-  return [...docker, qdrant!, ollama!, watcher!, http!, ...stamps];
+  return [...docker, qdrant, ollama, watcher, http, ...stamps, ...codexChecks];
 }
 
 interface RecallLogEntry {
@@ -378,7 +558,8 @@ export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Pr
     log.success(`Config at ${CONFIG_PATH}`);
     log.info(`flavor:         ${config.flavor}`);
     log.info(`vaultPath:      ${config.vaultPath}`);
-    log.info(`outputStyle:    ${config.outputStyle.installed}`);
+    log.info(`hosts:          ${config.hosts.join(', ')}`);
+    log.info(`outputStyle:    ${config.outputStyle.installed ?? '(none — codex-only install)'}`);
     log.info(`embeddings:     ${config.embeddings.provider}`);
     log.info(`recall.default: ${config.recall.defaultTier}`);
     log.info(`mcp:            ${config.mcp.registered.join(', ') || '(none)'}`);
