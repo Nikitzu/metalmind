@@ -5,8 +5,10 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   applyCodexHooksJson,
+  applyCodexNetworkAccess,
   clearCodexAgentsMd,
   clearCodexHooksJson,
+  clearCodexNetworkAccess,
   copyCodexHook,
   removeCodexHookScript,
   stampCodexAgentsMd,
@@ -403,5 +405,81 @@ describe('removeCodexHookScript', () => {
     await copyCodexHook({ flavor: 'classic', templatesDir: TEMPLATES_DIR, codexDir });
     expect(await removeCodexHookScript({ codexDir })).toBe(true);
     expect(existsSync(join(codexDir, 'hooks', 'metalmind-session-start.sh'))).toBe(false);
+  });
+});
+
+describe('applyCodexNetworkAccess', () => {
+  let codexDir: string;
+
+  beforeEach(async () => {
+    codexDir = await mkdtemp(join(tmpdir(), 'mm-codex-net-'));
+  });
+
+  afterEach(async () => {
+    await rm(codexDir, { recursive: true, force: true });
+  });
+
+  it('creates config.toml with sentinel-bounded network block', async () => {
+    const result = await applyCodexNetworkAccess({ templatesDir: TEMPLATES_DIR, codexDir });
+    expect(result.blockAction).toBe('created');
+    const content = await readFile(result.configTomlPath, 'utf8');
+    expect(content).toContain('# metalmind:codex:network:begin');
+    expect(content).toContain('# metalmind:codex:network:end');
+    expect(content).toContain('[sandbox_workspace_write]');
+    expect(content).toContain('network_access = true');
+  });
+
+  it('preserves user TOML outside the sentinels', async () => {
+    const target = join(codexDir, 'config.toml');
+    await mkdir(codexDir, { recursive: true });
+    await writeFile(
+      target,
+      '[mcp_servers.user_thing]\nurl = "http://localhost:99"\n',
+      'utf8',
+    );
+    await applyCodexNetworkAccess({ templatesDir: TEMPLATES_DIR, codexDir });
+    const content = await readFile(target, 'utf8');
+    expect(content).toContain('[mcp_servers.user_thing]');
+    expect(content).toContain('url = "http://localhost:99"');
+    expect(content).toContain('# metalmind:codex:network:begin');
+  });
+
+  it('is idempotent on second identical call', async () => {
+    await applyCodexNetworkAccess({ templatesDir: TEMPLATES_DIR, codexDir });
+    const second = await applyCodexNetworkAccess({ templatesDir: TEMPLATES_DIR, codexDir });
+    expect(second.blockAction).toBe('unchanged');
+  });
+});
+
+describe('clearCodexNetworkAccess', () => {
+  let codexDir: string;
+
+  beforeEach(async () => {
+    codexDir = await mkdtemp(join(tmpdir(), 'mm-codex-net-clear-'));
+  });
+
+  afterEach(async () => {
+    await rm(codexDir, { recursive: true, force: true });
+  });
+
+  it('returns false when config.toml absent', async () => {
+    expect(await clearCodexNetworkAccess({ codexDir })).toBe(false);
+  });
+
+  it('strips block and preserves user TOML', async () => {
+    const target = join(codexDir, 'config.toml');
+    await mkdir(codexDir, { recursive: true });
+    await writeFile(target, '[mcp_servers.user]\nurl = "http://x"\n', 'utf8');
+    await applyCodexNetworkAccess({ templatesDir: TEMPLATES_DIR, codexDir });
+    expect(await clearCodexNetworkAccess({ codexDir })).toBe(true);
+    const content = await readFile(target, 'utf8');
+    expect(content).toContain('[mcp_servers.user]');
+    expect(content).not.toContain('metalmind:codex:network');
+  });
+
+  it('deletes config.toml when our block was the only content', async () => {
+    await applyCodexNetworkAccess({ templatesDir: TEMPLATES_DIR, codexDir });
+    expect(await clearCodexNetworkAccess({ codexDir })).toBe(true);
+    expect(existsSync(join(codexDir, 'config.toml'))).toBe(false);
   });
 });

@@ -1,0 +1,7 @@
+[sandbox_workspace_write]
+# metalmind sets network_access=true so the model can reach the local
+# vault watcher at 127.0.0.1:17317 (loopback HTTP recall). Without this,
+# every `metalmind tap copper` call fails inside Codex's default
+# workspace-write sandbox with a network-proxy denial.
+# See SPEC §0 for the source-trace.
+network_access = true
