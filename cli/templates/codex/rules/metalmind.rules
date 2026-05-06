@@ -1,0 +1,24 @@
+# metalmind execpolicy — pre-approves the metalmind CLI surface so the
+# model doesn't hit an escalation prompt on first recall in a fresh Codex
+# workspace. This file is metalmind-owned end-to-end; metalmind uninstall
+# deletes it. Add your own custom rules in a separate *.rules file in
+# this directory (Codex loads all *.rules files in ~/.codex/rules/).
+#
+# DO NOT confuse with default.rules — that is Codex's user-acceptance
+# log (Codex appends to it when you click "Allow + Remember" in the TUI).
+
+prefix_rule(["metalmind", "tap"], decision="allow")
+prefix_rule(["metalmind", "scribe"], decision="allow")
+prefix_rule(["metalmind", "atium"], decision="allow")
+prefix_rule(["metalmind", "gold"], decision="allow")
+prefix_rule(["metalmind", "doctor"], decision="allow")
+prefix_rule(["metalmind", "pulse"], decision="allow")
+prefix_rule(["metalmind", "store"], decision="allow")
+prefix_rule(["metalmind", "burn"], decision="allow")
+prefix_rule(["metalmind", "flare"], decision="allow")
+prefix_rule(["metalmind", "recall"], decision="allow")
+prefix_rule(["metalmind", "note"], decision="allow")
+prefix_rule(["metalmind", "daily"], decision="allow")
+prefix_rule(["metalmind", "notify"], decision="allow")
+prefix_rule(["metalmind", "forge"], decision="allow")
+prefix_rule(["metalmind", "synod"], decision="allow")

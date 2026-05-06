@@ -10,7 +10,9 @@ import {
   clearCodexHooksJson,
   clearCodexNetworkAccess,
   copyCodexHook,
+  copyCodexPrefixRules,
   removeCodexHookScript,
+  removeCodexPrefixRules,
   stampCodexAgentsMd,
 } from './codex.js';
 
@@ -481,5 +483,86 @@ describe('clearCodexNetworkAccess', () => {
     await applyCodexNetworkAccess({ templatesDir: TEMPLATES_DIR, codexDir });
     expect(await clearCodexNetworkAccess({ codexDir })).toBe(true);
     expect(existsSync(join(codexDir, 'config.toml'))).toBe(false);
+  });
+});
+
+describe('copyCodexPrefixRules', () => {
+  let codexDir: string;
+
+  beforeEach(async () => {
+    codexDir = await mkdtemp(join(tmpdir(), 'mm-codex-rules-'));
+  });
+
+  afterEach(async () => {
+    await rm(codexDir, { recursive: true, force: true });
+  });
+
+  it('writes ~/.codex/rules/metalmind.rules with prefix_rule entries', async () => {
+    const result = await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
+    expect(result.action).toBe('created');
+    expect(result.rulesPath).toBe(join(codexDir, 'rules', 'metalmind.rules'));
+    const content = await readFile(result.rulesPath, 'utf8');
+    expect(content).toContain('prefix_rule(["metalmind", "tap"], decision="allow")');
+    expect(content).toContain('prefix_rule(["metalmind", "scribe"], decision="allow")');
+    expect(content).toContain('prefix_rule(["metalmind", "recall"], decision="allow")');
+  });
+
+  it('NEVER touches default.rules', async () => {
+    const rulesDir = join(codexDir, 'rules');
+    await mkdir(rulesDir, { recursive: true });
+    const defaultRulesPath = join(rulesDir, 'default.rules');
+    const sentinel =
+      '# Codex user-acceptance log\nprefix_rule(["other"], decision="allow")\n';
+    await writeFile(defaultRulesPath, sentinel, 'utf8');
+    await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
+    expect(await readFile(defaultRulesPath, 'utf8')).toBe(sentinel);
+  });
+
+  it('is idempotent on second identical call', async () => {
+    await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
+    const second = await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
+    expect(second.action).toBe('unchanged');
+  });
+
+  it('reports updated when on-disk content drifted from template', async () => {
+    await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
+    const rulesPath = join(codexDir, 'rules', 'metalmind.rules');
+    await writeFile(rulesPath, '# tampered\n', 'utf8');
+    const result = await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
+    expect(result.action).toBe('updated');
+    const content = await readFile(rulesPath, 'utf8');
+    expect(content).toContain('prefix_rule(["metalmind", "tap"]');
+  });
+});
+
+describe('removeCodexPrefixRules', () => {
+  let codexDir: string;
+
+  beforeEach(async () => {
+    codexDir = await mkdtemp(join(tmpdir(), 'mm-codex-rules-rm-'));
+  });
+
+  afterEach(async () => {
+    await rm(codexDir, { recursive: true, force: true });
+  });
+
+  it('returns false when our file absent', async () => {
+    expect(await removeCodexPrefixRules({ codexDir })).toBe(false);
+  });
+
+  it('removes metalmind.rules', async () => {
+    await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
+    expect(await removeCodexPrefixRules({ codexDir })).toBe(true);
+    expect(existsSync(join(codexDir, 'rules', 'metalmind.rules'))).toBe(false);
+  });
+
+  it('NEVER removes default.rules', async () => {
+    const rulesDir = join(codexDir, 'rules');
+    await mkdir(rulesDir, { recursive: true });
+    const defaultRulesPath = join(rulesDir, 'default.rules');
+    await writeFile(defaultRulesPath, '# user log\n', 'utf8');
+    await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
+    await removeCodexPrefixRules({ codexDir });
+    expect(existsSync(defaultRulesPath)).toBe(true);
   });
 });
