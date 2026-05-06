@@ -369,28 +369,41 @@ export async function checkCodexInstall(opts: {
         : 'Run `metalmind stamp --host codex`.',
   });
 
-  // 6. MCP (only when --check-mcp / --deep, since it spawns a subprocess)
+  // 6. MCP (only when --check-mcp / --deep, since it spawns a subprocess).
+  // The MCP server is OPT-IN via --with-mcp; absence is not a failure.
+  // Mark not-registered as ok=true with informational detail so the doctor
+  // summary doesn't flag a non-issue.
   if (opts.checkMcp) {
     const res = await runCommand('codex', ['mcp', 'list', '--json']);
     if (!res.ok) {
       out.push({
         name: 'codex-mcp',
-        ok: false,
-        detail: 'codex binary not on PATH (or `mcp list` failed)',
-        remediation: 'Install Codex CLI: https://github.com/openai/codex',
+        ok: true,
+        detail: 'codex binary not on PATH — MCP check skipped (opt-in feature)',
       });
     } else {
       try {
         const list = JSON.parse(res.stdout) as Array<{ name: string; url?: string }>;
         const ours = list.find((e) => e.name === DEFAULT_CODEX_MCP_NAME);
-        const ok = ours !== undefined && ours.url === DEFAULT_METALMIND_HTTP_URL;
-        out.push({
-          name: 'codex-mcp',
-          ok,
-          detail: ours
-            ? `${DEFAULT_CODEX_MCP_NAME} → ${ours.url ?? '(no url)'}`
-            : 'metalmind MCP server not registered (opt-in via --with-mcp)',
-        });
+        if (ours === undefined) {
+          out.push({
+            name: 'codex-mcp',
+            ok: true,
+            detail: 'not registered — opt-in via `metalmind stamp --host codex --with-mcp`',
+          });
+        } else {
+          const urlMatches = ours.url === DEFAULT_METALMIND_HTTP_URL;
+          out.push({
+            name: 'codex-mcp',
+            ok: urlMatches,
+            detail: urlMatches
+              ? `${DEFAULT_CODEX_MCP_NAME} → ${ours.url}`
+              : `${DEFAULT_CODEX_MCP_NAME} registered with unexpected url: ${ours.url ?? '(none)'}`,
+            remediation: urlMatches
+              ? undefined
+              : 'Re-run `metalmind stamp --host codex --with-mcp` to refresh the URL.',
+          });
+        }
       } catch {
         out.push({
           name: 'codex-mcp',
