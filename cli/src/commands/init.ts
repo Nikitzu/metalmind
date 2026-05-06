@@ -1,4 +1,5 @@
 import { log } from '@clack/prompts';
+import type { MetalmindHost } from '../config.js';
 import { type RunWizardOptions, runWizard } from '../install/wizard.js';
 
 export interface InitCliOptions {
@@ -27,6 +28,10 @@ export interface InitCliOptions {
   noGit?: boolean;
   autoInstallUv?: boolean;
   noAutoInstallUv?: boolean;
+  /** "claude" | "codex" | "both" — bypass the host multi-select prompt. */
+  host?: string;
+  /** Opt-in MCP server registration in Codex. */
+  withMcp?: boolean;
 }
 
 function isFlavor(v: string): v is 'scadrial' | 'classic' {
@@ -35,6 +40,20 @@ function isFlavor(v: string): v is 'scadrial' | 'classic' {
 
 function isMemoryRouting(v: string): v is 'vault-only' | 'both' {
   return v === 'vault-only' || v === 'both';
+}
+
+function parseHostFlag(value: string | undefined): MetalmindHost[] | undefined {
+  if (value === undefined) return undefined;
+  switch (value) {
+    case 'claude':
+      return ['claude'];
+    case 'codex':
+      return ['codex'];
+    case 'both':
+      return ['claude', 'codex'];
+    default:
+      throw new Error(`--host must be "claude", "codex", or "both"; got "${value}"`);
+  }
 }
 
 function resolveBool(affirmative?: boolean, negative?: boolean): boolean | undefined {
@@ -77,6 +96,10 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     if (vaultGit !== undefined) wizardOpts.vaultGit = vaultGit;
     const autoInstallUv = resolveBool(cliOpts.autoInstallUv, cliOpts.noAutoInstallUv);
     if (autoInstallUv !== undefined) wizardOpts.autoInstallUv = autoInstallUv;
+
+    const hostsFlag = parseHostFlag(cliOpts.host);
+    if (hostsFlag !== undefined) wizardOpts.hosts = hostsFlag;
+    if (cliOpts.withMcp) wizardOpts.withMcp = true;
 
     // Default v0.5.0 path: skip the Docker stack. The embedded backend
     // (sqlite-vec + fastembed) doesn't need it. --legacy opts back into

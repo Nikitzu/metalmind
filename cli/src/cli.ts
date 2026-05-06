@@ -2,6 +2,22 @@ import { log } from '@clack/prompts';
 import { Command } from 'commander';
 import pkg from '../package.json' with { type: 'json' };
 import { atiumAddCmd, atiumNewCmd } from './commands/atium.js';
+import type { MetalmindHost } from './config.js';
+
+function parseHostFlag(value: string | undefined): MetalmindHost[] | undefined {
+  if (value === undefined) return undefined;
+  switch (value) {
+    case 'claude':
+      return ['claude'];
+    case 'codex':
+      return ['codex'];
+    case 'both':
+      return ['claude', 'codex'];
+    default:
+      throw new Error(`--host must be "claude", "codex", or "both"; got "${value}"`);
+  }
+}
+
 import { burn } from './commands/burn.js';
 import { doctor } from './commands/doctor.js';
 import { flareBanner, flareDialog, flareSticky } from './commands/flare.js';
@@ -75,6 +91,11 @@ program
     'Opt into the Qdrant + Ollama backend instead of the embedded sqlite-vec + fastembed default',
   )
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
+  .option('--host <host>', '"claude" | "codex" | "both" — bypass the host multi-select prompt')
+  .option(
+    '--with-mcp',
+    'Register metalmind as a streamable HTTP MCP server in Codex (opt-in; off by default)',
+  )
   .action((cmdOpts) => init(cmdOpts));
 program
   .command('doctor')
@@ -509,7 +530,25 @@ burnCmd
   .command('brass')
   .description('Burn Brass (Soother) — smooth out drift, re-imprint metalmind managed files')
   .option('--skip-watcher', 'Skip refreshing the watcher unit file')
-  .action((cmdOpts: { skipWatcher?: boolean }) => stamp({ skipWatcher: cmdOpts.skipWatcher }));
+  .option('--host <host>', '"claude" | "codex" | "both" — bypass the host multi-select prompt')
+  .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
+  .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
+  .action(
+    (cmdOpts: {
+      skipWatcher?: boolean;
+      host?: string;
+      noPrompt?: boolean;
+      withMcp?: boolean;
+    }) => {
+      const hosts = parseHostFlag(cmdOpts.host);
+      return stamp({
+        skipWatcher: cmdOpts.skipWatcher,
+        ...(hosts !== undefined ? { hosts } : {}),
+        noPrompt: cmdOpts.noPrompt,
+        withMcp: cmdOpts.withMcp,
+      });
+    },
+  );
 
 program
   .command('rename <old> <new>')
@@ -547,7 +586,25 @@ program
   .command('stamp')
   .description('Classic alias: smooth out drift, re-imprint metalmind managed files')
   .option('--skip-watcher', 'Skip refreshing the watcher unit file')
-  .action((cmdOpts: { skipWatcher?: boolean }) => stamp({ skipWatcher: cmdOpts.skipWatcher }));
+  .option('--host <host>', '"claude" | "codex" | "both" — bypass the host multi-select prompt')
+  .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
+  .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
+  .action(
+    (cmdOpts: {
+      skipWatcher?: boolean;
+      host?: string;
+      noPrompt?: boolean;
+      withMcp?: boolean;
+    }) => {
+      const hosts = parseHostFlag(cmdOpts.host);
+      return stamp({
+        skipWatcher: cmdOpts.skipWatcher,
+        ...(hosts !== undefined ? { hosts } : {}),
+        noPrompt: cmdOpts.noPrompt,
+        withMcp: cmdOpts.withMcp,
+      });
+    },
+  );
 
 program.parseAsync(process.argv).catch((err: unknown) => {
   const message = err instanceof Error ? err.message : String(err);

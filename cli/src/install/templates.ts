@@ -98,7 +98,36 @@ export interface CopyClaudeHooksResult {
 
 export const METALMIND_HOOK_FILENAME = 'metalmind-session-start.sh';
 
-type Renderer = (content: string) => string;
+// Renderer may be sync OR async — async needed for renderers that call
+// resolvePartials (which reads files) to compose cleanly into the copy flow.
+type SyncRenderer = (content: string) => string;
+type Renderer = SyncRenderer | ((content: string) => Promise<string>);
+
+const PARTIAL_INCLUDE_RE = /\{\{>\s*([^\s}]+)\s*\}\}/g;
+
+/**
+ * Resolve `{{> path/to/partial.md}}` includes by reading the partial relative
+ * to `templatesDir`. Recursive (a partial may include another). Throws if a
+ * referenced partial cannot be read.
+ *
+ * Used by template renderers (copyClaudeTemplates, copyCodexSkills) so a body
+ * shared across hosts (e.g. `.shared/save-body.md`) lives once on disk and
+ * can never drift between consumers.
+ */
+export async function resolvePartials(source: string, templatesDir: string): Promise<string> {
+  const matches = [...source.matchAll(PARTIAL_INCLUDE_RE)];
+  if (matches.length === 0) return source;
+  let out = source;
+  for (const match of matches) {
+    const [whole, partialPath] = match;
+    if (!partialPath) continue;
+    const fullPath = join(templatesDir, partialPath);
+    const partialRaw = await readFile(fullPath, 'utf8');
+    const resolved = await resolvePartials(partialRaw, templatesDir);
+    out = out.replace(whole, resolved);
+  }
+  return out;
+}
 
 async function copyDir(
   srcDir: string,
@@ -116,7 +145,8 @@ async function copyDir(
     const renderer = render?.(entry.name);
     if (renderer) {
       const raw = await readFile(srcPath, 'utf8');
-      await writeFile(destPath, renderer(raw), 'utf8');
+      const rendered = await renderer(raw);
+      await writeFile(destPath, rendered, 'utf8');
     } else {
       await copyFile(srcPath, destPath);
     }
@@ -143,7 +173,8 @@ async function copyTreeRecursive(
       // sentinel/placeholder markup, so it's safe to apply universally.
       if (render && entry.name.endsWith('.md')) {
         const raw = await readFile(srcPath, 'utf8');
-        await writeFile(destPath, render(raw), 'utf8');
+        const rendered = await render(raw);
+        await writeFile(destPath, rendered, 'utf8');
       } else {
         await copyFile(srcPath, destPath);
       }
@@ -181,10 +212,16 @@ export async function copyClaudeTemplates(
   const eodHook = opts.eodHook ?? true;
   const notifications = opts.notifications ?? true;
 
-  const renderRecall: Renderer = (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall);
-  const renderSave: Renderer = (raw) =>
-    renderSkillSentinels(renderRecall(raw), { eodHook, notifications });
-  const renderSkill: Renderer = (raw) => renderFlavorSentinels(renderRecall(raw), flavor);
+  const renderRecall: SyncRenderer = (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall);
+  // save.md uses {{> .shared/save-body.md}} to source its body from the
+  // partial shared with Codex's skills/save/SKILL.md — extract once,
+  // both hosts wrap it. Resolution must run BEFORE recall/sentinel
+  // rendering so placeholders inside the partial get processed.
+  const renderSave: Renderer = async (raw) => {
+    const resolved = await resolvePartials(raw, templatesDir);
+    return renderSkillSentinels(renderRecall(resolved), { eodHook, notifications });
+  };
+  const renderSkill: SyncRenderer = (raw) => renderFlavorSentinels(renderRecall(raw), flavor);
 
   const rules = await copyDir(
     join(srcRoot, 'rules'),

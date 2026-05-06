@@ -34,6 +34,7 @@ function baseConfig(vaultPath: string): Config {
     forge: { groups: {} },
     memoryRouting: 'vault-only',
     skills: { eodHook: true, notifications: true },
+    hosts: ['claude'],
   };
 }
 

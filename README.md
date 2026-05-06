@@ -176,7 +176,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.7.0`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.8.0`.
 
 **From source (for hacking on metalmind itself):**
 
@@ -187,11 +187,20 @@ pnpm install && pnpm build && pnpm link --global
 metalmind init
 ```
 
-The wizard walks five steps: prereq check (Python + uv + git + Claude Code), vault scaffold, Python engines via `uv tool install` (sqlite-vec + fastembed bundled), watcher service (launchd on macOS, systemd on Linux), MCP registration, optional memory routing. See the [install-flow diagram](https://metalmind.mzyx.dev/#demo) for what each step does. Pass `--legacy` to opt into the old Qdrant + Ollama Docker stack instead.
+`metalmind init` detects `~/.claude/` and `~/.codex/` and shows a multi-select prompt — stamps only the hosts you choose. Skip the prompt with `--host`:
+
+```bash
+metalmind init --host claude          # Claude Code only
+metalmind init --host codex           # Codex CLI only
+metalmind init --host both            # both (when both are detected)
+metalmind init --host codex --with-mcp   # Codex + opt-in MCP server
+```
+
+The wizard walks five steps: prereq check (Python + uv + git + Claude Code or Codex), vault scaffold, Python engines via `uv tool install` (sqlite-vec + fastembed bundled), watcher service (launchd on macOS, systemd on Linux), then per-host stamping. See the [install-flow diagram](https://metalmind.mzyx.dev/#demo) for what each step does. Pass `--legacy` to opt into the old Qdrant + Ollama Docker stack instead.
 
 ## Requirements
 
-**Today, metalmind only supports [Claude Code](https://claude.ai/code).** The session-start hook, stamped `CLAUDE.md`, and MCP fallback all target Claude Code specifically. Support for other agents (Cursor, Codex, Copilot, Gemini CLI) is on the roadmap but not shipped yet.
+**Supported hosts (v0.8.0): [Claude Code](https://claude.ai/code) and [Codex CLI](https://github.com/openai/codex) (terminal).** The Codex desktop app (`codex app`) is on the v1.1 roadmap but not yet shipped. Cursor, Copilot, and Gemini CLI remain on the longer-term roadmap; per `Learnings/multi-host-distribution-thesis-bash-required` (vault), Cursor and Codex both honor AGENTS.md so the AGENTS.md template extracted in v0.8.0 is reusable.
 
 - macOS or Linux (WSL2 works; native Windows not supported)
 - [Claude Code CLI](https://claude.ai/code) v2.1+
