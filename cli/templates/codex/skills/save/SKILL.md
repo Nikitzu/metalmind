@@ -1,0 +1,8 @@
+---
+name: save
+description: Use when the user says "save this", "note that", "add to the vault", or wants to persist a session insight to their Obsidian vault. Decides folder (Plans/Learnings/Work/Personal/Memory/Daily), proposes path + content, writes via `metalmind scribe create|update|patch`. NEVER write directly with the file-write tool — always go through metalmind scribe.
+metadata:
+  short-description: Save a session insight to the Obsidian vault via metalmind scribe.
+---
+
+{{> .shared/save-body.md}}

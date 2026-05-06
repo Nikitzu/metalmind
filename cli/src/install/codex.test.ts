@@ -582,15 +582,109 @@ describe('copyCodexSkills', () => {
     await rm(codexDir, { recursive: true, force: true });
   });
 
-  it('copies writing-vault-notes and synod skill bundles', async () => {
+  it('copies writing-vault-notes, synod, and save skill bundles', async () => {
     const result = await copyCodexSkills({
       flavor: 'classic',
       templatesDir: TEMPLATES_DIR,
       codexDir,
     });
-    expect(result.copied).toEqual(['writing-vault-notes', 'synod']);
+    expect(result.copied).toEqual(['writing-vault-notes', 'synod', 'save']);
     expect(existsSync(join(codexDir, 'skills', 'writing-vault-notes', 'SKILL.md'))).toBe(true);
     expect(existsSync(join(codexDir, 'skills', 'synod', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(codexDir, 'skills', 'save', 'SKILL.md'))).toBe(true);
+  });
+
+  it('strips synod flavor sentinels per chosen flavor (no flavor leak on disk)', async () => {
+    await copyCodexSkills({ flavor: 'classic', templatesDir: TEMPLATES_DIR, codexDir });
+    const persona = await readFile(
+      join(codexDir, 'skills', 'synod', 'personas', 'scientist.md'),
+      'utf8',
+    );
+    // Classic flavor → "The Scientist" kept, "Sazed" stripped.
+    expect(persona).toContain('The Scientist');
+    expect(persona).not.toContain('Sazed');
+    // Sentinel comments themselves are stripped by renderFlavorSentinels.
+    expect(persona).not.toContain('metalmind:flavor-');
+  });
+
+  it('strips synod flavor sentinels for scadrial flavor', async () => {
+    await copyCodexSkills({ flavor: 'scadrial', templatesDir: TEMPLATES_DIR, codexDir });
+    const persona = await readFile(
+      join(codexDir, 'skills', 'synod', 'personas', 'scientist.md'),
+      'utf8',
+    );
+    expect(persona).toContain('Sazed');
+    expect(persona).not.toContain('The Scientist');
+    expect(persona).not.toContain('metalmind:flavor-');
+  });
+
+  it('save SKILL.md resolves the shared partial with full body', async () => {
+    await copyCodexSkills({
+      flavor: 'classic',
+      templatesDir: TEMPLATES_DIR,
+      codexDir,
+      eodHook: true,
+      notifications: true,
+    });
+    const save = await readFile(join(codexDir, 'skills', 'save', 'SKILL.md'), 'utf8');
+    // Partial-include directive must be gone (resolved at render time).
+    expect(save).not.toContain('{{> .shared/save-body.md}}');
+    // Body markers from the partial are present.
+    expect(save).toContain('## What to save');
+    expect(save).toContain('## Where to save');
+    expect(save).toContain('## How to save');
+    // RECALL_CMD substituted (not the literal placeholder).
+    expect(save).toContain('metalmind recall');
+    expect(save).not.toContain('{{RECALL_CMD}}');
+    // Codex's frontmatter intact (proves the wrapper survived).
+    expect(save).toMatch(/^---\nname: save\n/);
+  });
+
+  it('save SKILL.md strips eod sentinel when eodHook=false', async () => {
+    await copyCodexSkills({
+      flavor: 'classic',
+      templatesDir: TEMPLATES_DIR,
+      codexDir,
+      eodHook: false,
+      notifications: true,
+    });
+    const save = await readFile(join(codexDir, 'skills', 'save', 'SKILL.md'), 'utf8');
+    expect(save).not.toContain('## End-of-day hook');
+    expect(save).not.toContain('metalmind:eod:');
+  });
+
+  it('save SKILL.md body equals CC save.md body (shared partial parity)', async () => {
+    // Render both consumers and compare the body section (everything after
+    // their respective frontmatter blocks). This proves the {{> .shared/...}}
+    // partial is the single source of truth — no drift possible.
+    await copyCodexSkills({
+      flavor: 'classic',
+      templatesDir: TEMPLATES_DIR,
+      codexDir,
+      eodHook: true,
+      notifications: true,
+    });
+    const codexSave = await readFile(join(codexDir, 'skills', 'save', 'SKILL.md'), 'utf8');
+
+    const claudeDir = await mkdtemp(join(tmpdir(), 'mm-cc-save-eq-'));
+    const { copyClaudeTemplates } = await import('./templates.js');
+    await copyClaudeTemplates({
+      templatesDir: TEMPLATES_DIR,
+      claudeDir,
+      flavor: 'classic',
+      eodHook: true,
+      notifications: true,
+    });
+    const claudeSave = await readFile(join(claudeDir, 'commands', 'save.md'), 'utf8');
+
+    const stripFrontmatter = (s: string) => s.replace(/^---[\s\S]*?---\n/, '');
+    // CC save.md has a "## Arguments" tail past the partial; strip it for
+    // the comparison so we're comparing only the shared body section.
+    const claudeBody = stripFrontmatter(claudeSave).replace(/\n## Arguments[\s\S]*$/, '\n');
+    const codexBody = stripFrontmatter(codexSave);
+    expect(codexBody).toBe(claudeBody);
+
+    await rm(claudeDir, { recursive: true, force: true });
   });
 
   it('does NOT copy using-teams (CC-specific)', async () => {
@@ -646,9 +740,10 @@ describe('removeCodexSkills', () => {
     );
     await copyCodexSkills({ flavor: 'classic', templatesDir: TEMPLATES_DIR, codexDir });
     const removed = await removeCodexSkills({ codexDir });
-    expect(removed.sort()).toEqual(['synod', 'writing-vault-notes']);
+    expect(removed.sort()).toEqual(['save', 'synod', 'writing-vault-notes']);
     expect(existsSync(join(codexDir, 'skills', 'writing-vault-notes'))).toBe(false);
     expect(existsSync(join(codexDir, 'skills', 'synod'))).toBe(false);
+    expect(existsSync(join(codexDir, 'skills', 'save'))).toBe(false);
     expect(existsSync(userSkillDir)).toBe(true);
   });
 });

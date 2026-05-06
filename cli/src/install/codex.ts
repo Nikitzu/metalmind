@@ -20,6 +20,7 @@ import {
   type SentinelUpsertAction,
   upsertSentinelBlock,
 } from '../util/sentinel.js';
+import { renderFlavorSentinels, renderSkillSentinels, resolvePartials } from './templates.js';
 
 export const DEFAULT_CODEX_DIR = join(homedir(), '.codex');
 
@@ -386,15 +387,15 @@ export async function removeCodexPrefixRules(
 // The `save` skill is added in Phase 2 (Task 2.1) once the shared save-body
 // partial is extracted.
 
-export const METALMIND_CODEX_SKILLS = ['writing-vault-notes', 'synod'] as const;
+export const METALMIND_CODEX_SKILLS = ['writing-vault-notes', 'synod', 'save'] as const;
 export type MetalmindCodexSkill = (typeof METALMIND_CODEX_SKILLS)[number];
 
-type Renderer = (raw: string) => string;
+type AsyncRenderer = (raw: string) => Promise<string>;
 
 async function copyTreeRecursive(
   srcDir: string,
   destDir: string,
-  render?: Renderer,
+  render?: AsyncRenderer,
 ): Promise<void> {
   await mkdir(destDir, { recursive: true });
   const entries = await readdir(srcDir, { withFileTypes: true });
@@ -405,12 +406,13 @@ async function copyTreeRecursive(
       await copyTreeRecursive(srcPath, destPath, render);
     } else if (entry.isFile()) {
       // Render only markdown — binary skill assets (icons, fonts) must be
-      // copied byte-for-byte. Renderer is a no-op on files without
-      // placeholder markup, so safe-ish to apply universally; gate on
-      // .md extension to be defensive.
+      // copied byte-for-byte. Renderer composes resolvePartials (for
+      // {{> .shared/...}} includes) + flavor-strip + sentinel-strip +
+      // RECALL_CMD substitution.
       if (render && entry.name.endsWith('.md')) {
         const raw = await readFile(srcPath, 'utf8');
-        await writeFile(destPath, render(raw), 'utf8');
+        const rendered = await render(raw);
+        await writeFile(destPath, rendered, 'utf8');
       } else {
         await copyFile(srcPath, destPath);
       }
@@ -422,6 +424,10 @@ export interface CopyCodexSkillsOptions {
   templatesDir?: string;
   codexDir?: string;
   flavor: 'scadrial' | 'classic';
+  /** Strip the EOD-hook sentinel block when false. Defaults true (mirrors CC skills config). */
+  eodHook?: boolean;
+  /** Strip the macOS notifications sentinel block when false. Defaults true. */
+  notifications?: boolean;
 }
 
 export interface CopyCodexSkillsResult {
@@ -435,10 +441,21 @@ export async function copyCodexSkills(
   const codexDir = opts.codexDir ?? DEFAULT_CODEX_DIR;
   const skillsRoot = join(codexDir, 'skills');
   const srcRoot = join(templatesDir, 'codex', 'skills');
+  const eodHook = opts.eodHook ?? true;
+  const notifications = opts.notifications ?? true;
   await mkdir(skillsRoot, { recursive: true });
 
   const recall = recallCommand(opts.flavor);
-  const render: Renderer = (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall);
+  // Render chain (resolvePartials -> flavor sentinels -> skill sentinels ->
+  // RECALL_CMD) mirrors the CC renderSave pipeline so save/SKILL.md (which
+  // wraps the same .shared/save-body.md partial) ends up byte-identical to
+  // CC's commands/save.md body.
+  const render: AsyncRenderer = async (raw) => {
+    const resolved = await resolvePartials(raw, templatesDir);
+    const withFlavor = renderFlavorSentinels(resolved, opts.flavor);
+    const withSkill = renderSkillSentinels(withFlavor, { eodHook, notifications });
+    return withSkill.replace(/\{\{RECALL_CMD\}\}/g, recall);
+  };
 
   const copied: MetalmindCodexSkill[] = [];
   for (const skill of METALMIND_CODEX_SKILLS) {
