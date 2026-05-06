@@ -10,6 +10,9 @@ const FlavorSchema = z.enum(['scadrial', 'classic']);
 const RecallTierSchema = z.enum(['fast', 'deep', 'expand']);
 const EmbeddingsProviderSchema = z.enum(['local', 'ollama', 'custom', 'skip']);
 const MemoryRoutingSchema = z.enum(['vault-only', 'both']);
+const HostSchema = z.enum(['claude', 'codex']);
+
+export type MetalmindHost = z.infer<typeof HostSchema>;
 
 const ForgeGroupSchema = z.object({
   repos: z.array(z.string()),
@@ -51,6 +54,11 @@ export const ConfigSchema = z.object({
       notifications: z.boolean().default(true),
     })
     .default({ eodHook: true, notifications: true }),
+  // Backwards-compat: configs predating v0.8.0 (Codex host integration)
+  // had no notion of `hosts` because Claude Code was the only target.
+  // .default(['claude']) means an existing config gets ['claude'] on read,
+  // preserving v0.7.x behavior; only re-stamping after init/stamp can add 'codex'.
+  hosts: z.array(HostSchema).nonempty().default(['claude']),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
