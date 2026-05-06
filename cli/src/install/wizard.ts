@@ -1,8 +1,10 @@
 import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/prompts';
-import { type Config, writeConfig } from '../config.js';
+import { type Config, type MetalmindHost, writeConfig } from '../config.js';
 import { installAliases } from './aliases.js';
+import { installCodex } from './codex.js';
 import { setupVaultGit } from './git.js';
 import { installGraphify } from './graphify.js';
+import { promptHosts } from './host-prompt.js';
 import { registerMcpServers } from './mcp.js';
 import { type FlavorChoice, installOutputStyle } from './output-style.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
@@ -33,6 +35,10 @@ export interface RunWizardOptions {
   notifications?: boolean;
   vaultGit?: boolean;
   autoInstallUv?: boolean;
+  /** When set, skip the host multi-select and use this exact host set. */
+  hosts?: MetalmindHost[];
+  /** Opt-in MCP registration for Codex. Off by default. */
+  withMcp?: boolean;
 }
 
 function checkCancelled<T>(value: T | symbol, label: string): asserts value is T {
@@ -302,60 +308,121 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     }
   }
 
-  log.step('Registering MCP servers (serena)');
-  const mcp = await registerMcpServers({ serena });
-  if (mcp.added.length > 0) log.success(`  added: ${mcp.added.join(', ')}`);
-  if (mcp.skipped.length > 0) log.info(`  already present: ${mcp.skipped.join(', ')}`);
-
-  log.step('Configuring agent teams');
-  const teams = await applyAgentTeams({ enable: enableTeams });
-  if (teams.changed) {
-    if (enableTeams) {
-      if (teams.envSet) log.success(`  set env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 in ${teams.settingsPath}`);
-      if (teams.teammateModeSet) log.success(`  set teammateMode="tmux" in ${teams.settingsPath}`);
-    } else {
-      log.info(`  cleared agent-teams keys from ${teams.settingsPath}`);
-    }
-  } else {
-    log.info(enableTeams ? '  agent teams already enabled' : '  agent teams already disabled');
+  // Host selection — always prompted so newly-installed hosts (e.g. user
+  // installed Codex after a CC-only stamp) surface for opt-in. Forced via
+  // opts.hosts (--host claude|codex|both); pre-checks v0.7.x default of
+  // ['claude'] when no prior choice is recorded.
+  log.step('Choosing hosts');
+  const hostsResult = await promptHosts({
+    forced: opts.hosts,
+    preChecked: ['claude'],
+  });
+  if (hostsResult.cancelled) {
+    cancel('Cancelled.');
+    throw new Error('host-prompt cancelled');
   }
-
-  log.step('Applying memory routing');
-  const mem = await applyMemoryRouting({ disableNative: memoryRouting === 'vault-only' });
-  if (mem.changed) {
-    log.success(
-      memoryRouting === 'vault-only'
-        ? `  disabled native auto-memory in ${mem.settingsPath}`
-        : `  native auto-memory re-enabled in ${mem.settingsPath}`,
+  const chosenHosts = hostsResult.hosts;
+  if (chosenHosts.length === 0) {
+    log.warn(
+      '  no hosts selected; metalmind will be installed locally but neither Claude Code nor Codex will be wired.',
     );
   } else {
-    log.info(`  ${mem.settingsPath} already in desired state`);
+    log.success(`  chosen: ${chosenHosts.join(', ')}`);
+  }
+  const installClaude = chosenHosts.includes('claude');
+  const installCodexHost = chosenHosts.includes('codex');
+
+  let stylePriorValue: string | null = null;
+  let stampedOutputStyle: FlavorChoice | null = null;
+
+  if (installClaude) {
+    log.step('Registering MCP servers (serena)');
+    const mcp = await registerMcpServers({ serena });
+    if (mcp.added.length > 0) log.success(`  added: ${mcp.added.join(', ')}`);
+    if (mcp.skipped.length > 0) log.info(`  already present: ${mcp.skipped.join(', ')}`);
+
+    log.step('Configuring agent teams');
+    const teams = await applyAgentTeams({ enable: enableTeams });
+    if (teams.changed) {
+      if (enableTeams) {
+        if (teams.envSet) log.success(`  set env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 in ${teams.settingsPath}`);
+        if (teams.teammateModeSet) log.success(`  set teammateMode="tmux" in ${teams.settingsPath}`);
+      } else {
+        log.info(`  cleared agent-teams keys from ${teams.settingsPath}`);
+      }
+    } else {
+      log.info(enableTeams ? '  agent teams already enabled' : '  agent teams already disabled');
+    }
+
+    log.step('Applying memory routing');
+    const mem = await applyMemoryRouting({ disableNative: memoryRouting === 'vault-only' });
+    if (mem.changed) {
+      log.success(
+        memoryRouting === 'vault-only'
+          ? `  disabled native auto-memory in ${mem.settingsPath}`
+          : `  native auto-memory re-enabled in ${mem.settingsPath}`,
+      );
+    } else {
+      log.info(`  ${mem.settingsPath} already in desired state`);
+    }
+
+    log.step('Installing SessionStart hook (so every session knows memory is here)');
+    const hookScript = await copyClaudeHooks({ flavor });
+    const hookReg = await applyMetalmindSessionStartHook({ hookCommand: hookScript.hookCommand });
+    log.success(`  ${hookScript.action} ${hookScript.hookScriptPath}`);
+    log.info(
+      hookReg.changed ? '  registered in settings.json → SessionStart' : '  already registered',
+    );
+
+    log.step('Copying rules, agents, commands');
+    const tpl = await copyClaudeTemplates({
+      withTeams: enableTeams,
+      flavor,
+      eodHook,
+      notifications,
+    });
+    log.success(`  wrote ${tpl.copied.length} files`);
+    const claudeMd = await stampClaudeMd({ vaultPath: vault.vaultPath, flavor });
+    if (claudeMd.starterWritten) log.info(`  wrote starter ${claudeMd.path}`);
+    if (claudeMd.blockAction === 'created') log.info(`  wrote metalmind block → ${claudeMd.path}`);
+    else if (claudeMd.blockAction === 'inserted')
+      log.info(`  inserted metalmind block → ${claudeMd.path}`);
+    else if (claudeMd.blockAction === 'updated')
+      log.info(`  refreshed metalmind block → ${claudeMd.path}`);
+    else log.info(`  metalmind block up to date in ${claudeMd.path}`);
+
+    log.step(`Installing ${styleChoice} output-style`);
+    const style = await installOutputStyle({ choice: styleChoice });
+    if (style.migrated) log.success(`  migrated legacy style → ${style.stylePath}`);
+    else if (style.installed) log.success(`  copied bundled style → ${style.stylePath}`);
+    else log.info(`  ${style.stylePath} already present — kept`);
+    if (style.priorValue) log.info(`  prior settings.json outputStyle: ${style.priorValue}`);
+    stylePriorValue = style.priorValue;
+    stampedOutputStyle = styleChoice;
   }
 
-  log.step('Installing SessionStart hook (so every session knows memory is here)');
-  const hookScript = await copyClaudeHooks({ flavor });
-  const hookReg = await applyMetalmindSessionStartHook({ hookCommand: hookScript.hookCommand });
-  log.success(`  ${hookScript.action} ${hookScript.hookScriptPath}`);
-  log.info(
-    hookReg.changed ? '  registered in settings.json → SessionStart' : '  already registered',
-  );
-
-  log.step('Copying rules, agents, commands');
-  const tpl = await copyClaudeTemplates({
-    withTeams: enableTeams,
-    flavor,
-    eodHook,
-    notifications,
-  });
-  log.success(`  wrote ${tpl.copied.length} files`);
-  const claudeMd = await stampClaudeMd({ vaultPath: vault.vaultPath, flavor });
-  if (claudeMd.starterWritten) log.info(`  wrote starter ${claudeMd.path}`);
-  if (claudeMd.blockAction === 'created') log.info(`  wrote metalmind block → ${claudeMd.path}`);
-  else if (claudeMd.blockAction === 'inserted')
-    log.info(`  inserted metalmind block → ${claudeMd.path}`);
-  else if (claudeMd.blockAction === 'updated')
-    log.info(`  refreshed metalmind block → ${claudeMd.path}`);
-  else log.info(`  metalmind block up to date in ${claudeMd.path}`);
+  if (installCodexHost) {
+    log.step('Installing Codex CLI integration');
+    const codexResult = await installCodex({
+      vaultPath: vault.vaultPath,
+      flavor,
+      eodHook,
+      notifications,
+      withMcp: opts.withMcp ?? false,
+    });
+    log.info(`  AGENTS.md: ${codexResult.agentsMd}`);
+    log.info(`  hook script: ${codexResult.hookScript}; hooks.json: ${codexResult.hooksJson}`);
+    log.info(`  network_access: ${codexResult.networkAccess}`);
+    log.info(`  prefix rules: ${codexResult.prefixRules}`);
+    log.info(`  skills: ${codexResult.skills.join(', ')}`);
+    if (codexResult.mcp === 'codex-not-found') {
+      log.warn(
+        '  --with-mcp requested but `codex` binary not on PATH; skipped MCP registration. Install Codex CLI and rerun `metalmind stamp --host codex --with-mcp`.',
+      );
+    } else {
+      log.info(`  MCP server: ${codexResult.mcp}`);
+    }
+  }
 
   log.step('Updating global gitignore');
   const gi = await appendGlobalGitignore();
@@ -366,19 +433,12 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   if (aliases.appendedSource) log.success(`  ${aliases.aliasesPath} + source line in .zshrc`);
   else if (aliases.zshrcMissing) log.warn('  no ~/.zshrc — add source line manually');
 
-  log.step(`Installing ${styleChoice} output-style`);
-  const style = await installOutputStyle({ choice: styleChoice });
-  if (style.migrated) log.success(`  migrated legacy style → ${style.stylePath}`);
-  else if (style.installed) log.success(`  copied bundled style → ${style.stylePath}`);
-  else log.info(`  ${style.stylePath} already present — kept`);
-  if (style.priorValue) log.info(`  prior settings.json outputStyle: ${style.priorValue}`);
-
   const config: Config = {
     version: 1,
     flavor,
     vaultPath: vault.vaultPath,
     graphifyCmd: 'graphify',
-    outputStyle: { installed: styleChoice, priorValue: style.priorValue },
+    outputStyle: { installed: stampedOutputStyle, priorValue: stylePriorValue },
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast', httpEndpoint: null },
     verbose: false,
@@ -389,9 +449,10 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     hooks: { claudeCode: graphifyHookWired },
     forge: { groups: {} },
     skills: { eodHook, notifications },
-    // hosts is finalized in the host-prompt branch added by Task 3.1; until
-    // then, default to ['claude'] since v0.7.x always installed CC.
-    hosts: ['claude'],
+    hosts:
+      chosenHosts.length > 0
+        ? (chosenHosts as [MetalmindHost, ...MetalmindHost[]])
+        : ['claude'],
   };
   await writeConfig(config);
   log.success('Wrote ~/.metalmind/config.json');
