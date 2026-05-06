@@ -1,5 +1,15 @@
 import { existsSync } from 'node:fs';
-import { chmod, mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
+import {
+  chmod,
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  unlink,
+  writeFile,
+} from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { getTemplatesDir } from '../util/paths.js';
@@ -359,4 +369,100 @@ export async function removeCodexPrefixRules(
   if (!existsSync(rulesPath)) return false;
   await unlink(rulesPath);
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Codex skills (~/.codex/skills/<name>/SKILL.md)
+// ---------------------------------------------------------------------------
+//
+// Codex's skills format is identical to Claude Code's (frontmatter `name:`
+// and `description:`, optional `metadata.short-description:`, markdown body).
+// We ship writing-vault-notes and synod (host-agnostic prompt content).
+//
+// using-teams is deliberately excluded — depends on CC's TeamCreate tool
+// which Codex doesn't have.
+//
+// The `save` skill is added in Phase 2 (Task 2.1) once the shared save-body
+// partial is extracted.
+
+export const METALMIND_CODEX_SKILLS = ['writing-vault-notes', 'synod'] as const;
+export type MetalmindCodexSkill = (typeof METALMIND_CODEX_SKILLS)[number];
+
+type Renderer = (raw: string) => string;
+
+async function copyTreeRecursive(
+  srcDir: string,
+  destDir: string,
+  render?: Renderer,
+): Promise<void> {
+  await mkdir(destDir, { recursive: true });
+  const entries = await readdir(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = join(srcDir, entry.name);
+    const destPath = join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      await copyTreeRecursive(srcPath, destPath, render);
+    } else if (entry.isFile()) {
+      // Render only markdown — binary skill assets (icons, fonts) must be
+      // copied byte-for-byte. Renderer is a no-op on files without
+      // placeholder markup, so safe-ish to apply universally; gate on
+      // .md extension to be defensive.
+      if (render && entry.name.endsWith('.md')) {
+        const raw = await readFile(srcPath, 'utf8');
+        await writeFile(destPath, render(raw), 'utf8');
+      } else {
+        await copyFile(srcPath, destPath);
+      }
+    }
+  }
+}
+
+export interface CopyCodexSkillsOptions {
+  templatesDir?: string;
+  codexDir?: string;
+  flavor: 'scadrial' | 'classic';
+}
+
+export interface CopyCodexSkillsResult {
+  copied: MetalmindCodexSkill[];
+}
+
+export async function copyCodexSkills(
+  opts: CopyCodexSkillsOptions,
+): Promise<CopyCodexSkillsResult> {
+  const templatesDir = opts.templatesDir ?? getTemplatesDir();
+  const codexDir = opts.codexDir ?? DEFAULT_CODEX_DIR;
+  const skillsRoot = join(codexDir, 'skills');
+  const srcRoot = join(templatesDir, 'codex', 'skills');
+  await mkdir(skillsRoot, { recursive: true });
+
+  const recall = recallCommand(opts.flavor);
+  const render: Renderer = (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall);
+
+  const copied: MetalmindCodexSkill[] = [];
+  for (const skill of METALMIND_CODEX_SKILLS) {
+    const skillSrc = join(srcRoot, skill);
+    if (!existsSync(skillSrc)) continue;
+    await copyTreeRecursive(skillSrc, join(skillsRoot, skill), render);
+    copied.push(skill);
+  }
+  return { copied };
+}
+
+/** Remove metalmind-shipped skills from ~/.codex/skills/. Preserves user skills. */
+export async function removeCodexSkills(
+  opts: { codexDir?: string } = {},
+): Promise<MetalmindCodexSkill[]> {
+  const codexDir = opts.codexDir ?? DEFAULT_CODEX_DIR;
+  const skillsRoot = join(codexDir, 'skills');
+  if (!existsSync(skillsRoot)) return [];
+  const removed: MetalmindCodexSkill[] = [];
+  for (const skill of METALMIND_CODEX_SKILLS) {
+    const path = join(skillsRoot, skill);
+    if (existsSync(path)) {
+      await rm(path, { recursive: true, force: true });
+      removed.push(skill);
+    }
+  }
+  return removed;
 }

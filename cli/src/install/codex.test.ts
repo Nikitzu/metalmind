@@ -11,8 +11,10 @@ import {
   clearCodexNetworkAccess,
   copyCodexHook,
   copyCodexPrefixRules,
+  copyCodexSkills,
   removeCodexHookScript,
   removeCodexPrefixRules,
+  removeCodexSkills,
   stampCodexAgentsMd,
 } from './codex.js';
 
@@ -564,5 +566,87 @@ describe('removeCodexPrefixRules', () => {
     await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
     await removeCodexPrefixRules({ codexDir });
     expect(existsSync(defaultRulesPath)).toBe(true);
+  });
+});
+
+describe('copyCodexSkills', () => {
+  let codexDir: string;
+
+  beforeEach(async () => {
+    codexDir = await mkdtemp(join(tmpdir(), 'mm-codex-skills-'));
+  });
+
+  afterEach(async () => {
+    await rm(codexDir, { recursive: true, force: true });
+  });
+
+  it('copies writing-vault-notes and synod skill bundles', async () => {
+    const result = await copyCodexSkills({
+      flavor: 'classic',
+      templatesDir: TEMPLATES_DIR,
+      codexDir,
+    });
+    expect(result.copied).toEqual(['writing-vault-notes', 'synod']);
+    expect(existsSync(join(codexDir, 'skills', 'writing-vault-notes', 'SKILL.md'))).toBe(true);
+    expect(existsSync(join(codexDir, 'skills', 'synod', 'SKILL.md'))).toBe(true);
+  });
+
+  it('does NOT copy using-teams (CC-specific)', async () => {
+    await copyCodexSkills({ flavor: 'classic', templatesDir: TEMPLATES_DIR, codexDir });
+    expect(existsSync(join(codexDir, 'skills', 'using-teams'))).toBe(false);
+  });
+
+  it('renders {{RECALL_CMD}} per flavor in skill SKILL.md', async () => {
+    await copyCodexSkills({ flavor: 'scadrial', templatesDir: TEMPLATES_DIR, codexDir });
+    const content = await readFile(
+      join(codexDir, 'skills', 'writing-vault-notes', 'SKILL.md'),
+      'utf8',
+    );
+    expect(content).toContain('metalmind tap copper');
+  });
+
+  it('preserves user-added skills in ~/.codex/skills/', async () => {
+    const userSkillDir = join(codexDir, 'skills', 'my-custom');
+    await mkdir(userSkillDir, { recursive: true });
+    await writeFile(
+      join(userSkillDir, 'SKILL.md'),
+      '---\nname: my-custom\n---\n# my skill\n',
+      'utf8',
+    );
+    await copyCodexSkills({ flavor: 'classic', templatesDir: TEMPLATES_DIR, codexDir });
+    const content = await readFile(join(userSkillDir, 'SKILL.md'), 'utf8');
+    expect(content).toContain('my-custom');
+  });
+});
+
+describe('removeCodexSkills', () => {
+  let codexDir: string;
+
+  beforeEach(async () => {
+    codexDir = await mkdtemp(join(tmpdir(), 'mm-codex-skills-rm-'));
+  });
+
+  afterEach(async () => {
+    await rm(codexDir, { recursive: true, force: true });
+  });
+
+  it('returns [] when skills dir absent', async () => {
+    expect(await removeCodexSkills({ codexDir })).toEqual([]);
+  });
+
+  it('removes our skills; preserves user skills', async () => {
+    const userSkillDir = join(codexDir, 'skills', 'my-custom');
+    await mkdir(userSkillDir, { recursive: true });
+    await writeFile(
+      join(userSkillDir, 'SKILL.md'),
+      '---\nname: my-custom\n---\n',
+      'utf8',
+    );
+    await copyCodexSkills({ flavor: 'classic', templatesDir: TEMPLATES_DIR, codexDir });
+    const removed = await removeCodexSkills({ codexDir });
+    expect(removed.sort()).toEqual(['synod', 'writing-vault-notes']);
+    expect(existsSync(join(codexDir, 'skills', 'writing-vault-notes'))).toBe(false);
+    expect(existsSync(join(codexDir, 'skills', 'synod'))).toBe(false);
+    expect(existsSync(userSkillDir)).toBe(true);
   });
 });
