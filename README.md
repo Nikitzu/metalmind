@@ -52,7 +52,7 @@ metalmind pays off when your knowledge lives across **more than one repo**. A si
 
 - **Save once.** `metalmind store copper "<insight>"` (alias: `save`) deposits a decision into your local Obsidian vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes.
 
-- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session — most memory tools silently inject a handful of tool schemas — often heavily over-specified — into every Claude Code session before you've typed a prompt (measured: [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/)). We stamp the command into your `CLAUDE.md` so Claude reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback.
+- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session — most memory tools silently inject a handful of tool schemas — often heavily over-specified — into every host session before you've typed a prompt (measured: [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/)). We stamp the command into your `CLAUDE.md` (and `~/.codex/AGENTS.md` when Codex is installed) so the model reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback for hosts that need it.
   <br><sub>**Measured** on the 12-note fake vault in [`bench/recall-v0/`](bench/recall-v0/): **hit@5 = 90%**, **hit@3 = 85%**, **hit@1 = 70%**, latency **median 45 ms / p95 87 ms**. Hit payloads are billed like any other bash output; the MCP tax we avoid is the standing tool-schema cost, not the result tokens.</sub>
 
 - **Session-start awareness without nagging.** metalmind installs a Claude Code SessionStart hook plus a top-of-file block in `~/.claude/CLAUDE.md` with explicit WHEN→DO triggers, so every new Claude session discovers the vault on its own — no "did you check memory?" prompting. Re-stamp anytime with `metalmind burn brass` (alias: `stamp`) after an upgrade.
@@ -148,15 +148,6 @@ Numbers above are recall on a fixed corpus. The shape comparison — what each t
 **Native `/memory`** (text in `CLAUDE.md`) is the zero-install baseline every Claude Code user already has. metalmind earns its install cost once knowledge crosses repo boundaries — the row that flips is *Cross-repo*. **Letta and Mastra are agent frameworks with built-in memory** — different category from metalmind / qmd / mem0 (memory *tools* you bolt onto an existing host). Listed because they show up in "memory for AI" searches; "different host model" rows are honest about the apples-vs-oranges shape, not a metalmind win.
 
 **Pick metalmind** when your knowledge crosses repo boundaries and you want Claude Code to read it verbatim with zero standing tax. Pick **native `/memory`** if everything you care about lives in one repo. Pick **mem0** for fact extraction from conversations. Pick **Letta** or **Mastra** when you're building agents inside their framework. Pick **qmd** if you want the same shape on a non-Claude host.
-
-## Who should NOT use metalmind
-
-Honest anti-personas — install the wrong tool and you'll bounce in an hour:
-
-- **You don't use Claude Code.** SessionStart hook, stamped `CLAUDE.md`, MCP fallback — all target Claude Code specifically. Cursor/Codex/Copilot/Gemini are roadmap, not shipped.
-- **You don't use Obsidian.** The vault is the storage layer. No other UI is planned.
-- **You want a 30-second install.** The wizard takes a few minutes — Python prereqs, embed-model download (~30 MB), first-index. Worth it for daily users; overkill if you're evaluating.
-- **You're a team of 5+ with shared memory needs.** metalmind is single-dev by design. The *forge* supports many repos per dev; it does not sync vaults between devs.
 
 ## Will this still be around?
 

@@ -6,6 +6,32 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.2 — 2026-05-06
+
+Patch release — `metalmind gold` learns the wikilink-rewrite trick `metalmind scribe rename` already had, plus a README + site catch-up sweep against v0.8.x current state.
+
+### Fixed — `metalmind gold` rewrites `[[wikilinks]]` across the vault on archive
+
+`scribeArchive` now mirrors `scribeRename`'s `rewriteBacklinks` discipline. When you archive a note, every other note in the vault gets its path-prefixed wikilinks (`[[Plans/foo]]` → `[[Archive/Plans/foo]]`) rewritten to point at the new location. Basename-only wikilinks (`[[foo]]`) survive unchanged because the filename doesn't change. Returns `{ backlinksRewritten: number, filesTouched: string[] }`; `metalmind gold` surfaces both counts in the success log. Closes the v0.8.1 gotcha where archiving the two Codex companion plans left dangling `[[Plans/...]]` references scattered across the MOC + the multi-host learning.
+
+### Fixed — README dropped the fabricated "Who should NOT use" anti-personas section
+
+Same fabricated content the v0.7.x site cleanup removed from `NotFor.astro` (see `Learnings/marketing-copy-must-trace-to-moc`). The four bullets — "you don't use Claude Code" (now wrong post-v0.8.0; Codex shipped), "you don't use Obsidian" (false; metalmind only requires markdown files in a folder), "you want a 30-second install" (contradicts v0.5.0's single-binary install), "team of 5+" (contradicts P2.7 roadmap) — were the same drift class. Section deleted entirely; the existing prose elsewhere in the README handles filtering implicitly.
+
+### Fixed — README "every Claude Code session" generalized to "every host session"
+
+Updates the recall-without-MCP-tax paragraph to acknowledge metalmind now stamps both `CLAUDE.md` and `~/.codex/AGENTS.md` since v0.8.0.
+
+### Added — site `/releases` page caught up to v0.8.x
+
+Three new entries (v0.8.0, v0.8.1, v0.8.2) prepended to the releases array. Page header still pulls version from `cli/package.json` so the v-badge auto-updates.
+
+### Reference
+
+- Companion vault MOC: `Work/MOCs/metalmind` — Current state + the Known issues recordkeeping that drove this release
+
+---
+
 ## 0.8.1 — 2026-05-06
 
 Patch release — clears all three v0.8.0 follow-ups that surfaced in PR #1 review + post-ship audit. No template-content changes, no breaking changes, no re-stamp required for v0.8.0 users.

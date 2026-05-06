@@ -1,7 +1,7 @@
 {
   "name": "metalmind",
-  "version": "0.8.1",
-  "description": "Unified CLI for Obsidian vault, code graph (graphify), and cross-repo intelligence. Mistborn-themed with a neutral alias set.",
+  "version": "0.8.2",
+  "description": "Unified CLI for a local markdown-as-memory vault (Obsidian-compatible, not required), code graph (graphify), and cross-repo intelligence. Hosts: Claude Code + Codex CLI. Mistborn-themed with a neutral alias set.",
   "license": "MIT",
   "repository": {
     "type": "git",

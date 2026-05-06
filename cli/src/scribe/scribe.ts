@@ -362,11 +362,20 @@ export async function scribeDelete(
   return { path: abs, to: dest };
 }
 
+export interface ArchiveResult {
+  path: string;
+  to: string;
+  /** Number of [[wikilink]] occurrences rewritten across the vault. */
+  backlinksRewritten: number;
+  /** Files (other than the archived note itself) that had at least one rewrite. */
+  filesTouched: string[];
+}
+
 export async function scribeArchive(
   notePath: string,
   ctx: ScribeOpts,
   opts: { dryRun?: boolean; date?: DateArg } = {},
-): Promise<{ path: string; to: string }> {
+): Promise<ArchiveResult> {
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   const now = ctx.now ? ctx.now() : new Date();
@@ -374,14 +383,38 @@ export async function scribeArchive(
   const archiveRoot = join(ctx.vaultRoot, 'Archive');
   const rel = relative(ctx.vaultRoot, abs);
   const dest = join(archiveRoot, rel);
-  if (opts.dryRun) return { path: abs, to: dest };
+
+  // Rewrite [[wikilinks]] across the vault to point at the new (Archive/)
+  // path before moving the file. Basename-only wikilinks (e.g. [[foo]])
+  // survive an archive unchanged because the filename doesn't change;
+  // path-prefixed wikilinks (e.g. [[Plans/foo]]) need rewriting to
+  // [[Archive/Plans/foo]] so Obsidian's strict-path resolver still finds
+  // the note. This closes the v0.8.1 gotcha where archiving a referenced
+  // plan left dangling links scattered across the MOC + companion notes.
+  const oldRel = rel.replace(/\.md$/, '');
+  const newRel = relative(ctx.vaultRoot, dest).replace(/\.md$/, '');
+  const touched: string[] = [];
+  let total = 0;
+  const files = await walkMarkdown(ctx.vaultRoot);
+  for (const f of files) {
+    if (f === abs) continue;
+    const raw = await readFile(f, 'utf8');
+    const { text, count } = rewriteBacklinks(raw, oldRel, newRel);
+    if (count === 0) continue;
+    total += count;
+    touched.push(f);
+    if (!opts.dryRun) await writeFile(f, text, 'utf8');
+  }
+
+  if (opts.dryRun) return { path: abs, to: dest, backlinksRewritten: total, filesTouched: touched };
+
   await mkdir(dirname(dest), { recursive: true });
   const raw = await readFile(abs, 'utf8');
   const withStatus = rewriteFrontmatterField(raw, 'status', 'archived');
   const bumped = rewriteFrontmatterField(withStatus, 'updated', isoDate(now));
   await writeFile(dest, bumped, 'utf8');
   await rm(abs);
-  return { path: abs, to: dest };
+  return { path: abs, to: dest, backlinksRewritten: total, filesTouched: touched };
 }
 
 async function projectOf(abs: string): Promise<string | null> {

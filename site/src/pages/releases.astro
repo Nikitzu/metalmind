@@ -9,6 +9,27 @@ const description = 'Release notes and changelog for metalmind — one entry per
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.8.2',
+    date: '2026-05-06',
+    headline: 'metalmind gold rewrites wikilinks across the vault on archive',
+    summary: 'Same shape as scribe rename: when you archive a note, [[wikilinks]] in every other note that references it get rewritten to the new Archive/ path. Closes the v0.8.1 gotcha where archiving the two Codex plans left dangling links scattered across the MOC. Basename-only wikilinks survive unchanged. Plus: README anti-personas section dropped (was the same fabricated content we removed from the site in v0.7.x); releases page caught up to v0.8.x.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.8.1',
+    date: '2026-05-06',
+    headline: 'Three v0.8.0 follow-ups cleared',
+    summary: '(1) doctor codex-mcp check no longer misattributes 5s timeouts as "binary not on PATH" — disambiguated via a `which codex` probe first. (2) synod + writing-vault-notes skill bundles extracted to cli/templates/.shared/skills/ — drift impossible by construction. (3) New doctor codex-agents-mirror check warns when ~/.agents/skills/ holds stale broken copies. No template-content changes, no re-stamp required for v0.8.0 users.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.8.0',
+    date: '2026-05-06',
+    headline: 'Codex CLI as a first-class metalmind host',
+    summary: 'metalmind init --host codex (or via the new multi-select prompt) stamps Codex with the same recall-first behaviour Claude Code gets. Seven artifacts: AGENTS.md sentinel block, SessionStart hook (reuses CC hook script verbatim — Codex JSON shape is identical), [sandbox_workspace_write] network_access=true, ~/.codex/rules/metalmind.rules pre-approving the metalmind command surface, three skills (writing-vault-notes, synod, save), opt-in --with-mcp. /save body extracted to .shared partial; CC slash-command + Codex skill source from one body — drift impossible by construction.',
+    tag_kind: 'added',
+  },
+  {
     tag: '0.7.0',
     date: '2026-05-05',
     headline: 'Repositioned as the Claude Code standard library',

@@ -143,6 +143,11 @@ export async function scribeArchiveCmd(
       dryRun: opts.dryRun,
     });
     log.success(`${opts.dryRun ? 'would archive' : 'archived'} ${res.path} → ${res.to}`);
+    if (res.backlinksRewritten > 0) {
+      log.info(
+        `${opts.dryRun ? 'would rewrite' : 'rewrote'} ${res.backlinksRewritten} wikilink(s) across ${res.filesTouched.length} file(s)`,
+      );
+    }
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
   }

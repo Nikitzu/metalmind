@@ -254,6 +254,58 @@ describe('scribe CRUD', () => {
     expect(moved).toContain('# old-slug');
   });
 
+  it('archive: moves file to Archive/ and rewrites path-prefixed wikilink backlinks', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: oldPath } = await scribeCreate(
+      { kind: 'work', title: 'shipped-plan', body: 'x', project: 'metalmind' },
+      ctx,
+    );
+    const { scribeArchive } = await import('./scribe.js');
+    // Create referrers using both path-prefixed and basename-only wikilink flavors
+    await scribeCreate(
+      {
+        kind: 'learning',
+        title: 'referrer',
+        body: 'See [[Work/shipped-plan]] and [[shipped-plan]] and [[Work/shipped-plan|alias]].',
+        project: 'metalmind',
+      },
+      ctx,
+    );
+    const res = await scribeArchive('work:shipped-plan', ctx);
+    // 2 path-prefixed wikilinks in referrer + 1 in the auto-linked MOC = 3 minimum
+    expect(res.backlinksRewritten).toBeGreaterThanOrEqual(2);
+    // referrer + project MOC both get rewritten when project is set
+    expect(res.filesTouched.length).toBeGreaterThanOrEqual(1);
+    expect(res.to).toContain('Archive/Work/shipped-plan.md');
+    await expect(readFile(oldPath, 'utf8')).rejects.toBeTruthy();
+    const referrer = await readFile(join(vault, 'Learnings/referrer.md'), 'utf8');
+    expect(referrer).toContain('[[Archive/Work/shipped-plan]]');
+    expect(referrer).toContain('[[Archive/Work/shipped-plan|alias]]');
+    // Basename-only wikilink survives unchanged (path prefix not added; filename hasn't changed)
+    expect(referrer).toContain('[[shipped-plan]]');
+    const moved = await readFile(join(vault, 'Archive/Work/shipped-plan.md'), 'utf8');
+    expect(moved).toContain('status: archived');
+  });
+
+  it('archive --dry-run reports count but writes nothing', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: oldPath } = await scribeCreate(
+      { kind: 'work', title: 'pending-archive', body: 'x' },
+      ctx,
+    );
+    await scribeCreate({ kind: 'learning', title: 'r', body: '[[Work/pending-archive]]' }, ctx);
+    const { scribeArchive } = await import('./scribe.js');
+    const res = await scribeArchive('work:pending-archive', ctx, { dryRun: true });
+    expect(res.backlinksRewritten).toBe(1);
+    await expect(readFile(oldPath, 'utf8')).resolves.toBeTruthy();
+    await expect(
+      readFile(join(vault, 'Archive/Work/pending-archive.md'), 'utf8'),
+    ).rejects.toBeTruthy();
+    // Referrer file content unchanged under dry-run
+    const referrer = await readFile(join(vault, 'Learnings/r.md'), 'utf8');
+    expect(referrer).toContain('[[Work/pending-archive]]');
+  });
+
   it('rename --dry-run leaves files untouched but reports count', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     const { path: oldPath } = await scribeCreate(
