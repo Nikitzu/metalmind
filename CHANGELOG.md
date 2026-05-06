@@ -58,7 +58,14 @@ Bug fix introduced in Phase 1 development: `copyCodexSkills` now runs `renderFla
 
 - Vault plan: `Plans/2026-05-06-codex-host-integration-impl.md` — full implementation plan
 - Vault plan: `Plans/2026-05-06-2026-05-06-metalmind-codex-host-integration.md` — research record (Codex surfaces, prefix_rule path discovery)
+- Vault learning: `Learnings/template-shared-content-needs-directory-level-extraction.md` — why synod and writing-vault-notes are duplicated CC↔Codex (follow-up below)
 - Cookbook: [`docs/cookbook-codex.md`](docs/cookbook-codex.md)
+
+### Open follow-ups (tracked for v0.9)
+
+- **Skill-bundle content duplication.** `cli/templates/claude/skills/{synod,writing-vault-notes}/` and `cli/templates/codex/skills/{synod,writing-vault-notes}/` are byte-identical sibling trees. The `{{> .shared/save-body.md}}` partial-include preprocessor we shipped solves drift at the FILE level (one body file referenced by two wrappers) but not at the DIRECTORY level (a multi-file skill bundle). Drift risk class is identical to what `.shared/save-body.md` solved for `/save`. Acceptable for v0.8.0 because (a) these two skills change rarely, (b) any drift would be caught by the same body-equality test pattern we already wrote for save, (c) extracting requires shared-directory copy infrastructure out of v0.8.0 scope. Plan: extract `cli/templates/.shared/skills/<name>/` once we have a second skill that shows divergence pressure, OR proactively in v0.9 when synod gets its next behavioural change.
+
+- **`~/.agents/skills/` auto-mirror invalidation.** Codex auto-mirrors `~/.claude/skills/` to `~/.agents/skills/` on first launch (one-time copy, no auto-refresh). After a `metalmind stamp --host both` post-fix run, the CC source files are correct but the `.agents/` mirror retains stale broken copies until manually deleted. v0.9 candidate fixes: (1) detect `~/.agents/skills/{writing-vault-notes,synod}/` during `metalmind doctor --deep` and warn, (2) explicit `metalmind stamp --refresh-mirrors` that overwrites the stale copies, (3) document manual cleanup in `cookbook-codex.md` (already done via the deferred-note in the v0.8.0 ship).
 
 ---
 
