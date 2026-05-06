@@ -26,6 +26,17 @@ import { DEFAULT_CODEX_DIR, recallCommand } from './shared.js';
 export const METALMIND_CODEX_SKILLS = ['writing-vault-notes', 'synod', 'save'] as const;
 export type MetalmindCodexSkill = (typeof METALMIND_CODEX_SKILLS)[number];
 
+// Per-skill source-tree mapping. Most skills live under
+// cli/templates/.shared/skills/ (host-agnostic, single source of truth
+// shared with copyClaudeTemplates). 'save' is Codex-specific because its
+// frontmatter wraps the shared body partial differently from CC's slash
+// command.
+const CODEX_SKILL_SOURCE: Record<MetalmindCodexSkill, '.shared' | 'codex'> = {
+  'writing-vault-notes': '.shared',
+  synod: '.shared',
+  save: 'codex',
+};
+
 type AsyncRenderer = (raw: string) => Promise<string>;
 
 async function copyTreeRecursive(
@@ -76,7 +87,6 @@ export async function copyCodexSkills(
   const templatesDir = opts.templatesDir ?? getTemplatesDir();
   const codexDir = opts.codexDir ?? DEFAULT_CODEX_DIR;
   const skillsRoot = join(codexDir, 'skills');
-  const srcRoot = join(templatesDir, 'codex', 'skills');
   const eodHook = opts.eodHook ?? true;
   const notifications = opts.notifications ?? true;
   await mkdir(skillsRoot, { recursive: true });
@@ -95,7 +105,11 @@ export async function copyCodexSkills(
 
   const copied: MetalmindCodexSkill[] = [];
   for (const skill of METALMIND_CODEX_SKILLS) {
-    const skillSrc = join(srcRoot, skill);
+    const sourceTree = CODEX_SKILL_SOURCE[skill];
+    const skillSrc =
+      sourceTree === '.shared'
+        ? join(templatesDir, '.shared', 'skills', skill)
+        : join(templatesDir, 'codex', 'skills', skill);
     if (!existsSync(skillSrc)) continue;
     await copyTreeRecursive(skillSrc, join(skillsRoot, skill), render);
     copied.push(skill);

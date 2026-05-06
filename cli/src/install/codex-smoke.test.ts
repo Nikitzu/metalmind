@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -51,7 +51,7 @@ describe('codex install end-to-end smoke', () => {
     expect(installResult.mcp).toBe('skipped');
 
     // DOCTOR — every check green (mcp skipped because we didn't pass checkMcp).
-    const doctorAfterInstall = await checkCodexInstall({ codexDir });
+    const doctorAfterInstall = await checkCodexInstall({ codexDir, homeDir: codexDir });
     for (const check of doctorAfterInstall) {
       expect(check.ok, `${check.name} expected ok, got: ${check.detail}`).toBe(true);
     }
@@ -66,7 +66,7 @@ describe('codex install end-to-end smoke', () => {
     expect(uninstallResult.skills.sort()).toEqual(['save', 'synod', 'writing-vault-notes']);
 
     // DOCTOR — every check red.
-    const doctorAfterUninstall = await checkCodexInstall({ codexDir });
+    const doctorAfterUninstall = await checkCodexInstall({ codexDir, homeDir: codexDir });
     for (const check of doctorAfterUninstall) {
       expect(check.ok, `${check.name} expected fail, got: ${check.detail}`).toBe(false);
     }
@@ -160,5 +160,59 @@ describe('codex install end-to-end smoke', () => {
       : '';
     expect(tomlFinal).toContain('[mcp_servers.user_thing]');
     expect(tomlFinal).not.toContain('metalmind:codex:network');
+  });
+});
+
+// v0.8.1 follow-up: doctor surfaces stale ~/.agents/skills/ mirror.
+describe('checkCodexInstall — agents-mirror divergence detection', () => {
+  let homeDir: string;
+
+  beforeEach(async () => {
+    homeDir = await mkdtemp(join(tmpdir(), 'mm-mirror-'));
+  });
+
+  afterEach(async () => {
+    await rm(homeDir, { recursive: true, force: true });
+  });
+
+  it('no entry pushed when ~/.agents/skills does not exist', async () => {
+    const checks = await checkCodexInstall({ codexDir: join(homeDir, '.codex'), homeDir });
+    expect(checks.find((c) => c.name === 'codex-agents-mirror')).toBeUndefined();
+  });
+
+  it('reports in-sync when mirror matches ~/.claude/skills/', async () => {
+    const ccPath = join(homeDir, '.claude', 'skills', 'writing-vault-notes');
+    const mirrorPath = join(homeDir, '.agents', 'skills', 'writing-vault-notes');
+    await mkdir(ccPath, { recursive: true });
+    await mkdir(mirrorPath, { recursive: true });
+    const same = '---\nname: writing-vault-notes\ndescription: "ok"\n---\nbody\n';
+    await writeFile(join(ccPath, 'SKILL.md'), same, 'utf8');
+    await writeFile(join(mirrorPath, 'SKILL.md'), same, 'utf8');
+
+    const checks = await checkCodexInstall({ codexDir: join(homeDir, '.codex'), homeDir });
+    const mirror = checks.find((c) => c.name === 'codex-agents-mirror');
+    expect(mirror?.ok).toBe(true);
+    expect(mirror?.detail).toContain('in sync');
+  });
+
+  it('reports stale when mirror diverges from ~/.claude/skills/', async () => {
+    const ccPath = join(homeDir, '.claude', 'skills', 'synod');
+    const mirrorPath = join(homeDir, '.agents', 'skills', 'synod');
+    await mkdir(ccPath, { recursive: true });
+    await mkdir(mirrorPath, { recursive: true });
+    await writeFile(join(ccPath, 'SKILL.md'), '---\nname: synod\ndescription: fixed\n---\n', 'utf8');
+    await writeFile(
+      join(mirrorPath, 'SKILL.md'),
+      '---\nname: synod\ndescription: STALE BROKEN VERSION\n---\n',
+      'utf8',
+    );
+
+    const checks = await checkCodexInstall({ codexDir: join(homeDir, '.codex'), homeDir });
+    const mirror = checks.find((c) => c.name === 'codex-agents-mirror');
+    expect(mirror?.ok).toBe(false);
+    expect(mirror?.detail).toContain('synod');
+    expect(mirror?.detail).toContain('stale');
+    expect(mirror?.remediation).toContain('rm -rf');
+    expect(mirror?.remediation).toContain('synod');
   });
 });

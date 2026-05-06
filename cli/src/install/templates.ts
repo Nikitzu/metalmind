@@ -241,8 +241,18 @@ export async function copyClaudeTemplates(
     (name) => name === 'save.md' || (opts.withTeams === true && name.startsWith('team-')),
     (name) => (name === 'save.md' ? renderSave : null),
   );
-  const skills = await copySkillBundles(
+  // Skills come from two source trees:
+  // - cli/templates/claude/skills/ — CC-specific bundles (using-teams,
+  //   obsidian-markdown).
+  // - cli/templates/.shared/skills/ — host-agnostic bundles shared with
+  //   Codex (writing-vault-notes, synod). Single source of truth post-v0.8.1.
+  const ccSkills = await copySkillBundles(
     join(srcRoot, 'skills'),
+    join(claudeDir, 'skills'),
+    renderSkill,
+  );
+  const sharedSkills = await copySkillBundles(
+    join(templatesDir, '.shared', 'skills'),
     join(claudeDir, 'skills'),
     renderSkill,
   );
@@ -252,7 +262,8 @@ export async function copyClaudeTemplates(
       ...rules.copied.map((n) => `rules/${n}`),
       ...agents.copied.map((n) => `agents/${n}`),
       ...commands.copied.map((n) => `commands/${n}`),
-      ...skills.copied.map((n) => `skills/${n}`),
+      ...ccSkills.copied.map((n) => `skills/${n}`),
+      ...sharedSkills.copied.map((n) => `skills/${n}`),
     ],
   };
 }

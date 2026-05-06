@@ -6,6 +6,29 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.1 — 2026-05-06
+
+Patch release — clears all three v0.8.0 follow-ups that surfaced in PR #1 review + post-ship audit. No template-content changes, no breaking changes, no re-stamp required for v0.8.0 users.
+
+### Fixed — doctor `codex-mcp` no longer misattributes timeouts as "binary not on PATH"
+
+`metalmind doctor --deep`'s `codex-mcp` check now disambiguates "codex binary missing from PATH" from "codex mcp list failed or timed out." Previously a 5-second `runCommand` timeout (common when the user has live stdio MCP servers like `MCP_DOCKER` registered — Codex pings each one to report status) was reported as "binary not on PATH," which was wrong on every machine where codex was actually installed. Fix: `which codex` probe runs first; only the genuine binary-missing case shows that message. `ok` status unchanged (still `true` for both branches; MCP is opt-in).
+
+### Refactored — synod + writing-vault-notes skill bundles extracted to `cli/templates/.shared/skills/`
+
+The two skills were byte-identical sibling trees in `cli/templates/{claude,codex}/skills/` — same drift class the `.shared/save-body.md` file-level extraction solved for `/save`, just at directory level. Now both `copyClaudeTemplates` and `copyCodexSkills` source these two skills from `cli/templates/.shared/skills/<name>/`. `copyCodexSkills` gains a `CODEX_SKILL_SOURCE` per-skill mapping (save → `codex/`, writing-vault-notes + synod → `.shared/`). Drift impossible by construction. Rendered output is byte-identical to v0.8.0 — no re-stamp needed; existing users see no change.
+
+### Added — doctor warns about stale `~/.agents/skills/` mirror
+
+Codex auto-mirrors `~/.claude/skills/` to `~/.agents/skills/` on first launch (one-time copy, no auto-refresh). If CC source files get fixed post-mirror, the stale broken copies persist and Codex logs `Skipped loading N skill(s) due to invalid SKILL.md files` on every launch. New `codex-agents-mirror` doctor check compares `~/.agents/skills/{writing-vault-notes,synod}/SKILL.md` against the corresponding `~/.claude/skills/` source; reports `ok: false` with a `rm -rf` remediation when they diverge.
+
+### Reference
+
+- Vault MOC: [`Work/MOCs/metalmind`](Work/MOCs/metalmind.md) — current state + roadmap; v0.8.1 fixes recorded under "v0.8.0 follow-ups → resolved"
+- Companion learning: [[Learnings/template-shared-content-needs-directory-level-extraction]] — explains why the skill extraction happened now (Fix 2 above)
+
+---
+
 ## 0.8.0 — 2026-05-06
 
 ### Added — Codex CLI is now a first-class metalmind host

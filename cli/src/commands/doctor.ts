@@ -243,8 +243,11 @@ export async function checkClaudeMdSentinel(config: Config): Promise<DeepCheck[]
 export async function checkCodexInstall(opts: {
   codexDir?: string;
   checkMcp?: boolean;
+  /** Override $HOME for the ~/.agents/skills/ mirror probe (test injection). */
+  homeDir?: string;
 } = {}): Promise<DeepCheck[]> {
   const codexDir = opts.codexDir ?? DEFAULT_CODEX_DIR;
+  const homeDirPath = opts.homeDir ?? homedir();
   const out: DeepCheck[] = [];
 
   // 1. AGENTS.md sentinel
@@ -369,17 +372,64 @@ export async function checkCodexInstall(opts: {
         : 'Run `metalmind stamp --host codex`.',
   });
 
+  // 7. Codex auto-mirrors ~/.claude/skills/ to ~/.agents/skills/ on first
+  // launch (one-time copy, no auto-refresh). If we ever fixed source
+  // SKILL.md files post-mirror, the stale broken copies persist and
+  // Codex logs `Skipped loading N skill(s)` on every launch. Detect by
+  // checking whether our .shared/-sourced skills' on-disk content
+  // differs from the live ~/.agents/skills/ copy.
+  const agentsSkillsDir = join(homeDirPath, '.agents', 'skills');
+  const mirrorIssues: string[] = [];
+  for (const skill of ['writing-vault-notes', 'synod']) {
+    const mirrorPath = join(agentsSkillsDir, skill, 'SKILL.md');
+    const cclPath = join(homeDirPath, '.claude', 'skills', skill, 'SKILL.md');
+    if (!existsSync(mirrorPath) || !existsSync(cclPath)) continue;
+    const mirror = await readFile(mirrorPath, 'utf8');
+    const ccl = await readFile(cclPath, 'utf8');
+    if (mirror !== ccl) mirrorIssues.push(skill);
+  }
+  if (mirrorIssues.length > 0) {
+    out.push({
+      name: 'codex-agents-mirror',
+      ok: false,
+      detail: `~/.agents/skills/{${mirrorIssues.join(',')}} stale vs ~/.claude/skills/ — Codex skips these on every launch with "Skipped loading N skill(s) due to invalid SKILL.md files"`,
+      remediation: `rm -rf ${mirrorIssues.map((s) => `~/.agents/skills/${s}`).join(' ')}`,
+    });
+  } else if (existsSync(agentsSkillsDir)) {
+    out.push({
+      name: 'codex-agents-mirror',
+      ok: true,
+      detail: '~/.agents/skills/ in sync with ~/.claude/skills/',
+    });
+  }
+
   // 6. MCP (only when --check-mcp / --deep, since it spawns a subprocess).
   // The MCP server is OPT-IN via --with-mcp; absence is not a failure.
   // Mark not-registered as ok=true with informational detail so the doctor
   // summary doesn't flag a non-issue.
+  //
+  // Disambiguate "binary missing" from "command failed/timed out" via a
+  // first `which codex` probe. `codex mcp list --json` may legitimately
+  // time out (5s default in runCommand) when the user has live stdio MCP
+  // servers (e.g. MCP_DOCKER) registered — Codex pings each one to report
+  // status, which can exceed 5s. Misattributing that as "binary not on
+  // PATH" was the v0.8.0 doctor lie this v0.8.1 patch fixes.
   if (opts.checkMcp) {
+    const which = await runCommand('which', ['codex']);
+    if (!which.ok) {
+      out.push({
+        name: 'codex-mcp',
+        ok: true,
+        detail: 'codex binary not on PATH — MCP check skipped (opt-in feature)',
+      });
+    } else {
     const res = await runCommand('codex', ['mcp', 'list', '--json']);
     if (!res.ok) {
       out.push({
         name: 'codex-mcp',
         ok: true,
-        detail: 'codex binary not on PATH — MCP check skipped (opt-in feature)',
+        detail:
+          'codex mcp list failed or timed out — MCP check skipped (opt-in feature; common when live MCP servers slow Codex to ping)',
       });
     } else {
       try {
@@ -411,6 +461,7 @@ export async function checkCodexInstall(opts: {
           detail: 'codex mcp list returned non-JSON',
         });
       }
+    }
     }
   }
 
