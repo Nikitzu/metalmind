@@ -6,6 +6,22 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.3 — 2026-05-07
+
+Patch release — fixes a silent install bug where the bundled output style never applied on fresh installs because the frontmatter `name:` casing didn't match `settings.outputStyle`.
+
+### Fixed — bundled `marsh` / `terse` output styles silently inactive on fresh install
+
+Claude Code matches `settings.outputStyle` against the `name:` frontmatter in `~/.claude/output-styles/<name>.md` **case-sensitively**. The CLI wrote `settings.outputStyle = "marsh"` (lowercase, the choice value) but the bundled `cli/assets/marsh.md` shipped with `name: Marsh` (capitalized) — so on every fresh install the file landed, the setting pointed at it, the file looked correct, and the style never applied. Same bug shipped for `terse`. Caught by a user whose pre-existing hand-authored copy had `name: marsh` (lowercase) and worked, while every clean-install user got default voice with no error.
+
+Fix: assets now ship lowercase `name:`, and `flavorTitle()` was renamed to `flavorName()` returning the choice as-is so the legacy migration path (`rewriteFrontmatter`) writes the same lowercase identifier. Test assertions updated to match. Bonus cleanup: dropped `keep-coding-instructions: true` from both shipped frontmatters — not a recognized Claude Code output-style field; tolerated silently by the parser, but noise.
+
+Companion learning: [`Learnings/output-style-name-must-match-settings-case-exact`](https://github.com/Nikitzu/metalmind/tree/main/) — class-of-bug note covering "single source of truth for an identifier matched between two files" and "dogfood-on-the-author-machine misses shipped-asset bugs unless you wipe and reinstall."
+
+No breaking changes. Re-run `metalmind stamp` to land the corrected asset on machines that installed v0.8.0–v0.8.2.
+
+---
+
 ## 0.8.2 — 2026-05-06
 
 Patch release — `metalmind gold` learns the wikilink-rewrite trick `metalmind scribe rename` already had, plus a README + site catch-up sweep against v0.8.x current state.

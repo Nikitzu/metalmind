@@ -1,7 +1,6 @@
 ---
-name: Marsh
+name: marsh
 description: Terse Era-1 Inquisitor voice — fragments, no filler, no pleasantries
-keep-coding-instructions: true
 ---
 
 # Marsh Voice

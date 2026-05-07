@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind — one entry per
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.8.3',
+    date: '2026-05-07',
+    headline: 'Bundled output styles silently inactive on fresh install',
+    summary: 'Claude Code matches settings.outputStyle against the name: frontmatter case-sensitively. The CLI wrote settings.outputStyle = "marsh" (lowercase) but the bundled cli/assets/marsh.md shipped with name: Marsh (capitalized) — so on every fresh install the file landed, the setting pointed at it, the file looked correct, and the style never applied. Same for terse. Caught only because the user had a pre-existing hand-authored lowercase copy. Fixed by lowercasing the asset name field and the legacy-migration write path. Bonus: dropped keep-coding-instructions: true from both shipped frontmatters — not a recognized output-style field.',
+    tag_kind: 'fixed',
+  },
+  {
     tag: '0.8.2',
     date: '2026-05-06',
     headline: 'metalmind gold rewrites wikilinks across the vault on archive',

@@ -48,8 +48,8 @@ export function getAssetsDir(): string {
   return join(dir, 'assets');
 }
 
-function flavorTitle(choice: FlavorChoice): string {
-  return choice === 'marsh' ? 'Marsh' : 'Terse';
+function flavorName(choice: FlavorChoice): string {
+  return choice;
 }
 
 function flavorDescription(choice: FlavorChoice): string {
@@ -68,7 +68,7 @@ function rewriteFrontmatter(body: string, choice: FlavorChoice): string {
   });
   const newFrontmatter = [
     '---',
-    `name: ${flavorTitle(choice)}`,
+    `name: ${flavorName(choice)}`,
     `description: ${flavorDescription(choice)}`,
     ...lines,
     '---',

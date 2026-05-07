@@ -1,7 +1,6 @@
 ---
-name: Terse
+name: terse
 description: Terse engineering voice — fragments, no filler, no pleasantries
-keep-coding-instructions: true
 ---
 
 # Terse Voice

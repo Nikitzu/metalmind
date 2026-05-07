@@ -15,7 +15,6 @@ describe('output-style', () => {
     `---
 name: ${name}
 description: ${name} description
-keep-coding-instructions: true
 ---
 
 # ${name} Voice
@@ -24,9 +23,8 @@ body content
 `;
 
   const userAuthoredCaveman = `---
-name: Caveman
+name: caveman
 description: Terse engineering voice
-keep-coding-instructions: true
 ---
 
 # Caveman Voice
@@ -40,8 +38,8 @@ Custom body the user edited.
     outputStylesDir = join(tmp, 'output-styles');
     settingsPath = join(tmp, 'settings.json');
     await mkdir(assetsDir, { recursive: true });
-    await writeFile(join(assetsDir, 'marsh.md'), assetTemplate('Marsh'), 'utf8');
-    await writeFile(join(assetsDir, 'terse.md'), assetTemplate('Terse'), 'utf8');
+    await writeFile(join(assetsDir, 'marsh.md'), assetTemplate('marsh'), 'utf8');
+    await writeFile(join(assetsDir, 'terse.md'), assetTemplate('terse'), 'utf8');
   });
 
   afterEach(async () => {
@@ -60,7 +58,7 @@ Custom body the user edited.
     expect(result.migrated).toBe(false);
     expect(existsSync(result.stylePath)).toBe(true);
     const written = await readFile(result.stylePath, 'utf8');
-    expect(written).toContain('name: Marsh');
+    expect(written).toContain('name: marsh');
   });
 
   it('migrates user caveman.md preserving body, rewriting frontmatter', async () => {
@@ -80,9 +78,8 @@ Custom body the user edited.
     expect(existsSync(join(outputStylesDir, 'caveman.md'))).toBe(false);
 
     const written = await readFile(result.stylePath, 'utf8');
-    expect(written).toContain('name: Marsh');
+    expect(written).toContain('name: marsh');
     expect(written).toContain('description: Terse Era-1 Inquisitor voice');
-    expect(written).toContain('keep-coding-instructions: true');
     expect(written).toContain('Custom body the user edited.');
   });
 
