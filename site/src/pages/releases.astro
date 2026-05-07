@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind — one entry per
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.8.4',
+    date: '2026-05-07',
+    headline: 'metalmind stamp self-heals broken output-style frontmatter',
+    summary: 'v0.8.3 fixed fresh installs but the installer (output-style.ts:122 — if !existsSync) skipped the file on upgrade — so every v0.8.0–v0.8.2 user kept the broken name: Marsh stamp and silent default voice through any number of metalmind stamp re-runs. installOutputStyle now detects the case-mismatched twin pattern (on-disk name differs from choice only by case AND body is byte-equal to the bundled asset) and overwrites from the asset. User-edited bodies (case-twin name but diverged body) are left alone. Five tests cover heal-fires / skips-on-edit / skips-on-unrelated-name / skips-when-correct / terse-twin. No rm step required to recover.',
+    tag_kind: 'fixed',
+  },
+  {
     tag: '0.8.3',
     date: '2026-05-07',
     headline: 'Bundled output styles silently inactive on fresh install',

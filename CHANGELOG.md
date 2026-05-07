@@ -6,6 +6,22 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.4 — 2026-05-07
+
+Patch release — `metalmind stamp` now self-heals broken output-style frontmatter from v0.8.0–v0.8.2 installs, instead of skipping the file.
+
+### Fixed — `metalmind stamp` self-heals broken `name: Marsh` / `name: Terse` frontmatter
+
+v0.8.3 fixed the bundled asset and the install logic for fresh installs, but did nothing for users who installed v0.8.0–v0.8.2 — the broken capitalized file on their disk would be skipped on every subsequent `stamp` (`output-style.ts:122`: `if (!existsSync(stylePath))`). Re-running the upgrade flow appeared to succeed but left the silent-default-voice bug unfixed.
+
+`installOutputStyle` now detects the case-mismatched twin pattern: on-disk `name:` differs from `opts.choice` only by case (`"Marsh"` vs `"marsh"`), AND the body (frontmatter-stripped) is byte-equal to the bundled asset's body. When both conditions hold, the file is overwritten from the asset. Otherwise — body diverges, name unrelated, or already correct — the file is left alone. Returns `{ healed: boolean }` on the result; the wizard logs `healed broken-stamp frontmatter` when it fires.
+
+Body-equality is the safety: if a user hand-edited their style after the broken install, the heal won't fire and their content survives. Five tests cover heal-fires / heal-skips-when-body-edited / heal-skips-when-name-unrelated / heal-skips-when-already-correct / heal-fires-for-terse.
+
+Effect: anyone who installed v0.8.0–v0.8.2 gets the output style working again automatically the next time they run `metalmind stamp` or `metalmind init`. No `rm` step required.
+
+---
+
 ## 0.8.3 — 2026-05-07
 
 Patch release — fixes a silent install bug where the bundled output style never applied on fresh installs because the frontmatter `name:` casing didn't match `settings.outputStyle`.

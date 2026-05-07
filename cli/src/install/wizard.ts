@@ -395,6 +395,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     const style = await installOutputStyle({ choice: styleChoice });
     if (style.migrated) log.success(`  migrated legacy style → ${style.stylePath}`);
     else if (style.installed) log.success(`  copied bundled style → ${style.stylePath}`);
+    else if (style.healed) log.success(`  healed broken-stamp frontmatter → ${style.stylePath}`);
     else log.info(`  ${style.stylePath} already present — kept`);
     if (style.priorValue) log.info(`  prior settings.json outputStyle: ${style.priorValue}`);
     stylePriorValue = style.priorValue;

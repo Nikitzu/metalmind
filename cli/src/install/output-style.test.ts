@@ -160,6 +160,107 @@ Custom body the user edited.
 
     expect(result.installed).toBe(false);
     expect(result.migrated).toBe(false);
+    expect(result.healed).toBe(false);
     expect(await readFile(result.stylePath, 'utf8')).toBe('existing marsh\n');
+  });
+
+  describe('self-heal — case-mismatched twin recovery (v0.8.0–v0.8.2 broken stamps)', () => {
+    const brokenStampOf = async (assetName: string, capName: string) => {
+      const asset = await readFile(join(assetsDir, `${assetName}.md`), 'utf8');
+      const body = asset.replace(/^---\n[\s\S]*?\n---\n?/, '');
+      return `---\nname: ${capName}\ndescription: ${capName} description\nkeep-coding-instructions: true\n---\n${body}`;
+    };
+
+    it('heals a broken-stamp marsh.md (name: Marsh) when body matches current asset', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      await writeFile(
+        join(outputStylesDir, 'marsh.md'),
+        await brokenStampOf('marsh', 'Marsh'),
+        'utf8',
+      );
+
+      const result = await installOutputStyle({
+        choice: 'marsh',
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.installed).toBe(false);
+      expect(result.migrated).toBe(false);
+      expect(result.healed).toBe(true);
+      const written = await readFile(result.stylePath, 'utf8');
+      expect(written).toContain('name: marsh');
+      expect(written).not.toContain('name: Marsh');
+      expect(written).not.toContain('keep-coding-instructions');
+    });
+
+    it('heals a broken-stamp terse.md (name: Terse) when body matches current asset', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      await writeFile(
+        join(outputStylesDir, 'terse.md'),
+        await brokenStampOf('terse', 'Terse'),
+        'utf8',
+      );
+
+      const result = await installOutputStyle({
+        choice: 'terse',
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.healed).toBe(true);
+      const written = await readFile(result.stylePath, 'utf8');
+      expect(written).toContain('name: terse');
+    });
+
+    it('does NOT heal when body has been edited by user (case-twin name but body diverges)', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      const userEdited = `---\nname: Marsh\ndescription: Marsh description\n---\n\n# Marsh Voice\n\nUser-customised body — leave alone.\n`;
+      await writeFile(join(outputStylesDir, 'marsh.md'), userEdited, 'utf8');
+
+      const result = await installOutputStyle({
+        choice: 'marsh',
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.healed).toBe(false);
+      expect(await readFile(result.stylePath, 'utf8')).toBe(userEdited);
+    });
+
+    it('does NOT heal when on-disk name is unrelated (e.g. caveman) — only case-twins are healed', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      const unrelated = `---\nname: caveman\ndescription: x\n---\n\n# caveman\n\nbody\n`;
+      await writeFile(join(outputStylesDir, 'marsh.md'), unrelated, 'utf8');
+
+      const result = await installOutputStyle({
+        choice: 'marsh',
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.healed).toBe(false);
+      expect(await readFile(result.stylePath, 'utf8')).toBe(unrelated);
+    });
+
+    it('does NOT heal when name is already correct lowercase (no-op)', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      const correct = `---\nname: marsh\ndescription: Marsh description\n---\n\n# marsh Voice\n\nbody content\n`;
+      await writeFile(join(outputStylesDir, 'marsh.md'), correct, 'utf8');
+
+      const result = await installOutputStyle({
+        choice: 'marsh',
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.healed).toBe(false);
+      expect(await readFile(result.stylePath, 'utf8')).toBe(correct);
+    });
   });
 });

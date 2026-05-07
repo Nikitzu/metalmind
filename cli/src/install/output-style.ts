@@ -21,6 +21,7 @@ export interface InstallOutputStyleResult {
   stylePath: string;
   installed: boolean;
   migrated: boolean;
+  healed: boolean;
   priorValue: string | null;
 }
 
@@ -56,6 +57,21 @@ function flavorDescription(choice: FlavorChoice): string {
   return choice === 'marsh'
     ? 'Terse Era-1 Inquisitor voice — fragments, no filler, no pleasantries'
     : 'Terse engineering voice — fragments, no filler, no pleasantries';
+}
+
+interface ParsedFrontmatter {
+  body: string;
+  nameValue: string | null;
+}
+
+function parseFrontmatter(content: string): ParsedFrontmatter {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n?/);
+  if (!match) return { body: content, nameValue: null };
+  const fm = match[1] ?? '';
+  const body = content.slice(match[0].length);
+  const nameLine = fm.split('\n').find((line) => line.trimStart().startsWith('name:'));
+  const nameValue = nameLine ? (nameLine.split(':')[1] ?? '').trim() : null;
+  return { body, nameValue };
 }
 
 function rewriteFrontmatter(body: string, choice: FlavorChoice): string {
@@ -119,6 +135,7 @@ export async function installOutputStyle(
 
   let installed = false;
   let migrated = false;
+  let healed = false;
   if (!existsSync(stylePath)) {
     const legacyFile = await findLegacyFile(outputStylesDir, priorValue ?? undefined);
     if (legacyFile) {
@@ -130,12 +147,27 @@ export async function installOutputStyle(
       await copyFile(join(assetsDir, `${opts.choice}.md`), stylePath);
       installed = true;
     }
+  } else {
+    const onDisk = await readFile(stylePath, 'utf8');
+    const onDiskParsed = parseFrontmatter(onDisk);
+    const isCaseMismatchedTwin =
+      onDiskParsed.nameValue !== null &&
+      onDiskParsed.nameValue !== opts.choice &&
+      onDiskParsed.nameValue.toLowerCase() === opts.choice.toLowerCase();
+    if (isCaseMismatchedTwin) {
+      const assetContent = await readFile(join(assetsDir, `${opts.choice}.md`), 'utf8');
+      const assetBody = parseFrontmatter(assetContent).body;
+      if (onDiskParsed.body === assetBody) {
+        await writeFile(stylePath, assetContent, 'utf8');
+        healed = true;
+      }
+    }
   }
 
   settings.outputStyle = opts.choice;
   await writeSettings(settingsPath, settings);
 
-  return { stylePath, installed, migrated, priorValue };
+  return { stylePath, installed, migrated, healed, priorValue };
 }
 
 export async function uninstallOutputStyle(
