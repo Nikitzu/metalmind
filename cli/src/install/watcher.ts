@@ -7,7 +7,8 @@ export type WatcherPlatform = 'darwin' | 'linux';
 export interface InstallWatcherOptions {
   vaultPath: string;
   watcherBin: string;
-  uvBin: string;
+  /** @deprecated unused since v0.9.0 — watcher unit invokes the entry-point shim directly. */
+  uvBin?: string;
   platformOverride?: WatcherPlatform;
   launchAgentsDir?: string;
   systemdUserDir?: string;

@@ -11,7 +11,8 @@ export const DEFAULT_LAUNCH_AGENTS_DIR = join(homedir(), 'Library', 'LaunchAgent
 export interface InstallWatcherOptions {
   vaultPath: string;
   watcherBin: string;
-  uvBin: string;
+  /** @deprecated unused since v0.9.0 — watcher unit invokes the entry-point shim directly. */
+  uvBin?: string;
   templatesDir?: string;
   launchAgentsDir?: string;
   skipLoad?: boolean;
@@ -58,7 +59,6 @@ export async function installLaunchdWatcher(
   const rendered = renderPlist(template, {
     VAULT_PATH: opts.vaultPath,
     WATCHER_BIN: opts.watcherBin,
-    UV_BIN: opts.uvBin,
     PATH_VALUE: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin',
   });
 

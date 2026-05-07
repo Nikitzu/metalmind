@@ -6,6 +6,32 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.5 — 2026-05-07
+
+Patch release — fixes the watcher launchd / systemd unit, which has been crash-looping silently on every fresh install since `uv tool run --from` was introduced. Existing v0.8.x users get the corrected unit re-stamped automatically on the next `metalmind stamp` or `metalmind init`.
+
+### Fixed — watcher unit invoked `uv tool run --from` against PyPI, where the package doesn't exist
+
+The bundled launchd plist (`com.metalmind.vault-indexer.plist.template`) and systemd service (`metalmind-vault-indexer.service.template`) invoked the watcher as:
+
+```
+{{UV_BIN}} tool run --from metalmind-vault-rag metalmind-vault-rag-watcher
+```
+
+`uv tool run --from <name>` resolves `<name>` against the **PyPI registry**. `metalmind-vault-rag` is never published to PyPI — it's installed locally from the bundled path (`uv tool install --from <bundled-path> metalmind-vault-rag`). So launchd/systemd hit `× No solution found when resolving tool dependencies: metalmind-vault-rag was not found in the package registry`, the watcher exited 1, KeepAlive=1 (or `Restart=always`) restarted it on a 10-second throttle, and the loopback HTTP server (`127.0.0.1:17317`) never came up. Recall fell through to the stdio-MCP fallback, which spawns the entry-point binary by bare name and got `ENOENT` because Claude Code's subprocess PATH doesn't include `~/.local/bin`. Net effect on a fresh install: `metalmind recall` permanently broken; `metalmind pulse` reported "All systems nominal" because it has no watcher health probe.
+
+The original intent of the `uv tool run` invocation was to avoid baking absolute paths into unit files. That traded a real concern for a worse one: `uv tool run --from <name>` does not work for tools installed from a local path, only for PyPI packages.
+
+Fix: both unit templates now invoke the entry-point shim that `uv tool install` already creates at `~/.local/bin/metalmind-vault-rag-watcher` (resolved at install time via `which`, written into the unit). Same shape as `serena`'s install path. The shim is a uv-managed symlink into the versioned tool dir, so version upgrades stay clean without a unit rewrite. `UV_BIN` placeholder is dropped from both templates and from `KNOWN_PLACEHOLDERS`. The `uvBin` field on `InstallWatcherOptions` / `InstallSystemdOptions` / `InstallLaunchdOptions` is now optional and ignored, retained only so existing callers (`wizard.ts`, `commands/stamp.ts`) continue to compile during the deprecation window — drop next minor.
+
+Existing users on v0.8.x: the next `metalmind stamp` (or `metalmind init`) detects the unit content drift via byte comparison (`installLaunchdWatcher` already compares prior contents and unloads/rewrites on mismatch), unloads the old plist/service, writes the corrected one, and reloads. No manual intervention required.
+
+New regression test in `template-placeholders.test.ts` reads the bundled launchd and systemd templates and asserts neither contains `uv tool run --from`. The previous unit tests passed because they substituted synthetic templates at runtime — they never read the real bundled files. Companion vault learning: `Learnings/test-real-template-not-synthetic`.
+
+Also drops `UV_BIN` from `KNOWN_PLACEHOLDERS` in `template-placeholders.test.ts`. No CHANGELOG-worthy follow-ups: `metalmind pulse` should grow a watcher health probe (loopback HTTP `/health` ping + `launchctl print` exit-status check) so the next class of "watcher silently dead" bug doesn't take 30 minutes of log archaeology to find — tracked separately.
+
+---
+
 ## 0.8.4 — 2026-05-07
 
 Patch release — `metalmind stamp` now self-heals broken output-style frontmatter from v0.8.0–v0.8.2 installs, instead of skipping the file.

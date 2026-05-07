@@ -9,7 +9,6 @@ import { getTemplatesDir } from '../util/paths.js';
 const KNOWN_PLACEHOLDERS = new Set([
   'VAULT_PATH', // rendered by launchd.ts, systemd.ts, stampClaudeMd
   'WATCHER_BIN', // rendered by launchd.ts, systemd.ts
-  'UV_BIN', // rendered by launchd.ts, systemd.ts (watcher invoked as `uv tool run`)
   'PATH_VALUE', // rendered by launchd.ts, systemd.ts
   'RECALL_CMD', // rendered by vault.ts, templates.ts (save.md + agents + rules)
   'HOME', // rendered by serena.ts into serena_config.yml
@@ -97,5 +96,23 @@ describe('template placeholders', () => {
     }
     // Keep the list aligned with installer expectations. Silence unused var lint.
     expect(RENDERABLE_SUFFIXES.length).toBeGreaterThan(0);
+  });
+
+  it('watcher unit templates invoke the entry-point shim, not `uv tool run --from`', async () => {
+    // Regression for v0.8.x bug: plist used `uv tool run --from metalmind-vault-rag`,
+    // which resolves the package name against PyPI. metalmind-vault-rag is never
+    // published — it's installed locally from a bundled path — so launchd hit
+    // "package not found in registry", exit 1, KeepAlive restart loop, recall dead.
+    const templatesDir = getTemplatesDir();
+    for (const rel of [
+      'launchd/com.metalmind.vault-indexer.plist.template',
+      'systemd/metalmind-vault-indexer.service.template',
+    ]) {
+      const content = await readFile(join(templatesDir, rel), 'utf8');
+      expect(content, `${rel} must not invoke 'uv tool run --from'`).not.toMatch(
+        /uv\s+tool\s+run\s+--from/,
+      );
+      expect(content, `${rel} must reference {{WATCHER_BIN}}`).toContain('{{WATCHER_BIN}}');
+    }
   });
 });
