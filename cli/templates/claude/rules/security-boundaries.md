@@ -12,7 +12,10 @@
 - Hash passwords with bcrypt/argon2 — never store plaintext
 - Set security headers (CSP, X-Frame-Options, HSTS)
 - Use httpOnly + secure cookies for auth tokens
-- Run `pnpm audit` when adding new dependencies
+- Audit dependencies with the project's package-manager audit command when adding new dependencies
+
+### JS / TS specifics
+- Run `pnpm audit` (or `npm audit` / `yarn audit` per the project's lockfile) when adding new dependencies
 
 ## Ask First
 

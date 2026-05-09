@@ -20,16 +20,16 @@
 | "help me plan this" | brainstorming / writing-plans |
 | "debug this" | systematic-debugging |
 
-## MCP Servers
+## MCP Servers / external CLIs
 
-Use contextually: documentation lookup for unfamiliar APIs, infrastructure interaction for cloud work, security analysis when adding dependencies. See CLAUDE.md for specific tool table.
+Use contextually for unfamiliar APIs, infrastructure work, security analysis. The specific tools available depend on your installed plugins, MCP servers, and any rules under `~/.claude/rules/`.
 
 ## Plugins
 
 Follow plugin principles during normal work even when not explicitly invoking them:
 
-- **Code simplification** — always write clear, maintainable code
-- **Security guidance** — proactively apply security best practices
+- **`code-simplifier`** — always write clear, maintainable code
+- **`security-guidance`** — proactively apply security best practices
 
 ## Agents
 

@@ -14,6 +14,7 @@ import {
   type SentinelUpsertAction,
   upsertSentinelBlock,
 } from '../../util/sentinel.js';
+import { resolvePartials } from '../templates.js';
 import { DEFAULT_CODEX_DIR, recallCommand } from './shared.js';
 
 const CODEX_AGENTS_MARKERS: SentinelMarkers = {
@@ -46,7 +47,8 @@ export async function stampCodexAgentsMd(
     join(templatesDir, 'codex', 'AGENTS.md.block.template'),
     'utf8',
   );
-  const rendered = blockSource
+  const resolvedBlock = await resolvePartials(blockSource, templatesDir);
+  const rendered = resolvedBlock
     .replace(/\{\{VAULT_PATH\}\}/g, opts.vaultPath)
     .replace(/\{\{RECALL_CMD\}\}/g, recallCommand(opts.flavor));
 

@@ -37,7 +37,7 @@ Before doing any task work, run these in order:
 2. Find two or three existing components with similar shape. Follow their patterns for structure, state, styling.
 3. Implement in thin slices: render first, then state, then interactions, then network.
 4. For Vite projects, ensure any new client-side env var uses the `VITE_` prefix and is added to `.env`/`.dev.vars` — never just mention the requirement.
-5. Run the project's typecheck and test commands from `package.json` (e.g., `pnpm typecheck`, `pnpm test`). Do not invent commands.
+5. Run the project's typecheck and test commands — read them from `package.json` scripts (or the language equivalent). Do not invent commands.
 6. Never add `useMemo`/`useCallback` unless explicitly requested or there is a measured perf issue.
 7. Make only the minimal change requested — never restructure surrounding components.
 8. After three failed UI-positioning attempts, stop and ask for guidance.

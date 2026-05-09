@@ -6,6 +6,46 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.6 — 2026-05-09
+
+Patch release — three template fixes: closes the long-running drift between the metalmind block stamped into Claude Code and Codex CLI; strips concrete tool names (Context7, Serena, DeepWiki) and JS/TS-only assumptions (`pnpm` as a universal default) from rules and agents shipped to all users; clarifies plugin naming. No code-path changes, no behavioural break — re-stamp with `metalmind stamp` to pick up the refreshed templates.
+
+### Fixed — CC and Codex managed-block templates drifted; extract to a shared partial
+
+Before: `cli/templates/claude/CLAUDE.md.block.template` and `cli/templates/codex/AGENTS.md.block.template` were maintained as parallel files. The Codex variant was a compressed copy that omitted classic-alias call-outs on every CRUD verb (`metalmind note`, `metalmind daily`, `metalmind notify`), the `--dry-run` callout, the wikilink-rewrite-on-rename note, the daily-date error-message detail, and the **Forge cross-repo route edges** paragraph entirely. Users running both hosts saw inconsistent guidance — the CC session knew about classic aliases and Forge, the Codex session did not.
+
+Fix follows the same shape as v0.8.0's `.shared/save-body.md` extraction. Both block templates now reduce to a single line:
+
+```
+{{> .shared/managed-block-body.md}}
+```
+
+The canonical body lives once at `cli/templates/.shared/managed-block-body.md` (the richer CC variant is now the source of truth). `stampClaudeMd` (in `templates.ts`) and `stampCodexAgentsMd` (in `codex/agents.ts`) both call `resolvePartials` before placeholder substitution, so the include resolves at install time. New regression test in `template-placeholders.test.ts` asserts both block templates contain only the partial-include directive — if either ever holds inline body content again, the test fails before drift can ship. 407 tests pass (was 406).
+
+### Changed — strip concrete tool names from shipped rules
+
+The default rules shipped to every metalmind install named specific tools the maintainer happens to use (Context7, DeepWiki, Serena). These are private preferences, not universal guidance — installing metalmind into a fresh `~/.claude/` shouldn't pre-bias the user toward any particular MCP server or external CLI. Edits:
+
+- `claude/CLAUDE.md.starter.template` — replaced the `## MCP tools` section that named Context7 and Serena with a neutral one-liner: *"Install plugins, MCP servers, or external CLIs as your workflow requires. Document each in this file (or under `~/.claude/rules/`) with its purpose and any usage gotchas."*
+- `claude/rules/principles.md` — dropped the `(Context7/DeepWiki)` parenthetical from the source-verification bullet. The rule (*"check official docs before writing code — training data goes stale"*) stands; the tool reference doesn't.
+- `claude/rules/tool-philosophy.md` — `## MCP Servers` → `## MCP Servers / external CLIs` (CLIs like datadog-cli or linearis aren't MCP servers). The "see CLAUDE.md for specific tool table" line is replaced by a neutral pointer to the user's plugins/MCP/rules. Plugin bullet labels switched from descriptive (`**Code simplification**`) to the actual plugin slugs (`` **`code-simplifier`** ``, `` **`security-guidance`** ``) so they match what `/plugin list` shows.
+
+### Changed — JS/TS-only rules now scoped under `JS / TS specifics` subsections
+
+The bundled rules implied JS/TS-specific guidance was universal: strict equality, `pnpm`, `pnpm audit`, agent verification commands like `pnpm test` / `pnpm typecheck` / `pnpm ios:build`. Polyglot users hit dissonance reading "always use pnpm" in a Python project. Edits:
+
+- `claude/rules/principles.md` — `## Architecture` → `## Architecture (JS / TS projects)`; `## Sharing & Reuse` → `## Sharing & Reuse (JS / TS projects)`. New `### JS / TS specifics` subsection under `## Standards` carries the strict-equality and `pnpm` rules. The `pnpm` bullet gains a lockfile-override clause: *"or unless the project's lockfile says otherwise — `npm`/`yarn`/`bun` lockfiles override."*
+- `claude/rules/security-boundaries.md` — `## Always Do` now reads *"Audit dependencies with the project's package-manager audit command when adding new dependencies"*; concrete `pnpm audit` (or `npm audit` / `yarn audit`) lives under a new `### JS / TS specifics` subsection.
+- Engineer agents (`backend-api-engineer.md`, `backend-data-engineer.md`, `frontend-web-engineer.md`, `frontend-mobile-engineer.md`) — removed hardcoded `pnpm test` / `pnpm typecheck` / `pnpm db:generate` / `pnpm ios:build` references. Replaced with project-detection phrasing: *"read it from `package.json` scripts, `Makefile`, `pyproject.toml`, or the language equivalent."*
+
+Companion vault learning: `Learnings/templates-must-not-name-user-private-tools` (new).
+
+### Drift parity with the maintainer's installed config
+
+This release also reflects three drifts found between the maintainer's installed `~/.claude/` and the bundled templates back into the bundle: the JS/TS-scoping refactor in `principles.md`, the naming + linking refresh in `tool-philosophy.md`, and the managed-block extraction described above. After this release, a clean install of metalmind on the maintainer's machine produces zero substantive drift against `~/.claude/` (modulo placeholder substitution).
+
+---
+
 ## 0.8.5 — 2026-05-07
 
 Patch release — fixes the watcher launchd / systemd unit, which has been crash-looping silently on every fresh install since `uv tool run --from` was introduced. Existing v0.8.x users get the corrected unit re-stamped automatically on the next `metalmind stamp` or `metalmind init`.

@@ -98,6 +98,33 @@ describe('template placeholders', () => {
     expect(RENDERABLE_SUFFIXES.length).toBeGreaterThan(0);
   });
 
+  it('CC + Codex managed-block templates both wrap the shared partial (no drift possible)', async () => {
+    // v0.8.6: the metalmind block stamped into ~/.claude/CLAUDE.md and the one
+    // stamped into ~/.codex/AGENTS.md must stay identical. Earlier the two
+    // were hand-maintained and drifted (Codex's was a compressed variant
+    // missing classic aliases, --dry-run callouts, the Forge paragraph, etc.)
+    // The fix is the same shape as v0.8.0's .shared/save-body.md extraction:
+    // both consumers reduce to a single {{> ...}} include of one source file.
+    // This test enforces the contract — if either file ever holds inline
+    // body content again, the test fails before drift can ship.
+    const templatesDir = getTemplatesDir();
+    const PARTIAL_REF = '{{> .shared/managed-block-body.md}}';
+    for (const rel of ['claude/CLAUDE.md.block.template', 'codex/AGENTS.md.block.template']) {
+      const content = await readFile(join(templatesDir, rel), 'utf8');
+      expect(content.trim(), `${rel} must contain only the shared-partial include`).toBe(
+        PARTIAL_REF,
+      );
+    }
+    const partial = await readFile(join(templatesDir, '.shared', 'managed-block-body.md'), 'utf8');
+    expect(partial.length, '.shared/managed-block-body.md must not be empty').toBeGreaterThan(0);
+    expect(partial, 'shared body must reference VAULT_PATH placeholder').toContain(
+      '{{VAULT_PATH}}',
+    );
+    expect(partial, 'shared body must reference RECALL_CMD placeholder').toContain(
+      '{{RECALL_CMD}}',
+    );
+  });
+
   it('watcher unit templates invoke the entry-point shim, not `uv tool run --from`', async () => {
     // Regression for v0.8.x bug: plist used `uv tool run --from metalmind-vault-rag`,
     // which resolves the package name against PyPI. metalmind-vault-rag is never

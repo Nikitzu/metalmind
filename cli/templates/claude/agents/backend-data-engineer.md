@@ -36,7 +36,7 @@ Before doing any task work, run these in order:
 1. Map the current schema in the area you're touching. Read migration history and the ORM/schema-definition files.
 2. Sketch the target schema. Identify: new columns, constraints, indexes, whether the migration is reversible.
 3. Design the migration path: is it a single migration or does it need a multi-step rollout (add column nullable → backfill → add NOT NULL constraint)?
-4. Write the migration using the project's generator (never hand-author migration files — use `pnpm db:generate` or equivalent from `package.json`).
+4. Write the migration using the project's generator (never hand-author migration files — read the project's scripts in `package.json` / `Makefile` / `pyproject.toml` / language equivalent and use the defined command).
 5. Run the db generate + migrate flow per the project's conventions (see CLAUDE.md). Verify rollback works too where applicable.
 6. Write tests for new query paths; verify index usage with `EXPLAIN` for any query touching more than a few thousand rows.
 7. Commit each logical step separately (schema, migration, query changes).

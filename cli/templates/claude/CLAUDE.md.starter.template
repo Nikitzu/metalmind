@@ -30,10 +30,9 @@ Minimal scope only — no layout restructure, memoization, or splitting unless a
 - Never read `.env` or any file that may contain credentials
 - Stop on API keys/passwords; respect `.claudeignore` absolutely
 
-## MCP tools
+## MCP servers / external CLIs
 
-- **Context7** — unfamiliar library APIs: `resolve-library-id` → `get-library-docs`. Skip for well-known APIs.
-- **Serena** — code navigation and symbol-level editing.
+Install plugins, MCP servers, or external CLIs as your workflow requires. Document each in this file (or under `~/.claude/rules/`) with its purpose and any usage gotchas so the model can reach for the right one.
 
 ## Plugins & skills
 

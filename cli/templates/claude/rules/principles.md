@@ -9,7 +9,7 @@
 - Follow existing patterns and conventions in the codebase
 - Prefer simplicity over cleverness
 - When referencing framework APIs (e.g., server functions, validators), always verify the correct method name from actual source/types before generating code — do not guess API names
-- **Source verification**: For unfamiliar or recently-changed APIs, check official docs (Context7/DeepWiki) before writing code — training data goes stale
+- **Source verification**: For unfamiliar or recently-changed APIs, check official docs before writing code — training data goes stale
 
 ## YAGNI (You Aren't Gonna Need It)
 
@@ -49,14 +49,14 @@
 - Only add error handling, validation, and edge cases that are actually needed
 - Prefer simple, single-component solutions over split/abstracted designs unless explicitly requested
 
-## Architecture
+## Architecture (JS / TS projects)
 
 - Follow the **1 file – 1 instance rule** — each file exports only one instance (exception: props interfaces for components)
 - Server and Client build separation should be taken into account
 - Move separate functions (mapping, calculations, transformations) into helper functions
 - Check whether logic, values, or structures can be moved to constants, enums, or types — if possible, they must be moved
 
-## Sharing & Reuse
+## Sharing & Reuse (JS / TS projects)
 
 - Helpers, enums, constants, and types must be shared if used in multiple places
 - Shared items live in root-level folders: `helpers/`, `enums/`, `constants/`, `types/`
@@ -64,9 +64,11 @@
 
 ## Standards
 
-- Always use strict equality: `===` and `!==`
-- Always use `pnpm` as the package manager unless explicitly told otherwise
 - Avoid duplication and ensure clean separation of concerns
+
+### JS / TS specifics
+- Always use strict equality: `===` and `!==`
+- Always use `pnpm` as the package manager unless explicitly told otherwise (or unless the project's lockfile says otherwise — `npm`/`yarn`/`bun` lockfiles override)
 
 ## Git & Version Control
 

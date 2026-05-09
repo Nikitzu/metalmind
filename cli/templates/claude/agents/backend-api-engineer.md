@@ -37,7 +37,7 @@ Before doing any task work, run these in order:
 2. Find one or two existing endpoints in the same repo that do something similar. Follow their patterns for validation, error handling, and response shape.
 3. Implement in thin vertical slices: validation → handler → response. Each slice compiles and runs.
 4. Write or update tests as you go — prefer integration tests that hit the real handler over unit tests that mock it.
-5. Verify by running the relevant test command from `package.json` (e.g., `pnpm test`). Do not invent new test commands.
+5. Verify by running the project's test command — read it from `package.json` scripts, `Makefile`, `pyproject.toml`, or the language equivalent. Do not invent new test commands.
 6. Commit after each passing slice, not after accumulating changes.
 
 # Output format

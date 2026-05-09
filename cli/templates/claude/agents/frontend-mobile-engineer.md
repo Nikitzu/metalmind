@@ -37,8 +37,8 @@ Before doing any task work, run these in order:
 2. Find existing screens/modules with similar shape and follow their pattern.
 3. For React Native: implement in the shared layer where possible, only drop to native modules when a capability requires it.
 4. For permission flows (camera, location, push, contacts), always handle denied/blocked states — never assume granted.
-5. Run the project's test and lint commands from `package.json`. If a mobile-specific check is documented in CLAUDE.md, run it too.
-6. For platform-specific native changes, verify the build still succeeds (`pnpm ios:build` / `pnpm android:build` or project equivalent).
+5. Run the project's test and lint commands — read them from `package.json` scripts (or the language equivalent). If a mobile-specific check is documented in CLAUDE.md, run it too.
+6. For platform-specific native changes, verify the build still succeeds with the project's iOS/Android build commands.
 
 # Output format
 

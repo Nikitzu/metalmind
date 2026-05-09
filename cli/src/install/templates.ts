@@ -289,7 +289,8 @@ export async function stampClaudeMd(opts: StampClaudeMdOptions): Promise<StampCl
     join(templatesDir, 'claude', 'CLAUDE.md.block.template'),
     'utf8',
   );
-  const rendered = blockSource
+  const resolvedBlock = await resolvePartials(blockSource, templatesDir);
+  const rendered = resolvedBlock
     .replace(/\{\{VAULT_PATH\}\}/g, opts.vaultPath)
     .replace(/\{\{RECALL_CMD\}\}/g, recallCommand(opts.flavor));
   const { action } = await upsertSentinelBlock({ path: target, content: rendered });
