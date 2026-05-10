@@ -1,6 +1,7 @@
 ---
 name: writing-vault-notes
 description: "Use when creating or editing markdown notes in an Obsidian vault through metalmind — any time the user says 'save this', 'note that', 'add to the vault', updates an existing note, or pipes a body through `metalmind scribe create|update|patch`. Covers Obsidian Flavored Markdown (wikilinks, embeds, callouts, tags, block refs, highlights, tasks) and metalmind conventions; scribe stamps frontmatter, prefer `kind:slug` wikilinks, folder-by-intent not by project, link new notes from their MOC. Invoke before writing any note body, even if the user's request is one sentence."
+model: sonnet
 ---
 
 # Writing Vault Notes

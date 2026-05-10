@@ -1,0 +1,1 @@
+../../templates/.shared/skills/writing-vault-notes/SKILL.md

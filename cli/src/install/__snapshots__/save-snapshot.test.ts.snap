@@ -3,6 +3,7 @@
 exports[`CC save.md byte-identical snapshot > classic flavor, eodHook=false, notifications=false matches v0.7.x output 1`] = `
 "---
 description: Save the current session's key insight to the Obsidian Knowledge vault
+model: sonnet
 ---
 
 You are saving a note to the user's personal Obsidian vault.
@@ -70,6 +71,7 @@ User input: $ARGUMENTS
 exports[`CC save.md byte-identical snapshot > classic flavor, eodHook=true, notifications=false matches v0.7.x output 1`] = `
 "---
 description: Save the current session's key insight to the Obsidian Knowledge vault
+model: sonnet
 ---
 
 You are saving a note to the user's personal Obsidian vault.
@@ -146,6 +148,7 @@ User input: $ARGUMENTS
 exports[`CC save.md byte-identical snapshot > classic flavor, eodHook=true, notifications=true matches v0.7.x output 1`] = `
 "---
 description: Save the current session's key insight to the Obsidian Knowledge vault
+model: sonnet
 ---
 
 You are saving a note to the user's personal Obsidian vault.
@@ -224,6 +227,7 @@ User input: $ARGUMENTS
 exports[`CC save.md byte-identical snapshot > scadrial flavor, eodHook=true, notifications=true matches v0.7.x output 1`] = `
 "---
 description: Save the current session's key insight to the Obsidian Knowledge vault
+model: sonnet
 ---
 
 You are saving a note to the user's personal Obsidian vault.

@@ -20,7 +20,8 @@
     "bench:recall-at-scale": "node bench/recall-at-scale/run.mjs",
     "bench:recall-at-scale:fetch": "node bench/recall-at-scale/scripts/fetch-hn.mjs",
     "bench:recall-at-scale:seed": "node bench/recall-at-scale/scripts/seed-gold.mjs",
-    "bench:mcp-tax": "node bench/mcp-tax-v0/run.mjs"
+    "bench:mcp-tax": "node bench/mcp-tax-v0/run.mjs",
+    "test:skills": "node cli/scripts/resolve-skill-evals.mjs | xargs npx agent-skills-eval --baseline --strict"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12"

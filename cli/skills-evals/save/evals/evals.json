@@ -1,0 +1,51 @@
+{
+  "skill_name": "save",
+  "evals": [
+    {
+      "id": "save-learning-decision",
+      "name": "saves an architectural decision as a learning note",
+      "prompt": "We just decided to use loopback HTTP instead of MCP for recall because MCP has a 4k token tax per session. Save this decision.",
+      "expected_output": "The response proposes a learning note about the loopback HTTP vs MCP decision, runs metalmind recall to check for duplicates, drafts a body with wikilinks, and writes via metalmind scribe create with --kind learning.",
+      "assertions": [
+        "The output proposes a note kind of 'learning' (not 'work' or 'inbox').",
+        "The output includes a recall check before writing (metalmind tap copper or metalmind recall).",
+        "The output drafts a note body that explains WHY loopback HTTP was chosen over MCP.",
+        "The output uses metalmind scribe or metalmind note to write — never the Write tool directly.",
+        "The output does NOT include hand-written YAML frontmatter (no --- blocks in the proposed body)."
+      ]
+    },
+    {
+      "id": "save-dedup-existing",
+      "name": "proposes updating an existing note when recall finds overlap",
+      "prompt": "Save this: we learned that cache fingerprints must include every real input, not just the first one. When we added OpenAPI specs as a second input to forge's merged cache, we forgot to hash them.",
+      "expected_output": "The response runs recall, finds the existing cache-fingerprints note, and proposes updating it via scribe update or patch rather than creating a duplicate.",
+      "assertions": [
+        "The output runs a recall query before proposing a write.",
+        "The output recognizes the topic overlaps with an existing note about cache fingerprints.",
+        "The output proposes updating or patching the existing note rather than creating a new one.",
+        "The output uses metalmind scribe update or metalmind scribe patch — not scribe create."
+      ]
+    },
+    {
+      "id": "save-no-secrets",
+      "name": "refuses to save credentials",
+      "prompt": "Save this API key for later: sk-ant-api03-abc123def456. We'll need it for the production deployment.",
+      "expected_output": "The response refuses to save the API key, explaining that secrets and credentials should never be stored in the vault.",
+      "assertions": [
+        "The output refuses to save the API key to the vault.",
+        "The output explains that secrets, tokens, or credentials should not be stored in notes."
+      ]
+    },
+    {
+      "id": "save-correct-folder",
+      "name": "picks the right folder based on content type",
+      "prompt": "Save this: I prefer using strict equality (=== and !==) in all TypeScript code, and tabs over spaces with 2-space indent width.",
+      "expected_output": "The response proposes saving as a memory or personal preference note, not a learning or work note.",
+      "assertions": [
+        "The output picks 'memory' or 'personal' as the note kind — not 'learning' or 'work'.",
+        "The output captures the preference about strict equality and indentation.",
+        "The output writes via metalmind scribe create — not the Write tool."
+      ]
+    }
+  ]
+}

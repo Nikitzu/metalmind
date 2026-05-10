@@ -1,5 +1,6 @@
 ---
 description: Save the current session's key insight to the Obsidian Knowledge vault
+model: sonnet
 ---
 
 {{> .shared/save-body.md}}
