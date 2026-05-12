@@ -31,12 +31,6 @@ Follow plugin principles during normal work even when not explicitly invoking th
 - **`code-simplifier`** — always write clear, maintainable code
 - **`security-guidance`** — proactively apply security best practices
 
-## Agents
-
-- **CRITICAL: Never spawn sub-agents (Agent tool) without explicit user permission or request**
-- Always ask before dispatching parallel agents, background agents, or any sub-agent work
-- The user decides when and how agents are used, not Claude
-
 ## Workflow
 
 1. Understand the request — what is the user really asking?

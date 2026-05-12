@@ -11,11 +11,10 @@
 - When referencing framework APIs (e.g., server functions, validators), always verify the correct method name from actual source/types before generating code — do not guess API names
 - **Source verification**: For unfamiliar or recently-changed APIs, check official docs before writing code — training data goes stale
 
-## YAGNI (You Aren't Gonna Need It)
+## YAGNI
 
-- Don't over-engineer solutions
-- Only add features and abstractions that are currently needed
-- Avoid premature optimization — and when optimizing, **measure first**: no perf work without a baseline measurement proving the problem exists
+- Add only features and abstractions currently needed
+- Optimize only with a baseline measurement proving the problem exists
 - Three similar lines are better than a premature abstraction
 
 ## Error Handling
@@ -33,21 +32,15 @@
 
 ## Documentation
 
-- **CRITICAL: Never add inline comments unless extremely needed**
-- Only add comments when code cannot be made self-explanatory through better naming or structure
-- When comments are needed, explain WHY, not WHAT (the code shows what)
-- Avoid obvious comments that restate the code
-- When updating documentation or plan files, verify task/migration status against the actual codebase state before writing
-- Do not mark items as complete unless confirmed by code inspection
-- Never commit documentation files without explicit user approval
+- Default: no inline comments. Add only when code cannot be self-explanatory through naming/structure — explain WHY, not WHAT
+- Verify task/migration status against codebase before updating plan files. Confirm by code inspection before marking complete
+- Commit documentation files only with explicit user approval
 
 ## Simplicity
 
-- Prefer straightforward solutions over complex ones
-- Don't create helpers or abstractions for one-time operations
-- Don't add features, refactors, or "improvements" beyond what was asked
-- Only add error handling, validation, and edge cases that are actually needed
-- Prefer simple, single-component solutions over split/abstracted designs unless explicitly requested
+- Straightforward solutions over complex ones. Single-component over split/abstracted unless requested
+- Helpers and abstractions only for multi-use operations
+- Scope changes to what was asked — no bonus features, refactors, or "improvements"
 
 ## Architecture (JS / TS projects)
 
@@ -72,26 +65,15 @@
 
 ## Git & Version Control
 
-- **CRITICAL: Never add AI attribution footers to commit messages**
-- Never add "Co-Authored-By: Claude" or similar AI mentions
-- Never add footers like "Generated with Claude Code" or emoji signatures
-- Commit messages should describe the changes, not the tool used
-- Before making changes, always verify which git branch is currently checked out
-- Never attempt to commit files that are in `.gitignore`
-- Use `gh` CLI for PRs, issues, and all GitHub operations
-
-## Session Workflow
-
-- **Front-load context**: Before any non-trivial task, discover plan files via `metalmind tap copper "<project>"` (semantic) or the project's `Work/MOCs/<project>.md` map-of-content. Plans live flat in `~/Knowledge/Plans/`; project affiliation is in frontmatter, not folder. Summarize understanding, stay consistent with existing plans, skip only if user explicitly asks.
-- **Never use parallel memory_observation agents** — they produce documentation, not code
-- **End-of-session memory**: Use `/save` to persist key decisions, discoveries, and context into the Obsidian vault at `~/Knowledge/`. Recall via `Bash: {{RECALL_CMD}} "<query>"` (metalmind CLI — no MCP tool schema in context). Do not write to legacy `MEMORY.md` files — that system is retired.
+- Commit messages describe the change, not the tool. No AI attribution footers, no "Co-Authored-By: Claude", no emoji signatures
+- Verify current branch before making changes
+- Use `gh` CLI for PRs, issues, and all GitHub operations. `git` + `gh` only — no wrappers
 
 ## Cleanup & Deprecation
 
-- After any migration, renaming, or removal, search the entire codebase for leftover references using Grep and Glob
-- Check: barrel exports, UI placeholder text, config files, environment variables, import paths
-- Before removing code, understand why it exists (Chesterton's Fence) — if unclear, ask before deleting
-- When deprecating: remove all consumers first, then the implementation — never leave dead exports or zombie imports
+- After migration/rename/removal: search entire codebase for leftover references (barrel exports, config, env vars, imports)
+- Before removing code, understand why it exists (Chesterton's Fence) — ask if unclear
+- Deprecation order: remove consumers first, then implementation
 
 ## Incremental Delivery
 
@@ -102,6 +84,6 @@
 
 ## Investigation Rules
 
-- Limit bug exploration to 10 minutes before proposing a concrete fix or asking for direction. Do not re-read the same files repeatedly. If stuck, present 2-3 approaches ranked by likelihood.
-- Always check existing plan documents before proposing solutions. Never contradict plans without stating the deviation and reasoning.
-- When a first fix attempt fails, do not continue with the same approach. Pause, document why it failed, propose an alternative strategy.
+- 10-minute cap on bug exploration, then propose a fix or ask for direction. Present 2-3 approaches ranked by likelihood
+- Check existing plans before proposing solutions. State deviation and reasoning if contradicting a plan
+- First fix failed → stop, document why, propose alternative. Same approach twice is a signal to change strategy
