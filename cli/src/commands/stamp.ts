@@ -3,7 +3,11 @@ import { type MetalmindHost, readConfig, writeConfig } from '../config.js';
 import { installAliases } from '../install/aliases.js';
 import { installCodex } from '../install/codex.js';
 import { promptHosts } from '../install/host-prompt.js';
-import { applyMemoryRouting, applyMetalmindSessionStartHook } from '../install/settings.js';
+import {
+  applyMemoryRouting,
+  applyMetalmindSessionStartHook,
+  applyOutputStyleSessionStartHook,
+} from '../install/settings.js';
 import { copyClaudeHooks, copyClaudeTemplates, stampClaudeMd } from '../install/templates.js';
 import { setupVault } from '../install/vault.js';
 import {
@@ -84,6 +88,17 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     const hookReg = await applyMetalmindSessionStartHook({ hookCommand: hookScript.hookCommand });
     log.info(`  script: ${hookScript.action}`);
     log.info(hookReg.changed ? '  settings.json: registered' : '  settings.json: already registered');
+
+    log.step('Output-style activation hook');
+    const outputStyleHookReg = await applyOutputStyleSessionStartHook({
+      hookCommand: hookScript.outputStyleHookCommand,
+    });
+    log.info(`  script: ${hookScript.outputStyleAction}`);
+    log.info(
+      outputStyleHookReg.changed
+        ? '  settings.json: registered'
+        : '  settings.json: already registered',
+    );
   }
 
   if (chosenHosts.includes('codex')) {

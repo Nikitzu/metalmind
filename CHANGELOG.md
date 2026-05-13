@@ -6,6 +6,40 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.10 — 2026-05-13
+
+Patch release — fixes the long-standing drift of metalmind-shipped output styles (`marsh`, `terse`) under task load and after `/compact`. The output-style mechanism in Claude Code loads the style body into the system prompt once at session start; the section then loses weight against accumulating context, and the model drifts back to verbose prose. Fix is a second SessionStart hook that re-anchors the active style body as `additionalContext` every session, plus opt-in discoverability skills.
+
+Re-stamp with `metalmind stamp` to pick up the new hook + skills.
+
+### Added — `metalmind-output-style-activate.sh` SessionStart hook
+
+New hook script shipped alongside `metalmind-session-start.sh`. Reads `outputStyle` from `~/.claude/settings.json`, locates the corresponding file in `~/.claude/output-styles/`, strips its frontmatter, and emits the body as SessionStart `additionalContext`. The rules now anchor at the top of the visible context window every session — not buried in the system prompt where compaction can prune their weight.
+
+Works for both shipped styles (`marsh`, `terse`) without configuration — the hook reads whichever style is currently active. No-ops silently when no style is set or the file is missing.
+
+Independent SessionStart entry from the metalmind memory hook, so it can be disabled separately. `metalmind uninstall` (and `teardown`) clear the registration and remove the script.
+
+### Added — `marsh` and `terse` skill bundles (auto-installed)
+
+Two new skill bundles under `cli/templates/.shared/skills/marsh/` and `.shared/skills/terse/`. Each ships a `SKILL.md` whose description triggers on natural-language requests like "be brief", "less filler", "marsh mode", "terse mode". The descriptions sit in standing skill context (~60 tokens each), letting the model self-trigger the style when the user signals they want it — even mid-session, even on conversations that started in verbose mode.
+
+Skill bodies are thin: they point at the style file as the source of truth rather than duplicating its rules. The hook does the heavy lifting of re-anchoring rules per session; the skill does discoverability.
+
+### Why this needed three layers
+
+A single output-style file (Claude's built-in mechanism) is one channel and compaction-vulnerable. A SessionStart hook adds a top-of-context re-anchor. A skill description adds self-trigger by phrase match. Together: redundant reinforcement against the failure mode that single-channel enforcement keeps hitting.
+
+### Install layer changes
+
+- `CopyClaudeHooksResult` gains `outputStyleHookScriptPath`, `outputStyleHookCommand`, `outputStyleAction`
+- New `applyOutputStyleSessionStartHook` / `clearOutputStyleSessionStartHook` in `install/settings.ts` (parallel to the existing `applyMetalmindSessionStartHook`)
+- `stamp` and the install wizard now wire both hooks; `uninstall` clears both
+- New marker constants: `OUTPUT_STYLE_HOOK_FILENAME` (in templates.ts), `OUTPUT_STYLE_HOOK_MARKER` (in settings.ts)
+- Tests in `templates.test.ts` cover the second hook's installation + idempotency
+
+---
+
 ## 0.8.9 — 2026-05-13
 
 Patch release — two template trims. First, the shipped `rules/` set now respects the [4-line CLAUDE.md thesis](https://levelup.gitconnected.com/the-4-lines-every-claude-md-needs-2717a46866f6) that landed Karpathy's January diagnosis as a behavioural foundation: more rules past the foundation compete with signal. We were carrying ~14k chars of global rules across 7 files — over Claude's recommended 12k combined limit. Opus 4.7 is more literal than 4.6 about following instructions, so the bloat hurt more than it used to. Second, user-facing copy stopped implying Obsidian is required — it never has been; the vault is plain markdown, and Obsidian is one viewer of many.

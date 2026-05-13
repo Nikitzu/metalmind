@@ -8,9 +8,14 @@ import { uninstallGraphify } from './graphify.js';
 import { unregisterMcpServers } from './mcp.js';
 import { uninstallOutputStyle } from './output-style.js';
 import { uninstallSerena } from './serena.js';
-import { clearAgentTeams, clearMemoryRouting, clearMetalmindSessionStartHook } from './settings.js';
+import {
+  clearAgentTeams,
+  clearMemoryRouting,
+  clearMetalmindSessionStartHook,
+  clearOutputStyleSessionStartHook,
+} from './settings.js';
 import { STACK_SUBDIR, stopStack } from './stack.js';
-import { METALMIND_HOOK_FILENAME } from './templates.js';
+import { METALMIND_HOOK_FILENAME, OUTPUT_STYLE_HOOK_FILENAME } from './templates.js';
 import { uninstallVaultRag } from './vault-rag.js';
 import type { WatcherPlatform } from './watcher.js';
 import { uninstallWatcher } from './watcher.js';
@@ -58,6 +63,7 @@ export interface TeardownResult {
   memoryRoutingCleared: boolean;
   agentTeamsCleared: boolean;
   sessionStartHook: { registrationCleared: boolean; scriptRemoved: boolean };
+  outputStyleHook: { registrationCleared: boolean; scriptRemoved: boolean };
   claudeMdBlocks: { global: SentinelRemoveAction; vault: SentinelRemoveAction };
 }
 
@@ -79,6 +85,7 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
     memoryRoutingCleared: false,
     agentTeamsCleared: false,
     sessionStartHook: { registrationCleared: false, scriptRemoved: false },
+    outputStyleHook: { registrationCleared: false, scriptRemoved: false },
     claudeMdBlocks: { global: 'no-file', vault: 'no-file' },
   };
 
@@ -128,6 +135,14 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
   if (existsSync(hookScriptPath)) {
     await rm(hookScriptPath, { force: true });
     result.sessionStartHook.scriptRemoved = true;
+  }
+
+  result.outputStyleHook.registrationCleared =
+    await clearOutputStyleSessionStartHook(settingsPath);
+  const outputStyleHookScriptPath = join(claudeDir, 'hooks', OUTPUT_STYLE_HOOK_FILENAME);
+  if (existsSync(outputStyleHookScriptPath)) {
+    await rm(outputStyleHookScriptPath, { force: true });
+    result.outputStyleHook.scriptRemoved = true;
   }
 
   const mcp = await unregisterMcpServers({

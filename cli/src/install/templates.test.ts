@@ -45,6 +45,11 @@ describe('templates', () => {
       '#!/usr/bin/env bash\n# recall via {{RECALL_CMD}}\n',
       'utf8',
     );
+    await writeFile(
+      join(claudeSrc, 'hooks', 'output-style-activate.sh.template'),
+      '#!/usr/bin/env bash\n# output-style activate stub\n',
+      'utf8',
+    );
     runCommand.mockReset();
     runCommand.mockResolvedValue({ stdout: '', stderr: '', ok: true, exitCode: 0 });
   });
@@ -304,6 +309,26 @@ describe('templates', () => {
       expect(second.action).toBe('updated');
       const body = await readFile(second.hookScriptPath, 'utf8');
       expect(body).toContain('metalmind recall');
+    });
+
+    it('installs the output-style activation hook alongside the memory hook', async () => {
+      const hooksDir = join(claudeDir, 'hooks');
+      const { copyClaudeHooks } = await import('./templates.js');
+      const result = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
+
+      expect(result.outputStyleAction).toBe('created');
+      expect(result.outputStyleHookCommand).toBe(`bash ${result.outputStyleHookScriptPath}`);
+      const body = await readFile(result.outputStyleHookScriptPath, 'utf8');
+      expect(body).toContain('output-style activate stub');
+    });
+
+    it('is idempotent for the output-style hook on re-run', async () => {
+      const hooksDir = join(claudeDir, 'hooks');
+      const { copyClaudeHooks } = await import('./templates.js');
+      await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
+      const second = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
+
+      expect(second.outputStyleAction).toBe('unchanged');
     });
   });
 });

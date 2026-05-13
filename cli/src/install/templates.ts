@@ -127,9 +127,13 @@ export interface CopyClaudeHooksResult {
   hookScriptPath: string;
   hookCommand: string;
   action: 'created' | 'updated' | 'unchanged';
+  outputStyleHookScriptPath: string;
+  outputStyleHookCommand: string;
+  outputStyleAction: 'created' | 'updated' | 'unchanged';
 }
 
 export const METALMIND_HOOK_FILENAME = 'metalmind-session-start.sh';
+export const OUTPUT_STYLE_HOOK_FILENAME = 'metalmind-output-style-activate.sh';
 
 // Renderer may be sync OR async — async needed for renderers that call
 // resolvePartials (which reads files) to compose cleanly into the copy flow.
@@ -355,7 +359,31 @@ export async function copyClaudeHooks(
     await chmod(hookScriptPath, 0o755);
   }
 
-  return { hookScriptPath, hookCommand: `bash ${hookScriptPath}`, action };
+  // Output-style activation hook: re-anchors the active output-style body on
+  // every SessionStart so the rules survive context compaction. No template
+  // variables — bash reads ~/.claude/settings.json + output-styles/ at runtime.
+  const outputStyleHookScriptPath = join(hooksDir, OUTPUT_STYLE_HOOK_FILENAME);
+  const outputStyleSrc = join(templatesDir, 'claude', 'hooks', 'output-style-activate.sh.template');
+  const outputStyleRaw = await readFile(outputStyleSrc, 'utf8');
+
+  let outputStyleAction: CopyClaudeHooksResult['outputStyleAction'] = 'created';
+  if (existsSync(outputStyleHookScriptPath)) {
+    const existing = await readFile(outputStyleHookScriptPath, 'utf8');
+    outputStyleAction = existing === outputStyleRaw ? 'unchanged' : 'updated';
+  }
+  if (outputStyleAction !== 'unchanged') {
+    await writeFile(outputStyleHookScriptPath, outputStyleRaw, 'utf8');
+    await chmod(outputStyleHookScriptPath, 0o755);
+  }
+
+  return {
+    hookScriptPath,
+    hookCommand: `bash ${hookScriptPath}`,
+    action,
+    outputStyleHookScriptPath,
+    outputStyleHookCommand: `bash ${outputStyleHookScriptPath}`,
+    outputStyleAction,
+  };
 }
 
 export async function appendGlobalGitignore(

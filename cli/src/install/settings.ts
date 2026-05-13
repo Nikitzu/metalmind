@@ -8,6 +8,7 @@ export const DISABLE_AUTO_MEMORY_KEY = 'CLAUDE_CODE_DISABLE_AUTO_MEMORY';
 export const AGENT_TEAMS_ENV_KEY = 'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS';
 export const AGENT_TEAMS_TEAMMATE_MODE = 'tmux';
 export const METALMIND_HOOK_MARKER = 'metalmind-session-start.sh';
+export const OUTPUT_STYLE_HOOK_MARKER = 'metalmind-output-style-activate.sh';
 
 export interface ClaudeHookEntry {
   type: 'command';
@@ -164,6 +165,12 @@ function isMetalmindHookGroup(group: ClaudeHookGroup): boolean {
   );
 }
 
+function isOutputStyleHookGroup(group: ClaudeHookGroup): boolean {
+  return group.hooks.some(
+    (h) => typeof h?.command === 'string' && h.command.includes(OUTPUT_STYLE_HOOK_MARKER),
+  );
+}
+
 export async function applyMetalmindSessionStartHook(
   opts: SessionStartHookOptions,
 ): Promise<SessionStartHookResult> {
@@ -192,6 +199,59 @@ export async function applyMetalmindSessionStartHook(
   data.hooks = hooks;
   await writeSettings(settingsPath, data);
   return { settingsPath, changed: true };
+}
+
+/**
+ * Register the output-style activation hook as a sibling SessionStart entry
+ * alongside the metalmind memory hook. Independent group so users can disable
+ * one without losing the other. Idempotent: same hookCommand → no-op.
+ */
+export async function applyOutputStyleSessionStartHook(
+  opts: SessionStartHookOptions,
+): Promise<SessionStartHookResult> {
+  const settingsPath = opts.settingsPath ?? DEFAULT_SETTINGS_PATH;
+  const data = await readSettings(settingsPath);
+  const hooks = data.hooks ?? {};
+  const sessionStart = hooks.SessionStart ?? [];
+
+  const desired: ClaudeHookGroup = {
+    matcher: '',
+    hooks: [{ type: 'command', command: opts.hookCommand }],
+  };
+
+  const other = sessionStart.filter((g) => !isOutputStyleHookGroup(g));
+  const existing = sessionStart.find(isOutputStyleHookGroup);
+  const alreadyCorrect =
+    existing !== undefined &&
+    existing.hooks.length === 1 &&
+    existing.hooks[0]?.command === opts.hookCommand;
+
+  if (alreadyCorrect && other.length === sessionStart.length - 1) {
+    return { settingsPath, changed: false };
+  }
+
+  hooks.SessionStart = [...other, desired];
+  data.hooks = hooks;
+  await writeSettings(settingsPath, data);
+  return { settingsPath, changed: true };
+}
+
+export async function clearOutputStyleSessionStartHook(settingsPath?: string): Promise<boolean> {
+  const path = settingsPath ?? DEFAULT_SETTINGS_PATH;
+  if (!existsSync(path)) return false;
+  const data = await readSettings(path);
+  const hooks = data.hooks;
+  if (!hooks || !Array.isArray(hooks.SessionStart)) return false;
+
+  const filtered = hooks.SessionStart.filter((g) => !isOutputStyleHookGroup(g));
+  if (filtered.length === hooks.SessionStart.length) return false;
+
+  if (filtered.length === 0) delete hooks.SessionStart;
+  else hooks.SessionStart = filtered;
+  if (Object.keys(hooks).length === 0) delete data.hooks;
+  else data.hooks = hooks;
+  await writeSettings(path, data);
+  return true;
 }
 
 export async function clearMetalmindSessionStartHook(settingsPath?: string): Promise<boolean> {

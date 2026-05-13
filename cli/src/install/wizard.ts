@@ -10,7 +10,12 @@ import { type FlavorChoice, installOutputStyle } from './output-style.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
 import { installUv, UV_INSTALL_COMMAND } from './uv.js';
 import { installSerena } from './serena.js';
-import { applyAgentTeams, applyMemoryRouting, applyMetalmindSessionStartHook } from './settings.js';
+import {
+  applyAgentTeams,
+  applyMemoryRouting,
+  applyMetalmindSessionStartHook,
+  applyOutputStyleSessionStartHook,
+} from './settings.js';
 import { setupStack } from './stack.js';
 import {
   appendGlobalGitignore,
@@ -372,6 +377,17 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     log.success(`  ${hookScript.action} ${hookScript.hookScriptPath}`);
     log.info(
       hookReg.changed ? '  registered in settings.json → SessionStart' : '  already registered',
+    );
+
+    log.step('Installing output-style activation hook (re-anchors style against drift)');
+    const outputStyleHookReg = await applyOutputStyleSessionStartHook({
+      hookCommand: hookScript.outputStyleHookCommand,
+    });
+    log.success(`  ${hookScript.outputStyleAction} ${hookScript.outputStyleHookScriptPath}`);
+    log.info(
+      outputStyleHookReg.changed
+        ? '  registered in settings.json → SessionStart'
+        : '  already registered',
     );
 
     log.step('Copying rules, agents, commands');
