@@ -61,7 +61,7 @@ const program = new Command();
 
 program
   .name('metalmind')
-  .description('Unified CLI for Obsidian vault, code graph, and cross-repo intelligence.')
+  .description('Unified CLI for a markdown vault (Obsidian-compatible), code graph, and cross-repo intelligence.')
   .version(pkg.version);
 
 program
@@ -156,7 +156,7 @@ const storeCmd = program
 attachStoreFlags(
   storeCmd
     .command('copper <insight>')
-    .description('Store an insight in your coppermind (the Obsidian vault)'),
+    .description('Store an insight in your coppermind (your vault)'),
 ).action((insight: string, cmdOpts: { title?: string; tag?: string[]; project?: string }) => {
   const opts: StoreOptions = {
     title: cmdOpts.title,
@@ -221,7 +221,7 @@ const tapCmd = program
 attachTapFlags(
   tapCmd
     .command('copper [query]')
-    .description('Recall notes from your coppermind (the Obsidian vault)'),
+    .description('Recall notes from your coppermind (your vault)'),
 ).action((query: string | undefined, cmdOpts: TapCliOpts) => tap(query, normalizeTapOpts(cmdOpts)));
 
 attachTapFlags(

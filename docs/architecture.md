@@ -21,7 +21,7 @@ Every module reads or writes through these — never bypassing them. The integra
 
 ### 1. The vault (`~/Knowledge/` by default)
 
-Plain-markdown Obsidian vault with frontmatter. Owned by the user, never by metalmind. Folder layout:
+Plain-markdown vault with frontmatter (Obsidian-compatible, not required). Owned by the user, never by metalmind. Folder layout:
 
 ```
 <vault>/

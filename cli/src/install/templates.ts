@@ -1,5 +1,14 @@
 import { existsSync } from 'node:fs';
-import { appendFile, chmod, copyFile, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import {
+  appendFile,
+  chmod,
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  unlink,
+  writeFile,
+} from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { runCommand } from '../util/exec.js';
@@ -53,6 +62,30 @@ export function renderFlavorSentinels(source: string, flavor: 'scadrial' | 'clas
 
 export interface CopyClaudeTemplatesResult {
   copied: string[];
+  removed: string[];
+}
+
+/**
+ * Files we used to ship under `~/.claude/rules/` but have since retired.
+ * On every `metalmind init` we remove them from the user's `claudeDir` so
+ * old installs converge on the current template set. Safe by construction —
+ * only files metalmind itself shipped are listed here.
+ */
+export const LEGACY_RULES_FILES = ['tool-philosophy.md'];
+
+async function removeLegacyRules(claudeDir: string): Promise<string[]> {
+  const removed: string[] = [];
+  for (const name of LEGACY_RULES_FILES) {
+    const target = join(claudeDir, 'rules', name);
+    if (!existsSync(target)) continue;
+    try {
+      await unlink(target);
+      removed.push(`rules/${name}`);
+    } catch {
+      // Best-effort: a permission error or race shouldn't break install.
+    }
+  }
+  return removed;
 }
 
 export interface StampClaudeMdOptions {
@@ -229,6 +262,7 @@ export async function copyClaudeTemplates(
     (name) => name.endsWith('.md'),
     () => renderRecall,
   );
+  const removedLegacy = await removeLegacyRules(claudeDir);
   const agents = await copyDir(
     join(srcRoot, 'agents'),
     join(claudeDir, 'agents'),
@@ -265,6 +299,7 @@ export async function copyClaudeTemplates(
       ...ccSkills.copied.map((n) => `skills/${n}`),
       ...sharedSkills.copied.map((n) => `skills/${n}`),
     ],
+    removed: removedLegacy,
   };
 }
 

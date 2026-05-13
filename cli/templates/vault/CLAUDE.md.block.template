@@ -1,6 +1,6 @@
 # Knowledge Vault
 
-Personal Obsidian vault. Claude persists insights via the `/save` skill and recalls them via the `metalmind` CLI (Bash) — no MCP tools are registered for recall, which keeps session-start context clean.
+Personal markdown vault. Claude persists insights via the `/save` skill and recalls them via the `metalmind` CLI (Bash) — no MCP tools are registered for recall, which keeps session-start context clean.
 
 ## Folders
 

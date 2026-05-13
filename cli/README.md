@@ -16,7 +16,7 @@ cli/
 │   ├── install/               Wizard + per-concern installers
 │   │   ├── wizard.ts          Orchestration
 │   │   ├── prereqs.ts         Platform + tool detection
-│   │   ├── vault.ts           Obsidian vault scaffold
+│   │   ├── vault.ts           Vault scaffold
 │   │   ├── serena.ts          Serena install via uv tool
 │   │   ├── graphify.ts        graphify install via uv tool
 │   │   ├── vault-rag.ts       metalmind-vault-rag install via uv tool
@@ -37,7 +37,7 @@ cli/
 │   ├── metalmind-stack/       compose.yml for Qdrant + Ollama
 │   ├── vault-rag-pkg/         Populated by scripts/sync-vault-rag-pkg.mjs
 │   │                          from ../../packages/vault-rag/ (gitignored)
-│   ├── vault/                 CLAUDE.md.template for the Obsidian vault
+│   ├── vault/                 CLAUDE.md.template for the markdown vault
 │   ├── claude/                Global CLAUDE.md + rules + agents + commands
 │   ├── launchd/               macOS plist template
 │   ├── systemd/               Linux .service template

@@ -1,4 +1,4 @@
-You are saving a note to the user's personal Obsidian vault.
+You are saving a note to the user's personal markdown vault.
 
 ## What to save
 

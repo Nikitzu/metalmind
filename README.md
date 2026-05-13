@@ -40,7 +40,7 @@ metalmind pays off when your knowledge lives across **more than one repo**. A si
 - **One vault, every project.** `project:` frontmatter plus a MOC per project. A decision written in repo A surfaces when you `tap copper` in repo B if it's topically relevant. Native `CLAUDE.md` is scoped per-project; learnings don't cross-pollinate.
 - **Cross-repo code graph via forge.** `metalmind burn bronze "<q>" --forge <group>` queries every repo in a group. HTTP-route edges connect a caller in one service to a handler in another — Claude native has no concept of "the other service's code." More on the [forge page](https://metalmind.mzyx.dev/forge).
 - **Knowledge that compounds.** Each new project starts with every learning you've documented elsewhere. `Learnings/` is intentionally flat — "CLIs should never paste weird package-manager invocations" applies to every repo. With native memory you'd copy-paste the insight into every project's `CLAUDE.md` separately.
-- **Decisions that outlive the codebase.** Repos get archived, rewritten, replaced. The vault doesn't — plain markdown in your own Obsidian directory, searchable forever.
+- **Decisions that outlive the codebase.** Repos get archived, rewritten, replaced. The vault doesn't — plain markdown in your own directory, searchable forever.
 
 **Where native `/memory` still wins:** solo repo, under ~50 notes of context, no historical lookback needed. Below that break-even, it's simpler and free. metalmind earns its install cost when you've got more to remember than a single `CLAUDE.md` can cheaply hold.
 
@@ -50,7 +50,7 @@ metalmind pays off when your knowledge lives across **more than one repo**. A si
 
 ### Memory
 
-- **Save once.** `metalmind store copper "<insight>"` (alias: `save`) deposits a decision into your local Obsidian vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes.
+- **Save once.** `metalmind store copper "<insight>"` (alias: `save`) deposits a decision into your local vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes.
 
 - **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session — most memory tools silently inject a handful of tool schemas — often heavily over-specified — into every host session before you've typed a prompt (measured: [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/)). We stamp the command into your `CLAUDE.md` (and `~/.codex/AGENTS.md` when Codex is installed) so the model reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback for hosts that need it.
   <br><sub>**Measured** on the 12-note fake vault in [`bench/recall-v0/`](bench/recall-v0/): **hit@5 = 90%**, **hit@3 = 85%**, **hit@1 = 70%**, latency **median 45 ms / p95 87 ms**. Hit payloads are billed like any other bash output; the MCP tax we avoid is the standing tool-schema cost, not the result tokens.</sub>
@@ -235,7 +235,7 @@ One verb, one job. Each engine is swappable:
 | Concern | Engine |
 |---|---|
 | Semantic recall | [sqlite-vec](https://github.com/asg017/sqlite-vec) + [fastembed](https://github.com/qdrant/fastembed), `BAAI/bge-small-en-v1.5`, all in-process |
-| Vault | [Obsidian](https://obsidian.md) at `~/Knowledge/` |
+| Vault | Plain markdown at `~/Knowledge/` ([Obsidian](https://obsidian.md)-compatible, not required) |
 | Symbol navigation + rename | [Serena](https://github.com/oraios/serena) (LSP-backed) |
 | Code graph + cross-repo edges | [graphify](https://pypi.org/project/graphifyy/) |
 | Incremental indexing | [watchfiles](https://github.com/samuelcolvin/watchfiles) + launchd / systemd |

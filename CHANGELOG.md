@@ -6,6 +6,32 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.9 — 2026-05-13
+
+Patch release — two template trims. First, the shipped `rules/` set now respects the [4-line CLAUDE.md thesis](https://levelup.gitconnected.com/the-4-lines-every-claude-md-needs-2717a46866f6) that landed Karpathy's January diagnosis as a behavioural foundation: more rules past the foundation compete with signal. We were carrying ~14k chars of global rules across 7 files — over Claude's recommended 12k combined limit. Opus 4.7 is more literal than 4.6 about following instructions, so the bloat hurt more than it used to. Second, user-facing copy stopped implying Obsidian is required — it never has been; the vault is plain markdown, and Obsidian is one viewer of many.
+
+Re-stamp with `metalmind stamp` to pick up the refreshed templates. Existing installs that have `~/.claude/rules/tool-philosophy.md` will see it removed on the next stamp.
+
+### Changed — `rules/principles.md` trimmed to six unique sections
+
+Before: thirteen sections covering everything from "Write clean, maintainable, and readable code" (which Claude already does) to "Always use `pnpm`" (which a lockfile dictates) to a full "Architecture (JS/TS projects)" + "Sharing & Reuse (JS/TS projects)" block (wrong scope for a global file — belongs in project `CLAUDE.md`).
+
+After: only sections that pass the litmus "would removing this cause Claude to make a mistake it couldn't recover from?" — **YAGNI**, **Error Handling**, **Git & Version Control**, **Cleanup & Deprecation**, **Incremental Delivery**, **Investigation Rules**. The cut Code Quality / Testing / Documentation / Simplicity content was either already covered by the 4-line behavioural foundation (now first-class in `CLAUDE.md`) or by skill descriptions (`test-driven-development`, `documentation-and-adrs`). Language-specific guidance (`===`, `pnpm`, file-instance rules) was wrong scope at the global level.
+
+### Removed — `rules/tool-philosophy.md` deleted, including from existing installs
+
+The shipped file was meta — "Efficiency over automation," a "user says X → use skill Y" mapping table, a 4-step workflow. Skill descriptions already convey the mapping; the workflow guidance was generic. Net contribution against the 12k cap: bloat.
+
+`copyClaudeTemplates` now removes `rules/tool-philosophy.md` from `~/.claude/rules/` on every install pass (new `removed` field on the result). This is the first legacy-file cleanup in the install layer — extend `LEGACY_RULES_FILES` when we retire future shipped rules. Best-effort: a permission error never breaks install. Tests in `cli/src/install/templates.test.ts` cover both the new copy shape and the stale-file removal.
+
+### Changed — user-facing copy stops implying Obsidian is required
+
+Fourteen call sites across `README.md`, `cli/src/cli.ts`, `cli/src/install/vault.ts`, `cli/templates/claude/commands/save.md`, `cli/templates/codex/skills/save/SKILL.md`, `cli/templates/.shared/save-body.md`, `cli/templates/vault/CLAUDE.md.block.template`, `cli/templates/claude/hooks/session-start.sh.template`, `cli/templates/.shared/skills/writing-vault-notes/SKILL.md`, `cli/skills-evals/save/SKILL.md`, `cli/README.md`, and `docs/architecture.md` referred to "the Obsidian vault" as if Obsidian were a runtime dependency. It isn't — the vault is plain markdown, Obsidian is one optional viewer alongside `grep`, `git`, and any other markdown tool. The init prompt now reads "Vault path", not "Obsidian vault path". Stack table reads "Plain markdown at `~/Knowledge/` (Obsidian-compatible, not required)". The `writing-vault-notes` skill keeps Obsidian Flavored Markdown (OFM) references — OFM is the supported syntax dialect, not the required runtime.
+
+Kept as-is: `.obsidian/` filesystem references (only fire when Obsidian is present), `docs/prerequisites.md` (already labels Obsidian "optional but recommended"), historical CHANGELOG entries, eval/bench fixtures.
+
+---
+
 ## 0.8.6 — 2026-05-09
 
 Patch release — three template fixes: closes the long-running drift between the metalmind block stamped into Claude Code and Codex CLI; strips concrete tool names (Context7, Serena, DeepWiki) and JS/TS-only assumptions (`pnpm` as a universal default) from rules and agents shipped to all users; clarifies plugin naming. No code-path changes, no behavioural break — re-stamp with `metalmind stamp` to pick up the refreshed templates.

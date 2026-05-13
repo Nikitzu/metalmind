@@ -1,5 +1,5 @@
 ---
-description: Save the current session's key insight to the Obsidian Knowledge vault
+description: Save the current session's key insight to your Knowledge vault
 model: sonnet
 ---
 

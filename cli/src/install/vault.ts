@@ -30,7 +30,7 @@ export interface SetupVaultOptions {
 
 export async function promptVaultPath(defaultPath = '~/Knowledge'): Promise<string> {
   const answer = await text({
-    message: 'Obsidian vault path',
+    message: 'Vault path',
     placeholder: defaultPath,
     initialValue: defaultPath,
     validate: (value) => {

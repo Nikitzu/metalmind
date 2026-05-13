@@ -26,7 +26,6 @@ describe('templates', () => {
     await mkdir(join(claudeSrc, 'agents'), { recursive: true });
     await mkdir(join(claudeSrc, 'commands'), { recursive: true });
     await writeFile(join(claudeSrc, 'rules', 'principles.md'), '# principles\n', 'utf8');
-    await writeFile(join(claudeSrc, 'rules', 'tool-philosophy.md'), '# tools\n', 'utf8');
     await writeFile(join(claudeSrc, 'agents', 'architect.md'), '# architect\n', 'utf8');
     await writeFile(join(claudeSrc, 'commands', 'save.md'), '# save\n', 'utf8');
     await writeFile(join(claudeSrc, 'commands', 'team-debug.md'), '# team-debug\n', 'utf8');
@@ -61,12 +60,27 @@ describe('templates', () => {
 
       expect(result.copied).toEqual([
         'rules/principles.md',
-        'rules/tool-philosophy.md',
         'agents/architect.md',
         'commands/save.md',
       ]);
+      expect(result.removed).toEqual([]);
       expect(existsSync(join(claudeDir, 'rules', 'principles.md'))).toBe(true);
       expect(existsSync(join(claudeDir, 'commands', 'team-debug.md'))).toBe(false);
+    });
+
+    it('removes legacy rule files left over from earlier versions', async () => {
+      await mkdir(join(claudeDir, 'rules'), { recursive: true });
+      await writeFile(
+        join(claudeDir, 'rules', 'tool-philosophy.md'),
+        '# legacy tools\n',
+        'utf8',
+      );
+
+      const { copyClaudeTemplates } = await import('./templates.js');
+      const result = await copyClaudeTemplates({ templatesDir, claudeDir });
+
+      expect(result.removed).toContain('rules/tool-philosophy.md');
+      expect(existsSync(join(claudeDir, 'rules', 'tool-philosophy.md'))).toBe(false);
     });
 
     it('includes team commands when withTeams=true', async () => {
