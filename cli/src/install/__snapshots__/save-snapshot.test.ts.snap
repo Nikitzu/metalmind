@@ -2,11 +2,11 @@
 
 exports[`CC save.md byte-identical snapshot > classic flavor, eodHook=false, notifications=false matches v0.7.x output 1`] = `
 "---
-description: Save the current session's key insight to the Obsidian Knowledge vault
+description: Save the current session's key insight to your Knowledge vault
 model: sonnet
 ---
 
-You are saving a note to the user's personal Obsidian vault.
+You are saving a note to the user's personal markdown vault.
 
 ## What to save
 
@@ -70,11 +70,11 @@ User input: $ARGUMENTS
 
 exports[`CC save.md byte-identical snapshot > classic flavor, eodHook=true, notifications=false matches v0.7.x output 1`] = `
 "---
-description: Save the current session's key insight to the Obsidian Knowledge vault
+description: Save the current session's key insight to your Knowledge vault
 model: sonnet
 ---
 
-You are saving a note to the user's personal Obsidian vault.
+You are saving a note to the user's personal markdown vault.
 
 ## What to save
 
@@ -147,11 +147,11 @@ User input: $ARGUMENTS
 
 exports[`CC save.md byte-identical snapshot > classic flavor, eodHook=true, notifications=true matches v0.7.x output 1`] = `
 "---
-description: Save the current session's key insight to the Obsidian Knowledge vault
+description: Save the current session's key insight to your Knowledge vault
 model: sonnet
 ---
 
-You are saving a note to the user's personal Obsidian vault.
+You are saving a note to the user's personal markdown vault.
 
 ## What to save
 
@@ -226,11 +226,11 @@ User input: $ARGUMENTS
 
 exports[`CC save.md byte-identical snapshot > scadrial flavor, eodHook=true, notifications=true matches v0.7.x output 1`] = `
 "---
-description: Save the current session's key insight to the Obsidian Knowledge vault
+description: Save the current session's key insight to your Knowledge vault
 model: sonnet
 ---
 
-You are saving a note to the user's personal Obsidian vault.
+You are saving a note to the user's personal markdown vault.
 
 ## What to save
 
