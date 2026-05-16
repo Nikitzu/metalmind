@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# metalmind-cursor-session-start — Cursor sessionStart hook.
+#
+# LATENT: Cursor 3.1.15 has a staff-confirmed bug where additional_context
+# from sessionStart is dropped before reaching the agent. This script is
+# correct per the documented schema and starts working when Cursor ships the
+# fix. Until then, recall is delivered by the metalmind-recall skill.
+set -euo pipefail
+cat <<'JSON'
+{
+  "additional_context": "metalmind memory is available. Before any non-trivial task, run `{{RECALL_CMD}} \"<query>\"` to recall prior decisions from the vault. Use `metalmind scribe` to write notes — never raw file writes."
+}
+JSON
