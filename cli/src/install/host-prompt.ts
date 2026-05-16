@@ -28,9 +28,10 @@ export interface PromptHostsResult {
 const HOST_LABELS: Record<MetalmindHost, string> = {
   claude: 'Claude Code (~/.claude)',
   codex: 'Codex CLI (~/.codex)',
+  cursor: 'Cursor (~/.cursor)',
 };
 
-const HOST_ORDER: readonly MetalmindHost[] = ['claude', 'codex'];
+const HOST_ORDER: readonly MetalmindHost[] = ['claude', 'codex', 'cursor'];
 
 function intersect(
   candidate: MetalmindHost[] | undefined,

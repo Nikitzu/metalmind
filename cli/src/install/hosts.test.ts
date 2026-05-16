@@ -15,32 +15,65 @@ describe('detectHosts', () => {
     await rm(tmpHome, { recursive: true, force: true });
   });
 
-  it('returns false/false on empty home', () => {
-    expect(detectHosts({ home: tmpHome })).toEqual({ claude: false, codex: false });
+  it('returns all false on empty home', () => {
+    expect(detectHosts({ home: tmpHome })).toEqual({
+      claude: false,
+      codex: false,
+      cursor: false,
+    });
   });
 
   it('detects claude only', async () => {
     await mkdir(join(tmpHome, '.claude'), { recursive: true });
-    expect(detectHosts({ home: tmpHome })).toEqual({ claude: true, codex: false });
+    expect(detectHosts({ home: tmpHome })).toEqual({
+      claude: true,
+      codex: false,
+      cursor: false,
+    });
   });
 
   it('detects codex only', async () => {
     await mkdir(join(tmpHome, '.codex'), { recursive: true });
-    expect(detectHosts({ home: tmpHome })).toEqual({ claude: false, codex: true });
+    expect(detectHosts({ home: tmpHome })).toEqual({
+      claude: false,
+      codex: true,
+      cursor: false,
+    });
   });
 
-  it('detects both', async () => {
+  it('detects cursor only', async () => {
+    await mkdir(join(tmpHome, '.cursor'), { recursive: true });
+    expect(detectHosts({ home: tmpHome })).toEqual({
+      claude: false,
+      codex: false,
+      cursor: true,
+    });
+  });
+
+  it('detects all three', async () => {
     await mkdir(join(tmpHome, '.claude'), { recursive: true });
     await mkdir(join(tmpHome, '.codex'), { recursive: true });
-    expect(detectHosts({ home: tmpHome })).toEqual({ claude: true, codex: true });
+    await mkdir(join(tmpHome, '.cursor'), { recursive: true });
+    expect(detectHosts({ home: tmpHome })).toEqual({
+      claude: true,
+      codex: true,
+      cursor: true,
+    });
   });
 });
 
 describe('detectedAsList', () => {
-  it('preserves claude-then-codex ordering', () => {
-    expect(detectedAsList({ claude: true, codex: true })).toEqual(['claude', 'codex']);
-    expect(detectedAsList({ claude: false, codex: true })).toEqual(['codex']);
-    expect(detectedAsList({ claude: true, codex: false })).toEqual(['claude']);
-    expect(detectedAsList({ claude: false, codex: false })).toEqual([]);
+  it('preserves claude-then-codex-then-cursor ordering', () => {
+    expect(detectedAsList({ claude: true, codex: true, cursor: true })).toEqual([
+      'claude',
+      'codex',
+      'cursor',
+    ]);
+    expect(detectedAsList({ claude: false, codex: true, cursor: false })).toEqual(['codex']);
+    expect(detectedAsList({ claude: true, codex: false, cursor: true })).toEqual([
+      'claude',
+      'cursor',
+    ]);
+    expect(detectedAsList({ claude: false, codex: false, cursor: false })).toEqual([]);
   });
 });

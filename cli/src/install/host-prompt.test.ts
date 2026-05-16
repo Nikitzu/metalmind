@@ -12,7 +12,7 @@ import { promptHosts } from './host-prompt.js';
 describe('promptHosts', () => {
   it('returns [] when no hosts detected (no prompt fires)', async () => {
     multiselect.mockReset();
-    const result = await promptHosts({ detection: { claude: false, codex: false } });
+    const result = await promptHosts({ detection: { claude: false, codex: false, cursor: false } });
     expect(result).toEqual({ hosts: [], cancelled: false });
     expect(multiselect).not.toHaveBeenCalled();
   });
@@ -20,7 +20,7 @@ describe('promptHosts', () => {
   it('forced overrides everything; intersected with detection', async () => {
     multiselect.mockReset();
     const result = await promptHosts({
-      detection: { claude: true, codex: true },
+      detection: { claude: true, codex: true, cursor: false },
       forced: ['codex'],
     });
     expect(result.hosts).toEqual(['codex']);
@@ -29,7 +29,7 @@ describe('promptHosts', () => {
 
   it('forced silently drops undetected hosts', async () => {
     const result = await promptHosts({
-      detection: { claude: true, codex: false },
+      detection: { claude: true, codex: false, cursor: false },
       forced: ['codex'],
     });
     expect(result.hosts).toEqual([]);
@@ -38,7 +38,7 @@ describe('promptHosts', () => {
   it('noPrompt returns preChecked verbatim (intersected with detection)', async () => {
     multiselect.mockReset();
     const result = await promptHosts({
-      detection: { claude: true, codex: true },
+      detection: { claude: true, codex: true, cursor: false },
       preChecked: ['codex'],
       noPrompt: true,
     });
@@ -48,7 +48,7 @@ describe('promptHosts', () => {
 
   it('noPrompt with preChecked dropping undetected', async () => {
     const result = await promptHosts({
-      detection: { claude: true, codex: false },
+      detection: { claude: true, codex: false, cursor: false },
       preChecked: ['codex'],
       noPrompt: true,
     });
@@ -61,7 +61,7 @@ describe('promptHosts', () => {
       async ({ initialValues }) => initialValues as unknown,
     );
     const result = await promptHosts({
-      detection: { claude: true, codex: true },
+      detection: { claude: true, codex: true, cursor: false },
       preChecked: ['claude'],
     });
     expect(multiselect).toHaveBeenCalledTimes(1);
@@ -73,7 +73,7 @@ describe('promptHosts', () => {
     multiselect.mockImplementation(
       async ({ initialValues }) => initialValues as unknown,
     );
-    const result = await promptHosts({ detection: { claude: true, codex: true } });
+    const result = await promptHosts({ detection: { claude: true, codex: true, cursor: false } });
     expect(result.hosts).toEqual(['claude', 'codex']);
   });
 
@@ -83,7 +83,7 @@ describe('promptHosts', () => {
     isCancel.mockReset();
     multiselect.mockResolvedValue(cancelSym);
     isCancel.mockImplementation((v) => v === cancelSym);
-    const result = await promptHosts({ detection: { claude: true, codex: true } });
+    const result = await promptHosts({ detection: { claude: true, codex: true, cursor: false } });
     expect(result).toEqual({ hosts: [], cancelled: true });
   });
 });

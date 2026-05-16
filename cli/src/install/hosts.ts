@@ -8,6 +8,7 @@ export type { MetalmindHost } from '../config.js';
 export interface HostsDetectionResult {
   claude: boolean;
   codex: boolean;
+  cursor: boolean;
 }
 
 export interface DetectHostsOptions {
@@ -18,6 +19,7 @@ export interface DetectHostsOptions {
 export const HOST_DIRS: Record<MetalmindHost, string> = {
   claude: '.claude',
   codex: '.codex',
+  cursor: '.cursor',
 };
 
 export function detectHosts(opts: DetectHostsOptions = {}): HostsDetectionResult {
@@ -25,6 +27,7 @@ export function detectHosts(opts: DetectHostsOptions = {}): HostsDetectionResult
   return {
     claude: existsSync(join(home, HOST_DIRS.claude)),
     codex: existsSync(join(home, HOST_DIRS.codex)),
+    cursor: existsSync(join(home, HOST_DIRS.cursor)),
   };
 }
 
@@ -33,5 +36,6 @@ export function detectedAsList(detection: HostsDetectionResult): MetalmindHost[]
   const out: MetalmindHost[] = [];
   if (detection.claude) out.push('claude');
   if (detection.codex) out.push('codex');
+  if (detection.cursor) out.push('cursor');
   return out;
 }
