@@ -6,6 +6,16 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.11 — 2026-05-18
+
+Patch release — corrects broken wikilink guidance. The `writing-vault-notes` skill and the cookbook told agents to write `[[kind:slug]]` wikilinks (e.g. `[[learning:cache-fingerprints]]`). Obsidian has no `kind:` link resolver, so it reads `learning:cache-fingerprints` as a filename — and `:` is an illegal filename character. Clicking such a link raises `File name cannot contain any of the following characters: \ / :`. The `kind:slug` form is a metalmind CLI argument convention only; it was never valid wikilink syntax.
+
+Re-stamp with `metalmind stamp` to pick up the corrected skill.
+
+### Changed — wikilink guidance is plain-stem only
+
+`cli/templates/.shared/skills/writing-vault-notes/SKILL.md` (and its eval copy) now instruct plain-stem wikilinks — `[[cache-fingerprints]]`, never a `kind:` prefix, never a path. `docs/cookbook.md` updated to match, with an explicit note on the Obsidian failure mode. Vaults with existing `[[kind:slug]]` links should rewrite them to `[[slug]]`; stems resolve vault-wide.
+
 ## 0.8.10 — 2026-05-13
 
 Patch release — fixes the long-standing drift of metalmind-shipped output styles (`marsh`, `terse`) under task load and after `/compact`. The output-style mechanism in Claude Code loads the style body into the system prompt once at session start; the section then loses weight against accumulating context, and the model drifts back to verbose prose. Fix is a second SessionStart hook that re-anchors the active style body as `additionalContext` every session, plus opt-in discoverability skills.
