@@ -6,6 +6,12 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.12 — 2026-05-19
+
+Patch release — follow-up to 0.8.11. The `writing-vault-notes` skill and the cookbook still showed `metalmind scribe create kind:slug` examples (e.g. `scribe create learning:my-topic`). `scribe create` does not accept a `kind:slug` argument — it takes a plain title plus `--kind` (`scribe create "my topic" --kind learning`). The `kind:slug` shortcut is only for commands that address an **existing** note: `scribe update`, `scribe patch`, `gold`, `delete`, `show`, `rename`. The wrong examples are corrected and the distinction is now stated explicitly.
+
+Re-stamp with `metalmind stamp` to pick up the corrected skill.
+
 ## 0.8.11 — 2026-05-18
 
 Patch release — corrects broken wikilink guidance. The `writing-vault-notes` skill and the cookbook told agents to write `[[kind:slug]]` wikilinks (e.g. `[[learning:cache-fingerprints]]`). Obsidian has no `kind:` link resolver, so it reads `learning:cache-fingerprints` as a filename — and `:` is an illegal filename character. Clicking such a link raises `File name cannot contain any of the following characters: \ / :`. The `kind:slug` form is a metalmind CLI argument convention only; it was never valid wikilink syntax.

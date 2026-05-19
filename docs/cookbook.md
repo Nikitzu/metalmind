@@ -72,7 +72,7 @@ Write wikilinks as plain stems: `[[cache-fingerprints]]`, never `[[learning:cach
 
 A `kind:` prefix inside `[[ ]]` is **broken in Obsidian** — there is no `kind:` link resolver, so `[[learning:slug]]` is read as a filename containing an illegal `:` and a click raises `File name cannot contain any of the following characters: \ / :`. Path links rot the moment the file moves. Stem links resolve vault-wide and `scribe rename` rewrites them cleanly; keep slugs unique so the stem stays unambiguous.
 
-`kind:slug` is a metalmind **CLI argument** form (`scribe create learning:foo`, `gold plan:bar`) — it is not wikilink syntax.
+`kind:slug` is a metalmind **CLI argument** form for addressing **existing** notes (`scribe update learning:foo`, `scribe patch learning:foo`, `gold plan:bar`) — it is not wikilink syntax. Note `scribe create` does **not** take `kind:slug`; it takes a plain title plus `--kind` (`scribe create "foo" --kind learning`).
 
 ```markdown
 Reasoning lives in [[silent-fallback-bugs-compound]] —

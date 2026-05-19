@@ -54,7 +54,7 @@ Both names always work — prefer whichever the user's `CLAUDE.md` suggests. If 
 2. **Pick the intent folder**, not a per-project subdir: `Work/`, `Personal/`, `Learnings/`, `Daily/`, `Inbox/`, `Plans/`, `Archive/`.
 3. **Write the body** using the syntax below. No frontmatter when piping through scribe.
 4. **Link internally via wikilinks.** Use plain stem links — `[[cache-fingerprints]]`, not `[[learning:cache-fingerprints]]`. Obsidian resolves stems vault-wide and has no `kind:` resolver; a `kind:` prefix yields an unresolvable link (`:` is an illegal filename char). The `kind:slug` form is for metalmind CLI arguments only, never wikilink bodies.
-5. **Pass to scribe on stdin:** `printf '%s' "$body" | metalmind scribe create learning:my-topic`.
+5. **Pass to scribe on stdin:** `printf '%s' "$body" | metalmind scribe create "my topic" --kind learning`. `scribe create` takes a plain title plus `--kind` — never a `kind:slug` argument.
 
 ## Syntax reference
 
@@ -71,7 +71,7 @@ Both names always work — prefer whichever the user's `CLAUDE.md` suggests. If 
 
 Wikilinks resolve by filename stem (no `.md`, no folder path). Be consistent with case — some vaults are case-sensitive.
 
-> **Never put a `kind:` prefix inside `[[ ]]`.** `[[learning:slug]]` is unresolvable in Obsidian — `:` is an illegal filename char, so a click triggers a "File name cannot contain..." error. `kind:slug` is a metalmind CLI argument form (`scribe create learning:foo`, `gold plan:bar`) — not a wikilink.
+> **Never put a `kind:` prefix inside `[[ ]]`.** `[[learning:slug]]` is unresolvable in Obsidian — `:` is an illegal filename char, so a click triggers a "File name cannot contain..." error. `kind:slug` is a metalmind CLI argument form for addressing **existing** notes (`scribe update learning:foo`, `scribe patch learning:foo`, `gold plan:bar`) — not a wikilink, and not how `scribe create` works (`create` takes a title + `--kind`).
 
 ### Embeds
 
@@ -210,7 +210,7 @@ Project affiliation lives in frontmatter (`project: metalmind`), and a matching 
 
 ## Example
 
-A learning note — body passed as stdin to `metalmind scribe create learning:cache-fingerprints-need-all-inputs`:
+A learning note — body passed as stdin to `metalmind scribe create "cache fingerprints need all inputs" --kind learning`:
 
 ```markdown
 Cache staleness fingerprints must include every real input, not just the first one. When we added OpenAPI specs as a second input to forge's merged cache, we forgot to hash them — so spec edits didn't invalidate the cache and downstream edges stayed stale.
