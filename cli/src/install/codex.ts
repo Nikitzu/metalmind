@@ -15,67 +15,61 @@
 // - mcp:          opt-in `codex mcp add` wrapper
 // - orchestrator: installCodex / uninstallCodex compositions
 
-export { DEFAULT_CODEX_DIR, recallCommand } from './codex/shared.js';
-
 export {
   clearCodexAgentsMd,
-  stampCodexAgentsMd,
   type StampCodexAgentsMdOptions,
   type StampCodexAgentsMdResult,
+  stampCodexAgentsMd,
 } from './codex/agents.js';
-
 export {
+  type ApplyCodexHooksJsonOptions,
+  type ApplyCodexHooksJsonResult,
   applyCodexHooksJson,
+  type CopyCodexHookOptions,
+  type CopyCodexHookResult,
   clearCodexHooksJson,
   copyCodexHook,
   METALMIND_CODEX_HOOK_FILENAME,
   removeCodexHookScript,
-  type ApplyCodexHooksJsonOptions,
-  type ApplyCodexHooksJsonResult,
-  type CopyCodexHookOptions,
-  type CopyCodexHookResult,
 } from './codex/hooks.js';
-
 export {
-  applyCodexNetworkAccess,
-  clearCodexNetworkAccess,
-  type ApplyCodexNetworkAccessOptions,
-  type ApplyCodexNetworkAccessResult,
-} from './codex/network.js';
-
-export {
-  copyCodexPrefixRules,
-  METALMIND_RULES_FILENAME,
-  removeCodexPrefixRules,
-  type CopyCodexPrefixRulesOptions,
-  type CopyCodexPrefixRulesResult,
-} from './codex/rules.js';
-
-export {
-  copyCodexSkills,
-  METALMIND_CODEX_SKILLS,
-  removeCodexSkills,
-  type CopyCodexSkillsOptions,
-  type CopyCodexSkillsResult,
-  type MetalmindCodexSkill,
-} from './codex/skills.js';
-
-export {
+  type AddCodexMcpServerOptions,
+  type AddCodexMcpServerResult,
   addCodexMcpServer,
   DEFAULT_CODEX_MCP_NAME,
   DEFAULT_METALMIND_HTTP_URL,
-  removeCodexMcpServer,
-  type AddCodexMcpServerOptions,
-  type AddCodexMcpServerResult,
   type RemoveCodexMcpServerOptions,
   type RemoveCodexMcpServerResult,
+  removeCodexMcpServer,
 } from './codex/mcp.js';
 
 export {
-  installCodex,
-  uninstallCodex,
+  type ApplyCodexNetworkAccessOptions,
+  type ApplyCodexNetworkAccessResult,
+  applyCodexNetworkAccess,
+  clearCodexNetworkAccess,
+} from './codex/network.js';
+export {
   type InstallCodexOptions,
   type InstallCodexResult,
+  installCodex,
   type UninstallCodexOptions,
   type UninstallCodexResult,
+  uninstallCodex,
 } from './codex/orchestrator.js';
+export {
+  type CopyCodexPrefixRulesOptions,
+  type CopyCodexPrefixRulesResult,
+  copyCodexPrefixRules,
+  METALMIND_RULES_FILENAME,
+  removeCodexPrefixRules,
+} from './codex/rules.js';
+export { DEFAULT_CODEX_DIR, recallCommand } from './codex/shared.js';
+export {
+  type CopyCodexSkillsOptions,
+  type CopyCodexSkillsResult,
+  copyCodexSkills,
+  METALMIND_CODEX_SKILLS,
+  type MetalmindCodexSkill,
+  removeCodexSkills,
+} from './codex/skills.js';

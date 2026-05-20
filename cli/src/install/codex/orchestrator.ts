@@ -10,34 +10,18 @@
 
 import { join } from 'node:path';
 import type { SentinelUpsertAction } from '../../util/sentinel.js';
-import {
-  clearCodexAgentsMd,
-  stampCodexAgentsMd,
-} from './agents.js';
+import { clearCodexAgentsMd, stampCodexAgentsMd } from './agents.js';
 import {
   applyCodexHooksJson,
   clearCodexHooksJson,
   copyCodexHook,
   removeCodexHookScript,
 } from './hooks.js';
-import {
-  addCodexMcpServer,
-  removeCodexMcpServer,
-} from './mcp.js';
-import {
-  applyCodexNetworkAccess,
-  clearCodexNetworkAccess,
-} from './network.js';
-import {
-  copyCodexPrefixRules,
-  removeCodexPrefixRules,
-} from './rules.js';
+import { addCodexMcpServer, removeCodexMcpServer } from './mcp.js';
+import { applyCodexNetworkAccess, clearCodexNetworkAccess } from './network.js';
+import { copyCodexPrefixRules, removeCodexPrefixRules } from './rules.js';
 import { DEFAULT_CODEX_DIR } from './shared.js';
-import {
-  copyCodexSkills,
-  type MetalmindCodexSkill,
-  removeCodexSkills,
-} from './skills.js';
+import { copyCodexSkills, type MetalmindCodexSkill, removeCodexSkills } from './skills.js';
 
 export interface InstallCodexOptions {
   vaultPath: string;

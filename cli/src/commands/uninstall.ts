@@ -136,10 +136,10 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
       if (codex.agentsMd) log.success('Stripped metalmind block from ~/.codex/AGENTS.md');
       if (codex.hooksJson) log.success('Removed SessionStart entry from ~/.codex/hooks.json');
       if (codex.hookScript) log.success('Deleted ~/.codex/hooks/metalmind-session-start.sh');
-      if (codex.networkAccess) log.success('Stripped network_access block from ~/.codex/config.toml');
+      if (codex.networkAccess)
+        log.success('Stripped network_access block from ~/.codex/config.toml');
       if (codex.prefixRules) log.success('Deleted ~/.codex/rules/metalmind.rules');
-      if (codex.skills.length > 0)
-        log.success(`Removed Codex skills: ${codex.skills.join(', ')}`);
+      if (codex.skills.length > 0) log.success(`Removed Codex skills: ${codex.skills.join(', ')}`);
       if (codex.mcp === 'removed') log.success('codex mcp remove metalmind succeeded');
       else if (codex.mcp === 'codex-not-found')
         log.info('codex binary not on PATH — skipped MCP unregister (no-op since not registered)');

@@ -27,7 +27,8 @@ describe('codex install end-to-end smoke', () => {
   it('installCodex → checkCodexInstall green → uninstallCodex → checkCodexInstall red', async () => {
     // Pre-seed default.rules with user-acceptance content; we must never touch it.
     await mkdir(join(codexDir, 'rules'), { recursive: true });
-    const defaultRulesContent = '# Codex user-acceptance log\nprefix_rule(["other"], decision="allow")\n';
+    const defaultRulesContent =
+      '# Codex user-acceptance log\nprefix_rule(["other"], decision="allow")\n';
     const { writeFile } = await import('node:fs/promises');
     const defaultRulesPath = join(codexDir, 'rules', 'default.rules');
     await writeFile(defaultRulesPath, defaultRulesContent, 'utf8');
@@ -200,7 +201,11 @@ describe('checkCodexInstall — agents-mirror divergence detection', () => {
     const mirrorPath = join(homeDir, '.agents', 'skills', 'synod');
     await mkdir(ccPath, { recursive: true });
     await mkdir(mirrorPath, { recursive: true });
-    await writeFile(join(ccPath, 'SKILL.md'), '---\nname: synod\ndescription: fixed\n---\n', 'utf8');
+    await writeFile(
+      join(ccPath, 'SKILL.md'),
+      '---\nname: synod\ndescription: fixed\n---\n',
+      'utf8',
+    );
     await writeFile(
       join(mirrorPath, 'SKILL.md'),
       '---\nname: synod\ndescription: STALE BROKEN VERSION\n---\n',

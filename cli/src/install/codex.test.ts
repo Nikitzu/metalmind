@@ -297,9 +297,7 @@ describe('applyCodexHooksJson', () => {
       JSON.stringify(
         {
           hooks: {
-            PreToolUse: [
-              { matcher: '', hooks: [{ type: 'command', command: '/usr/bin/audit' }] },
-            ],
+            PreToolUse: [{ matcher: '', hooks: [{ type: 'command', command: '/usr/bin/audit' }] }],
           },
         },
         null,
@@ -438,11 +436,7 @@ describe('applyCodexNetworkAccess', () => {
   it('preserves user TOML outside the sentinels', async () => {
     const target = join(codexDir, 'config.toml');
     await mkdir(codexDir, { recursive: true });
-    await writeFile(
-      target,
-      '[mcp_servers.user_thing]\nurl = "http://localhost:99"\n',
-      'utf8',
-    );
+    await writeFile(target, '[mcp_servers.user_thing]\nurl = "http://localhost:99"\n', 'utf8');
     await applyCodexNetworkAccess({ templatesDir: TEMPLATES_DIR, codexDir });
     const content = await readFile(target, 'utf8');
     expect(content).toContain('[mcp_servers.user_thing]');
@@ -515,8 +509,7 @@ describe('copyCodexPrefixRules', () => {
     const rulesDir = join(codexDir, 'rules');
     await mkdir(rulesDir, { recursive: true });
     const defaultRulesPath = join(rulesDir, 'default.rules');
-    const sentinel =
-      '# Codex user-acceptance log\nprefix_rule(["other"], decision="allow")\n';
+    const sentinel = '# Codex user-acceptance log\nprefix_rule(["other"], decision="allow")\n';
     await writeFile(defaultRulesPath, sentinel, 'utf8');
     await copyCodexPrefixRules({ templatesDir: TEMPLATES_DIR, codexDir });
     expect(await readFile(defaultRulesPath, 'utf8')).toBe(sentinel);
@@ -733,11 +726,7 @@ describe('removeCodexSkills', () => {
   it('removes our skills; preserves user skills', async () => {
     const userSkillDir = join(codexDir, 'skills', 'my-custom');
     await mkdir(userSkillDir, { recursive: true });
-    await writeFile(
-      join(userSkillDir, 'SKILL.md'),
-      '---\nname: my-custom\n---\n',
-      'utf8',
-    );
+    await writeFile(join(userSkillDir, 'SKILL.md'), '---\nname: my-custom\n---\n', 'utf8');
     await copyCodexSkills({ flavor: 'classic', templatesDir: TEMPLATES_DIR, codexDir });
     const removed = await removeCodexSkills({ codexDir });
     expect(removed.sort()).toEqual(['save', 'synod', 'writing-vault-notes']);

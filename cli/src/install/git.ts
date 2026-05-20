@@ -81,7 +81,11 @@ export async function setupVaultGit(opts: SetupVaultGitOptions): Promise<SetupVa
 
   let initialCommit = false;
   let commitWarning: string | undefined;
-  if (!alreadyTracked && !(await hasAnyCommit(vaultPath)) && (await workingTreeHasChanges(vaultPath))) {
+  if (
+    !alreadyTracked &&
+    !(await hasAnyCommit(vaultPath)) &&
+    (await workingTreeHasChanges(vaultPath))
+  ) {
     const add = await runCommand('git', ['-C', vaultPath, 'add', '-A']);
     if (!add.ok) {
       commitWarning = `git add failed: ${add.stderr || 'unknown error'}`;

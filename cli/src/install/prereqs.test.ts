@@ -94,12 +94,7 @@ describe('prereqs', () => {
     const { detectPrereqs } = await import('./prereqs.js');
     const results = await detectPrereqs();
     expect(results).toHaveLength(4);
-    expect(results.map((r) => r.name)).toEqual([
-      'Claude Code',
-      'Python 3.11+',
-      'uv',
-      'git',
-    ]);
+    expect(results.map((r) => r.name)).toEqual(['Claude Code', 'Python 3.11+', 'uv', 'git']);
   });
 
   it('detectPrereqs adds Docker when includeDocker=true (legacy backend)', async () => {
