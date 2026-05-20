@@ -6,6 +6,22 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.13 — 2026-05-20
+
+Patch release — adds a per-turn output-style re-anchor hook to fix mid-session drift on Claude Code. Pattern borrowed from `caveman`'s `UserPromptSubmit` reinforcement: the 0.8.10 `SessionStart` anchor handles fresh sessions and post-`/compact` cases, but the style still fades under sustained task pressure on long sessions because nothing re-injects it between turns. The new sibling hook fires on every user message and emits a short (~25 token) reminder, keeping the active style name and core rules at the top of attention every turn. Token cost is dwarfed by the output savings of the style actually firing — typically 30–50% on chat replies.
+
+Scope is Claude Code only — output styles are a Claude Code feature. Codex hosts are unaffected.
+
+Re-stamp with `metalmind stamp` to pick up the new hook in `~/.claude/settings.json`. Existing `SessionStart` activation hook is unchanged; the new entry lives independently under `UserPromptSubmit` so users can disable one without losing the other.
+
+### Added — `metalmind-output-style-reanchor.sh` hook
+
+`cli/templates/claude/hooks/output-style-reanchor.sh.template` — reads `outputStyle` from `~/.claude/settings.json` and emits `{ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: ... } }`. No-ops silently when no style is active. Mirrors the runtime model of the existing activation hook but skips the full-body re-emit — only a short marker reminder ships per turn.
+
+### Added — install/teardown wiring
+
+`cli/src/install/settings.ts` gains `applyOutputStyleUserPromptSubmitHook` and `clearOutputStyleUserPromptSubmitHook`, mirroring the existing SessionStart pair. `cli/src/install/templates.ts` `copyClaudeHooks` now also copies the re-anchor template and returns its script path/command. `wizard.ts` and `commands/stamp.ts` register the new hook alongside the existing two. `teardown.ts` clears the registration and removes the script.
+
 ## 0.8.12 — 2026-05-19
 
 Patch release — follow-up to 0.8.11. The `writing-vault-notes` skill and the cookbook still showed `metalmind scribe create kind:slug` examples (e.g. `scribe create learning:my-topic`). `scribe create` does not accept a `kind:slug` argument — it takes a plain title plus `--kind` (`scribe create "my topic" --kind learning`). The `kind:slug` shortcut is only for commands that address an **existing** note: `scribe update`, `scribe patch`, `gold`, `delete`, `show`, `rename`. The wrong examples are corrected and the distinction is now stated explicitly.

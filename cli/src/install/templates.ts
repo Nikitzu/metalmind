@@ -130,10 +130,14 @@ export interface CopyClaudeHooksResult {
   outputStyleHookScriptPath: string;
   outputStyleHookCommand: string;
   outputStyleAction: 'created' | 'updated' | 'unchanged';
+  outputStyleReanchorHookScriptPath: string;
+  outputStyleReanchorHookCommand: string;
+  outputStyleReanchorAction: 'created' | 'updated' | 'unchanged';
 }
 
 export const METALMIND_HOOK_FILENAME = 'metalmind-session-start.sh';
 export const OUTPUT_STYLE_HOOK_FILENAME = 'metalmind-output-style-activate.sh';
+export const OUTPUT_STYLE_REANCHOR_HOOK_FILENAME = 'metalmind-output-style-reanchor.sh';
 
 // Renderer may be sync OR async — async needed for renderers that call
 // resolvePartials (which reads files) to compose cleanly into the copy flow.
@@ -376,6 +380,29 @@ export async function copyClaudeHooks(
     await chmod(outputStyleHookScriptPath, 0o755);
   }
 
+  // Output-style re-anchor hook: UserPromptSubmit sibling that emits a short
+  // (~25 token) reminder every turn. Anchors the style against mid-session
+  // drift even after the SessionStart body fades from attention. No template
+  // variables — bash reads ~/.claude/settings.json at runtime.
+  const outputStyleReanchorHookScriptPath = join(hooksDir, OUTPUT_STYLE_REANCHOR_HOOK_FILENAME);
+  const outputStyleReanchorSrc = join(
+    templatesDir,
+    'claude',
+    'hooks',
+    'output-style-reanchor.sh.template',
+  );
+  const outputStyleReanchorRaw = await readFile(outputStyleReanchorSrc, 'utf8');
+
+  let outputStyleReanchorAction: CopyClaudeHooksResult['outputStyleReanchorAction'] = 'created';
+  if (existsSync(outputStyleReanchorHookScriptPath)) {
+    const existing = await readFile(outputStyleReanchorHookScriptPath, 'utf8');
+    outputStyleReanchorAction = existing === outputStyleReanchorRaw ? 'unchanged' : 'updated';
+  }
+  if (outputStyleReanchorAction !== 'unchanged') {
+    await writeFile(outputStyleReanchorHookScriptPath, outputStyleReanchorRaw, 'utf8');
+    await chmod(outputStyleReanchorHookScriptPath, 0o755);
+  }
+
   return {
     hookScriptPath,
     hookCommand: `bash ${hookScriptPath}`,
@@ -383,6 +410,9 @@ export async function copyClaudeHooks(
     outputStyleHookScriptPath,
     outputStyleHookCommand: `bash ${outputStyleHookScriptPath}`,
     outputStyleAction,
+    outputStyleReanchorHookScriptPath,
+    outputStyleReanchorHookCommand: `bash ${outputStyleReanchorHookScriptPath}`,
+    outputStyleReanchorAction,
   };
 }
 

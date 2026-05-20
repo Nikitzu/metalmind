@@ -7,6 +7,7 @@ import {
   applyMemoryRouting,
   applyMetalmindSessionStartHook,
   applyOutputStyleSessionStartHook,
+  applyOutputStyleUserPromptSubmitHook,
 } from '../install/settings.js';
 import { copyClaudeHooks, copyClaudeTemplates, stampClaudeMd } from '../install/templates.js';
 import { setupVault } from '../install/vault.js';
@@ -87,7 +88,9 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     const hookScript = await copyClaudeHooks({ flavor: config.flavor });
     const hookReg = await applyMetalmindSessionStartHook({ hookCommand: hookScript.hookCommand });
     log.info(`  script: ${hookScript.action}`);
-    log.info(hookReg.changed ? '  settings.json: registered' : '  settings.json: already registered');
+    log.info(
+      hookReg.changed ? '  settings.json: registered' : '  settings.json: already registered',
+    );
 
     log.step('Output-style activation hook');
     const outputStyleHookReg = await applyOutputStyleSessionStartHook({
@@ -97,6 +100,17 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     log.info(
       outputStyleHookReg.changed
         ? '  settings.json: registered'
+        : '  settings.json: already registered',
+    );
+
+    log.step('Output-style re-anchor hook (per-turn drift guard)');
+    const outputStyleReanchorReg = await applyOutputStyleUserPromptSubmitHook({
+      hookCommand: hookScript.outputStyleReanchorHookCommand,
+    });
+    log.info(`  script: ${hookScript.outputStyleReanchorAction}`);
+    log.info(
+      outputStyleReanchorReg.changed
+        ? '  settings.json: registered (UserPromptSubmit)'
         : '  settings.json: already registered',
     );
   }
@@ -116,9 +130,7 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     log.info(`  prefix rules: ${codexResult.prefixRules}`);
     log.info(`  skills: ${codexResult.skills.join(', ')}`);
     if (codexResult.mcp === 'codex-not-found') {
-      log.warn(
-        '  --with-mcp requested but `codex` binary not on PATH; skipped MCP registration.',
-      );
+      log.warn('  --with-mcp requested but `codex` binary not on PATH; skipped MCP registration.');
     } else {
       log.info(`  MCP server: ${codexResult.mcp}`);
     }

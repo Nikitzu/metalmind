@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# metalmind output-style re-anchor hook — UserPromptSubmit event.
+#
+# Why this exists: the SessionStart sibling injects the full output-style body
+# once per session. After many turns or context compaction, even that anchor
+# loses weight relative to recent context and the model drifts back to verbose
+# prose mid-conversation. This hook fires on every user message and emits a
+# *short* (~25 token) reminder marker, keeping the style name visible at the
+# top of the model's attention every turn — without re-paying the full body
+# tokens per turn.
+#
+# Reads `outputStyle` from ~/.claude/settings.json (or $CLAUDE_CONFIG_DIR).
+# No-ops silently when no style is active — never breaks a session.
+#
+# Token cost: ~25-30 input tokens per turn. Offset by the output savings of
+# the style actually firing (typically 30-50% on chat replies). Net positive.
+
+set -euo pipefail
+
+CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+SETTINGS="$CONFIG_DIR/settings.json"
+
+[ -f "$SETTINGS" ] || exit 0
+command -v jq >/dev/null 2>&1 || exit 0
+
+ACTIVE=$(jq -r '.outputStyle // empty' "$SETTINGS" 2>/dev/null || true)
+[ -n "$ACTIVE" ] || exit 0
+
+REMINDER="Output style '$ACTIVE' is active. Hold its rules from the first token of this reply. No warm-up phrases. No drift under task load. Code blocks, security warnings, and destructive-action confirmations remain normal prose."
+
+jq -nc --arg ctx "$REMINDER" '{
+  hookSpecificOutput: {
+    hookEventName: "UserPromptSubmit",
+    additionalContext: $ctx
+  }
+}'
