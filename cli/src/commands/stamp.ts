@@ -3,6 +3,7 @@ import { type MetalmindHost, readConfig, writeConfig } from '../config.js';
 import { installAliases } from '../install/aliases.js';
 import { installCodex } from '../install/codex.js';
 import { promptHosts } from '../install/host-prompt.js';
+import { migrateTerseToTelegraph } from '../install/output-style.js';
 import {
   applyMemoryRouting,
   applyMetalmindSessionStartHook,
@@ -91,6 +92,16 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     log.info(
       hookReg.changed ? '  settings.json: registered' : '  settings.json: already registered',
     );
+
+    log.step('Output-style rename: terse → telegraph (legacy migration)');
+    const styleMigration = await migrateTerseToTelegraph();
+    if (styleMigration.migrated) {
+      if (styleMigration.fileRenamed) log.info('  ~/.claude/output-styles/terse.md → telegraph.md');
+      if (styleMigration.settingsUpdated)
+        log.info('  settings.json: outputStyle terse → telegraph');
+    } else {
+      log.info('  no legacy terse style found; nothing to migrate');
+    }
 
     log.step('Output-style activation hook');
     const outputStyleHookReg = await applyOutputStyleSessionStartHook({

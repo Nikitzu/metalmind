@@ -1,6 +1,6 @@
 ---
 name: marsh
-description: "Use when the user asks for brief, terse, fragment-style responses — phrases like 'be brief', 'less filler', 'no fluff', 'short answer', 'marsh', 'marsh mode'. Also invoke when the conversation drifts back to verbose prose mid-session and the active output style is `marsh` (check `outputStyle` in ~/.claude/settings.json). Re-anchors the marsh rules so they survive compaction and task pressure."
+description: "Use when the user asks for brief, terse, fragment-style responses — phrases like 'be brief', 'less filler', 'no fluff', 'short answer', 'marsh', 'marsh mode', 'inquisitor mode'. Also invoke when the conversation drifts back to verbose prose mid-session and the active output style is `marsh` (check `outputStyle` in ~/.claude/settings.json). Re-anchors the Marsh / Era-1 Inquisitor persona so it survives compaction and task pressure."
 ---
 
 # Marsh activation

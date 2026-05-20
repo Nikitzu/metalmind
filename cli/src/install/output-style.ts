@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 export const DEFAULT_OUTPUT_STYLES_DIR = join(homedir(), '.claude', 'output-styles');
 export const DEFAULT_SETTINGS_PATH = join(homedir(), '.claude', 'settings.json');
 
-export type FlavorChoice = 'marsh' | 'terse';
+export type FlavorChoice = 'marsh' | 'telegraph';
 
 export interface InstallOutputStyleOptions {
   choice: FlavorChoice;
@@ -55,8 +55,8 @@ function flavorName(choice: FlavorChoice): string {
 
 function flavorDescription(choice: FlavorChoice): string {
   return choice === 'marsh'
-    ? 'Terse Era-1 Inquisitor voice — fragments, no filler, no pleasantries'
-    : 'Terse engineering voice — fragments, no filler, no pleasantries';
+    ? 'Era-1 Inquisitor voice — spikes through eyes, no warmth, no filler'
+    : 'Telegraph operator voice — every word costs, every word counts';
 }
 
 interface ParsedFrontmatter {
@@ -110,14 +110,86 @@ async function findLegacyFile(
   outputStylesDir: string,
   declared: string | undefined,
 ): Promise<string | null> {
-  const candidates = [declared, 'caveman'].filter(
-    (name): name is string => !!name && name !== 'marsh' && name !== 'terse',
+  const candidates = [declared, 'caveman', 'terse'].filter(
+    (name): name is string => !!name && name !== 'marsh' && name !== 'telegraph',
   );
   for (const name of candidates) {
     const path = join(outputStylesDir, `${name}.md`);
     if (existsSync(path)) return path;
   }
   return null;
+}
+
+export interface MigrateTerseToTelegraphOptions {
+  outputStylesDir?: string;
+  settingsPath?: string;
+  assetsDir?: string;
+}
+
+export interface MigrateTerseToTelegraphResult {
+  migrated: boolean;
+  fileRenamed: boolean;
+  settingsUpdated: boolean;
+}
+
+/**
+ * Rename a previously-installed `terse` output style to `telegraph` (the new
+ * persona-named slug shipped in 0.8.14). Safe to call on every stamp — no-ops
+ * when no `terse` state is present.
+ *
+ * Behaviour:
+ *  - If `~/.claude/output-styles/terse.md` exists and `telegraph.md` does not:
+ *    rewrite frontmatter (`name: terse` → `name: telegraph`) and rename.
+ *    Body is preserved so user edits survive.
+ *  - If both exist, the legacy `terse.md` is deleted (telegraph wins).
+ *  - If `settings.outputStyle === 'terse'`, point it at `'telegraph'`.
+ */
+export async function migrateTerseToTelegraph(
+  opts: MigrateTerseToTelegraphOptions = {},
+): Promise<MigrateTerseToTelegraphResult> {
+  const outputStylesDir = opts.outputStylesDir ?? DEFAULT_OUTPUT_STYLES_DIR;
+  const settingsPath = opts.settingsPath ?? DEFAULT_SETTINGS_PATH;
+  const assetsDir = opts.assetsDir ?? getAssetsDir();
+
+  const tersePath = join(outputStylesDir, 'terse.md');
+  const telegraphPath = join(outputStylesDir, 'telegraph.md');
+
+  const hasTerse = existsSync(tersePath);
+  const hasTelegraph = existsSync(telegraphPath);
+
+  const settings = await readSettings(settingsPath);
+  const current = typeof settings.outputStyle === 'string' ? settings.outputStyle : null;
+  const pointsAtTerse = current === 'terse';
+
+  if (!hasTerse && !pointsAtTerse) {
+    return { migrated: false, fileRenamed: false, settingsUpdated: false };
+  }
+
+  let fileRenamed = false;
+  if (hasTerse && !hasTelegraph) {
+    const body = await readFile(tersePath, 'utf8');
+    await writeFile(telegraphPath, rewriteFrontmatter(body, 'telegraph'), 'utf8');
+    await unlink(tersePath);
+    fileRenamed = true;
+  } else if (hasTerse && hasTelegraph) {
+    // telegraph already present — drop the legacy file
+    await unlink(tersePath);
+    fileRenamed = true;
+  } else if (!hasTerse && pointsAtTerse && !hasTelegraph) {
+    // settings point at a missing file — fall back to bundled asset
+    await mkdir(outputStylesDir, { recursive: true });
+    await copyFile(join(assetsDir, 'telegraph.md'), telegraphPath);
+    fileRenamed = true;
+  }
+
+  let settingsUpdated = false;
+  if (pointsAtTerse) {
+    settings.outputStyle = 'telegraph';
+    await writeSettings(settingsPath, settings);
+    settingsUpdated = true;
+  }
+
+  return { migrated: true, fileRenamed, settingsUpdated };
 }
 
 export async function installOutputStyle(

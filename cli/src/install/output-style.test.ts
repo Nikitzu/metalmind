@@ -3,7 +3,11 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { installOutputStyle, uninstallOutputStyle } from './output-style.js';
+import {
+  installOutputStyle,
+  migrateTerseToTelegraph,
+  uninstallOutputStyle,
+} from './output-style.js';
 
 describe('output-style', () => {
   let tmp: string;
@@ -39,7 +43,7 @@ Custom body the user edited.
     settingsPath = join(tmp, 'settings.json');
     await mkdir(assetsDir, { recursive: true });
     await writeFile(join(assetsDir, 'marsh.md'), assetTemplate('marsh'), 'utf8');
-    await writeFile(join(assetsDir, 'terse.md'), assetTemplate('terse'), 'utf8');
+    await writeFile(join(assetsDir, 'telegraph.md'), assetTemplate('telegraph'), 'utf8');
   });
 
   afterEach(async () => {
@@ -79,7 +83,7 @@ Custom body the user edited.
 
     const written = await readFile(result.stylePath, 'utf8');
     expect(written).toContain('name: marsh');
-    expect(written).toContain('description: Terse Era-1 Inquisitor voice');
+    expect(written).toContain('description: Era-1 Inquisitor voice');
     expect(written).toContain('Custom body the user edited.');
   });
 
@@ -91,7 +95,7 @@ Custom body the user edited.
     );
 
     await installOutputStyle({
-      choice: 'terse',
+      choice: 'telegraph',
       assetsDir,
       outputStylesDir,
       settingsPath,
@@ -99,7 +103,7 @@ Custom body the user edited.
 
     const raw = await readFile(settingsPath, 'utf8');
     const settings = JSON.parse(raw);
-    expect(settings.outputStyle).toBe('terse');
+    expect(settings.outputStyle).toBe('telegraph');
     expect(settings.env.FOO).toBe('bar');
   });
 
@@ -130,14 +134,14 @@ Custom body the user edited.
 
   it('uninstall removes outputStyle when no prior value', async () => {
     await installOutputStyle({
-      choice: 'terse',
+      choice: 'telegraph',
       assetsDir,
       outputStylesDir,
       settingsPath,
     });
 
     await uninstallOutputStyle({
-      styleName: 'terse',
+      styleName: 'telegraph',
       priorValue: null,
       outputStylesDir,
       settingsPath,
@@ -195,16 +199,16 @@ Custom body the user edited.
       expect(written).not.toContain('keep-coding-instructions');
     });
 
-    it('heals a broken-stamp terse.md (name: Terse) when body matches current asset', async () => {
+    it('heals a broken-stamp telegraph.md (name: Telegraph) when body matches current asset', async () => {
       await mkdir(outputStylesDir, { recursive: true });
       await writeFile(
-        join(outputStylesDir, 'terse.md'),
-        await brokenStampOf('terse', 'Terse'),
+        join(outputStylesDir, 'telegraph.md'),
+        await brokenStampOf('telegraph', 'Telegraph'),
         'utf8',
       );
 
       const result = await installOutputStyle({
-        choice: 'terse',
+        choice: 'telegraph',
         assetsDir,
         outputStylesDir,
         settingsPath,
@@ -212,7 +216,7 @@ Custom body the user edited.
 
       expect(result.healed).toBe(true);
       const written = await readFile(result.stylePath, 'utf8');
-      expect(written).toContain('name: terse');
+      expect(written).toContain('name: telegraph');
     });
 
     it('does NOT heal when body has been edited by user (case-twin name but body diverges)', async () => {
@@ -261,6 +265,87 @@ Custom body the user edited.
 
       expect(result.healed).toBe(false);
       expect(await readFile(result.stylePath, 'utf8')).toBe(correct);
+    });
+  });
+
+  describe('migrateTerseToTelegraph (0.8.14 rename)', () => {
+    it('renames terse.md → telegraph.md and rewrites frontmatter name', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      const userBody = `---\nname: terse\ndescription: old desc\n---\n\n# Body the user kept\n`;
+      await writeFile(join(outputStylesDir, 'terse.md'), userBody, 'utf8');
+      await writeFile(settingsPath, JSON.stringify({ outputStyle: 'terse' }), 'utf8');
+
+      const result = await migrateTerseToTelegraph({
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.migrated).toBe(true);
+      expect(result.fileRenamed).toBe(true);
+      expect(result.settingsUpdated).toBe(true);
+      expect(existsSync(join(outputStylesDir, 'terse.md'))).toBe(false);
+      const newFile = await readFile(join(outputStylesDir, 'telegraph.md'), 'utf8');
+      expect(newFile).toContain('name: telegraph');
+      expect(newFile).toContain('# Body the user kept');
+      const settings = JSON.parse(await readFile(settingsPath, 'utf8'));
+      expect(settings.outputStyle).toBe('telegraph');
+    });
+
+    it('no-op when neither terse.md nor terse setting present', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      await writeFile(settingsPath, JSON.stringify({ outputStyle: 'marsh' }), 'utf8');
+
+      const result = await migrateTerseToTelegraph({
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.migrated).toBe(false);
+      expect(result.fileRenamed).toBe(false);
+      expect(result.settingsUpdated).toBe(false);
+      const settings = JSON.parse(await readFile(settingsPath, 'utf8'));
+      expect(settings.outputStyle).toBe('marsh');
+    });
+
+    it('drops legacy terse.md if telegraph.md already exists', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      await writeFile(join(outputStylesDir, 'terse.md'), 'legacy body\n', 'utf8');
+      await writeFile(join(outputStylesDir, 'telegraph.md'), 'new body\n', 'utf8');
+      await writeFile(settingsPath, JSON.stringify({ outputStyle: 'terse' }), 'utf8');
+
+      const result = await migrateTerseToTelegraph({
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.migrated).toBe(true);
+      expect(result.fileRenamed).toBe(true);
+      expect(result.settingsUpdated).toBe(true);
+      expect(existsSync(join(outputStylesDir, 'terse.md'))).toBe(false);
+      expect(await readFile(join(outputStylesDir, 'telegraph.md'), 'utf8')).toBe('new body\n');
+      const settings = JSON.parse(await readFile(settingsPath, 'utf8'));
+      expect(settings.outputStyle).toBe('telegraph');
+    });
+
+    it('copies bundled asset when settings point at terse but no file exists', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      await writeFile(settingsPath, JSON.stringify({ outputStyle: 'terse' }), 'utf8');
+
+      const result = await migrateTerseToTelegraph({
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.migrated).toBe(true);
+      expect(result.fileRenamed).toBe(true);
+      expect(result.settingsUpdated).toBe(true);
+      expect(existsSync(join(outputStylesDir, 'telegraph.md'))).toBe(true);
+      const settings = JSON.parse(await readFile(settingsPath, 'utf8'));
+      expect(settings.outputStyle).toBe('telegraph');
     });
   });
 });

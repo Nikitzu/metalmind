@@ -6,6 +6,40 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.14 — 2026-05-20
+
+Patch release — persona-first rewrite of the bundled output styles and a slug rename. The 0.8.10–0.8.13 line treated style adherence as a rule-list problem: re-anchor more often, reinforce harder, keep the rules at the top of attention. That works against the grain of how an LLM follows instructions — rule lists are continuously-suppressed token preferences competing with the content prior. Persona prompts swap the underlying distribution wholesale and stick under load. `caveman` works for the same reason `marsh` previously didn't: identity, not rules.
+
+Both styles now open with an identity statement and a scene, then state how that character speaks; the rule list survives but as supporting material, not the headline. The Scadrial-flavor body explicitly invokes Marsh — Ironeyes the Steel Inquisitor — rather than listing fragment grammar. The neutral-flavor slug is renamed `terse` → `telegraph`: the operator-at-the-key persona ("every word costs the sender money") gives the model a vivid mental hook the previous, abstract `terse` name lacked.
+
+Re-stamp with `metalmind stamp` to migrate. The stamp command now detects a legacy `~/.claude/output-styles/terse.md` and renames it to `telegraph.md` in place — frontmatter is rewritten, body is preserved, `settings.outputStyle: "terse"` is updated to `"telegraph"`. If both files already exist, the legacy `terse.md` is dropped (the on-disk telegraph wins). No user action beyond `metalmind stamp` is required.
+
+### Changed — `cli/assets/marsh.md`
+
+Rewritten as a persona document — opens with "You are Marsh — Ironeyes. Steel Inquisitor of the Final Empire," then lists how Marsh talks, where Marsh does not speak (code blocks, ADRs, security warnings, destructive-action confirmations), how Marsh thinks (senior, not a yes-man), and how long Marsh speaks. The intensity tiers (`ULTRA` / `FULL` / `LITE`) and the example pairs are preserved. The description in the frontmatter is updated to match.
+
+### Changed — `cli/assets/telegraph.md` (renamed from `terse.md`)
+
+Rewritten as the Telegraph operator persona — every word costs the sender money, padding is theft. Same structure as the new marsh: identity opener, transmission rules, sheath-points, thinking stance, length budget. The slug rename (`terse` → `telegraph`) is the source-of-truth change; everywhere `terse` was used internally — `FlavorChoice` type, wizard default for the `classic` flavor, output-style asset filename, shared skill directory, skill frontmatter — now uses `telegraph`. The previous `terse` slug is treated as a migration source, not a supported choice.
+
+### Added — `migrateTerseToTelegraph` in `cli/src/install/output-style.ts`
+
+Idempotent migration helper called from `metalmind stamp`. Rewrites `~/.claude/output-styles/terse.md` in place (frontmatter `name: terse` → `name: telegraph`, body preserved), unlinks the legacy file, and updates `settings.outputStyle` if it was pointing at `terse`. Handles the three real cases: legacy file present + no telegraph (rename + rewrite), both present (drop legacy), settings point at terse but file is gone (copy from bundled asset). Four tests cover the matrix.
+
+### Changed — `cli/src/commands/stamp.ts`
+
+Stamp gains an explicit `Output-style rename: terse → telegraph (legacy migration)` step that calls the helper and logs whether the file was renamed and whether settings were updated. The step runs before the activation-hook step so subsequent re-anchor hooks see the new slug.
+
+### Changed — `cli/src/install/output-style.ts` legacy-file detection
+
+`findLegacyFile` now treats `terse` as a known legacy slug alongside `caveman`, and the canonical exclusion set is `marsh` + `telegraph`. Fresh installs that find a pre-existing `terse.md` from an upgraded user will migrate it the same way `caveman.md` has been migrated since 0.8.0.
+
+### Changed — `cli/src/install/wizard.ts`
+
+The `classic` flavor branch in the install wizard now selects `'telegraph'` instead of `'terse'`. The Scadrial branch is unchanged.
+
+---
+
 ## 0.8.13 — 2026-05-20
 
 Patch release — adds a per-turn output-style re-anchor hook to fix mid-session drift on Claude Code. Pattern borrowed from `caveman`'s `UserPromptSubmit` reinforcement: the 0.8.10 `SessionStart` anchor handles fresh sessions and post-`/compact` cases, but the style still fades under sustained task pressure on long sessions because nothing re-injects it between turns. The new sibling hook fires on every user message and emits a short (~25 token) reminder, keeping the active style name and core rules at the top of attention every turn. Token cost is dwarfed by the output savings of the style actually firing — typically 30–50% on chat replies.

@@ -158,7 +158,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     checkCancelled(answer, 'theme prompt');
     flavor = answer as 'scadrial' | 'classic';
   }
-  const styleChoice: FlavorChoice = flavor === 'scadrial' ? 'marsh' : 'terse';
+  const styleChoice: FlavorChoice = flavor === 'scadrial' ? 'marsh' : 'telegraph';
 
   let memoryRouting: 'vault-only' | 'both';
   if (opts.memoryRouting !== undefined) {
