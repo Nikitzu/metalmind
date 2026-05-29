@@ -2,6 +2,7 @@ import { cancel, intro, log, outro } from '@clack/prompts';
 import { type MetalmindHost, readConfig, writeConfig } from '../config.js';
 import { installAliases } from '../install/aliases.js';
 import { installCodex } from '../install/codex.js';
+import { installCursor } from '../install/cursor.js';
 import { promptHosts } from '../install/host-prompt.js';
 import { migrateTerseToTelegraph } from '../install/output-style.js';
 import {
@@ -145,6 +146,19 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     } else {
       log.info(`  MCP server: ${codexResult.mcp}`);
     }
+  }
+
+  if (chosenHosts.includes('cursor')) {
+    log.step('Cursor');
+    const cursorResult = await installCursor({
+      vaultPath: config.vaultPath,
+      flavor: config.flavor,
+      withMcp: opts.withMcp ?? false,
+    });
+    log.info(`  skills: ${cursorResult.skills.join(', ')}`);
+    log.info(`  agents: ${cursorResult.agents.length} copied`);
+    log.info(`  hook script: ${cursorResult.hookScript}; hooks.json: ${cursorResult.hooksJson}`);
+    log.info(`  MCP server: ${cursorResult.mcp}`);
   }
 
   log.step('Shell aliases');

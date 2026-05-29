@@ -11,10 +11,16 @@ function parseHostFlag(value: string | undefined): MetalmindHost[] | undefined {
       return ['claude'];
     case 'codex':
       return ['codex'];
+    case 'cursor':
+      return ['cursor'];
     case 'both':
       return ['claude', 'codex'];
+    case 'all':
+      return ['claude', 'codex', 'cursor'];
     default:
-      throw new Error(`--host must be "claude", "codex", or "both"; got "${value}"`);
+      throw new Error(
+        `--host must be "claude", "codex", "cursor", "both", or "all"; got "${value}"`,
+      );
   }
 }
 
@@ -93,7 +99,10 @@ program
     'Opt into the Qdrant + Ollama backend instead of the embedded sqlite-vec + fastembed default',
   )
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
-  .option('--host <host>', '"claude" | "codex" | "both" — bypass the host multi-select prompt')
+  .option(
+    '--host <host>',
+    '"claude" | "codex" | "cursor" | "both" | "all" — bypass the host multi-select prompt',
+  )
   .option(
     '--with-mcp',
     'Register metalmind as a streamable HTTP MCP server in Codex (opt-in; off by default)',
@@ -530,7 +539,10 @@ burnCmd
   .command('brass')
   .description('Burn Brass (Soother) — smooth out drift, re-imprint metalmind managed files')
   .option('--skip-watcher', 'Skip refreshing the watcher unit file')
-  .option('--host <host>', '"claude" | "codex" | "both" — bypass the host multi-select prompt')
+  .option(
+    '--host <host>',
+    '"claude" | "codex" | "cursor" | "both" | "all" — bypass the host multi-select prompt',
+  )
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
   .action(
@@ -581,7 +593,10 @@ program
   .command('stamp')
   .description('Classic alias: smooth out drift, re-imprint metalmind managed files')
   .option('--skip-watcher', 'Skip refreshing the watcher unit file')
-  .option('--host <host>', '"claude" | "codex" | "both" — bypass the host multi-select prompt')
+  .option(
+    '--host <host>',
+    '"claude" | "codex" | "cursor" | "both" | "all" — bypass the host multi-select prompt',
+  )
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
   .action(

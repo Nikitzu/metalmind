@@ -49,10 +49,16 @@ function parseHostFlag(value: string | undefined): MetalmindHost[] | undefined {
       return ['claude'];
     case 'codex':
       return ['codex'];
+    case 'cursor':
+      return ['cursor'];
     case 'both':
       return ['claude', 'codex'];
+    case 'all':
+      return ['claude', 'codex', 'cursor'];
     default:
-      throw new Error(`--host must be "claude", "codex", or "both"; got "${value}"`);
+      throw new Error(
+        `--host must be "claude", "codex", "cursor", "both", or "all"; got "${value}"`,
+      );
   }
 }
 

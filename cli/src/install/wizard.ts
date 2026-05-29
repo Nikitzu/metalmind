@@ -2,6 +2,7 @@ import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/pro
 import { type Config, type MetalmindHost, writeConfig } from '../config.js';
 import { installAliases } from './aliases.js';
 import { installCodex } from './codex.js';
+import { installCursor } from './cursor.js';
 import { setupVaultGit } from './git.js';
 import { installGraphify } from './graphify.js';
 import { promptHosts } from './host-prompt.js';
@@ -340,6 +341,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   }
   const installClaude = chosenHosts.includes('claude');
   const installCodexHost = chosenHosts.includes('codex');
+  const installCursorHost = chosenHosts.includes('cursor');
 
   let stylePriorValue: string | null = null;
   let stampedOutputStyle: FlavorChoice | null = null;
@@ -458,6 +460,19 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     } else {
       log.info(`  MCP server: ${codexResult.mcp}`);
     }
+  }
+
+  if (installCursorHost) {
+    log.step('Installing Cursor integration');
+    const cursorResult = await installCursor({
+      vaultPath: vault.vaultPath,
+      flavor,
+      withMcp: opts.withMcp ?? false,
+    });
+    log.info(`  skills: ${cursorResult.skills.join(', ')}`);
+    log.info(`  agents: ${cursorResult.agents.length} copied`);
+    log.info(`  hook script: ${cursorResult.hookScript}; hooks.json: ${cursorResult.hooksJson}`);
+    log.info(`  MCP server: ${cursorResult.mcp}`);
   }
 
   log.step('Updating global gitignore');
