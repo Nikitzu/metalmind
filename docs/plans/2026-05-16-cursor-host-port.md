@@ -14,7 +14,7 @@
 
 ## Progress
 
-Branch: `cursor-host-port`. Execution: inline, paused after Task 6. Rebased onto main (merge `8edf176`) on 2026-05-29 — main had shipped v0.8.9–v0.8.15 since the fork (telegraph rename, reanchor hook, colon-frontmatter fix); one test conflict in `host-prompt.test.ts` resolved, 435 tests green.
+Branch: `cursor-host-port`. Execution: inline, COMPLETE through Task 10 (CHECKPOINT 4 passed). Rebased onto main (merge `8edf176`) on 2026-05-29 — main had shipped v0.8.9–v0.8.15 since the fork (telegraph rename, reanchor hook, colon-frontmatter fix); one test conflict in `host-prompt.test.ts` resolved. Shipping as v0.9.0.
 
 - [x] **Task 1** — Widen host type to cursor — `246869e` — CHECKPOINT 1 passed
 - [x] **Task 2** — Shared module + recall-skill/hook templates — `f7e17df`
@@ -22,10 +22,12 @@ Branch: `cursor-host-port`. Execution: inline, paused after Task 6. Rebased onto
 - [x] **Task 4** — Cursor subagents install (15 agents) — `47b4d01`
 - [x] **Task 5** — Latent sessionStart hook — `669a84c` — CHECKPOINT 2 passed
 - [x] **Task 6** — Opt-in MCP registration — `73da5f6`
-- [ ] **Task 7** — Orchestrator + barrel — CHECKPOINT 3 ← resume here
-- [ ] **Task 8** — Wire stamp + init
-- [ ] **Task 9** — Wire uninstall + doctor
-- [ ] **Task 10** — Full verification + smoke test — CHECKPOINT 4
+- [x] **Task 7** — Orchestrator + barrel — `ae6c1ca` — CHECKPOINT 3 passed
+- [x] **Task 8** — Wire stamp + init + wizard — `c377287`
+- [x] **Task 9** — Wire uninstall + doctor — `90f8edc`
+- [x] **Task 10** — Full verification — 440 tests green; manual smoke (stamp/hook/doctor/uninstall round-trip) passed — CHECKPOINT 4 passed
+
+Task 8 note: dispatch lives in `stamp.ts` AND `wizard.ts` (init delegates to the wizard), not init.ts directly. Also widened `parseHostFlag` in both `cli.ts` and `init.ts` to accept `cursor` + new `all` value; updated `--host` help strings.
 
 Deviation log:
 - Task 5: plan's hook test used `'bash mm.sh'` as the fake `hookCommand` — lacks
