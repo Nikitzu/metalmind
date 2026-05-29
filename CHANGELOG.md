@@ -6,6 +6,30 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.9.0 — 2026-05-29
+
+Cursor host support. metalmind now stamps a third host alongside Claude Code and Codex CLI: Cursor (`~/.cursor`). Same recall thesis (bash over loopback, MCP optional), reusing the AGENTS.md-style template surface extracted for the Codex port in v0.8.0.
+
+Install with `metalmind init` (Cursor is auto-detected and offered in the host multi-select) or `metalmind stamp --host cursor`. The `--host` flag now accepts `cursor` and a new `all` value (claude + codex + cursor); `both` is unchanged (claude + codex). `metalmind doctor --deep` reports Cursor install health, and `metalmind uninstall` strips the Cursor footprint.
+
+### Added — Cursor install module (`cli/src/install/cursor/`)
+
+- **`metalmind-recall` skill** — the primary recall delivery path on Cursor. Cursor 3.1.15 has a staff-confirmed bug where `sessionStart` `additional_context` is dropped before reaching the agent, so recall rides on a skill rather than the hook. Also installs `writing-vault-notes`, `synod`, and `save`.
+- **15 specialist subagents** copied into `~/.cursor/agents/` from the shared `templates/claude/agents/` set.
+- **Latent `sessionStart` hook** (`~/.cursor/hooks.json` + `hooks/metalmind-cursor-session-start.sh`). Correct per the documented Cursor schema; starts working when Cursor ships the `additional_context` fix. Emits `{ "additional_context": ... }` (snake_case).
+- **Opt-in MCP registration** (`--with-mcp`) writes a `metalmind` HTTP entry to `~/.cursor/mcp.json` (`http://127.0.0.1:17317/mcp`, same URL/key as Codex). Off by default — recall is bash-first.
+- **Orchestrators** `installCursor` / `uninstallCursor` compose the primitives; uninstall round-trips in reverse.
+
+### Changed — host wiring
+
+- `MetalmindHost` already included `cursor` (v0.8.x schema); `stamp.ts`, `wizard.ts` (the init path), `doctor.ts`, and `uninstall.ts` now dispatch the cursor host.
+- `parseHostFlag` in both `cli.ts` and `init.ts` accepts `cursor` and `all`; `--host` help strings updated.
+
+### Notes
+
+- v0.9.0 was previously scoped as "external-repo leverage" (agent-skills-eval gating + SigMap lexical ranker). That work is deferred; this release ships the Cursor host port instead.
+- 440 tests pass. Manual smoke verified end to end: stamp installs skill + 15 agents + hook + hooks.json entry; hook emits valid JSON; doctor reports all three cursor checks green; uninstall removes the full footprint.
+
 ## 0.8.15 — 2026-05-29
 
 Patch release. Fixes unquoted colons in stamped frontmatter titles. A title containing a colon (`Topic: subtopic`, the common "Title: subtitle" habit) was interpolated raw into the YAML `title:` field, producing `title: Topic: subtopic`. YAML parsers read that as a malformed mapping ("mapping values are not allowed here"), so the note's frontmatter failed to parse in Obsidian, Dataview, and `scribe show`. The filename slug was already sanitised, so the breakage was invisible on disk and only surfaced when something read the frontmatter back.
