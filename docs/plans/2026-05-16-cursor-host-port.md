@@ -14,15 +14,15 @@
 
 ## Progress
 
-Branch: `cursor-host-port`. Execution: inline, paused after Task 5.
+Branch: `cursor-host-port`. Execution: inline, paused after Task 6. Rebased onto main (merge `8edf176`) on 2026-05-29 — main had shipped v0.8.9–v0.8.15 since the fork (telegraph rename, reanchor hook, colon-frontmatter fix); one test conflict in `host-prompt.test.ts` resolved, 435 tests green.
 
 - [x] **Task 1** — Widen host type to cursor — `246869e` — CHECKPOINT 1 passed
 - [x] **Task 2** — Shared module + recall-skill/hook templates — `f7e17df`
 - [x] **Task 3** — Cursor skills install (incl. metalmind-recall) — `41c25ad`
 - [x] **Task 4** — Cursor subagents install (15 agents) — `47b4d01`
 - [x] **Task 5** — Latent sessionStart hook — `669a84c` — CHECKPOINT 2 passed
-- [ ] **Task 6** — Opt-in MCP registration ← resume here
-- [ ] **Task 7** — Orchestrator + barrel — CHECKPOINT 3
+- [x] **Task 6** — Opt-in MCP registration — `73da5f6`
+- [ ] **Task 7** — Orchestrator + barrel — CHECKPOINT 3 ← resume here
 - [ ] **Task 8** — Wire stamp + init
 - [ ] **Task 9** — Wire uninstall + doctor
 - [ ] **Task 10** — Full verification + smoke test — CHECKPOINT 4
