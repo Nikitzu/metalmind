@@ -16,11 +16,7 @@ import { existsSync } from 'node:fs';
 import { copyFile, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { getTemplatesDir } from '../../util/paths.js';
-import {
-  renderFlavorSentinels,
-  renderSkillSentinels,
-  resolvePartials,
-} from '../templates.js';
+import { renderFlavorSentinels, renderSkillSentinels, resolvePartials } from '../templates.js';
 import { DEFAULT_CODEX_DIR, recallCommand } from './shared.js';
 
 export const METALMIND_CODEX_SKILLS = ['writing-vault-notes', 'synod', 'save'] as const;

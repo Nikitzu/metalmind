@@ -13,9 +13,14 @@ import {
   clearMemoryRouting,
   clearMetalmindSessionStartHook,
   clearOutputStyleSessionStartHook,
+  clearOutputStyleUserPromptSubmitHook,
 } from './settings.js';
 import { STACK_SUBDIR, stopStack } from './stack.js';
-import { METALMIND_HOOK_FILENAME, OUTPUT_STYLE_HOOK_FILENAME } from './templates.js';
+import {
+  METALMIND_HOOK_FILENAME,
+  OUTPUT_STYLE_HOOK_FILENAME,
+  OUTPUT_STYLE_REANCHOR_HOOK_FILENAME,
+} from './templates.js';
 import { uninstallVaultRag } from './vault-rag.js';
 import type { WatcherPlatform } from './watcher.js';
 import { uninstallWatcher } from './watcher.js';
@@ -64,6 +69,7 @@ export interface TeardownResult {
   agentTeamsCleared: boolean;
   sessionStartHook: { registrationCleared: boolean; scriptRemoved: boolean };
   outputStyleHook: { registrationCleared: boolean; scriptRemoved: boolean };
+  outputStyleReanchorHook: { registrationCleared: boolean; scriptRemoved: boolean };
   claudeMdBlocks: { global: SentinelRemoveAction; vault: SentinelRemoveAction };
 }
 
@@ -86,6 +92,7 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
     agentTeamsCleared: false,
     sessionStartHook: { registrationCleared: false, scriptRemoved: false },
     outputStyleHook: { registrationCleared: false, scriptRemoved: false },
+    outputStyleReanchorHook: { registrationCleared: false, scriptRemoved: false },
     claudeMdBlocks: { global: 'no-file', vault: 'no-file' },
   };
 
@@ -137,12 +144,23 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
     result.sessionStartHook.scriptRemoved = true;
   }
 
-  result.outputStyleHook.registrationCleared =
-    await clearOutputStyleSessionStartHook(settingsPath);
+  result.outputStyleHook.registrationCleared = await clearOutputStyleSessionStartHook(settingsPath);
   const outputStyleHookScriptPath = join(claudeDir, 'hooks', OUTPUT_STYLE_HOOK_FILENAME);
   if (existsSync(outputStyleHookScriptPath)) {
     await rm(outputStyleHookScriptPath, { force: true });
     result.outputStyleHook.scriptRemoved = true;
+  }
+
+  result.outputStyleReanchorHook.registrationCleared =
+    await clearOutputStyleUserPromptSubmitHook(settingsPath);
+  const outputStyleReanchorHookScriptPath = join(
+    claudeDir,
+    'hooks',
+    OUTPUT_STYLE_REANCHOR_HOOK_FILENAME,
+  );
+  if (existsSync(outputStyleReanchorHookScriptPath)) {
+    await rm(outputStyleReanchorHookScriptPath, { force: true });
+    result.outputStyleReanchorHook.scriptRemoved = true;
   }
 
   const mcp = await unregisterMcpServers({

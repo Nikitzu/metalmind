@@ -3,10 +3,12 @@ import { type MetalmindHost, readConfig, writeConfig } from '../config.js';
 import { installAliases } from '../install/aliases.js';
 import { installCodex } from '../install/codex.js';
 import { promptHosts } from '../install/host-prompt.js';
+import { migrateTerseToTelegraph } from '../install/output-style.js';
 import {
   applyMemoryRouting,
   applyMetalmindSessionStartHook,
   applyOutputStyleSessionStartHook,
+  applyOutputStyleUserPromptSubmitHook,
 } from '../install/settings.js';
 import { copyClaudeHooks, copyClaudeTemplates, stampClaudeMd } from '../install/templates.js';
 import { setupVault } from '../install/vault.js';
@@ -87,7 +89,19 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     const hookScript = await copyClaudeHooks({ flavor: config.flavor });
     const hookReg = await applyMetalmindSessionStartHook({ hookCommand: hookScript.hookCommand });
     log.info(`  script: ${hookScript.action}`);
-    log.info(hookReg.changed ? '  settings.json: registered' : '  settings.json: already registered');
+    log.info(
+      hookReg.changed ? '  settings.json: registered' : '  settings.json: already registered',
+    );
+
+    log.step('Output-style rename: terse → telegraph (legacy migration)');
+    const styleMigration = await migrateTerseToTelegraph();
+    if (styleMigration.migrated) {
+      if (styleMigration.fileRenamed) log.info('  ~/.claude/output-styles/terse.md → telegraph.md');
+      if (styleMigration.settingsUpdated)
+        log.info('  settings.json: outputStyle terse → telegraph');
+    } else {
+      log.info('  no legacy terse style found; nothing to migrate');
+    }
 
     log.step('Output-style activation hook');
     const outputStyleHookReg = await applyOutputStyleSessionStartHook({
@@ -97,6 +111,17 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     log.info(
       outputStyleHookReg.changed
         ? '  settings.json: registered'
+        : '  settings.json: already registered',
+    );
+
+    log.step('Output-style re-anchor hook (per-turn drift guard)');
+    const outputStyleReanchorReg = await applyOutputStyleUserPromptSubmitHook({
+      hookCommand: hookScript.outputStyleReanchorHookCommand,
+    });
+    log.info(`  script: ${hookScript.outputStyleReanchorAction}`);
+    log.info(
+      outputStyleReanchorReg.changed
+        ? '  settings.json: registered (UserPromptSubmit)'
         : '  settings.json: already registered',
     );
   }
@@ -116,9 +141,7 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     log.info(`  prefix rules: ${codexResult.prefixRules}`);
     log.info(`  skills: ${codexResult.skills.join(', ')}`);
     if (codexResult.mcp === 'codex-not-found') {
-      log.warn(
-        '  --with-mcp requested but `codex` binary not on PATH; skipped MCP registration.',
-      );
+      log.warn('  --with-mcp requested but `codex` binary not on PATH; skipped MCP registration.');
     } else {
       log.info(`  MCP server: ${codexResult.mcp}`);
     }

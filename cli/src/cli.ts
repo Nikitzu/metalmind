@@ -61,7 +61,9 @@ const program = new Command();
 
 program
   .name('metalmind')
-  .description('Unified CLI for a markdown vault (Obsidian-compatible), code graph, and cross-repo intelligence.')
+  .description(
+    'Unified CLI for a markdown vault (Obsidian-compatible), code graph, and cross-repo intelligence.',
+  )
   .version(pkg.version);
 
 program
@@ -219,9 +221,7 @@ const tapCmd = program
   .command('tap')
   .description('Feruchemy — withdraw state. Currently: `tap copper <query>` → vault.');
 attachTapFlags(
-  tapCmd
-    .command('copper [query]')
-    .description('Recall notes from your coppermind (your vault)'),
+  tapCmd.command('copper [query]').description('Recall notes from your coppermind (your vault)'),
 ).action((query: string | undefined, cmdOpts: TapCliOpts) => tap(query, normalizeTapOpts(cmdOpts)));
 
 attachTapFlags(
@@ -534,12 +534,7 @@ burnCmd
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
   .action(
-    (cmdOpts: {
-      skipWatcher?: boolean;
-      host?: string;
-      noPrompt?: boolean;
-      withMcp?: boolean;
-    }) => {
+    (cmdOpts: { skipWatcher?: boolean; host?: string; noPrompt?: boolean; withMcp?: boolean }) => {
       const hosts = parseHostFlag(cmdOpts.host);
       return stamp({
         skipWatcher: cmdOpts.skipWatcher,
@@ -590,12 +585,7 @@ program
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
   .action(
-    (cmdOpts: {
-      skipWatcher?: boolean;
-      host?: string;
-      noPrompt?: boolean;
-      withMcp?: boolean;
-    }) => {
+    (cmdOpts: { skipWatcher?: boolean; host?: string; noPrompt?: boolean; withMcp?: boolean }) => {
       const hosts = parseHostFlag(cmdOpts.host);
       return stamp({
         skipWatcher: cmdOpts.skipWatcher,

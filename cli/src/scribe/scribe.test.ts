@@ -63,6 +63,17 @@ describe('scribe CRUD', () => {
     expect(moc).toContain('[[Plans/2026-04-21-do-x]] — Do X');
   });
 
+  it('create: quotes a colon in the title so frontmatter stays valid YAML', async () => {
+    const res = await scribeCreate(
+      { kind: 'plan', title: 'Topic: subtopic', body: 'hi', project: 'metalmind' },
+      { vaultRoot: vault, now: fixedNow },
+    );
+    const note = await readFile(res.path, 'utf8');
+    expect(note).toContain('title: "Topic: subtopic"');
+    expect(note).not.toContain('\ntitle: Topic: subtopic\n');
+    expect(note).toContain('# Topic: subtopic');
+  });
+
   it('create daily: appends if file exists', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     await scribeCreate({ kind: 'daily', title: 'morning', body: 'a' }, ctx);
@@ -369,21 +380,15 @@ describe('daily-date guard', () => {
 
   it('update on a future-dated daily note refuses without --date', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
-    await scribeCreate(
-      { kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' },
-      ctx,
+    await scribeCreate({ kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' }, ctx);
+    await expect(scribeUpdate('daily:2026-04-25', 'more', ctx)).rejects.toThrow(
+      /refusing to update daily note for 2026-04-25.*atium add --date 2026-04-25/s,
     );
-    await expect(
-      scribeUpdate('daily:2026-04-25', 'more', ctx),
-    ).rejects.toThrow(/refusing to update daily note for 2026-04-25.*atium add --date 2026-04-25/s);
   });
 
   it('update on a future-dated daily note accepts matching --date', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
-    await scribeCreate(
-      { kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' },
-      ctx,
-    );
+    await scribeCreate({ kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' }, ctx);
     await scribeUpdate('daily:2026-04-25', 'more', ctx, { date: '2026-04-25' });
     const raw = await readFile(join(vault, 'Daily/2026-04-25.md'), 'utf8');
     expect(raw).toContain('more');
@@ -391,13 +396,12 @@ describe('daily-date guard', () => {
 
   it('update with mismatched --date prints both dates in the error', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
-    await scribeCreate(
-      { kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' },
-      ctx,
-    );
+    await scribeCreate({ kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' }, ctx);
     await expect(
       scribeUpdate('daily:2026-04-25', 'more', ctx, { date: '2026-04-26' }),
-    ).rejects.toThrow(/--date '2026-04-26' resolves to 2026-04-26.*target daily note is 2026-04-25/s);
+    ).rejects.toThrow(
+      /--date '2026-04-26' resolves to 2026-04-26.*target daily note is 2026-04-25/s,
+    );
   });
 
   it('patch on future-dated daily refuses without --date', async () => {
@@ -413,10 +417,7 @@ describe('daily-date guard', () => {
 
   it('archive on future-dated daily refuses without --date', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
-    await scribeCreate(
-      { kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' },
-      ctx,
-    );
+    await scribeCreate({ kind: 'daily', title: 'plan-ahead', body: 'x', date: '2026-04-25' }, ctx);
     await expect(scribeArchive('daily:2026-04-25', ctx)).rejects.toThrow(
       /refusing to archive daily note for 2026-04-25/,
     );

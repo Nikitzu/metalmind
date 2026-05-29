@@ -240,12 +240,14 @@ export async function checkClaudeMdSentinel(config: Config): Promise<DeepCheck[]
  * sandbox network_access, prefix rules, skills, optional MCP server.
  * Only invoked when config.hosts.includes('codex'); skipped otherwise.
  */
-export async function checkCodexInstall(opts: {
-  codexDir?: string;
-  checkMcp?: boolean;
-  /** Override $HOME for the ~/.agents/skills/ mirror probe (test injection). */
-  homeDir?: string;
-} = {}): Promise<DeepCheck[]> {
+export async function checkCodexInstall(
+  opts: {
+    codexDir?: string;
+    checkMcp?: boolean;
+    /** Override $HOME for the ~/.agents/skills/ mirror probe (test injection). */
+    homeDir?: string;
+  } = {},
+): Promise<DeepCheck[]> {
   const codexDir = opts.codexDir ?? DEFAULT_CODEX_DIR;
   const homeDirPath = opts.homeDir ?? homedir();
   const out: DeepCheck[] = [];
@@ -276,9 +278,7 @@ export async function checkCodexInstall(opts: {
     name: 'codex-hook-script',
     ok: existsSync(hookScriptPath),
     detail: existsSync(hookScriptPath) ? hookScriptPath : 'missing',
-    remediation: existsSync(hookScriptPath)
-      ? undefined
-      : 'Run `metalmind stamp --host codex`.',
+    remediation: existsSync(hookScriptPath) ? undefined : 'Run `metalmind stamp --host codex`.',
   });
 
   const hooksJsonPath = join(codexDir, 'hooks.json');
@@ -289,7 +289,10 @@ export async function checkCodexInstall(opts: {
       };
       const groups = data?.hooks?.SessionStart ?? [];
       const ours = groups.find((g) =>
-        g.hooks?.some((h) => typeof h?.command === 'string' && h.command.includes(METALMIND_CODEX_HOOK_FILENAME)),
+        g.hooks?.some(
+          (h) =>
+            typeof h?.command === 'string' && h.command.includes(METALMIND_CODEX_HOOK_FILENAME),
+        ),
       );
       out.push({
         name: 'codex-hooks-json',
@@ -324,7 +327,9 @@ export async function checkCodexInstall(opts: {
     out.push({
       name: 'codex-network-access',
       ok,
-      detail: ok ? 'sentinel block present + network_access=true' : 'sentinel missing or value wrong',
+      detail: ok
+        ? 'sentinel block present + network_access=true'
+        : 'sentinel missing or value wrong',
       remediation: ok ? undefined : 'Run `metalmind stamp --host codex`.',
     });
   } else {
@@ -423,45 +428,45 @@ export async function checkCodexInstall(opts: {
         detail: 'codex binary not on PATH — MCP check skipped (opt-in feature)',
       });
     } else {
-    const res = await runCommand('codex', ['mcp', 'list', '--json']);
-    if (!res.ok) {
-      out.push({
-        name: 'codex-mcp',
-        ok: true,
-        detail:
-          'codex mcp list failed or timed out — MCP check skipped (opt-in feature; common when live MCP servers slow Codex to ping)',
-      });
-    } else {
-      try {
-        const list = JSON.parse(res.stdout) as Array<{ name: string; url?: string }>;
-        const ours = list.find((e) => e.name === DEFAULT_CODEX_MCP_NAME);
-        if (ours === undefined) {
-          out.push({
-            name: 'codex-mcp',
-            ok: true,
-            detail: 'not registered — opt-in via `metalmind stamp --host codex --with-mcp`',
-          });
-        } else {
-          const urlMatches = ours.url === DEFAULT_METALMIND_HTTP_URL;
-          out.push({
-            name: 'codex-mcp',
-            ok: urlMatches,
-            detail: urlMatches
-              ? `${DEFAULT_CODEX_MCP_NAME} → ${ours.url}`
-              : `${DEFAULT_CODEX_MCP_NAME} registered with unexpected url: ${ours.url ?? '(none)'}`,
-            remediation: urlMatches
-              ? undefined
-              : 'Re-run `metalmind stamp --host codex --with-mcp` to refresh the URL.',
-          });
-        }
-      } catch {
+      const res = await runCommand('codex', ['mcp', 'list', '--json']);
+      if (!res.ok) {
         out.push({
           name: 'codex-mcp',
-          ok: false,
-          detail: 'codex mcp list returned non-JSON',
+          ok: true,
+          detail:
+            'codex mcp list failed or timed out — MCP check skipped (opt-in feature; common when live MCP servers slow Codex to ping)',
         });
+      } else {
+        try {
+          const list = JSON.parse(res.stdout) as Array<{ name: string; url?: string }>;
+          const ours = list.find((e) => e.name === DEFAULT_CODEX_MCP_NAME);
+          if (ours === undefined) {
+            out.push({
+              name: 'codex-mcp',
+              ok: true,
+              detail: 'not registered — opt-in via `metalmind stamp --host codex --with-mcp`',
+            });
+          } else {
+            const urlMatches = ours.url === DEFAULT_METALMIND_HTTP_URL;
+            out.push({
+              name: 'codex-mcp',
+              ok: urlMatches,
+              detail: urlMatches
+                ? `${DEFAULT_CODEX_MCP_NAME} → ${ours.url}`
+                : `${DEFAULT_CODEX_MCP_NAME} registered with unexpected url: ${ours.url ?? '(none)'}`,
+              remediation: urlMatches
+                ? undefined
+                : 'Re-run `metalmind stamp --host codex --with-mcp` to refresh the URL.',
+            });
+          }
+        } catch {
+          out.push({
+            name: 'codex-mcp',
+            ok: false,
+            detail: 'codex mcp list returned non-JSON',
+          });
+        }
       }
-    }
     }
   }
 
@@ -489,10 +494,7 @@ async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   }
 
   const docker = await checkDockerContainers();
-  const [qdrant, ollama] = await Promise.all([
-    checkQdrantCollection(),
-    checkOllamaModel(),
-  ]);
+  const [qdrant, ollama] = await Promise.all([checkQdrantCollection(), checkOllamaModel()]);
   return [...docker, qdrant, ollama, watcher, http, ...stamps, ...codexChecks];
 }
 
@@ -589,7 +591,10 @@ async function runRecallAudit(opts: DoctorOptions): Promise<void> {
     log.info(`[${tag}]${times} ${g.query}`);
   }
   log.info('');
-  log.info('Workflow: open the relevant note in your vault, refine it, then `/save` ' + 'to surface a future query.');
+  log.info(
+    'Workflow: open the relevant note in your vault, refine it, then `/save` ' +
+      'to surface a future query.',
+  );
 }
 
 export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Promise<void> {

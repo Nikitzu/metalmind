@@ -61,9 +61,7 @@ export async function applyCodexNetworkAccess(
   return { configTomlPath: target, blockAction: action };
 }
 
-export async function clearCodexNetworkAccess(
-  opts: { codexDir?: string } = {},
-): Promise<boolean> {
+export async function clearCodexNetworkAccess(opts: { codexDir?: string } = {}): Promise<boolean> {
   const codexDir = opts.codexDir ?? DEFAULT_CODEX_DIR;
   const target = join(codexDir, 'config.toml');
   if (!existsSync(target)) return false;

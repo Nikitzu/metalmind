@@ -138,9 +138,7 @@ export interface DetectPrereqsOptions {
   includeDocker?: boolean;
 }
 
-export async function detectPrereqs(
-  opts: DetectPrereqsOptions = {},
-): Promise<PrereqResult[]> {
+export async function detectPrereqs(opts: DetectPrereqsOptions = {}): Promise<PrereqResult[]> {
   const checks = [checkClaudeCode(), checkPython(), checkUv(), checkGit()];
   if (opts.includeDocker) checks.push(checkDocker());
   return Promise.all(checks);

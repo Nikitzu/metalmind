@@ -111,12 +111,7 @@ export async function installVaultRag(
     ? ['tool', 'install', ...forceFlags, `${packageDir}[${opts.extras!.join(',')}]`]
     : ['tool', 'install', ...forceFlags, '--from', packageDir, VAULT_RAG_PACKAGE];
 
-  if (
-    !opts.reinstall &&
-    !hasExtras &&
-    !versionMismatch &&
-    alreadyInstalledPackage
-  ) {
+  if (!opts.reinstall && !hasExtras && !versionMismatch && alreadyInstalledPackage) {
     alreadyInstalled = true;
   } else if (!opts.skipToolInstall) {
     const res = await runCommand('uv', args, { timeoutMs: 900_000 });

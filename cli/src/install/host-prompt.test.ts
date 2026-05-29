@@ -57,9 +57,7 @@ describe('promptHosts', () => {
 
   it('interactive: pre-checks previously chosen hosts via initialValues', async () => {
     multiselect.mockReset();
-    multiselect.mockImplementation(
-      async ({ initialValues }) => initialValues as unknown,
-    );
+    multiselect.mockImplementation(async ({ initialValues }) => initialValues as unknown);
     const result = await promptHosts({
       detection: { claude: true, codex: true, cursor: false },
       preChecked: ['claude'],
@@ -70,9 +68,7 @@ describe('promptHosts', () => {
 
   it('interactive: pre-checks all detected when no preChecked given', async () => {
     multiselect.mockReset();
-    multiselect.mockImplementation(
-      async ({ initialValues }) => initialValues as unknown,
-    );
+    multiselect.mockImplementation(async ({ initialValues }) => initialValues as unknown);
     const result = await promptHosts({ detection: { claude: true, codex: true, cursor: false } });
     expect(result.hosts).toEqual(['claude', 'codex']);
   });

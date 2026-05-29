@@ -52,9 +52,7 @@ export async function copyCodexPrefixRules(
 }
 
 /** Delete metalmind.rules. Never touches default.rules. */
-export async function removeCodexPrefixRules(
-  opts: { codexDir?: string } = {},
-): Promise<boolean> {
+export async function removeCodexPrefixRules(opts: { codexDir?: string } = {}): Promise<boolean> {
   const codexDir = opts.codexDir ?? DEFAULT_CODEX_DIR;
   const rulesPath = join(codexDir, 'rules', METALMIND_RULES_FILENAME);
   if (!existsSync(rulesPath)) return false;

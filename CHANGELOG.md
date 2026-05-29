@@ -6,6 +6,90 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.15 — 2026-05-29
+
+Patch release. Fixes unquoted colons in stamped frontmatter titles. A title containing a colon (`Topic: subtopic`, the common "Title: subtitle" habit) was interpolated raw into the YAML `title:` field, producing `title: Topic: subtopic`. YAML parsers read that as a malformed mapping ("mapping values are not allowed here"), so the note's frontmatter failed to parse in Obsidian, Dataview, and `scribe show`. The filename slug was already sanitised, so the breakage was invisible on disk and only surfaced when something read the frontmatter back.
+
+Both frontmatter writers now route scalar values through a `yamlScalar` helper that double-quotes any value containing a YAML indicator character (`:`, `#`, `[`, `]`, `{`, `}`, `&`, `*`, `!`, `|`, `>`, `'`, `"`, `%`, `@`, backtick), leading/trailing whitespace, or the empty string. `JSON.stringify` produces a valid YAML double-quoted scalar. This defends every write path regardless of caller, not just titles passed through the skill.
+
+### Fixed — `cli/src/scribe/scribe.ts`
+
+`buildFrontmatter` now quotes scalar values via the new `yamlScalar` helper. Affects every `scribe create|update|patch` write.
+
+### Fixed — `cli/src/backends/vault.ts`
+
+`buildFrontmatter` (the `/save` Inbox path) quotes the `title:` field via `yamlScalar`.
+
+### Added — tests
+
+`scribe.test.ts` and `vault.test.ts` each assert a colon title round-trips as `title: "Topic: subtopic"` and never emits the broken unquoted form.
+
+## 0.8.14 — 2026-05-20
+
+Patch release — persona-first rewrite of the bundled output styles and a slug rename. The 0.8.10–0.8.13 line treated style adherence as a rule-list problem: re-anchor more often, reinforce harder, keep the rules at the top of attention. That works against the grain of how an LLM follows instructions — rule lists are continuously-suppressed token preferences competing with the content prior. Persona prompts swap the underlying distribution wholesale and stick under load. `caveman` works for the same reason `marsh` previously didn't: identity, not rules.
+
+Both styles now open with an identity statement and a scene, then state how that character speaks; the rule list survives but as supporting material, not the headline. The Scadrial-flavor body explicitly invokes Marsh — Ironeyes the Steel Inquisitor — rather than listing fragment grammar. The neutral-flavor slug is renamed `terse` → `telegraph`: the operator-at-the-key persona ("every word costs the sender money") gives the model a vivid mental hook the previous, abstract `terse` name lacked.
+
+Re-stamp with `metalmind stamp` to migrate. The stamp command now detects a legacy `~/.claude/output-styles/terse.md` and renames it to `telegraph.md` in place — frontmatter is rewritten, body is preserved, `settings.outputStyle: "terse"` is updated to `"telegraph"`. If both files already exist, the legacy `terse.md` is dropped (the on-disk telegraph wins). No user action beyond `metalmind stamp` is required.
+
+### Changed — `cli/assets/marsh.md`
+
+Rewritten as a persona document — opens with "You are Marsh — Ironeyes. Steel Inquisitor of the Final Empire," then lists how Marsh talks, where Marsh does not speak (code blocks, ADRs, security warnings, destructive-action confirmations), how Marsh thinks (senior, not a yes-man), and how long Marsh speaks. The intensity tiers (`ULTRA` / `FULL` / `LITE`) and the example pairs are preserved. The description in the frontmatter is updated to match.
+
+### Changed — `cli/assets/telegraph.md` (renamed from `terse.md`)
+
+Rewritten as the Telegraph operator persona — every word costs the sender money, padding is theft. Same structure as the new marsh: identity opener, transmission rules, sheath-points, thinking stance, length budget. The slug rename (`terse` → `telegraph`) is the source-of-truth change; everywhere `terse` was used internally — `FlavorChoice` type, wizard default for the `classic` flavor, output-style asset filename, shared skill directory, skill frontmatter — now uses `telegraph`. The previous `terse` slug is treated as a migration source, not a supported choice.
+
+### Added — `migrateTerseToTelegraph` in `cli/src/install/output-style.ts`
+
+Idempotent migration helper called from `metalmind stamp`. Rewrites `~/.claude/output-styles/terse.md` in place (frontmatter `name: terse` → `name: telegraph`, body preserved), unlinks the legacy file, and updates `settings.outputStyle` if it was pointing at `terse`. Handles the three real cases: legacy file present + no telegraph (rename + rewrite), both present (drop legacy), settings point at terse but file is gone (copy from bundled asset). Four tests cover the matrix.
+
+### Changed — `cli/src/commands/stamp.ts`
+
+Stamp gains an explicit `Output-style rename: terse → telegraph (legacy migration)` step that calls the helper and logs whether the file was renamed and whether settings were updated. The step runs before the activation-hook step so subsequent re-anchor hooks see the new slug.
+
+### Changed — `cli/src/install/output-style.ts` legacy-file detection
+
+`findLegacyFile` now treats `terse` as a known legacy slug alongside `caveman`, and the canonical exclusion set is `marsh` + `telegraph`. Fresh installs that find a pre-existing `terse.md` from an upgraded user will migrate it the same way `caveman.md` has been migrated since 0.8.0.
+
+### Changed — `cli/src/install/wizard.ts`
+
+The `classic` flavor branch in the install wizard now selects `'telegraph'` instead of `'terse'`. The Scadrial branch is unchanged.
+
+---
+
+## 0.8.13 — 2026-05-20
+
+Patch release — adds a per-turn output-style re-anchor hook to fix mid-session drift on Claude Code. Pattern borrowed from `caveman`'s `UserPromptSubmit` reinforcement: the 0.8.10 `SessionStart` anchor handles fresh sessions and post-`/compact` cases, but the style still fades under sustained task pressure on long sessions because nothing re-injects it between turns. The new sibling hook fires on every user message and emits a short (~25 token) reminder, keeping the active style name and core rules at the top of attention every turn. Token cost is dwarfed by the output savings of the style actually firing — typically 30–50% on chat replies.
+
+Scope is Claude Code only — output styles are a Claude Code feature. Codex hosts are unaffected.
+
+Re-stamp with `metalmind stamp` to pick up the new hook in `~/.claude/settings.json`. Existing `SessionStart` activation hook is unchanged; the new entry lives independently under `UserPromptSubmit` so users can disable one without losing the other.
+
+### Added — `metalmind-output-style-reanchor.sh` hook
+
+`cli/templates/claude/hooks/output-style-reanchor.sh.template` — reads `outputStyle` from `~/.claude/settings.json` and emits `{ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: ... } }`. No-ops silently when no style is active. Mirrors the runtime model of the existing activation hook but skips the full-body re-emit — only a short marker reminder ships per turn.
+
+### Added — install/teardown wiring
+
+`cli/src/install/settings.ts` gains `applyOutputStyleUserPromptSubmitHook` and `clearOutputStyleUserPromptSubmitHook`, mirroring the existing SessionStart pair. `cli/src/install/templates.ts` `copyClaudeHooks` now also copies the re-anchor template and returns its script path/command. `wizard.ts` and `commands/stamp.ts` register the new hook alongside the existing two. `teardown.ts` clears the registration and removes the script.
+
+## 0.8.12 — 2026-05-19
+
+Patch release — follow-up to 0.8.11. The `writing-vault-notes` skill and the cookbook still showed `metalmind scribe create kind:slug` examples (e.g. `scribe create learning:my-topic`). `scribe create` does not accept a `kind:slug` argument — it takes a plain title plus `--kind` (`scribe create "my topic" --kind learning`). The `kind:slug` shortcut is only for commands that address an **existing** note: `scribe update`, `scribe patch`, `gold`, `delete`, `show`, `rename`. The wrong examples are corrected and the distinction is now stated explicitly.
+
+Re-stamp with `metalmind stamp` to pick up the corrected skill.
+
+## 0.8.11 — 2026-05-18
+
+Patch release — corrects broken wikilink guidance. The `writing-vault-notes` skill and the cookbook told agents to write `[[kind:slug]]` wikilinks (e.g. `[[learning:cache-fingerprints]]`). Obsidian has no `kind:` link resolver, so it reads `learning:cache-fingerprints` as a filename — and `:` is an illegal filename character. Clicking such a link raises `File name cannot contain any of the following characters: \ / :`. The `kind:slug` form is a metalmind CLI argument convention only; it was never valid wikilink syntax.
+
+Re-stamp with `metalmind stamp` to pick up the corrected skill.
+
+### Changed — wikilink guidance is plain-stem only
+
+`cli/templates/.shared/skills/writing-vault-notes/SKILL.md` (and its eval copy) now instruct plain-stem wikilinks — `[[cache-fingerprints]]`, never a `kind:` prefix, never a path. `docs/cookbook.md` updated to match, with an explicit note on the Obsidian failure mode. Vaults with existing `[[kind:slug]]` links should rewrite them to `[[slug]]`; stems resolve vault-wide.
+
 ## 0.8.10 — 2026-05-13
 
 Patch release — fixes the long-standing drift of metalmind-shipped output styles (`marsh`, `terse`) under task load and after `/compact`. The output-style mechanism in Claude Code loads the style body into the system prompt once at session start; the section then loses weight against accumulating context, and the model drifts back to verbose prose. Fix is a second SessionStart hook that re-anchors the active style body as `additionalContext` every session, plus opt-in discoverability skills.

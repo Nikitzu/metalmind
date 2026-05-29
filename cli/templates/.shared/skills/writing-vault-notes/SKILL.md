@@ -1,6 +1,6 @@
 ---
 name: writing-vault-notes
-description: "Use when creating or editing markdown notes in a metalmind vault — any time the user says 'save this', 'note that', 'add to the vault', updates an existing note, or pipes a body through `metalmind scribe create|update|patch`. Covers Obsidian Flavored Markdown (wikilinks, embeds, callouts, tags, block refs, highlights, tasks) as the supported syntax dialect and metalmind conventions; scribe stamps frontmatter, prefer `kind:slug` wikilinks, folder-by-intent not by project, link new notes from their MOC. Invoke before writing any note body, even if the user's request is one sentence."
+description: "Use when creating or editing markdown notes in a metalmind vault — any time the user says 'save this', 'note that', 'add to the vault', updates an existing note, or pipes a body through `metalmind scribe create|update|patch`. Covers Obsidian Flavored Markdown (wikilinks, embeds, callouts, tags, block refs, highlights, tasks) as the supported syntax dialect and metalmind conventions; scribe stamps frontmatter, plain-stem wikilinks (no `kind:` prefix), folder-by-intent not by project, link new notes from their MOC. Invoke before writing any note body, even if the user's request is one sentence."
 model: sonnet
 ---
 
@@ -53,8 +53,8 @@ Both names always work — prefer whichever the user's `CLAUDE.md` suggests. If 
 1. **Recall first.** Run `metalmind tap copper "<topic>"` before writing. Surfaces an existing note to update (via `scribe update`/`patch`) instead of creating a duplicate.
 2. **Pick the intent folder**, not a per-project subdir: `Work/`, `Personal/`, `Learnings/`, `Daily/`, `Inbox/`, `Plans/`, `Archive/`.
 3. **Write the body** using the syntax below. No frontmatter when piping through scribe.
-4. **Link internally via wikilinks.** Prefer `[[kind:slug]]` shortcuts (`[[learning:cache-fingerprints]]`) — scribe resolves them to the right path and updates backlinks on rename.
-5. **Pass to scribe on stdin:** `printf '%s' "$body" | metalmind scribe create learning:my-topic`.
+4. **Link internally via wikilinks.** Use plain stem links — `[[cache-fingerprints]]`, not `[[learning:cache-fingerprints]]`. Obsidian resolves stems vault-wide and has no `kind:` resolver; a `kind:` prefix yields an unresolvable link (`:` is an illegal filename char). The `kind:slug` form is for metalmind CLI arguments only, never wikilink bodies.
+5. **Pass to scribe on stdin:** `printf '%s' "$body" | metalmind scribe create "my topic" --kind learning`. `scribe create` takes a plain title plus `--kind` — never a `kind:slug` argument.
 
 ## Syntax reference
 
@@ -65,11 +65,13 @@ Both names always work — prefer whichever the user's `CLAUDE.md` suggests. If 
 [[Note Name|display text]]
 [[Note Name#Heading]]
 [[Note Name#^block-id]]
-[[learning:cache-fingerprints]]     # metalmind kind:slug shortcut
-[[plan:2026-04-22-my-topic]]
+[[cache-fingerprints]]              # plain stem — resolves vault-wide
+[[2026-04-22-my-topic]]
 ```
 
 Wikilinks resolve by filename stem (no `.md`, no folder path). Be consistent with case — some vaults are case-sensitive.
+
+> **Never put a `kind:` prefix inside `[[ ]]`.** `[[learning:slug]]` is unresolvable in Obsidian — `:` is an illegal filename char, so a click triggers a "File name cannot contain..." error. `kind:slug` is a metalmind CLI argument form for addressing **existing** notes (`scribe update learning:foo`, `scribe patch learning:foo`, `gold plan:bar`) — not a wikilink, and not how `scribe create` works (`create` takes a title + `--kind`).
 
 ### Embeds
 
@@ -197,7 +199,7 @@ Project affiliation lives in frontmatter (`project: metalmind`), and a matching 
 - Use headings to chunk. Long prose walls don't survive six months.
 - Wikilink liberally. An unlinked note is invisible to the graph.
 - Put code and config in fenced blocks with the language tag.
-- Prefer `[[kind:slug]]` shortcuts over raw filenames — they survive renames.
+- Use plain stem links (`[[my-note]]`) — never raw paths, never `kind:` prefixes. scribe rewrites stems on rename.
 
 ### What NOT to write
 
@@ -208,7 +210,7 @@ Project affiliation lives in frontmatter (`project: metalmind`), and a matching 
 
 ## Example
 
-A learning note — body passed as stdin to `metalmind scribe create learning:cache-fingerprints-need-all-inputs`:
+A learning note — body passed as stdin to `metalmind scribe create "cache fingerprints need all inputs" --kind learning`:
 
 ```markdown
 Cache staleness fingerprints must include every real input, not just the first one. When we added OpenAPI specs as a second input to forge's merged cache, we forgot to hash them — so spec edits didn't invalidate the cache and downstream edges stayed stale.
@@ -237,7 +239,7 @@ Scribe stamps the frontmatter (`tags: [metalmind, learning, caching]`, `created:
 | Link with alias | `[[Note Name\|shown text]]` |
 | Link to heading | `[[Note Name#Heading]]` |
 | Link to block | `[[Note Name#^block-id]]` |
-| Metalmind shortcut | `[[learning:slug]]` / `[[plan:2026-04-22-topic]]` |
+| Internal link | `[[slug]]` — plain stem, no `kind:` prefix, no path |
 | Embed note | `![[Note Name]]` |
 | Embed image sized | `![[file.png\|400]]` |
 | Callout | `> [!note]` then body on next `>` lines |

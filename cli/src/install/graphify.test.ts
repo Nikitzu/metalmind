@@ -101,62 +101,62 @@ describe('graphify install', () => {
     expect(result.installed).toBe(true);
     expect(result.claudeWired).toBe(false);
     expect(runCommand).toHaveBeenCalledTimes(2);
-});
-
-describe('cleanLegacyHomeClaudeMdStamp', () => {
-  let tmp: string;
-
-  beforeEach(async () => {
-    tmp = await mkdtemp(join(tmpdir(), 'metalmind-cleanup-'));
   });
 
-  afterEach(async () => {
-    await rm(tmp, { recursive: true, force: true });
-  });
+  describe('cleanLegacyHomeClaudeMdStamp', () => {
+    let tmp: string;
 
-  it('returns false when ~/CLAUDE.md does not exist', async () => {
-    const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
-    const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
-    expect(removed).toBe(false);
-  });
+    beforeEach(async () => {
+      tmp = await mkdtemp(join(tmpdir(), 'metalmind-cleanup-'));
+    });
 
-  it('returns false when file exists but has no graphify section', async () => {
-    await writeFile(join(tmp, 'CLAUDE.md'), '# my notes\nrandom content\n', 'utf8');
-    const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
-    const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
-    expect(removed).toBe(false);
-    const after = await readFile(join(tmp, 'CLAUDE.md'), 'utf8');
-    expect(after).toContain('# my notes');
-  });
+    afterEach(async () => {
+      await rm(tmp, { recursive: true, force: true });
+    });
 
-  it('deletes the file when it only contains the graphify section', async () => {
-    await writeFile(
-      join(tmp, 'CLAUDE.md'),
-      '## graphify\n\nThis project has a graphify knowledge graph at graphify-out/.\n',
-      'utf8',
-    );
-    const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
-    const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
-    expect(removed).toBe(true);
-    expect(existsSync(join(tmp, 'CLAUDE.md'))).toBe(false);
-  });
+    it('returns false when ~/CLAUDE.md does not exist', async () => {
+      const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
+      const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
+      expect(removed).toBe(false);
+    });
 
-  it('strips only the graphify section, preserves other user content', async () => {
-    await writeFile(
-      join(tmp, 'CLAUDE.md'),
-      '# My personal notes\n\nKept text\n\n## graphify\n\nThis project has a graphify knowledge graph at graphify-out/.\n\n## Another section\n\nAlso kept\n',
-      'utf8',
-    );
-    const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
-    const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
-    expect(removed).toBe(true);
-    const after = await readFile(join(tmp, 'CLAUDE.md'), 'utf8');
-    expect(after).toContain('# My personal notes');
-    expect(after).toContain('Kept text');
-    expect(after).toContain('## Another section');
-    expect(after).toContain('Also kept');
-    expect(after).not.toContain('graphify');
-  });
+    it('returns false when file exists but has no graphify section', async () => {
+      await writeFile(join(tmp, 'CLAUDE.md'), '# my notes\nrandom content\n', 'utf8');
+      const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
+      const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
+      expect(removed).toBe(false);
+      const after = await readFile(join(tmp, 'CLAUDE.md'), 'utf8');
+      expect(after).toContain('# my notes');
+    });
+
+    it('deletes the file when it only contains the graphify section', async () => {
+      await writeFile(
+        join(tmp, 'CLAUDE.md'),
+        '## graphify\n\nThis project has a graphify knowledge graph at graphify-out/.\n',
+        'utf8',
+      );
+      const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
+      const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
+      expect(removed).toBe(true);
+      expect(existsSync(join(tmp, 'CLAUDE.md'))).toBe(false);
+    });
+
+    it('strips only the graphify section, preserves other user content', async () => {
+      await writeFile(
+        join(tmp, 'CLAUDE.md'),
+        '# My personal notes\n\nKept text\n\n## graphify\n\nThis project has a graphify knowledge graph at graphify-out/.\n\n## Another section\n\nAlso kept\n',
+        'utf8',
+      );
+      const { cleanLegacyHomeClaudeMdStamp } = await import('./graphify.js');
+      const removed = await cleanLegacyHomeClaudeMdStamp(tmp);
+      expect(removed).toBe(true);
+      const after = await readFile(join(tmp, 'CLAUDE.md'), 'utf8');
+      expect(after).toContain('# My personal notes');
+      expect(after).toContain('Kept text');
+      expect(after).toContain('## Another section');
+      expect(after).toContain('Also kept');
+      expect(after).not.toContain('graphify');
+    });
   });
 
   it('uninstall runs graphify claude uninstall then uv tool uninstall', async () => {

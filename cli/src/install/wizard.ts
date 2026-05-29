@@ -8,13 +8,13 @@ import { promptHosts } from './host-prompt.js';
 import { registerMcpServers } from './mcp.js';
 import { type FlavorChoice, installOutputStyle } from './output-style.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
-import { installUv, UV_INSTALL_COMMAND } from './uv.js';
 import { installSerena } from './serena.js';
 import {
   applyAgentTeams,
   applyMemoryRouting,
   applyMetalmindSessionStartHook,
   applyOutputStyleSessionStartHook,
+  applyOutputStyleUserPromptSubmitHook,
 } from './settings.js';
 import { setupStack } from './stack.js';
 import {
@@ -23,6 +23,7 @@ import {
   copyClaudeTemplates,
   stampClaudeMd,
 } from './templates.js';
+import { installUv, UV_INSTALL_COMMAND } from './uv.js';
 import { promptVaultPath, setupVault } from './vault.js';
 import { installVaultRag, resolveUvBinPath, resolveWatcherBinPath } from './vault-rag.js';
 import { installWatcher } from './watcher.js';
@@ -157,7 +158,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     checkCancelled(answer, 'theme prompt');
     flavor = answer as 'scadrial' | 'classic';
   }
-  const styleChoice: FlavorChoice = flavor === 'scadrial' ? 'marsh' : 'terse';
+  const styleChoice: FlavorChoice = flavor === 'scadrial' ? 'marsh' : 'telegraph';
 
   let memoryRouting: 'vault-only' | 'both';
   if (opts.memoryRouting !== undefined) {
@@ -249,10 +250,13 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     log.step('Tracking vault in git');
     const git = await setupVaultGit({ vaultPath: vault.vaultPath, enable: true });
     if (git.action === 'initialized') log.success(`  git init at ${vault.vaultPath}`);
-    else if (git.action === 'already-tracked') log.info('  vault was already a git repo — skipped init');
+    else if (git.action === 'already-tracked')
+      log.info('  vault was already a git repo — skipped init');
     if (git.gitignoreAction === 'created') log.info('  wrote .gitignore');
-    else if (git.gitignoreAction === 'inserted') log.info('  inserted metalmind block into .gitignore');
-    else if (git.gitignoreAction === 'updated') log.info('  refreshed metalmind block in .gitignore');
+    else if (git.gitignoreAction === 'inserted')
+      log.info('  inserted metalmind block into .gitignore');
+    else if (git.gitignoreAction === 'updated')
+      log.info('  refreshed metalmind block in .gitignore');
     if (git.initialCommit) log.info('  made initial commit');
     if (git.commitWarning) log.warn(`  initial commit skipped: ${git.commitWarning}`);
     log.info('  add a remote with: git -C ' + vault.vaultPath + ' remote add origin <url>');
@@ -272,9 +276,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     const result = await installGraphify();
     if (result.alreadyInstalled) log.info('  graphify already on PATH — skipped install');
     if (result.installed) log.success('  uv tool install graphifyy complete');
-    if (result.claudeWired) log.info('  graphify claude install wired PreToolUse hook (no $HOME stamp)');
-    if (result.legacyHomeStampRemoved)
-      log.info('  cleaned legacy graphify stamp from ~/CLAUDE.md');
+    if (result.claudeWired)
+      log.info('  graphify claude install wired PreToolUse hook (no $HOME stamp)');
+    if (result.legacyHomeStampRemoved) log.info('  cleaned legacy graphify stamp from ~/CLAUDE.md');
     graphifyHookWired = result.claudeWired;
   }
 
@@ -350,8 +354,10 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     const teams = await applyAgentTeams({ enable: enableTeams });
     if (teams.changed) {
       if (enableTeams) {
-        if (teams.envSet) log.success(`  set env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 in ${teams.settingsPath}`);
-        if (teams.teammateModeSet) log.success(`  set teammateMode="tmux" in ${teams.settingsPath}`);
+        if (teams.envSet)
+          log.success(`  set env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 in ${teams.settingsPath}`);
+        if (teams.teammateModeSet)
+          log.success(`  set teammateMode="tmux" in ${teams.settingsPath}`);
       } else {
         log.info(`  cleared agent-teams keys from ${teams.settingsPath}`);
       }
@@ -387,6 +393,19 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     log.info(
       outputStyleHookReg.changed
         ? '  registered in settings.json → SessionStart'
+        : '  already registered',
+    );
+
+    log.step('Installing output-style re-anchor hook (per-turn drift guard)');
+    const outputStyleReanchorReg = await applyOutputStyleUserPromptSubmitHook({
+      hookCommand: hookScript.outputStyleReanchorHookCommand,
+    });
+    log.success(
+      `  ${hookScript.outputStyleReanchorAction} ${hookScript.outputStyleReanchorHookScriptPath}`,
+    );
+    log.info(
+      outputStyleReanchorReg.changed
+        ? '  registered in settings.json → UserPromptSubmit'
         : '  already registered',
     );
 
@@ -467,9 +486,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     forge: { groups: {} },
     skills: { eodHook, notifications },
     hosts:
-      chosenHosts.length > 0
-        ? (chosenHosts as [MetalmindHost, ...MetalmindHost[]])
-        : ['claude'],
+      chosenHosts.length > 0 ? (chosenHosts as [MetalmindHost, ...MetalmindHost[]]) : ['claude'],
   };
   await writeConfig(config);
   log.success('Wrote ~/.metalmind/config.json');

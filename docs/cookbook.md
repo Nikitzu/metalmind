@@ -66,13 +66,17 @@ The title is the H1. The first sentence is the highest-weighted text the embedde
 
 If a future-you scans the first line of the file, can they tell whether it's the right note? If no, rewrite.
 
-### `kind:slug` shortcuts in wikilinks
+### Wikilinks — plain stems only
 
-Prefer `[[learning:cache-fingerprints]]` over `[[cache-fingerprints]]` over `[[Learnings/cache-fingerprints.md]]`. The shortcut survives folder reorganisation and is the format `scribe rename` rewrites cleanly. Stem-only links work but break on rename if the stem isn't unique. Path links rot the moment the file moves.
+Write wikilinks as plain stems: `[[cache-fingerprints]]`, never `[[learning:cache-fingerprints]]` and never `[[Learnings/cache-fingerprints.md]]`.
+
+A `kind:` prefix inside `[[ ]]` is **broken in Obsidian** — there is no `kind:` link resolver, so `[[learning:slug]]` is read as a filename containing an illegal `:` and a click raises `File name cannot contain any of the following characters: \ / :`. Path links rot the moment the file moves. Stem links resolve vault-wide and `scribe rename` rewrites them cleanly; keep slugs unique so the stem stays unambiguous.
+
+`kind:slug` is a metalmind **CLI argument** form for addressing **existing** notes (`scribe update learning:foo`, `scribe patch learning:foo`, `gold plan:bar`) — it is not wikilink syntax. Note `scribe create` does **not** take `kind:slug`; it takes a plain title plus `--kind` (`scribe create "foo" --kind learning`).
 
 ```markdown
-Reasoning lives in [[learning:silent-fallback-bugs-compound]] —
-the same pattern bit us in [[plan:2026-04-30-metalmind-v0-4-0]].
+Reasoning lives in [[silent-fallback-bugs-compound]] —
+the same pattern bit us in [[2026-04-30-metalmind-v0-4-0]].
 ```
 
 ### MOC linking — every project's index

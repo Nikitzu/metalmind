@@ -7,10 +7,12 @@ import {
   applyAgentTeams,
   applyMemoryRouting,
   applyMetalmindSessionStartHook,
+  applyOutputStyleUserPromptSubmitHook,
   type ClaudeSettings,
   clearAgentTeams,
   clearMemoryRouting,
   clearMetalmindSessionStartHook,
+  clearOutputStyleUserPromptSubmitHook,
 } from './settings.js';
 
 async function readJson(path: string): Promise<ClaudeSettings> {
@@ -132,11 +134,7 @@ describe('settings', () => {
     });
 
     it('does not strip a non-tmux teammateMode the user set themselves on disable', async () => {
-      await writeFile(
-        settingsPath,
-        JSON.stringify({ teammateMode: 'in-process' }),
-        'utf8',
-      );
+      await writeFile(settingsPath, JSON.stringify({ teammateMode: 'in-process' }), 'utf8');
       const result = await applyAgentTeams({ settingsPath, enable: false });
       expect(result.changed).toBe(false);
       const data = await readJson(settingsPath);
@@ -298,6 +296,118 @@ describe('settings', () => {
 
     it('returns false when settings file does not exist', async () => {
       const changed = await clearMetalmindSessionStartHook(join(tmp, 'nope.json'));
+      expect(changed).toBe(false);
+    });
+  });
+
+  describe('applyOutputStyleUserPromptSubmitHook', () => {
+    const hookCommand = 'bash /x/metalmind-output-style-reanchor.sh';
+
+    it('registers a new UserPromptSubmit group in an empty settings file', async () => {
+      const result = await applyOutputStyleUserPromptSubmitHook({ settingsPath, hookCommand });
+      expect(result.changed).toBe(true);
+
+      const data = await readJson(settingsPath);
+      expect(data.hooks?.UserPromptSubmit).toHaveLength(1);
+      expect(data.hooks?.UserPromptSubmit?.[0]?.hooks?.[0]?.command).toBe(hookCommand);
+    });
+
+    it('preserves pre-existing unrelated UserPromptSubmit hooks', async () => {
+      await writeFile(
+        settingsPath,
+        JSON.stringify({
+          hooks: {
+            UserPromptSubmit: [
+              { matcher: '', hooks: [{ type: 'command', command: 'bash /other.sh' }] },
+            ],
+          },
+        }),
+        'utf8',
+      );
+      await applyOutputStyleUserPromptSubmitHook({ settingsPath, hookCommand });
+
+      const data = await readJson(settingsPath);
+      expect(data.hooks?.UserPromptSubmit).toHaveLength(2);
+      const commands = data.hooks?.UserPromptSubmit?.flatMap((g) => g.hooks.map((h) => h.command));
+      expect(commands).toContain('bash /other.sh');
+      expect(commands).toContain(hookCommand);
+    });
+
+    it('is idempotent: re-apply with identical command returns changed=false', async () => {
+      await applyOutputStyleUserPromptSubmitHook({ settingsPath, hookCommand });
+      const second = await applyOutputStyleUserPromptSubmitHook({ settingsPath, hookCommand });
+      expect(second.changed).toBe(false);
+    });
+
+    it('replaces a stale entry when the hookCommand changes', async () => {
+      await applyOutputStyleUserPromptSubmitHook({
+        settingsPath,
+        hookCommand: 'bash /old/metalmind-output-style-reanchor.sh',
+      });
+      const second = await applyOutputStyleUserPromptSubmitHook({
+        settingsPath,
+        hookCommand: 'bash /new/metalmind-output-style-reanchor.sh',
+      });
+      expect(second.changed).toBe(true);
+
+      const data = await readJson(settingsPath);
+      const entries = data.hooks?.UserPromptSubmit?.filter((g) =>
+        g.hooks.some((h) => h.command.includes('metalmind-output-style-reanchor.sh')),
+      );
+      expect(entries).toHaveLength(1);
+      expect(entries?.[0]?.hooks?.[0]?.command).toContain('/new/');
+    });
+  });
+
+  describe('clearOutputStyleUserPromptSubmitHook', () => {
+    it('removes only the re-anchor entry, keeps other UserPromptSubmit groups', async () => {
+      await writeFile(
+        settingsPath,
+        JSON.stringify({
+          hooks: {
+            UserPromptSubmit: [
+              { matcher: '', hooks: [{ type: 'command', command: 'bash /other.sh' }] },
+              {
+                matcher: '',
+                hooks: [
+                  {
+                    type: 'command',
+                    command: 'bash /x/metalmind-output-style-reanchor.sh',
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+        'utf8',
+      );
+      const changed = await clearOutputStyleUserPromptSubmitHook(settingsPath);
+      expect(changed).toBe(true);
+
+      const data = await readJson(settingsPath);
+      expect(data.hooks?.UserPromptSubmit).toHaveLength(1);
+      expect(data.hooks?.UserPromptSubmit?.[0]?.hooks?.[0]?.command).toBe('bash /other.sh');
+    });
+
+    it('deletes UserPromptSubmit array entirely when it was the only entry', async () => {
+      await applyOutputStyleUserPromptSubmitHook({
+        settingsPath,
+        hookCommand: 'bash /metalmind-output-style-reanchor.sh',
+      });
+      const changed = await clearOutputStyleUserPromptSubmitHook(settingsPath);
+      expect(changed).toBe(true);
+
+      const data = await readJson(settingsPath);
+      expect(data.hooks).toBeUndefined();
+    });
+
+    it('returns false when no re-anchor entry exists', async () => {
+      const changed = await clearOutputStyleUserPromptSubmitHook(settingsPath);
+      expect(changed).toBe(false);
+    });
+
+    it('returns false when settings file does not exist', async () => {
+      const changed = await clearOutputStyleUserPromptSubmitHook(join(tmp, 'nope.json'));
       expect(changed).toBe(false);
     });
   });
