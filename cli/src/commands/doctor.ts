@@ -12,6 +12,8 @@ import {
   METALMIND_CODEX_SKILLS,
   METALMIND_RULES_FILENAME,
 } from '../install/codex.js';
+import { METALMIND_CURSOR_HOOK_FILENAME } from '../install/cursor/hooks.js';
+import { DEFAULT_CURSOR_DIR } from '../install/cursor.js';
 import { detectPrereqs } from '../install/prereqs.js';
 import { OLLAMA_CONTAINER } from '../install/stack.js';
 import { runCommand } from '../util/exec.js';
@@ -473,6 +475,69 @@ export async function checkCodexInstall(
   return out;
 }
 
+/**
+ * Cursor per-host deep checks: metalmind-recall skill, sessionStart hook
+ * (script + hooks.json entry). Only invoked when config.hosts.includes('cursor').
+ */
+export async function checkCursorInstall(opts: { cursorDir?: string } = {}): Promise<DeepCheck[]> {
+  const cursorDir = opts.cursorDir ?? DEFAULT_CURSOR_DIR;
+  const out: DeepCheck[] = [];
+
+  // 1. metalmind-recall skill
+  const skillPath = join(cursorDir, 'skills', 'metalmind-recall', 'SKILL.md');
+  out.push({
+    name: 'cursor-recall-skill',
+    ok: existsSync(skillPath),
+    detail: existsSync(skillPath) ? skillPath : 'metalmind-recall skill not installed',
+    remediation: existsSync(skillPath) ? undefined : 'Run `metalmind stamp --host cursor`.',
+  });
+
+  // 2. sessionStart hook script
+  const hookScriptPath = join(cursorDir, 'hooks', METALMIND_CURSOR_HOOK_FILENAME);
+  out.push({
+    name: 'cursor-hook-script',
+    ok: existsSync(hookScriptPath),
+    detail: existsSync(hookScriptPath) ? hookScriptPath : 'missing',
+    remediation: existsSync(hookScriptPath) ? undefined : 'Run `metalmind stamp --host cursor`.',
+  });
+
+  // 3. hooks.json sessionStart entry
+  const hooksJsonPath = join(cursorDir, 'hooks.json');
+  if (existsSync(hooksJsonPath)) {
+    try {
+      const data = JSON.parse(await readFile(hooksJsonPath, 'utf8')) as {
+        hooks?: { sessionStart?: Array<{ command?: string }> };
+      };
+      const entries = data?.hooks?.sessionStart ?? [];
+      const ours = entries.find(
+        (e) => typeof e?.command === 'string' && e.command.includes(METALMIND_CURSOR_HOOK_FILENAME),
+      );
+      out.push({
+        name: 'cursor-hooks-json',
+        ok: ours !== undefined,
+        detail: ours !== undefined ? 'sessionStart entry registered' : 'sessionStart entry missing',
+        remediation: ours !== undefined ? undefined : 'Run `metalmind stamp --host cursor`.',
+      });
+    } catch (err) {
+      out.push({
+        name: 'cursor-hooks-json',
+        ok: false,
+        detail: `parse error: ${err instanceof Error ? err.message : String(err)}`,
+        remediation: 'Inspect ~/.cursor/hooks.json for invalid JSON.',
+      });
+    }
+  } else {
+    out.push({
+      name: 'cursor-hooks-json',
+      ok: false,
+      detail: 'hooks.json absent',
+      remediation: 'Run `metalmind stamp --host cursor`.',
+    });
+  }
+
+  return out;
+}
+
 async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   // Only fire the docker/qdrant/ollama probes when the user is actually
   // on the legacy stack. Default v0.5.0 installs run sqlite-vec +
@@ -483,19 +548,21 @@ async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
 
   const installClaude = config.hosts.includes('claude');
   const installCodex = config.hosts.includes('codex');
+  const installCursor = config.hosts.includes('cursor');
 
   const stamps = installClaude ? await checkClaudeMdSentinel(config) : [];
   const codexChecks = installCodex ? await checkCodexInstall({ checkMcp: true }) : [];
+  const cursorChecks = installCursor ? await checkCursorInstall() : [];
 
   const [watcher, http] = await Promise.all([checkWatcherService(), checkRecallHttp()]);
 
   if (!onLegacy) {
-    return [watcher, http, ...stamps, ...codexChecks];
+    return [watcher, http, ...stamps, ...codexChecks, ...cursorChecks];
   }
 
   const docker = await checkDockerContainers();
   const [qdrant, ollama] = await Promise.all([checkQdrantCollection(), checkOllamaModel()]);
-  return [...docker, qdrant, ollama, watcher, http, ...stamps, ...codexChecks];
+  return [...docker, qdrant, ollama, watcher, http, ...stamps, ...codexChecks, ...cursorChecks];
 }
 
 interface RecallLogEntry {

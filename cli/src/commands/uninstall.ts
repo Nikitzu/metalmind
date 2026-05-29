@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import { DEFAULT_CODEX_DIR, uninstallCodex } from '../install/codex.js';
+import { DEFAULT_CURSOR_DIR, uninstallCursor } from '../install/cursor.js';
 import { teardown } from '../install/teardown.js';
 
 const STACK_COMPOSE_REL = '.metalmind-stack/compose.yml';
@@ -40,6 +41,14 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
     existsSync(codexAgentsPath) ||
     existsSync(codexRulesPath);
 
+  // Detect Cursor install footprint: config flag or our sentinel files on disk.
+  const cursorSkillPath = join(DEFAULT_CURSOR_DIR, 'skills', 'metalmind-recall', 'SKILL.md');
+  const cursorHooksPath = join(DEFAULT_CURSOR_DIR, 'hooks.json');
+  const cursorInstalled =
+    (config?.hosts.includes('cursor') ?? false) ||
+    existsSync(cursorSkillPath) ||
+    existsSync(cursorHooksPath);
+
   log.warn('This will:');
   log.info(legacyStack ? '  - stop watcher and Docker stack' : '  - stop watcher');
   if (legacyStack) {
@@ -56,6 +65,11 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
   if (codexInstalled) {
     log.info(
       '  - strip Codex stamps from ~/.codex/ (AGENTS.md sentinel, hooks.json entry, hook script, network_access block, metalmind.rules, our skills); also `codex mcp remove metalmind` if registered',
+    );
+  }
+  if (cursorInstalled) {
+    log.info(
+      '  - strip Cursor stamps from ~/.cursor/ (metalmind-recall skill, our subagents, hooks.json entry, hook script); also the metalmind entry in mcp.json if registered',
     );
   }
   log.info('  - optionally uninstall the metalmind-vault-rag uv tool (prompt)');
@@ -143,6 +157,17 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
       if (codex.mcp === 'removed') log.success('codex mcp remove metalmind succeeded');
       else if (codex.mcp === 'codex-not-found')
         log.info('codex binary not on PATH — skipped MCP unregister (no-op since not registered)');
+    }
+
+    if (cursorInstalled) {
+      const cursor = await uninstallCursor({ removeMcp: true });
+      if (cursor.skills.length > 0)
+        log.success(`Removed Cursor skills: ${cursor.skills.join(', ')}`);
+      if (cursor.agents.length > 0) log.success(`Removed ${cursor.agents.length} Cursor subagents`);
+      if (cursor.hooksJson) log.success('Removed sessionStart entry from ~/.cursor/hooks.json');
+      if (cursor.hookScript)
+        log.success('Deleted ~/.cursor/hooks/metalmind-cursor-session-start.sh');
+      if (cursor.mcp === 'removed') log.success('Removed metalmind entry from ~/.cursor/mcp.json');
     }
 
     const claudeDir = join(homedir(), '.claude');
