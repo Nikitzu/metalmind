@@ -50,6 +50,19 @@ describe('saveToVault', () => {
     expect(contents).toContain('title: Custom Title');
   });
 
+  it('quotes a colon in the title so frontmatter stays valid YAML', async () => {
+    const result = await saveToVault({
+      vaultPath: tmp,
+      content: 'body',
+      title: 'Topic: subtopic',
+      now: new Date('2026-04-19T12:00:00Z'),
+    });
+
+    const contents = await readFile(result.path, 'utf8');
+    expect(contents).toContain('title: "Topic: subtopic"');
+    expect(contents).not.toContain('\ntitle: Topic: subtopic\n');
+  });
+
   it('falls back to "note" slug when content has no text', async () => {
     const result = await saveToVault({
       vaultPath: tmp,

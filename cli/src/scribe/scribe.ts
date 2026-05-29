@@ -125,6 +125,11 @@ function filenameFor(kind: ScribeKind, slug: string, now: Date, dailyDate?: stri
   return `${slug}.md`;
 }
 
+function yamlScalar(v: string): string {
+  if (/[:#[\]{}&*!|>'"%@`]/.test(v) || /^\s|\s$/.test(v) || v === '') return JSON.stringify(v);
+  return v;
+}
+
 function buildFrontmatter(fields: Record<string, unknown>): string {
   const lines: string[] = ['---'];
   for (const [k, v] of Object.entries(fields)) {
@@ -133,7 +138,7 @@ function buildFrontmatter(fields: Record<string, unknown>): string {
       if (v.length === 0) continue;
       lines.push(`${k}: [${v.map((x) => JSON.stringify(String(x))).join(', ')}]`);
     } else {
-      lines.push(`${k}: ${String(v)}`);
+      lines.push(`${k}: ${yamlScalar(String(v))}`);
     }
   }
   lines.push('---', '');

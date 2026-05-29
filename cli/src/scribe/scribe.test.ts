@@ -63,6 +63,17 @@ describe('scribe CRUD', () => {
     expect(moc).toContain('[[Plans/2026-04-21-do-x]] — Do X');
   });
 
+  it('create: quotes a colon in the title so frontmatter stays valid YAML', async () => {
+    const res = await scribeCreate(
+      { kind: 'plan', title: 'Topic: subtopic', body: 'hi', project: 'metalmind' },
+      { vaultRoot: vault, now: fixedNow },
+    );
+    const note = await readFile(res.path, 'utf8');
+    expect(note).toContain('title: "Topic: subtopic"');
+    expect(note).not.toContain('\ntitle: Topic: subtopic\n');
+    expect(note).toContain('# Topic: subtopic');
+  });
+
   it('create daily: appends if file exists', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     await scribeCreate({ kind: 'daily', title: 'morning', body: 'a' }, ctx);

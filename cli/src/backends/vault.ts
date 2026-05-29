@@ -79,13 +79,18 @@ function inferTitle(content: string): string {
   return withoutHeading || 'note';
 }
 
+function yamlScalar(v: string): string {
+  if (/[:#[\]{}&*!|>'"%@`]/.test(v) || /^\s|\s$/.test(v) || v === '') return JSON.stringify(v);
+  return v;
+}
+
 function buildFrontmatter(opts: {
   title: string;
   tags: string[];
   created: string;
   project?: string;
 }): string {
-  const lines = ['---', `title: ${opts.title}`];
+  const lines = ['---', `title: ${yamlScalar(opts.title)}`];
   lines.push(`tags: [${opts.tags.map((t) => JSON.stringify(t)).join(', ')}]`);
   lines.push(`created: ${opts.created}`);
   lines.push(`updated: ${opts.created}`);

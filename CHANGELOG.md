@@ -6,6 +6,24 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.8.15 — 2026-05-29
+
+Patch release. Fixes unquoted colons in stamped frontmatter titles. A title containing a colon (`Topic: subtopic`, the common "Title: subtitle" habit) was interpolated raw into the YAML `title:` field, producing `title: Topic: subtopic`. YAML parsers read that as a malformed mapping ("mapping values are not allowed here"), so the note's frontmatter failed to parse in Obsidian, Dataview, and `scribe show`. The filename slug was already sanitised, so the breakage was invisible on disk and only surfaced when something read the frontmatter back.
+
+Both frontmatter writers now route scalar values through a `yamlScalar` helper that double-quotes any value containing a YAML indicator character (`:`, `#`, `[`, `]`, `{`, `}`, `&`, `*`, `!`, `|`, `>`, `'`, `"`, `%`, `@`, backtick), leading/trailing whitespace, or the empty string. `JSON.stringify` produces a valid YAML double-quoted scalar. This defends every write path regardless of caller, not just titles passed through the skill.
+
+### Fixed — `cli/src/scribe/scribe.ts`
+
+`buildFrontmatter` now quotes scalar values via the new `yamlScalar` helper. Affects every `scribe create|update|patch` write.
+
+### Fixed — `cli/src/backends/vault.ts`
+
+`buildFrontmatter` (the `/save` Inbox path) quotes the `title:` field via `yamlScalar`.
+
+### Added — tests
+
+`scribe.test.ts` and `vault.test.ts` each assert a colon title round-trips as `title: "Topic: subtopic"` and never emits the broken unquoted form.
+
 ## 0.8.14 — 2026-05-20
 
 Patch release — persona-first rewrite of the bundled output styles and a slug rename. The 0.8.10–0.8.13 line treated style adherence as a rule-list problem: re-anchor more often, reinforce harder, keep the rules at the top of attention. That works against the grain of how an LLM follows instructions — rule lists are continuously-suppressed token preferences competing with the content prior. Persona prompts swap the underlying distribution wholesale and stick under load. `caveman` works for the same reason `marsh` previously didn't: identity, not rules.
