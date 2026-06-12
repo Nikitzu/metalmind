@@ -13,6 +13,7 @@ export interface RecallOptions {
   rerank?: boolean;
   /** When true, log the HTTP-path failure to stderr before falling back. */
   verbose?: boolean;
+  compact?: boolean;
   /** Override the co-hosted HTTP recall endpoint. Defaults to env or config. */
   httpEndpoint?: string | null;
 }
@@ -83,8 +84,39 @@ function formatHits(hits: Array<Record<string, unknown>>): string {
   return hits.map((h) => JSON.stringify(h, null, 2)).join('\n');
 }
 
+const COMPACT_SNIPPET_CHARS = 240;
+
+function lastHeadingSegment(heading: unknown): string {
+  if (typeof heading !== 'string' || heading.length === 0) return '';
+  const parts = heading.split(' / ');
+  return (parts[parts.length - 1] ?? '').trim();
+}
+
+function snippet(text: unknown, max = COMPACT_SNIPPET_CHARS): string {
+  if (typeof text !== 'string') return '';
+  const flat = text.replace(/\s+/g, ' ').trim();
+  if (flat.length <= max) return flat;
+  const cut = flat.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  const trimmed = lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut;
+  return `${trimmed.trimEnd()}…`;
+}
+
+function formatHitsCompact(hits: Array<Record<string, unknown>>): string {
+  return hits
+    .map((h, i) => {
+      const score = typeof h.score === 'number' ? h.score.toFixed(3) : '—';
+      const file = typeof h.file === 'string' ? h.file : '(unknown)';
+      const head = lastHeadingSegment(h.heading);
+      const headPart = head ? ` › ${head}` : '';
+      return `${i + 1}. [${score}] ${file}${headPart}\n   ${snippet(h.text)}`;
+    })
+    .join('\n');
+}
+
 async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
   const endpoint = resolveEndpoint(opts.httpEndpoint);
+  const fmt = opts.compact ? formatHitsCompact : formatHits;
   try {
     if (opts.tier === 'expand') {
       const body = (await httpPost(endpoint, '/expand', {
@@ -94,7 +126,10 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
         hits: Array<Record<string, unknown>>;
         expansions: unknown[];
       };
-      const text = `${formatHits(body.hits)}\n---expansions---\n${JSON.stringify(body.expansions, null, 2)}`;
+      const expandTail = opts.compact
+        ? `\n+${body.expansions.length} linked (use --json for full)`
+        : `\n---expansions---\n${JSON.stringify(body.expansions, null, 2)}`;
+      const text = `${fmt(body.hits)}${expandTail}`;
       return { tool: 'http:expand', text, raw: rawFromText(text), transport: 'http' };
     }
 
@@ -105,18 +140,21 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
       { rerank: opts.rerank },
     )) as { hits: Array<Record<string, unknown>> };
     if (opts.tier === 'fast') {
-      const text = formatHits(hits.hits);
+      const text = fmt(hits.hits);
       return { tool: 'http:search', text, raw: rawFromText(text), transport: 'http' };
     }
 
     // deep tier: search then related_notes on the top hit
     const topFile = (hits.hits[0]?.file as string | undefined) ?? null;
     if (!topFile) {
-      const text = formatHits(hits.hits);
+      const text = fmt(hits.hits);
       return { tool: 'http:search', text, raw: rawFromText(text), transport: 'http' };
     }
     const related = await httpPost(endpoint, '/related', { file: topFile });
-    const text = `${formatHits(hits.hits)}\n---related to ${topFile}---\n${JSON.stringify(related, null, 2)}`;
+    const relatedTail = opts.compact
+      ? `\n+related to ${topFile} (use --deep --json for full)`
+      : `\n---related to ${topFile}---\n${JSON.stringify(related, null, 2)}`;
+    const text = `${fmt(hits.hits)}${relatedTail}`;
     return { tool: 'http:search+related', text, raw: rawFromText(text), transport: 'http' };
   } catch (err) {
     if (opts.verbose) {

@@ -10,6 +10,7 @@ export interface TapOptions {
   rerank?: boolean;
   k?: number;
   json?: boolean;
+  compact?: boolean;
   verbose?: boolean;
   listRecent?: number;
 }
@@ -73,6 +74,7 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       k: opts.k,
       rerank: opts.rerank,
       verbose: showMeta,
+      compact: opts.compact,
       httpEndpoint: config.recall.httpEndpoint,
     });
     if (opts.json) {

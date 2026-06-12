@@ -6,6 +6,23 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.9.1 - 2026-06-12
+
+Leaner recall output. A new `--compact` flag on `tap copper` / `recall` renders each hit as a lean envelope (score, file path, last heading segment, and a snippet-truncated body) instead of the full per-hit JSON dump. The file path is the recovery handle: read the full note with `metalmind scribe show <file>` only when a hit actually matters. This is the same expand-on-demand idea other token-compression tools deliver through an MCP retrieval tool, done here bash-native so it costs zero standing schema tax.
+
+Measured at roughly 74% fewer recall-output tokens (1,660 down to 432 mean tokens per recall on a real vault, fast and deep tiers), with retrieval byte-identical between modes. `--compact` changes only how hits are rendered, never which hits are returned.
+
+The SessionStart stamp now steers the agent to compact-by-default, full-note-on-demand. The CLI default stays verbose for back-compat and scripted callers.
+
+### Added
+
+- **`--compact` flag** on `tap copper` / `recall` (`cli/src/backends/recall.ts`, `commands/tap.ts`, `cli.ts`). HTTP recall path only; the stdio MCP fallback stays verbose. Deep and expand tiers replace the related-notes / expansions JSON dump with a `+N linked` handle line.
+- **`bench/compact-v0/`**: runs the real CLI both ways over a query set, counts tokens (Anthropic `count_tokens`, char/4 offline fallback), and gates on retrieval drift. A saving is only reported if the returned file set is identical between verbose and compact.
+
+### Changed - SessionStart stamp
+
+- The Claude and Cursor `session-start` hook templates now instruct: default to `--compact` for lean recall, read a full note via `metalmind scribe show <file>` only when a hit matters.
+
 ## 0.9.0 — 2026-05-29
 
 Cursor host support. metalmind now stamps a third host alongside Claude Code and Codex CLI: Cursor (`~/.cursor`). Same recall thesis (bash over loopback, MCP optional), reusing the AGENTS.md-style template surface extracted for the Codex port in v0.8.0.

@@ -198,6 +198,10 @@ function attachTapFlags<T extends Command>(cmd: T): T {
     )
     .option('-k, --k <n>', 'Limit results to top N', (v) => Number.parseInt(v, 10))
     .option('--json', 'Emit structured JSON (tier, query, text, raw)')
+    .option(
+      '--compact',
+      'Lean per-hit render (drop prev_score, snippet text); full note via scribe show',
+    )
     .option('--verbose', 'Include metadata line (overrides config.verbose)')
     .option('--list-recent <n>', 'List the N most-recently-modified notes (no query needed)', (v) =>
       Number.parseInt(v, 10),
@@ -210,6 +214,7 @@ type TapCliOpts = {
   rerank?: boolean;
   k?: number;
   json?: boolean;
+  compact?: boolean;
   verbose?: boolean;
   listRecent?: number;
 };
@@ -221,6 +226,7 @@ function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
     rerank: cmdOpts.rerank,
     k: cmdOpts.k,
     json: cmdOpts.json,
+    compact: cmdOpts.compact,
     verbose: cmdOpts.verbose,
     listRecent: cmdOpts.listRecent,
   };
