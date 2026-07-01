@@ -1,7 +1,7 @@
 ---
 name: conventions-reviewer
 description: Code conventions and style review specialist. Audits for adherence to project CLAUDE.md rules, user-level principles (YAGNI, DRY-vs-premature, strict equality, error handling), and repo-specific patterns. Use on any PR to catch style drift.
-model: claude-opus-4-7[1m]
+model: claude-opus-4-8[1m]
 color: yellow
 tools: Read, Grep, Glob, Bash, WebFetch, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---

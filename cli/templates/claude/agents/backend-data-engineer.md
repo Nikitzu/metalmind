@@ -1,7 +1,7 @@
 ---
 name: backend-data-engineer
 description: Database and data-modeling specialist. Owns schema design, migrations, query optimisation, indexing, and data integrity. Use for schema changes, migration authoring, query performance work, or when a slow query needs investigation.
-model: claude-opus-4-7[1m]
+model: claude-opus-4-8[1m]
 color: cyan
 tools: Read, Grep, Glob, Edit, Write, Bash, WebFetch, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---

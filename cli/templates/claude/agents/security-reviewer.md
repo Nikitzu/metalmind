@@ -1,7 +1,7 @@
 ---
 name: security-reviewer
 description: Security review specialist. Audits code for OWASP-class vulnerabilities, PII handling, authn/authz flaws, secret leakage, and injection vectors. Use proactively on any PR touching auth, user input, storage, or external integrations.
-model: claude-opus-4-7[1m]
+model: claude-opus-4-8[1m]
 color: red
 tools: Read, Grep, Glob, Bash, WebFetch, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---

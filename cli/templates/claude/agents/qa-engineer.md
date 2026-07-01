@@ -1,7 +1,7 @@
 ---
 name: qa-engineer
 description: Test engineering specialist. Writes unit, integration, and e2e tests; designs test plans; audits coverage. Use after new code is written or when a bug has been fixed to add a regression test.
-model: claude-opus-4-7[1m]
+model: claude-opus-4-8[1m]
 color: yellow
 tools: Read, Grep, Glob, Edit, Write, Bash, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---

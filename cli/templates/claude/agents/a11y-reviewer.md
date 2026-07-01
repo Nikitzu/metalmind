@@ -1,7 +1,7 @@
 ---
 name: a11y-reviewer
 description: Accessibility review specialist. Audits frontend code for WCAG compliance, keyboard navigation, screen reader support, semantic HTML, colour contrast, and focus management. Use on any PR touching user-facing UI components.
-model: claude-opus-4-7[1m]
+model: claude-opus-4-8[1m]
 color: pink
 tools: Read, Grep, Glob, Bash, WebFetch, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---

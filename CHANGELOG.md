@@ -6,6 +6,16 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.9.2 - 2026-07-01
+
+Bump the bundled review and engineer agent templates from Opus 4.7 to Opus 4.8. These agents pin an explicit model with the `[1m]` context suffix rather than the `inherit` default, and the pin had fallen a version behind the current Opus release. No behavioural or interface change: a model version refresh only.
+
+### Changed
+
+- **Agent model pin `claude-opus-4-7[1m]` to `claude-opus-4-8[1m]`** across all 15 bundled agents in `cli/templates/claude/agents/` (architect, the adversary trio, backend and frontend engineers, and the reviewer set). Re-stamp on upgrade propagates the new pin to installed `~/.claude/agents/`.
+
+---
+
 ## 0.9.1 - 2026-06-12
 
 Leaner recall output. A new `--compact` flag on `tap copper` / `recall` renders each hit as a lean envelope (score, file path, last heading segment, and a snippet-truncated body) instead of the full per-hit JSON dump. The file path is the recovery handle: read the full note with `metalmind scribe show <file>` only when a hit actually matters. This is the same expand-on-demand idea other token-compression tools deliver through an MCP retrieval tool, done here bash-native so it costs zero standing schema tax.

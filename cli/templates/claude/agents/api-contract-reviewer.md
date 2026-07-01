@@ -1,7 +1,7 @@
 ---
 name: api-contract-reviewer
 description: API contract and interface review specialist. Audits for breaking changes, Hyrum's Law exposure, contract/implementation drift, and cross-consumer impact. Use on any PR that changes public API shape — endpoints, GraphQL schemas, shared types, exported functions.
-model: claude-opus-4-7[1m]
+model: claude-opus-4-8[1m]
 color: purple
 tools: Read, Grep, Glob, Bash, WebFetch, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---

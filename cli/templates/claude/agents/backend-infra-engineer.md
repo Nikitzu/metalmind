@@ -1,7 +1,7 @@
 ---
 name: backend-infra-engineer
 description: Infrastructure and deployment specialist. Owns CI/CD pipelines, Dockerfiles, env configs, observability (logging, metrics, tracing), and deploy scripts. Use for build/deploy changes, env var wiring, observability work, or infra-as-code.
-model: claude-opus-4-7[1m]
+model: claude-opus-4-8[1m]
 color: orange
 tools: Read, Grep, Glob, Edit, Write, Bash, WebFetch, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---

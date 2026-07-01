@@ -1,7 +1,7 @@
 ---
 name: adversary-archaeologist
 description: History-first debugging adversary. Reads git log, old PRs, and incident postmortems before source code. Looks at what used to work, when it stopped, and what changed around that time. Use in /team-debug teams when the bug involves a behaviour that may have changed over time.
-model: claude-opus-4-7[1m]
+model: claude-opus-4-8[1m]
 color: red
 tools: Read, Grep, Glob, Bash, WebFetch, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet
 ---
