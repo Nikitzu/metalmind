@@ -552,12 +552,12 @@ burnCmd
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
   .action(
-    (cmdOpts: { skipWatcher?: boolean; host?: string; noPrompt?: boolean; withMcp?: boolean }) => {
+    (cmdOpts: { skipWatcher?: boolean; host?: string; prompt?: boolean; withMcp?: boolean }) => {
       const hosts = parseHostFlag(cmdOpts.host);
       return stamp({
         skipWatcher: cmdOpts.skipWatcher,
         ...(hosts !== undefined ? { hosts } : {}),
-        noPrompt: cmdOpts.noPrompt,
+        noPrompt: cmdOpts.prompt === false,
         withMcp: cmdOpts.withMcp,
       });
     },
@@ -606,12 +606,12 @@ program
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
   .action(
-    (cmdOpts: { skipWatcher?: boolean; host?: string; noPrompt?: boolean; withMcp?: boolean }) => {
+    (cmdOpts: { skipWatcher?: boolean; host?: string; prompt?: boolean; withMcp?: boolean }) => {
       const hosts = parseHostFlag(cmdOpts.host);
       return stamp({
         skipWatcher: cmdOpts.skipWatcher,
         ...(hosts !== undefined ? { hosts } : {}),
-        noPrompt: cmdOpts.noPrompt,
+        noPrompt: cmdOpts.prompt === false,
         withMcp: cmdOpts.withMcp,
       });
     },

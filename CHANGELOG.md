@@ -6,6 +6,17 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.9.5 - 2026-07-19
+
+`stamp --no-prompt` crashed headless with `uv_tty_init EINVAL`. Two layers: Commander parses `--no-prompt` as a negation (`opts.prompt = false`), but both call sites read `opts.noPrompt` — always undefined, so the flag was a silent no-op and execution fell through to clack's host multi-select, which requires a TTY. The documented CI/scripted flag never worked.
+
+### Fixed
+
+- **`--no-prompt` wired correctly** (`cli/src/cli.ts`, both `stamp` command registrations): reads Commander's negated `prompt: false` instead of the nonexistent `noPrompt` key.
+- **Headless fallback in `promptHosts`** (`cli/src/install/host-prompt.ts`): when stdin is not a TTY, fall back to the previously-chosen host set instead of invoking clack's multiselect — plain `metalmind stamp` (and the init wizard's host step) now degrades gracefully under CI, agents, and piped stdin instead of crashing.
+
+---
+
 ## 0.9.4 - 2026-07-19
 
 Recall was surfacing soft-deleted notes: `scribe delete` moves a note into `.trash/`, the file watcher saw that move as a fresh `.md` and indexed it — so trashed notes could outrank their live replacements. The bulk indexer (`files_to_index`) always skipped `.trash`; the live watcher and the incremental reindex path didn't. All three now share one skip set.
