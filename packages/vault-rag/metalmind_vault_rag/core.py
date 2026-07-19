@@ -123,13 +123,15 @@ def chunk_markdown(text: str) -> list[tuple[str, str]]:
     return final
 
 
+SKIP_DIRS = frozenset({".obsidian", ".metalmind-stack", ".trash"})
+
+
+def in_skip_dir(path: pathlib.PurePath) -> bool:
+    return any(part in SKIP_DIRS for part in path.parts)
+
+
 def files_to_index() -> list[pathlib.Path]:
-    skip = {".obsidian", ".metalmind-stack", ".trash"}
-    return [
-        p
-        for p in VAULT.rglob("*.md")
-        if not any(part in skip for part in p.parts)
-    ]
+    return [p for p in VAULT.rglob("*.md") if not in_skip_dir(p)]
 
 
 def point_id(file_rel: str, heading: str, idx: int) -> str:

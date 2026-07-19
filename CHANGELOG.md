@@ -6,6 +6,20 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.9.4 - 2026-07-19
+
+Recall was surfacing soft-deleted notes: `scribe delete` moves a note into `.trash/`, the file watcher saw that move as a fresh `.md` and indexed it — so trashed notes could outrank their live replacements. The bulk indexer (`files_to_index`) always skipped `.trash`; the live watcher and the incremental reindex path didn't. All three now share one skip set.
+
+This release also makes the 0.9.3 fastembed cache fix actually reach installed machines: vault-rag is vendored into the npm package and only reinstalled when its own version bumps, and 0.9.3 shipped the Python change without bumping it. 0.9.4 bumps vault-rag to 0.3.1, so `stamp` reinstalls the tool and both Python fixes land.
+
+### Fixed
+
+- **Watcher no longer indexes `.trash/`** (`packages/vault-rag/watcher.py`): `_md_change` now filters through the shared `SKIP_DIRS` (`.trash`, `.obsidian`, `.metalmind-stack`) instead of its own two-entry substring check.
+- **Incremental reindex purges skip-dir entries** (`packages/vault-rag/indexer.py`): `reindex_paths` treats a skip-dir path as delete-only, so previously polluted `.trash` index entries self-heal when touched. For an immediate cleanup run `metalmind-vault-rag-indexer --wipe`.
+- **vault-rag version bumped to 0.3.1** so the vendored package reinstalls on upgrade, delivering this fix and 0.9.3's durable model cache (`~/.metalmind/cache/fastembed/`).
+
+---
+
 ## 0.9.3 - 2026-07-19
 
 Two scribe path-resolution bugs and one durability fix for the embedding model cache. All three surfaced in one real session: a `scribe rename` with a bare-slug destination silently moved a note to the vault root with no `.md` extension (invisible to the indexer), `scribe create --kind plan` double-dated slugs that already carried a date prefix, and macOS purged fastembed's temp-dir model cache leaving recall failing with `NO_SUCHFILE` until the half-cache was cleared by hand.

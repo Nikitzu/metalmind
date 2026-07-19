@@ -8,6 +8,7 @@ from .core import (
     embedding_backend,
     files_to_index,
     fts_conn,
+    in_skip_dir,
     point_id,
     vector_store,
 )
@@ -113,7 +114,7 @@ def reindex_paths(paths: list[Path]) -> int:
         for p in paths:
             rel = str(p.relative_to(VAULT)) if p.is_absolute() else str(p)
             abs_path = p if p.is_absolute() else VAULT / p
-            if not abs_path.exists():
+            if in_skip_dir(Path(rel)) or not abs_path.exists():
                 store.delete_by_file(rel)
                 _fts_delete_file(fts, rel)
                 deleted += 1

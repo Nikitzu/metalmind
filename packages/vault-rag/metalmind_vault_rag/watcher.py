@@ -19,12 +19,12 @@ import os
 import sys
 import time
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from watchfiles import watch
 
 from . import http_server
-from .core import COLLECTION, VAULT, files_to_index, fts_row_count, vector_store
+from .core import COLLECTION, VAULT, files_to_index, fts_row_count, in_skip_dir, vector_store
 from .indexer import reindex_all, reindex_paths
 
 DEBOUNCE_SECONDS = 2.0
@@ -74,7 +74,7 @@ def _install_log_rotation() -> None:
 
 
 def _md_change(path: str) -> bool:
-    return path.endswith(".md") and ".obsidian" not in path and ".metalmind-stack" not in path
+    return path.endswith(".md") and not in_skip_dir(PurePath(path))
 
 
 def _maybe_backfill() -> None:
