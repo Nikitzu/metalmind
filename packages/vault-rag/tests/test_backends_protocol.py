@@ -85,7 +85,9 @@ def backend(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch):
         return
 
     # fastembed: stub the import so .embed() never reaches the real ONNX runtime.
-    fake_module = SimpleNamespace(TextEmbedding=lambda model_name: _FakeTextEmbedding(model_name, dim=4))
+    fake_module = SimpleNamespace(
+        TextEmbedding=lambda model_name, cache_dir=None: _FakeTextEmbedding(model_name, dim=4)
+    )
     monkeypatch.setitem(sys.modules, "fastembed", fake_module)
     yield FastEmbedBackend(model_name="fake-model", dim=4)
 
@@ -161,3 +163,20 @@ def test_ollama_batches_across_input(monkeypatch: pytest.MonkeyPatch) -> None:
     assert out[0] == [1.0, 0.0, 0.0, 0.0]
     assert out[1] == [0.0, 1.0, 0.0, 0.0]
     assert out[2] == [1.0, 0.0, 0.0, 0.0]
+
+
+def test_cache_dir_defaults_to_metalmind_home(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Model cache must live under ~/.metalmind, not the system temp dir —
+    macOS purges temp files, leaving a broken half-cache (NO_SUCHFILE)."""
+    from metalmind_vault_rag.backends.fastembed_backend import resolve_cache_dir
+
+    monkeypatch.delenv("FASTEMBED_CACHE_PATH", raising=False)
+    monkeypatch.setenv("HOME", "/home/tester")
+    assert resolve_cache_dir() == "/home/tester/.metalmind/cache/fastembed"
+
+
+def test_cache_dir_env_override_wins(monkeypatch: pytest.MonkeyPatch) -> None:
+    from metalmind_vault_rag.backends.fastembed_backend import resolve_cache_dir
+
+    monkeypatch.setenv("FASTEMBED_CACHE_PATH", "/custom/cache")
+    assert resolve_cache_dir() == "/custom/cache"

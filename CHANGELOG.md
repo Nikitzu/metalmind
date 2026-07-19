@@ -6,6 +6,22 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.9.3 - 2026-07-19
+
+Two scribe path-resolution bugs and one durability fix for the embedding model cache. All three surfaced in one real session: a `scribe rename` with a bare-slug destination silently moved a note to the vault root with no `.md` extension (invisible to the indexer), `scribe create --kind plan` double-dated slugs that already carried a date prefix, and macOS purged fastembed's temp-dir model cache leaving recall failing with `NO_SUCHFILE` until the half-cache was cleared by hand.
+
+### Fixed
+
+- **`scribe rename` bare-slug destination** (`cli/src/scribe/scribe.ts`): a destination without a `kind:` prefix or `/` now renames within the source note's directory and keeps the `.md` extension, instead of resolving to `<vaultRoot>/<slug>` extensionless.
+- **Relative note paths without `.md`** now resolve with the extension appended in `resolveNotePath`, so `scribe show Plans/foo` works the same as `scribe show Plans/foo.md`.
+- **Plan slug double-dating**: `scribe create --kind plan --slug 2026-07-19-topic` no longer produces `2026-07-19-2026-07-19-topic.md`; the date prefix is only added when the slug doesn't already start with one.
+
+### Changed
+
+- **fastembed model cache moved to `~/.metalmind/cache/fastembed/`** (`packages/vault-rag`): fastembed's default cache lives in the system temp dir, which macOS purges periodically — leaving a snapshot dir whose model file is gone and recall broken. A home-dir cache survives temp cleanup. `FASTEMBED_CACHE_PATH` still wins when set; existing installs re-download the ~30 MB model once.
+
+---
+
 ## 0.9.2 - 2026-07-01
 
 Bump the bundled review and engineer agent templates from Opus 4.7 to Opus 4.8. These agents pin an explicit model with the `[1m]` context suffix rather than the `inherit` default, and the pin had fallen a version behind the current Opus release. No behavioural or interface change: a model version refresh only.

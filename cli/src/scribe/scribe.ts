@@ -116,12 +116,13 @@ export function resolveNotePath(input: string, vaultRoot: string): string {
     return join(vaultRoot, dir, filename);
   }
   if (input.startsWith('/')) return input;
-  return join(vaultRoot, input);
+  return join(vaultRoot, input.endsWith('.md') ? input : `${input}.md`);
 }
 
 function filenameFor(kind: ScribeKind, slug: string, now: Date, dailyDate?: string): string {
   if (kind === 'daily') return `${dailyDate ?? isoDate(now)}.md`;
-  if (kind === 'plan') return `${isoDate(now)}-${slug}.md`;
+  if (kind === 'plan')
+    return /^\d{4}-\d{2}-\d{2}-/.test(slug) ? `${slug}.md` : `${isoDate(now)}-${slug}.md`;
   return `${slug}.md`;
 }
 
@@ -550,7 +551,10 @@ export async function scribeRename(
 ): Promise<RenameResult> {
   const absFrom = resolveNotePath(from, ctx.vaultRoot);
   if (!(await exists(absFrom))) throw new Error(`source note not found: ${absFrom}`);
-  const absTo = resolveNotePath(to, ctx.vaultRoot);
+  const bareSlug = !/^[a-z]+:/.test(to) && !to.includes('/');
+  const absTo = bareSlug
+    ? join(dirname(absFrom), to.endsWith('.md') ? to : `${to}.md`)
+    : resolveNotePath(to, ctx.vaultRoot);
   if (absFrom === absTo) throw new Error('from and to resolve to the same path');
   if (await exists(absTo)) throw new Error(`destination already exists: ${absTo}`);
   const renameNow = ctx.now ? ctx.now() : new Date();

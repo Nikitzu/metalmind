@@ -2,10 +2,15 @@
 in-process — no Ollama daemon, no HTTP. Becomes the default in v0.5.0.
 
 Default model is BAAI/bge-small-en-v1.5 (384-dim, ~30 MB). First call
-auto-downloads the ONNX weights to ~/.cache/fastembed/ and caches them
-across processes; subsequent calls reuse the disk cache without network
-access. Override via the VAULT_EMBED_MODEL env var; the matching
-dimension is read from VAULT_EMBED_DIM (default 384 for bge-small).
+auto-downloads the ONNX weights to ~/.metalmind/cache/fastembed/ and
+caches them across processes; subsequent calls reuse the disk cache
+without network access. fastembed's own default lives in the system
+temp dir, which macOS purges periodically — that leaves a snapshot
+directory with the model file missing and recall failing with
+NO_SUCHFILE until the cache is cleared. A home-dir cache is durable.
+Override the location via FASTEMBED_CACHE_PATH, the model via
+VAULT_EMBED_MODEL; the matching dimension is read from VAULT_EMBED_DIM
+(default 384 for bge-small).
 
 The TextEmbedding model is held lazily — first call to `embed` triggers
 construction (which may download). That keeps watcher startup fast for
@@ -20,6 +25,15 @@ from typing import Any
 
 DEFAULT_MODEL = "BAAI/bge-small-en-v1.5"
 DEFAULT_DIM = 384
+
+
+def resolve_cache_dir() -> str:
+    """Durable model cache location. FASTEMBED_CACHE_PATH wins so users
+    keep full control; otherwise ~/.metalmind/cache/fastembed."""
+    env = os.environ.get("FASTEMBED_CACHE_PATH")
+    if env:
+        return env
+    return os.path.join(os.path.expanduser("~"), ".metalmind", "cache", "fastembed")
 
 
 class FastEmbedBackend:
@@ -51,7 +65,9 @@ class FastEmbedBackend:
         if self._model is None:
             from fastembed import TextEmbedding  # local import keeps unit tests fast
 
-            self._model = TextEmbedding(model_name=self._model_name)
+            cache_dir = resolve_cache_dir()
+            os.makedirs(cache_dir, exist_ok=True)
+            self._model = TextEmbedding(model_name=self._model_name, cache_dir=cache_dir)
         return self._model
 
     def dimension(self) -> int:

@@ -33,6 +33,10 @@ describe('resolveNotePath', () => {
     expect(resolveNotePath('/abs/x.md', '/v')).toBe('/abs/x.md');
     expect(resolveNotePath('Plans/a.md', '/v')).toBe('/v/Plans/a.md');
   });
+  it('appends .md to relative paths that lack it', () => {
+    expect(resolveNotePath('Plans/a', '/v')).toBe('/v/Plans/a.md');
+    expect(resolveNotePath('bare-note', '/v')).toBe('/v/bare-note.md');
+  });
   it('rejects unknown kind', () => {
     expect(() => resolveNotePath('bogus:y', '/v')).toThrow(/unknown kind/);
   });
@@ -61,6 +65,20 @@ describe('scribe CRUD', () => {
     expect(note).toContain('hello');
     const moc = await readFile(join(vault, 'Work/MOCs/metalmind.md'), 'utf8');
     expect(moc).toContain('[[Plans/2026-04-21-do-x]] — Do X');
+  });
+
+  it('create: does not double-date a plan slug that already starts with a date', async () => {
+    const res = await scribeCreate(
+      {
+        kind: 'plan',
+        title: 'Do X',
+        body: 'hello',
+        project: 'metalmind',
+        slug: '2026-04-20-do-x',
+      },
+      { vaultRoot: vault, now: fixedNow },
+    );
+    expect(res.relPath).toBe('Plans/2026-04-20-do-x.md');
   });
 
   it('create: quotes a colon in the title so frontmatter stays valid YAML', async () => {
@@ -263,6 +281,20 @@ describe('scribe CRUD', () => {
     expect(referrer).toContain('[[new-slug|pretty name]]');
     const moved = await readFile(join(vault, 'Learnings/new-slug.md'), 'utf8');
     expect(moved).toContain('# old-slug');
+  });
+
+  it('rename: bare-slug destination stays in the source directory with .md', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: oldPath } = await scribeCreate(
+      { kind: 'plan', title: 'old plan', body: 'x', project: 'metalmind' },
+      ctx,
+    );
+    const { scribeRename } = await import('./scribe.js');
+    const res = await scribeRename('plan:2026-04-21-old-plan', '2026-04-21-new-plan', ctx);
+    expect(res.to).toBe(join(vault, 'Plans/2026-04-21-new-plan.md'));
+    await expect(readFile(oldPath, 'utf8')).rejects.toBeTruthy();
+    const moved = await readFile(join(vault, 'Plans/2026-04-21-new-plan.md'), 'utf8');
+    expect(moved).toContain('# old plan');
   });
 
   it('archive: moves file to Archive/ and rewrites path-prefixed wikilink backlinks', async () => {
