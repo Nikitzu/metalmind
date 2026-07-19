@@ -43,14 +43,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
-      # npm bundled with Node 20 (10.x) has incomplete OIDC trusted-publisher
+      # npm 10.x (bundled with Node 20) had incomplete OIDC trusted-publisher
       # support — provenance signing works but the final registry PUT 404s
       # because auth falls back to the empty token written by setup-node.
-      # Pinning latest npm (11+) fixes the handshake.
+      # Latest npm (11+) fixes the handshake. npm 12 requires Node >=22,
+      # which is why the runner is on Node 24 above.
       - name: Upgrade npm for OIDC trusted-publisher support
         run: npm install -g npm@latest
 
