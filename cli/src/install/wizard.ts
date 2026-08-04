@@ -260,7 +260,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       log.info('  refreshed metalmind block in .gitignore');
     if (git.initialCommit) log.info('  made initial commit');
     if (git.commitWarning) log.warn(`  initial commit skipped: ${git.commitWarning}`);
-    log.info('  add a remote with: git -C ' + vault.vaultPath + ' remote add origin <url>');
+    log.info(`  add a remote with: git -C ${vault.vaultPath} remote add origin <url>`);
   }
 
   if (serena) {

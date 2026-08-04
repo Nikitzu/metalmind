@@ -9,10 +9,7 @@ describe('copyCursorSkills', () => {
     const cursorDir = mkdtempSync(join(tmpdir(), 'mm-cursor-'));
     const result = await copyCursorSkills({ cursorDir, flavor: 'scadrial' });
     expect(result.copied).toContain('metalmind-recall');
-    const skill = readFileSync(
-      join(cursorDir, 'skills', 'metalmind-recall', 'SKILL.md'),
-      'utf8',
-    );
+    const skill = readFileSync(join(cursorDir, 'skills', 'metalmind-recall', 'SKILL.md'), 'utf8');
     expect(skill).toContain('metalmind tap copper');
     expect(skill).not.toContain('{{RECALL_CMD}}');
   });

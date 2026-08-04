@@ -87,7 +87,8 @@ export async function installVaultRag(
   // `tool install <path>[extra]` (positional, no --from). Without extras, the
   // --from + package-name form stays — it's what every metalmind release since
   // v0.1.0 has used.
-  const hasExtras = (opts.extras?.length ?? 0) > 0;
+  const extras = opts.extras ?? [];
+  const hasExtras = extras.length > 0;
 
   // Version-aware reinstall: if an older vault-rag is already installed,
   // force-reinstall so the newer bundled code (e.g. v0.3.0's FTS5 writes,
@@ -108,7 +109,7 @@ export async function installVaultRag(
   const forceFlags =
     opts.reinstall || hasExtras || versionMismatch ? ['--reinstall', '--force'] : [];
   const args = hasExtras
-    ? ['tool', 'install', ...forceFlags, `${packageDir}[${opts.extras!.join(',')}]`]
+    ? ['tool', 'install', ...forceFlags, `${packageDir}[${extras.join(',')}]`]
     : ['tool', 'install', ...forceFlags, '--from', packageDir, VAULT_RAG_PACKAGE];
 
   if (!opts.reinstall && !hasExtras && !versionMismatch && alreadyInstalledPackage) {
@@ -116,9 +117,7 @@ export async function installVaultRag(
   } else if (!opts.skipToolInstall) {
     const res = await runCommand('uv', args, { timeoutMs: 900_000 });
     if (!res.ok) {
-      const label = hasExtras
-        ? `${VAULT_RAG_PACKAGE}[${opts.extras!.join(',')}]`
-        : VAULT_RAG_PACKAGE;
+      const label = hasExtras ? `${VAULT_RAG_PACKAGE}[${extras.join(',')}]` : VAULT_RAG_PACKAGE;
       throw new Error(`uv tool install ${label} failed: ${res.stderr || res.stdout}`);
     }
     installed = true;

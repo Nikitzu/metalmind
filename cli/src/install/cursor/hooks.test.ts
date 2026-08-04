@@ -21,7 +21,10 @@ describe('cursor hooks', () => {
       hooksJsonPath,
       JSON.stringify({ version: 1, hooks: { sessionStart: [{ command: 'user-hook.sh' }] } }),
     );
-    await applyCursorHooksJson({ hooksJsonPath, hookCommand: 'bash /x/metalmind-cursor-session-start.sh' });
+    await applyCursorHooksJson({
+      hooksJsonPath,
+      hookCommand: 'bash /x/metalmind-cursor-session-start.sh',
+    });
     const data = JSON.parse(readFileSync(hooksJsonPath, 'utf8'));
     expect(data.version).toBe(1);
     expect(data.hooks.sessionStart).toHaveLength(2);
@@ -33,8 +36,14 @@ describe('cursor hooks', () => {
   it('applyCursorHooksJson is idempotent', async () => {
     const cursorDir = mkdtempSync(join(tmpdir(), 'mm-cursor-'));
     const hooksJsonPath = join(cursorDir, 'hooks.json');
-    await applyCursorHooksJson({ hooksJsonPath, hookCommand: 'bash /x/metalmind-cursor-session-start.sh' });
-    const second = await applyCursorHooksJson({ hooksJsonPath, hookCommand: 'bash /x/metalmind-cursor-session-start.sh' });
+    await applyCursorHooksJson({
+      hooksJsonPath,
+      hookCommand: 'bash /x/metalmind-cursor-session-start.sh',
+    });
+    const second = await applyCursorHooksJson({
+      hooksJsonPath,
+      hookCommand: 'bash /x/metalmind-cursor-session-start.sh',
+    });
     expect(second.changed).toBe(false);
   });
 
@@ -45,7 +54,10 @@ describe('cursor hooks', () => {
       hooksJsonPath,
       JSON.stringify({ version: 1, hooks: { sessionStart: [{ command: 'user-hook.sh' }] } }),
     );
-    await applyCursorHooksJson({ hooksJsonPath, hookCommand: 'bash /x/metalmind-cursor-session-start.sh' });
+    await applyCursorHooksJson({
+      hooksJsonPath,
+      hookCommand: 'bash /x/metalmind-cursor-session-start.sh',
+    });
     await clearCursorHooksJson({ hooksJsonPath });
     const data = JSON.parse(readFileSync(hooksJsonPath, 'utf8'));
     expect(data.hooks.sessionStart).toEqual([{ command: 'user-hook.sh' }]);

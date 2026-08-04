@@ -137,9 +137,7 @@ export async function clearCursorHooksJson(
 }
 
 /** Delete the metalmind Cursor hook script. Returns true if the file existed. */
-export async function removeCursorHookScript(
-  opts: { cursorDir?: string } = {},
-): Promise<boolean> {
+export async function removeCursorHookScript(opts: { cursorDir?: string } = {}): Promise<boolean> {
   const cursorDir = opts.cursorDir ?? DEFAULT_CURSOR_DIR;
   const hookScriptPath = join(cursorDir, 'hooks', METALMIND_CURSOR_HOOK_FILENAME);
   if (!existsSync(hookScriptPath)) return false;

@@ -459,7 +459,7 @@ export async function scribeList(
       if (!name.endsWith('.md')) continue;
       const abs = join(dir, name);
       const s = await stat(abs).catch(() => null);
-      if (!s || !s.isFile()) continue;
+      if (!s?.isFile()) continue;
       const raw = await readFile(abs, 'utf8').catch(() => '');
       const { fm } = parseFrontmatter(raw);
       if (filter.project && fm.project !== filter.project) continue;

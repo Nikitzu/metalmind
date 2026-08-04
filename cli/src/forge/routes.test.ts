@@ -193,7 +193,7 @@ describe('parseUrlLiterals (Tier 3)', () => {
 
 describe('canonicalizePath', () => {
   it('maps every param notation to :param so cross-repo edges bucket together', () => {
-    const inputs = ['/users/:id', '/users/{id}', '/users/<int:id>', '/users/${id}'];
+    const inputs = ['/users/:id', '/users/{id}', '/users/<int:id>', `/users/\${id}`];
     const canon = inputs.map(canonicalizePath);
     expect(new Set(canon).size).toBe(1);
     expect(canon[0]).toBe('/users/:param');
