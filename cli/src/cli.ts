@@ -59,6 +59,7 @@ import {
 } from './commands/scribe.js';
 import { stamp } from './commands/stamp.js';
 import { type StoreOptions, store } from './commands/store.js';
+import { type SyncCmdOptions, syncCmd } from './commands/sync.js';
 import { synod } from './commands/synod.js';
 import { type TapOptions, tap } from './commands/tap.js';
 import { uninstall } from './commands/uninstall.js';
@@ -447,6 +448,28 @@ program
   )
   .option('--dry-run', 'Preview only')
   .action((note: string, cmdOpts: { dryRun?: boolean }) => scribeArchiveCmd(note, cmdOpts));
+
+function attachSyncOptions(cmd: Command): Command {
+  return cmd
+    .option('-m, --message <msg>', 'Commit message (generated from the change counts if omitted)')
+    .option('--dry-run', 'Report what would be committed, then reset the index')
+    .option('--no-push', 'Commit locally without pushing')
+    .option('--force', 'Commit even when a guard flags the change set')
+    .option('--vault <path>', 'Override the configured vault path')
+    .action((cmdOpts: SyncCmdOptions) => syncCmd(cmdOpts));
+}
+
+attachSyncOptions(
+  program
+    .command('duralumin')
+    .description(
+      'Feruchemy — store Connection. Commit and push the vault, refusing change sets that look like note loss.',
+    ),
+);
+
+attachSyncOptions(
+  program.command('sync').description('Classic alias: commit and push the vault to its remote'),
+);
 
 function attachFlareSubcommands(parent: Command): void {
   parent
