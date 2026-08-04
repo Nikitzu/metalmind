@@ -48,7 +48,13 @@ describe('codex install end-to-end smoke', () => {
     expect(installResult.hooksJson).toBe('changed');
     expect(installResult.networkAccess).toBe('created');
     expect(installResult.prefixRules).toBe('created');
-    expect(installResult.skills.sort()).toEqual(['save', 'synod', 'writing-vault-notes']);
+    expect(installResult.skills.sort()).toEqual([
+      'save',
+      'save-sync',
+      'sync',
+      'synod',
+      'writing-vault-notes',
+    ]);
     expect(installResult.mcp).toBe('skipped');
 
     // DOCTOR — every check green (mcp skipped because we didn't pass checkMcp).
@@ -64,7 +70,13 @@ describe('codex install end-to-end smoke', () => {
     expect(uninstallResult.hookScript).toBe(true);
     expect(uninstallResult.networkAccess).toBe(true);
     expect(uninstallResult.prefixRules).toBe(true);
-    expect(uninstallResult.skills.sort()).toEqual(['save', 'synod', 'writing-vault-notes']);
+    expect(uninstallResult.skills.sort()).toEqual([
+      'save',
+      'save-sync',
+      'sync',
+      'synod',
+      'writing-vault-notes',
+    ]);
 
     // DOCTOR — every check red.
     const doctorAfterUninstall = await checkCodexInstall({ codexDir, homeDir: codexDir });
@@ -115,7 +127,7 @@ describe('codex install end-to-end smoke', () => {
     expect(second.hooksJson).toBe('unchanged');
     expect(second.networkAccess).toBe('unchanged');
     expect(second.prefixRules).toBe('unchanged');
-    expect(second.skills).toHaveLength(3);
+    expect(second.skills).toHaveLength(5);
   });
 
   it('install preserves user content alongside ours', async () => {

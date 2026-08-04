@@ -29,6 +29,8 @@ export const METALMIND_CURSOR_SKILLS = [
   'writing-vault-notes',
   'synod',
   'save',
+  'sync',
+  'save-sync',
 ] as const;
 export type MetalmindCursorSkill = (typeof METALMIND_CURSOR_SKILLS)[number];
 
@@ -40,6 +42,8 @@ const CURSOR_SKILL_SOURCE: Record<MetalmindCursorSkill, '.shared' | 'codex' | 'c
   'writing-vault-notes': '.shared',
   synod: '.shared',
   save: 'codex',
+  sync: 'codex',
+  'save-sync': 'codex',
 };
 
 type AsyncRenderer = (raw: string) => Promise<string>;

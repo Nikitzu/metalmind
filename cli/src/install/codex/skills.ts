@@ -19,7 +19,13 @@ import { getTemplatesDir } from '../../util/paths.js';
 import { renderFlavorSentinels, renderSkillSentinels, resolvePartials } from '../templates.js';
 import { DEFAULT_CODEX_DIR, recallCommand } from './shared.js';
 
-export const METALMIND_CODEX_SKILLS = ['writing-vault-notes', 'synod', 'save'] as const;
+export const METALMIND_CODEX_SKILLS = [
+  'writing-vault-notes',
+  'synod',
+  'save',
+  'sync',
+  'save-sync',
+] as const;
 export type MetalmindCodexSkill = (typeof METALMIND_CODEX_SKILLS)[number];
 
 // Per-skill source-tree mapping. Most skills live under
@@ -31,6 +37,8 @@ const CODEX_SKILL_SOURCE: Record<MetalmindCodexSkill, '.shared' | 'codex'> = {
   'writing-vault-notes': '.shared',
   synod: '.shared',
   save: 'codex',
+  sync: 'codex',
+  'save-sync': 'codex',
 };
 
 type AsyncRenderer = (raw: string) => Promise<string>;

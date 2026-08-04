@@ -581,7 +581,7 @@ describe('copyCodexSkills', () => {
       templatesDir: TEMPLATES_DIR,
       codexDir,
     });
-    expect(result.copied).toEqual(['writing-vault-notes', 'synod', 'save']);
+    expect(result.copied).toEqual(['writing-vault-notes', 'synod', 'save', 'sync', 'save-sync']);
     expect(existsSync(join(codexDir, 'skills', 'writing-vault-notes', 'SKILL.md'))).toBe(true);
     expect(existsSync(join(codexDir, 'skills', 'synod', 'SKILL.md'))).toBe(true);
     expect(existsSync(join(codexDir, 'skills', 'save', 'SKILL.md'))).toBe(true);
@@ -729,7 +729,7 @@ describe('removeCodexSkills', () => {
     await writeFile(join(userSkillDir, 'SKILL.md'), '---\nname: my-custom\n---\n', 'utf8');
     await copyCodexSkills({ flavor: 'classic', templatesDir: TEMPLATES_DIR, codexDir });
     const removed = await removeCodexSkills({ codexDir });
-    expect(removed.sort()).toEqual(['save', 'synod', 'writing-vault-notes']);
+    expect(removed.sort()).toEqual(['save', 'save-sync', 'sync', 'synod', 'writing-vault-notes']);
     expect(existsSync(join(codexDir, 'skills', 'writing-vault-notes'))).toBe(false);
     expect(existsSync(join(codexDir, 'skills', 'synod'))).toBe(false);
     expect(existsSync(join(codexDir, 'skills', 'save'))).toBe(false);
