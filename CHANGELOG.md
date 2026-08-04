@@ -6,7 +6,7 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
-## Unreleased
+## 0.10.0 - 2026-08-04
 
 ### Added
 
