@@ -6,6 +6,18 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.10.1 - 2026-08-04
+
+### Fixed
+
+- Shell-alias install reported its result wrongly in three places. `stamp` printed `sourced in 0 shell rc file(s)` after a successful re-run, because the append helper returned the same `false` whether the source line was already present or the rc file did not exist; zero read as a failure. The wizard hardcoded `.zshrc` in its success line regardless of which file it wrote to, so a bash-only machine was told it had written to a file that does not exist there. And `zshrcMissing` was true only when neither rc file existed, so the name said zsh while the meaning was neither.
+
+  The helper now returns a three-way outcome, the result carries `alreadySourcedIn` alongside `appendedTo`, and both commands name the actual files. Nothing changed about which files get written.
+
+- `templates/zsh/` renamed to `templates/shell/`. The file is shell-agnostic and both zsh and bash have sourced it since bash support landed; the directory name was a leftover.
+
+---
+
 ## 0.10.0 - 2026-08-04
 
 ### Added
