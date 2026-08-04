@@ -258,11 +258,12 @@ export async function copyClaudeTemplates(
   // partial shared with Codex's skills/save/SKILL.md — extract once,
   // both hosts wrap it. Resolution must run BEFORE recall/sentinel
   // rendering so placeholders inside the partial get processed.
-  const renderSave: Renderer = async (raw) => {
+  const renderPartials: Renderer = async (raw) => {
     const resolved = await resolvePartials(raw, templatesDir);
     return renderSkillSentinels(renderRecall(resolved), { eodHook, notifications });
   };
   const renderSkill: SyncRenderer = (raw) => renderFlavorSentinels(renderRecall(raw), flavor);
+  const PARTIAL_COMMANDS = new Set(['save.md', 'sync.md', 'save-sync.md']);
 
   const rules = await copyDir(
     join(srcRoot, 'rules'),
@@ -280,8 +281,8 @@ export async function copyClaudeTemplates(
   const commands = await copyDir(
     join(srcRoot, 'commands'),
     join(claudeDir, 'commands'),
-    (name) => name === 'save.md' || (opts.withTeams === true && name.startsWith('team-')),
-    (name) => (name === 'save.md' ? renderSave : null),
+    (name) => PARTIAL_COMMANDS.has(name) || (opts.withTeams === true && name.startsWith('team-')),
+    (name) => (PARTIAL_COMMANDS.has(name) ? renderPartials : null),
   );
   // Skills come from two source trees:
   // - cli/templates/claude/skills/ — CC-specific bundles (using-teams,
