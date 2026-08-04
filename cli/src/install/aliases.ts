@@ -29,7 +29,8 @@ export interface InstallAliasesResult {
   wroteAliases: boolean;
   appendedSource: boolean;
   appendedTo: string[];
-  zshrcMissing: boolean;
+  alreadySourcedIn: string[];
+  noRcFilesFound: boolean;
 }
 
 export interface UninstallAliasesOptions {
@@ -48,13 +49,15 @@ function sourceLineFor(aliasesPath: string): string {
   return `[ -f ${aliasesPath} ] && source ${aliasesPath}`;
 }
 
-async function appendSourceBlock(rcPath: string, aliasesPath: string): Promise<boolean> {
-  if (!existsSync(rcPath)) return false;
+type AppendOutcome = 'appended' | 'already-present' | 'no-such-file';
+
+async function appendSourceBlock(rcPath: string, aliasesPath: string): Promise<AppendOutcome> {
+  if (!existsSync(rcPath)) return 'no-such-file';
   const current = await readFile(rcPath, 'utf8');
-  if (current.includes(RC_SOURCE_SENTINEL)) return false;
+  if (current.includes(RC_SOURCE_SENTINEL)) return 'already-present';
   const block = `\n${RC_SOURCE_SENTINEL}\n${sourceLineFor(aliasesPath)}\n`;
   await appendFile(rcPath, block, 'utf8');
-  return true;
+  return 'appended';
 }
 
 async function stripSourceBlock(rcPath: string, aliasesPath: string): Promise<boolean> {
@@ -80,13 +83,17 @@ export async function installAliases(
   const aliasesDir = join(aliasesPath, '..');
 
   await mkdir(aliasesDir, { recursive: true });
-  const src = join(templatesDir, 'zsh', 'aliases.sh');
+  const src = join(templatesDir, 'shell', 'aliases.sh');
   await copyFile(src, aliasesPath);
   const wroteAliases = true;
 
   const appendedTo: string[] = [];
-  if (await appendSourceBlock(zshrcPath, aliasesPath)) appendedTo.push(zshrcPath);
-  if (await appendSourceBlock(bashrcPath, aliasesPath)) appendedTo.push(bashrcPath);
+  const alreadySourcedIn: string[] = [];
+  for (const rcPath of [zshrcPath, bashrcPath]) {
+    const outcome = await appendSourceBlock(rcPath, aliasesPath);
+    if (outcome === 'appended') appendedTo.push(rcPath);
+    else if (outcome === 'already-present') alreadySourcedIn.push(rcPath);
+  }
 
   return {
     aliasesPath,
@@ -95,8 +102,25 @@ export async function installAliases(
     wroteAliases,
     appendedSource: appendedTo.length > 0,
     appendedTo,
-    zshrcMissing: !existsSync(zshrcPath) && !existsSync(bashrcPath),
+    alreadySourcedIn,
+    noRcFilesFound: !existsSync(zshrcPath) && !existsSync(bashrcPath),
   };
+}
+
+function tildify(path: string): string {
+  const home = homedir();
+  return path.startsWith(home) ? `~${path.slice(home.length)}` : path;
+}
+
+export function describeAliasSourcing(result: InstallAliasesResult): string {
+  const appended = result.appendedTo.map(tildify);
+  const already = result.alreadySourcedIn.map(tildify);
+  if (appended.length > 0 && already.length > 0) {
+    return `source line added to ${appended.join(', ')}; already present in ${already.join(', ')}`;
+  }
+  if (appended.length > 0) return `source line added to ${appended.join(', ')}`;
+  if (already.length > 0) return `already sourced in ${already.join(', ')}`;
+  return 'no shell rc file found, add the source line manually';
 }
 
 export async function uninstallAliases(

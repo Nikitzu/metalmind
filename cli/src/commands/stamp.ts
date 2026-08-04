@@ -1,6 +1,6 @@
 import { cancel, intro, log, outro } from '@clack/prompts';
 import { type MetalmindHost, readConfig, writeConfig } from '../config.js';
-import { installAliases } from '../install/aliases.js';
+import { describeAliasSourcing, installAliases } from '../install/aliases.js';
 import { installCodex } from '../install/codex.js';
 import { installCursor } from '../install/cursor.js';
 import { promptHosts } from '../install/host-prompt.js';
@@ -163,7 +163,7 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
 
   log.step('Shell aliases');
   const aliases = await installAliases();
-  log.info(`  aliases.sh written; sourced in ${aliases.appendedTo.length} shell rc file(s)`);
+  log.info(`  aliases.sh written; ${describeAliasSourcing(aliases)}`);
 
   // Persist the chosen hosts back to config so subsequent --no-prompt uses
   // the right set. Skipped if we're stamping the exact same set already

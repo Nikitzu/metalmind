@@ -1,6 +1,6 @@
 import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/prompts';
 import { type Config, type MetalmindHost, writeConfig } from '../config.js';
-import { installAliases } from './aliases.js';
+import { describeAliasSourcing, installAliases } from './aliases.js';
 import { installCodex } from './codex.js';
 import { installCursor } from './cursor.js';
 import { setupVaultGit } from './git.js';
@@ -481,8 +481,8 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
 
   log.step('Installing shell aliases');
   const aliases = await installAliases();
-  if (aliases.appendedSource) log.success(`  ${aliases.aliasesPath} + source line in .zshrc`);
-  else if (aliases.zshrcMissing) log.warn('  no ~/.zshrc — add source line manually');
+  if (aliases.noRcFilesFound) log.warn(`  ${describeAliasSourcing(aliases)}`);
+  else log.success(`  ${aliases.aliasesPath}; ${describeAliasSourcing(aliases)}`);
 
   const config: Config = {
     version: 1,
