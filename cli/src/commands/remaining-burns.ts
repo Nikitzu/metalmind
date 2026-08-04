@@ -13,7 +13,7 @@ async function loadConfig(): Promise<Config | null> {
   return cfg;
 }
 
-// Steel — rename via Serena MCP
+// Steel - rename via Serena MCP
 export async function renameSymbol(oldName: string, newName: string): Promise<void> {
   if (!oldName || !newName) {
     log.error('Usage: metalmind burn steel <old> <new>');
@@ -41,7 +41,7 @@ export async function renameSymbol(oldName: string, newName: string): Promise<vo
   }
 }
 
-// Zinc — dispatch /team-debug by invoking claude directly.
+// Zinc - dispatch /team-debug by invoking claude directly.
 export async function burnZinc(bug: string): Promise<void> {
   if (!bug?.trim()) {
     log.error('Usage: metalmind burn zinc "<bug description>"');
@@ -66,7 +66,7 @@ export async function burnZinc(bug: string): Promise<void> {
   }
 }
 
-// Tin — verbose toggle
+// Tin - verbose toggle
 export async function toggleVerbose(state?: boolean): Promise<void> {
   const cfg = await loadConfig();
   if (!cfg) return;
@@ -76,7 +76,7 @@ export async function toggleVerbose(state?: boolean): Promise<void> {
   log.success(`verbose = ${next}`);
 }
 
-// Pewter — force rebuild graphify index for current repo
+// Pewter - force rebuild graphify index for current repo
 export async function pewterReindex(): Promise<void> {
   const repoRoot = findRepoRoot();
   if (!repoRoot) {
@@ -95,7 +95,7 @@ export async function pewterReindex(): Promise<void> {
   }
 }
 
-// Aluminum — alias to uninstall
+// Aluminum - alias to uninstall
 export async function aluminumWipe(opts: { yes?: boolean; purge?: boolean } = {}): Promise<void> {
   await uninstall(opts);
 }

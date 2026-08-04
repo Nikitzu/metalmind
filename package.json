@@ -2,7 +2,7 @@
   "name": "metalmind-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "metalmind — unified CLI for vault, code graph, and cross-repo intelligence.",
+  "description": "metalmind - unified CLI for vault, code graph, and cross-repo intelligence.",
   "license": "MIT",
   "engines": {
     "node": ">=20"

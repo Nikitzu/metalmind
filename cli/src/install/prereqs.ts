@@ -92,7 +92,7 @@ export async function checkPython(): Promise<PrereqResult> {
       ok: false,
       detail: `found ${latestSeen.stdout} via \`${latestSeen.cmd}\` (need ${MIN_PYTHON_MAJOR}.${MIN_PYTHON_MINOR}+)`,
       remediation:
-        'Upgrade Python: `brew install python@3.12` — metalmind also probes python3.13 / python3.12 / python3.11 in case your PATH is pinned to an older python3.',
+        'Upgrade Python: `brew install python@3.12` - metalmind also probes python3.13 / python3.12 / python3.11 in case your PATH is pinned to an older python3.',
     };
   }
 
@@ -132,7 +132,7 @@ export interface DetectPrereqsOptions {
   /**
    * Include Docker in the check set. Required by the legacy backend
    * (Qdrant + Ollama containers); not needed by the embedded backend
-   * (sqlite-vec + fastembed run in-process). Default: false — embedded
+   * (sqlite-vec + fastembed run in-process). Default: false - embedded
    * is the v0.5.0 install path.
    */
   includeDocker?: boolean;

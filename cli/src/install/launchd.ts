@@ -11,8 +11,6 @@ export const DEFAULT_LAUNCH_AGENTS_DIR = join(homedir(), 'Library', 'LaunchAgent
 export interface InstallWatcherOptions {
   vaultPath: string;
   watcherBin: string;
-  /** @deprecated unused since v0.9.0 — watcher unit invokes the entry-point shim directly. */
-  uvBin?: string;
   templatesDir?: string;
   launchAgentsDir?: string;
   skipLoad?: boolean;

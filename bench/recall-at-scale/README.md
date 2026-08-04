@@ -1,6 +1,6 @@
-# recall-at-scale — recall quality + latency at 1k / 10k / 50k
+# recall-at-scale - recall quality + latency at 1k / 10k / 50k
 
-> Benchmark for the **memory** module of the [metalmind standard library](../../README.md#whats-in-the-standard-library) — at scale.
+> Benchmark for the **memory** module of the [metalmind standard library](../../README.md#whats-in-the-standard-library) - at scale.
 
 Sister bench to [`bench/recall-v0/`](../recall-v0/). Where `recall-v0` answers
 "is recall any good on a hand-authored 12-note vault?", `recall-at-scale`
@@ -19,9 +19,9 @@ hybrid mode, no rerank, on a 16-thread M-series Mac:
 |---|---|---|---|---|---|---|---|
 | 1,000 | 100% | 100% | 100% | 0/20 | 33 | 12 | 24 |
 | 10,000 | 100% | 100% | 100% | 0/20 | 1226 | 40 | 67 |
-| 50,000 | _pending — indexer takes ~100 min, run with `--scales 50000` separately_ |
+| 50,000 | _pending - indexer takes ~100 min, run with `--scales 50000` separately_ |
 
-Both small scales hit the same 100% top-1 — the embedded retrieval pipeline
+Both small scales hit the same 100% top-1 - the embedded retrieval pipeline
 holds up cleanly at 10× the recall-v0 corpus size with sub-100 ms p95
 latency. 50k results land in a follow-up; the framework is here, the
 indexer just needs an unattended hour.
@@ -45,7 +45,7 @@ indexer just needs an unattended hour.
   one-shot, runs the 20 questions, writes `results/recall-at-scale-<ts>.md`,
   tears down the watcher and tmp vault even on Ctrl-C.
 - **Defaults**: `mode=hybrid`, `K=5`, `rerank=false`. Pass `--rerank` to add
-  cross-encoder rescore (≈+5pp on hit@5 for ~2 s per query — orthogonal
+  cross-encoder rescore (≈+5pp on hit@5 for ~2 s per query - orthogonal
   knob, same trade as `recall-v0`).
 
 ## How to run
@@ -68,14 +68,14 @@ node bench/recall-at-scale/run.mjs --scales 1000,10000 --rerank
 ```
 
 The runner exits non-zero if `min hit@5` across scales falls below `40%`
-— the gate is intentionally loose because this bench is about scale
+- the gate is intentionally loose because this bench is about scale
 behavior, not query craft (queries are mechanical paraphrases, not
 hand-tuned). Ratchet upward once the numbers stabilize.
 
 ## Why HN comments
 
 - Free, no auth, no PII gating worse than what HN itself publishes.
-- Topically diverse — a real vault has many subjects, not one.
+- Topically diverse - a real vault has many subjects, not one.
 - Comments have meaningful length variance (≈100 to 5000 chars), which
   exercises the chunker.
 - Story-IDs give us a natural many-to-one gold mapping that mirrors how
@@ -83,7 +83,7 @@ hand-tuned). Ratchet upward once the numbers stabilize.
   "this exact line").
 
 The honest limit: HN comments are conversational, not your notes. Numbers
-here are floor estimates — your own vault should be at least this
+here are floor estimates - your own vault should be at least this
 recoverable, usually better, since you wrote it for retrieval.
 
 ## Reading the table
@@ -105,7 +105,7 @@ hit@1 on the same scale. Two differences make those numbers
 
 - `recall-v0` queries are **hand-crafted to share keywords with the
   expected gold**. `recall-at-scale` queries are **mechanically paraphrased
-  from story titles** — they don't necessarily appear in the gold body.
+  from story titles** - they don't necessarily appear in the gold body.
 - `recall-v0` has **one gold per query**. `recall-at-scale` has **~22 gold
   per query** (every comment on the thread). That makes hit@5 easier but
   hit@1 harder, because top-1 has to come from that specific thread amid

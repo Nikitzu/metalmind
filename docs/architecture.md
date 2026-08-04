@@ -1,14 +1,15 @@
 # Architecture
 
-metalmind is six modules sharing four pieces of state. This page is the architectural overview — what each module owns, how they wire together, and why the integration is the moat.
+metalmind is seven modules sharing four pieces of state. This page is the architectural overview - what each module owns, how they wire together, and why the integration is the moat.
 
 For module-level user docs see the repo root [`README.md`](../README.md). For per-feature reference run `metalmind --help`. For "how to use this well" see [`cookbook.md`](cookbook.md).
 
-## The six modules
+## The seven modules
 
 | Module | Verbs | What it owns |
 |---|---|---|
 | **Memory** | `tap copper` / `store copper` / `scribe` / `gold` | Recall, save, vault CRUD, archive |
+| **Vault sync** | `duralumin` / `sync` | Commit and push the vault with note-loss guards |
 | **Code intelligence** | `forge` / `burn bronze\|iron\|steel\|zinc\|pewter` | Cross-repo graph, symbol nav, rename, debug-team dispatch, reindex |
 | **Daily workflow** | `atium` / `routine` | Daily-note action items + EOD launchd routine |
 | **Deliberation** | `synod` | 7-persona deliberative council (CLI shells out to `claude -p`) |
@@ -17,7 +18,7 @@ For module-level user docs see the repo root [`README.md`](../README.md). For pe
 
 ## The four pieces of shared state
 
-Every module reads or writes through these — never bypassing them. The integration discipline is what makes the modules a library and not a toolbox.
+Every module reads or writes through these - never bypassing them. The integration discipline is what makes the modules a library and not a toolbox.
 
 ### 1. The vault (`~/Knowledge/` by default)
 
@@ -49,30 +50,32 @@ metalmind writes blocks into user-owned files between sentinels:
 <!-- metalmind:managed:end -->
 ```
 
-Stamped files:
-- `~/.claude/CLAUDE.md` — global rule for every Claude Code session
-- `<vault>/CLAUDE.md` — vault-local rules (folders, lookup ladder, daily-date contract)
-- `~/.claude/settings.json` — env vars + SessionStart hook entry (sentinel keys, not text)
-- `~/.metalmind/aliases.sh` — shell aliases sourced from `~/.zshrc` / `~/.bashrc`
+Stamped files (per host, only the hosts you chose at `init`):
+- `~/.claude/CLAUDE.md` - global rule for every Claude Code session
+- `<vault>/CLAUDE.md` - vault-local rules (folders, lookup ladder, daily-date contract)
+- `~/.claude/settings.json` - env vars + SessionStart hook entry (sentinel keys, not text)
+- `~/.codex/AGENTS.md` + `~/.codex/config.toml` - Codex CLI rules and config (v0.8.0)
+- `~/.cursor/skills/`, `~/.cursor/agents/`, `~/.cursor/hooks.json` - Cursor recall skill, subagents, and the latent sessionStart hook (v0.9.0)
+- `~/.metalmind/aliases.sh` - shell aliases sourced from `~/.zshrc` / `~/.bashrc`
 
-`metalmind uninstall` strips by sentinel. **User content outside the markers is preserved.** This is the reversibility guarantee — and it's what every module relies on to stay non-invasive.
+`metalmind uninstall` strips by sentinel. **User content outside the markers is preserved.** This is the reversibility guarantee - and it's what every module relies on to stay non-invasive.
 
 ### 3. The watcher process + recall HTTP fast-path
 
 A single Python process (`metalmind-vault-rag-watcher`) under launchd (macOS) or systemd --user (Linux):
 
 - Watches the vault for file changes via `watchfiles`
-- Indexes into sqlite-vec (vectors) + SQLite FTS5 (keyword) — both files at `~/.metalmind/`
+- Indexes into sqlite-vec (vectors) + SQLite FTS5 (keyword) - both files at `~/.metalmind/`
 - Co-hosts a loopback HTTP server at `127.0.0.1:17317` for sub-100ms recall calls
-- Stays in-process — no Docker, no Ollama daemon (since v0.5.0)
+- Stays in-process - no Docker, no Ollama daemon (since v0.5.0)
 
-`tap copper` hits the HTTP endpoint first; falls back to stdio MCP if the watcher is down. Both transports return the same JSON shape — pinned by `recall.test.ts`.
+`tap copper` hits the HTTP endpoint first; falls back to stdio MCP if the watcher is down. Both transports return the same JSON shape - pinned by `recall.test.ts`.
 
 ### 4. The CLI surface (Node + commander)
 
 The Node CLI is the only public entry point. It's the package on npm, the binary on PATH, the thing every module ships through. `cli/src/commands/` is verb implementations; `cli/src/install/` is per-concern installers; `cli/src/scribe/` and `cli/src/forge/` are domain logic.
 
-The Node ↔ Python boundary is **loopback HTTP only** — never imports. Protocol changes ship coordinated releases of both packages (`metalmind` on npm + `metalmind-vault-rag` on the bundled `uv tool` venv).
+The Node ↔ Python boundary is **loopback HTTP only** - never imports. Protocol changes ship coordinated releases of both packages (`metalmind` on npm + `metalmind-vault-rag` on the bundled `uv tool` venv).
 
 ## How the modules share state
 
@@ -88,12 +91,12 @@ The Node ↔ Python boundary is **loopback HTTP only** — never imports. Protoc
    │  ~/.claude/CLAUDE.md  · <vault>/CLAUDE.md ·         │
    │  ~/.claude/settings.json · ~/.metalmind/aliases.sh  │
    └────────────────────┬────────────────────────────────┘
-                        │ teaches Claude Code:
+                        │ teaches the host:
                         │   "use metalmind tap copper"
                         ▼
    ┌────────────────────────────────────────┐         ┌──────────────────────┐
-   │  Claude Code session                   │  Bash   │  metalmind CLI       │
-   │  (host)                                ├────────►│  (Node, commander)   │
+   │  host session (Claude Code /           │  Bash   │  metalmind CLI       │
+   │  Codex CLI / Cursor)                   ├────────►│  (Node, commander)   │
    └────────────────────────────────────────┘         │                      │
                                                       │  • tap copper        │
                                                       │  • store copper      │
@@ -125,37 +128,41 @@ The Node ↔ Python boundary is **loopback HTTP only** — never imports. Protoc
 
 ### Memory
 
-- `tap copper` (recall) — RRF-fused semantic + BM25 hybrid retrieval, top-rank bonus, weighted lists, optional cross-encoder rerank. Returns hits as JSONL.
-- `store copper` (save) — proposes path + frontmatter + wikilinks, agent confirms, writes through `scribe create` (or `scribe update` if recall surfaced an existing note).
-- `scribe <create|update|patch|delete|archive|list|show|rename>` — vault CRUD. Stamps frontmatter, picks intent folder, auto-links the project MOC, rewrites `[[wikilinks]]` on rename. Daily-targeted writes for non-today dates require `--date` to acknowledge.
-- `gold <kind:slug>` — one-shot archive (move to `Archive/`, set `status: archived`).
+- `tap copper` (recall) - RRF-fused semantic + BM25 hybrid retrieval, top-rank bonus, weighted lists, optional cross-encoder rerank. Returns hits as JSONL. `--compact` renders a lean per-hit form; `--semantic-only` / `--keyword-only` isolate one retriever leg for A/B (HTTP path only); `--list-recent N` browses without a query.
+- `store copper` (save) - proposes path + frontmatter + wikilinks, agent confirms, writes through `scribe create` (or `scribe update` if recall surfaced an existing note).
+- `scribe <create|update|patch|delete|archive|list|show|rename>` - vault CRUD. Stamps frontmatter, picks intent folder, auto-links the project MOC, rewrites `[[wikilinks]]` on rename. Daily-targeted writes for non-today dates require `--date` to acknowledge.
+- `gold <kind:slug>` - one-shot archive (move to `Archive/`, set `status: archived`).
+
+### Vault sync
+
+- `duralumin` (sync) - a single command that pulls with rebase, stages, runs three note-loss guards over the change set (unexplained-deletion, delete-only, incomplete-staging), commits, pushes, and verifies the remote advanced. Guards live in the CLI, never in prompt text. `--dry-run` reports without committing.
 
 ### Code intelligence
 
-- `forge` — manage forge groups (named sets of repo paths) and the OpenAPI spec shelf (`~/.metalmind/specs/`).
-- `burn bronze` (graph) — query the cross-repo code graph for structure / concepts. HTTP-route edges connect caller in repo A to handler in repo B, in three tiers: (1) shelf OpenAPI specs, (2) Java framework callers (RestTemplate / WebClient / Feign), (3) URL string literals (opt-in). Every inferred edge carries provenance.
-- `burn iron` (symbol) — symbol's neighbors via Serena's LSP backend.
-- `burn steel` (rename) — coordinated symbol rename through Serena.
-- `burn zinc` (debug) — dispatch `/team-debug` skill with code graph pre-loaded.
-- `burn pewter` (reindex) — rebuild the graphify code graph.
+- `forge` - manage forge groups (named sets of repo paths) and the OpenAPI spec shelf (`~/.metalmind/specs/`).
+- `burn bronze` (graph) - query the cross-repo code graph for structure / concepts. HTTP-route edges connect caller in repo A to handler in repo B, in three tiers: (1) shelf OpenAPI specs, (2) Java framework callers (RestTemplate / WebClient / Feign), (3) URL string literals (opt-in). Every inferred edge carries provenance.
+- `burn iron` (symbol) - symbol's neighbors via Serena's LSP backend.
+- `burn steel` (rename) - coordinated symbol rename through Serena.
+- `burn zinc` (debug) - dispatch `/team-debug` skill with code graph pre-loaded.
+- `burn pewter` (reindex) - rebuild the graphify code graph.
 
 ### Daily workflow
 
-- `atium new --date <date>` — seed a daily note for `today | tomorrow | next-workday | YYYY-MM-DD`. `--from <prev>` carries unchecked items forward.
-- `atium add "<item>" --date <date>` — append a checkbox bullet under `## Action Items`.
-- `routine install eod` — register a launchd Mon–Fri 17:30 carry-and-archive routine. `routine remove eod` reverses it.
+- `atium new --date <date>` - seed a daily note for `today | tomorrow | next-workday | YYYY-MM-DD`. `--from <prev>` carries unchecked items forward.
+- `atium add "<item>" --date <date>` - append a checkbox bullet under `## Action Items`.
+- `routine install eod` - register a launchd Mon-Fri 17:30 carry-and-archive routine. `routine remove eod` reverses it.
 
 ### Deliberation
 
-- `synod "<question>"` — shells out to `claude -p` with the `synod` skill prompt. The skill spawns 7 personas as parallel subagents (Adversary / Strategist / Scientist / Visionary / Engineer / Philosopher / Humanist — or Kelsier's crew under Scadrial flavor), debates, and synthesises a structured verdict. The CLI shell-out keeps the deliberation inside a real Claude Code session so subagent orchestration works.
+- `synod "<question>"` - shells out to `claude -p` with the `synod` skill prompt. The skill spawns 7 personas as parallel subagents (Adversary / Strategist / Scientist / Visionary / Engineer / Philosopher / Humanist - or Kelsier's crew under Scadrial flavor), debates, and synthesises a structured verdict. The CLI shell-out keeps the deliberation inside a real Claude Code session so subagent orchestration works.
 
 ### Desktop integration (macOS)
 
-- `flare banner|dialog|sticky <title> <message>` — wraps `osascript` / `terminal-notifier` so other modules (notably the EOD routine and `/save`) can surface notifications without each module owning a notification primitive.
+- `flare banner|dialog|sticky <title> <message>` - wraps `osascript` / `terminal-notifier` so other modules (notably the EOD routine and `/save`) can surface notifications without each module owning a notification primitive.
 
 ### Health
 
-- `pulse` (doctor) — install verification: prereqs, config, MCP state, sentinel presence, watcher liveness. `--deep` adds live-service probes; `--recall-audit` replays the opt-in NDJSON recall log and surfaces zero-hit / weak-hit queries as `/save` candidates.
+- `pulse` (doctor) - install verification: prereqs, config, MCP state, sentinel presence, watcher liveness. `--deep` adds live-service probes; `--recall-audit` replays the opt-in NDJSON recall log and surfaces zero-hit / weak-hit queries as `/save` candidates.
 
 ## The four-rule honesty bar
 
@@ -163,24 +170,24 @@ Every module clears all four. If a proposed module fails any one, it doesn't shi
 
 1. **Zero standing MCP-schema tax in Claude Code.** No tool schema injected into every session. Recall is a Bash call to a CLI. The stdio MCP fallback is opt-in and only active when the watcher's HTTP server is down.
 2. **Reversible to zero.** `metalmind uninstall` strips every sentinel, unloads the watcher, removes the alias file, restores prior output style. **Never touches the vault.**
-3. **No accounts, no cloud, no third-party services.** Embeddings, indexing, recall, code graphs — all local. The only network calls metalmind makes are the ones you were already making to Claude Code's own API.
+3. **No accounts, no cloud, no third-party services.** Embeddings, indexing, recall, code graphs - all local. The only network calls metalmind makes are the ones you were already making to Claude Code's own API.
 4. **Closes a gap Claude Code itself doesn't fill.** No duplication of host primitives. The bar refuses, by construction, anything that would make metalmind a chat assistant, a cloud-sync product, or a hosted memory service.
 
 ## Adding a new module
 
 1. The module must clear all four rules above.
 2. It must share state through one of the four shared pieces (vault / sentinels / watcher / CLI). New shared state is a major design conversation, not a feature.
-3. It must have a single CLI verb (themed name + classic alias) — no module is allowed to grow more than ~5 verbs.
-4. It must be reversible — every install path needs a teardown counterpart.
+3. It must have a single CLI verb (themed name + classic alias) - no module is allowed to grow more than ~5 verbs.
+4. It must be reversible - every install path needs a teardown counterpart.
 5. It must have an installer in `cli/src/install/<thing>.ts` with a mirrored `*.test.ts`.
 
-If a candidate passes those, it's a module. If not, it's a feature inside an existing module — or it's not metalmind's problem.
+If a candidate passes those, it's a module. If not, it's a feature inside an existing module - or it's not metalmind's problem.
 
 ## See also
 
-- [`cookbook.md`](cookbook.md) — opinionated patterns for using each module well.
-- [`prerequisites.md`](prerequisites.md) — what to install before `metalmind init`.
-- [`post-install.md`](post-install.md) — verification + troubleshooting.
-- [`customization.md`](customization.md) — embedding model swaps, vault relocation.
-- [`teams.md`](teams.md) — the experimental agent-teams feature.
-- Repo root [`README.md`](../README.md) — the user-facing entry point + comparison matrix.
+- [`cookbook.md`](cookbook.md) - opinionated patterns for using each module well.
+- [`prerequisites.md`](prerequisites.md) - what to install before `metalmind init`.
+- [`post-install.md`](post-install.md) - verification + troubleshooting.
+- [`customization.md`](customization.md) - embedding model swaps, vault relocation.
+- [`teams.md`](teams.md) - the experimental agent-teams feature.
+- Repo root [`README.md`](../README.md) - the user-facing entry point + comparison matrix.

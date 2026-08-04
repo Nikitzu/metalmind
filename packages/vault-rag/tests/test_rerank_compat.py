@@ -1,6 +1,6 @@
 """Canary for the rerank dependency stack (ONNX path, v0.5.2+).
 
-Runs only when the `[rerank]` extra is installed — skipped on the default
+Runs only when the `[rerank]` extra is installed - skipped on the default
 dev install. Its job is to fail loudly if the ONNX runtime stack breaks
 the way the FlagEmbedding/transformers stack broke in v0.3.0.
 
@@ -25,7 +25,7 @@ from metalmind_vault_rag import rerank
 
 
 _RERANK_NOT_INSTALLED = not rerank.is_dep_available()
-_SKIP_REASON = "[rerank] extra not installed — canary skipped on default dev install"
+_SKIP_REASON = "[rerank] extra not installed - canary skipped on default dev install"
 
 
 @pytest.mark.skipif(_RERANK_NOT_INSTALLED, reason=_SKIP_REASON)
@@ -56,7 +56,7 @@ def test_no_torch_in_rerank_extra() -> None:
 
     assert importlib.util.find_spec("torch") is None, (
         "torch is importable in a process where only [rerank] should be "
-        "installed. Something pulled it back in — check pyproject.toml's "
+        "installed. Something pulled it back in - check pyproject.toml's "
         "rerank extra and any new transitive deps."
     )
 

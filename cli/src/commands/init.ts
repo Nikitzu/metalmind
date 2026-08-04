@@ -28,7 +28,7 @@ export interface InitCliOptions {
   noGit?: boolean;
   autoInstallUv?: boolean;
   noAutoInstallUv?: boolean;
-  /** "claude" | "codex" | "both" — bypass the host multi-select prompt. */
+  /** "claude" | "codex" | "both" - bypass the host multi-select prompt. */
   host?: string;
   /** Opt-in MCP server registration in Codex. */
   withMcp?: boolean;

@@ -3,7 +3,7 @@
 # Covers: non-interactive init, stamp idempotency, managed-block stamping
 # in vault + global CLAUDE.md, store-copper, tap-copper (HTTP path via
 # stdio fallback since no watcher runs), pulse readout, and reversible
-# uninstall. Does NOT touch Docker, Serena, or graphify — those are heavy
+# uninstall. Does NOT touch Docker, Serena, or graphify - those are heavy
 # and covered by the live `metalmind pulse --deep` on a real install.
 #
 # Usage:
@@ -93,7 +93,7 @@ assert_contains "doctor shows vault-only routing config" \
     "$TEST_HOME/doctor.log" 'Config at'
 
 section "4. store copper writes to Inbox/"
-# Skip the synchronous reindex — no watcher to hit anyway.
+# Skip the synchronous reindex - no watcher to hit anyway.
 METALMIND_SKIP_REINDEX=1 "$METALMIND_BIN" save "integration test insight" \
     --title "smoke-note" \
     > "$TEST_HOME/save.log" 2>&1 || true
@@ -104,7 +104,7 @@ section "5. uninstall is reversible (flag-driven)"
 yes | "$METALMIND_BIN" uninstall > "$TEST_HOME/uninstall.log" 2>&1 || true
 assert "config.json removed" sh -c '! test -f "$TEST_HOME/.metalmind/config.json"'
 assert "vault notes preserved" sh -c 'ls "$TEST_HOME"/Knowledge/Inbox/*smoke-note*.md >/dev/null 2>&1'
-# After uninstall, the sentinel block should be gone — but user content around it stays.
+# After uninstall, the sentinel block should be gone - but user content around it stays.
 if [ -f "$TEST_HOME/.claude/CLAUDE.md" ]; then
     if grep -qF '<!-- metalmind:managed:begin -->' "$TEST_HOME/.claude/CLAUDE.md"; then
         printf '  ✗ sentinel block still in global CLAUDE.md after uninstall\n'

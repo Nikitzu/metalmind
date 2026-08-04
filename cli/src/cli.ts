@@ -102,7 +102,7 @@ program
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
   .option(
     '--host <host>',
-    '"claude" | "codex" | "cursor" | "both" | "all" — bypass the host multi-select prompt',
+    '"claude" | "codex" | "cursor" | "both" | "all" - bypass the host multi-select prompt',
   )
   .option(
     '--with-mcp',
@@ -127,7 +127,7 @@ program
   );
 program
   .command('pulse')
-  .description('Pulse-check the install — prereqs, config, MCP state (Seeker)')
+  .description('Pulse-check the install - prereqs, config, MCP state (Seeker)')
   .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
   .option(
     '--recall-audit',
@@ -163,7 +163,7 @@ function attachStoreFlags<T extends Command>(cmd: T): T {
 
 const storeCmd = program
   .command('store')
-  .description('Feruchemy — deposit state. Currently: `store copper <insight>` → vault.')
+  .description('Feruchemy - deposit state. Currently: `store copper <insight>` → vault.')
   .addHelpText('after', '\nExample: metalmind store copper "auth rewrite decision"');
 attachStoreFlags(
   storeCmd
@@ -197,6 +197,14 @@ function attachTapFlags<T extends Command>(cmd: T): T {
       '--rerank',
       'Cross-encoder reranker tier (opt-in; first call downloads ~500 MB, needs vault-rag[rerank])',
     )
+    .option(
+      '--semantic-only',
+      'Vector search only, skip BM25 (HTTP path; stdio fallback stays hybrid)',
+    )
+    .option(
+      '--keyword-only',
+      'BM25 keyword search only, skip vectors (HTTP path; stdio fallback stays hybrid)',
+    )
     .option('-k, --k <n>', 'Limit results to top N', (v) => Number.parseInt(v, 10))
     .option('--json', 'Emit structured JSON (tier, query, text, raw)')
     .option(
@@ -213,6 +221,8 @@ type TapCliOpts = {
   deep?: boolean;
   expand?: boolean;
   rerank?: boolean;
+  semanticOnly?: boolean;
+  keywordOnly?: boolean;
   k?: number;
   json?: boolean;
   compact?: boolean;
@@ -225,6 +235,8 @@ function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
     deep: cmdOpts.deep,
     expand: cmdOpts.expand,
     rerank: cmdOpts.rerank,
+    semanticOnly: cmdOpts.semanticOnly,
+    keywordOnly: cmdOpts.keywordOnly,
     k: cmdOpts.k,
     json: cmdOpts.json,
     compact: cmdOpts.compact,
@@ -235,7 +247,7 @@ function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
 
 const tapCmd = program
   .command('tap')
-  .description('Feruchemy — withdraw state. Currently: `tap copper <query>` → vault.');
+  .description('Feruchemy - withdraw state. Currently: `tap copper <query>` → vault.');
 attachTapFlags(
   tapCmd.command('copper [query]').description('Recall notes from your coppermind (your vault)'),
 ).action((query: string | undefined, cmdOpts: TapCliOpts) => tap(query, normalizeTapOpts(cmdOpts)));
@@ -246,11 +258,11 @@ attachTapFlags(
 
 const burnCmd = program
   .command('burn')
-  .description('Allomancy — burn a metal, take an action. bronze/iron live here.');
+  .description('Allomancy - burn a metal, take an action. bronze/iron live here.');
 
 burnCmd
   .command('bronze <query>')
-  .description('Burn Bronze (Seeker) — query the code graph for structure / concepts')
+  .description('Burn Bronze (Seeker) - query the code graph for structure / concepts')
   .option('--yes', 'Skip the index prompt; assume yes if no graph exists')
   .option('--forge <name>', 'Query across all repos in the named forge')
   .option(
@@ -269,7 +281,7 @@ burnCmd
 
 burnCmd
   .command('iron <symbol>')
-  .description('Burn Iron — pull a symbol and its neighbors out of the graph')
+  .description('Burn Iron - pull a symbol and its neighbors out of the graph')
   .option('--yes', 'Skip the index prompt; assume yes if no graph exists')
   .option('--forge <name>', 'Query across all repos in the named forge')
   .action((symbol: string, cmdOpts: { yes?: boolean; forge?: string }) =>
@@ -434,7 +446,7 @@ function attachAtiumSubcommands(parent: Command): void {
 const atiumCmd = program
   .command('atium')
   .description(
-    'Allomancy — burn atium to see future notes. Create or append to Daily/YYYY-MM-DD notes.',
+    'Allomancy - burn atium to see future notes. Create or append to Daily/YYYY-MM-DD notes.',
   );
 attachAtiumSubcommands(atiumCmd);
 
@@ -444,7 +456,7 @@ attachAtiumSubcommands(dailyCmd);
 program
   .command('gold <note>')
   .description(
-    'Allomancy — burn gold to see past selves. Move a note to Archive/ and set status: archived.',
+    'Allomancy - burn gold to see past selves. Move a note to Archive/ and set status: archived.',
   )
   .option('--dry-run', 'Preview only')
   .action((note: string, cmdOpts: { dryRun?: boolean }) => scribeArchiveCmd(note, cmdOpts));
@@ -463,7 +475,7 @@ attachSyncOptions(
   program
     .command('duralumin')
     .description(
-      'Feruchemy — store Connection. Commit and push the vault, refusing change sets that look like note loss.',
+      'Feruchemy - store Connection. Commit and push the vault, refusing change sets that look like note loss.',
     ),
 );
 
@@ -478,7 +490,7 @@ function attachFlareSubcommands(parent: Command): void {
     .action((title: string, text: string) => flareBanner(title, text));
   parent
     .command('dialog <text>')
-    .description('Modal dialog — blocks until dismissed')
+    .description('Modal dialog - blocks until dismissed')
     .action((text: string) => flareDialog(text));
   parent
     .command('sticky <text>')
@@ -488,7 +500,7 @@ function attachFlareSubcommands(parent: Command): void {
 
 const flareCmd = program
   .command('flare')
-  .description('Flare a metal — amplify a signal. Deliver a desktop notification (macOS only).');
+  .description('Flare a metal - amplify a signal. Deliver a desktop notification (macOS only).');
 attachFlareSubcommands(flareCmd);
 
 const notifyCmd = program
@@ -501,7 +513,7 @@ const routineCmd = program
   .description('Install / remove metalmind scheduled routines (macOS launchd).');
 routineCmd
   .command('install <name>')
-  .description('Install a named routine. Supported: "eod" (carry-forward + archive Mon–Fri).')
+  .description('Install a named routine. Supported: "eod" (carry-forward + archive Mon-Fri).')
   .option('--time <HH:MM>', 'Time to fire (default 17:30)')
   .action((name: string, cmdOpts: { time?: string }) => {
     if (name !== 'eod') {
@@ -534,17 +546,17 @@ program
 
 burnCmd
   .command('steel <old> <new>')
-  .description('Burn Steel — rename a symbol via Serena')
+  .description('Burn Steel - rename a symbol via Serena')
   .action(renameSymbol);
 
 burnCmd
   .command('zinc <bug>')
-  .description('Burn Zinc (Rioter) — dispatch team-debug via Claude Code')
+  .description('Burn Zinc (Rioter) - dispatch team-debug via Claude Code')
   .action(burnZinc);
 
 burnCmd
   .command('tin')
-  .description('Burn Tin — toggle verbose output')
+  .description('Burn Tin - toggle verbose output')
   .option('--on', 'Force verbose on')
   .option('--off', 'Force verbose off')
   .action((cmdOpts: { on?: boolean; off?: boolean }) => {
@@ -554,23 +566,23 @@ burnCmd
 
 burnCmd
   .command('pewter')
-  .description('Burn Pewter — force rebuild the code graph for the current repo')
+  .description('Burn Pewter - force rebuild the code graph for the current repo')
   .action(pewterReindex);
 
 burnCmd
   .command('aluminum')
-  .description('Burn Aluminum — wipe metalmind install (alias for uninstall)')
+  .description('Burn Aluminum - wipe metalmind install (alias for uninstall)')
   .option('-y, --yes', 'Non-interactive: accept defaults')
   .option('--purge', 'Also remove Docker volumes (with --yes)')
   .action((cmdOpts: { yes?: boolean; purge?: boolean }) => aluminumWipe(cmdOpts));
 
 burnCmd
   .command('brass')
-  .description('Burn Brass (Soother) — smooth out drift, re-imprint metalmind managed files')
+  .description('Burn Brass (Soother) - smooth out drift, re-imprint metalmind managed files')
   .option('--skip-watcher', 'Skip refreshing the watcher unit file')
   .option(
     '--host <host>',
-    '"claude" | "codex" | "cursor" | "both" | "all" — bypass the host multi-select prompt',
+    '"claude" | "codex" | "cursor" | "both" | "all" - bypass the host multi-select prompt',
   )
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
@@ -599,7 +611,7 @@ program
 program
   .command('synod <question>')
   .description(
-    "Convene the synod — 7 personas debate a decision, return a structured verdict (Classic) or summon Kelsier's crew (Scadrial). Spawns Claude Code with the synod skill.",
+    "Convene the synod - 7 personas debate a decision, return a structured verdict (Classic) or summon Kelsier's crew (Scadrial). Spawns Claude Code with the synod skill.",
   )
   .action((question: string) => synod(question));
 
@@ -624,7 +636,7 @@ program
   .option('--skip-watcher', 'Skip refreshing the watcher unit file')
   .option(
     '--host <host>',
-    '"claude" | "codex" | "cursor" | "both" | "all" — bypass the host multi-select prompt',
+    '"claude" | "codex" | "cursor" | "both" | "all" - bypass the host multi-select prompt',
   )
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')

@@ -16,7 +16,7 @@ import httpx
 
 class OllamaBackend:
     """Ollama HTTP client. One instance per process; httpx.Client is
-    re-created on each call to keep call sites simple — embed batches
+    re-created on each call to keep call sites simple - embed batches
     are infrequent enough that connection-pool benefit is negligible."""
 
     def __init__(

@@ -6,10 +6,10 @@
 ## Always Do
 
 - Validate and sanitize all external input (user input, API responses, URL params)
-- Parameterize database queries — never concatenate user input into SQL
+- Parameterize database queries - never concatenate user input into SQL
 - Encode output to prevent XSS (use framework defaults, don't bypass)
 - Use HTTPS for all external communication
-- Hash passwords with bcrypt/argon2 — never store plaintext
+- Hash passwords with bcrypt/argon2 - never store plaintext
 - Set security headers (CSP, X-Frame-Options, HSTS)
 - Use httpOnly + secure cookies for auth tokens
 - Audit dependencies with the project's package-manager audit command when adding new dependencies

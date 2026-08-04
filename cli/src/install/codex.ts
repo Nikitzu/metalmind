@@ -1,6 +1,6 @@
 // Codex host-integration entry point.
 //
-// This file is a barrel — every public symbol re-exports from a focused
+// This file is a barrel - every public symbol re-exports from a focused
 // per-section module under ./codex/. Keeps the import surface stable
 // (`from '../install/codex.js'` still resolves) while letting each
 // section live in a 60-150 line file with a single responsibility.

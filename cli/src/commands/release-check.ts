@@ -50,7 +50,7 @@ async function checkBranch(cwd: string): Promise<CheckResult> {
   return {
     name: 'on main branch',
     ok,
-    detail: ok ? 'main' : `currently on '${branch}' — release from main`,
+    detail: ok ? 'main' : `currently on '${branch}' - release from main`,
   };
 }
 
@@ -68,7 +68,33 @@ async function checkVersionSync(repoRoot: string): Promise<CheckResult> {
     ok,
     detail: ok
       ? `both ${pkgVersion}`
-      : `HEAD ${pkgVersion} · global ${globalVersion} — reinstall before tag`,
+      : `HEAD ${pkgVersion} · global ${globalVersion} - reinstall before tag`,
+  };
+}
+
+export function findVersionClaimDrift(text: string, pkgVersion: string): string[] {
+  const claims = [...text.matchAll(/current release `(v\d+\.\d+\.\d+)`/g)].map((m) => m[1] ?? '');
+  return claims.filter((claimed) => claimed !== `v${pkgVersion}`);
+}
+
+async function checkDocsVersionDrift(repoRoot: string): Promise<CheckResult> {
+  const pkgRaw = await readFile(join(repoRoot, 'cli', 'package.json'), 'utf8');
+  const pkgVersion = (JSON.parse(pkgRaw) as { version: string }).version;
+  const files = ['README.md', join('docs', 'architecture.md'), join('docs', 'cookbook.md')];
+  const stale: string[] = [];
+  for (const rel of files) {
+    const text = await readFile(join(repoRoot, rel), 'utf8').catch(() => '');
+    for (const claim of findVersionClaimDrift(text, pkgVersion)) {
+      stale.push(`${rel}: ${claim}`);
+    }
+  }
+  return {
+    name: 'docs version claims match package.json',
+    ok: stale.length === 0,
+    detail:
+      stale.length === 0
+        ? `all current-release claims say v${pkgVersion}`
+        : `stale claim(s): ${stale.join(', ')} - expected v${pkgVersion}`,
   };
 }
 
@@ -114,7 +140,7 @@ async function checkStampedBlockPresent(repoRoot: string): Promise<CheckResult> 
       return {
         name: 'stamped block present',
         ok: false,
-        detail: 'no metalmind managed block — run `metalmind stamp`',
+        detail: 'no metalmind managed block - run `metalmind stamp`',
       };
     }
     const firstLine = template.split('\n').find((l) => l.trim().length > 0) ?? '';
@@ -128,7 +154,7 @@ async function checkStampedBlockPresent(repoRoot: string): Promise<CheckResult> 
       ok,
       detail: ok
         ? 'signature line present'
-        : 'block drifted from template — run `metalmind stamp` to refresh',
+        : 'block drifted from template - run `metalmind stamp` to refresh',
     };
   } catch (err) {
     return {
@@ -147,6 +173,7 @@ export async function releaseCheck(
   checks.push(await checkWorkingTree(repoRoot));
   checks.push(await checkBranch(repoRoot));
   checks.push(await checkVersionSync(repoRoot));
+  checks.push(await checkDocsVersionDrift(repoRoot));
   if (!opts.skipBuild) checks.push(await checkBuild(repoRoot));
   if (!opts.skipTests) checks.push(await checkTests(repoRoot));
   checks.push(await checkDoctor());
@@ -156,7 +183,7 @@ export async function releaseCheck(
   const fail = checks.length - pass;
   for (const c of checks) {
     const mark = c.ok ? '✓' : '✗';
-    log[c.ok ? 'info' : 'error'](`${mark} ${c.name} — ${c.detail}`);
+    log[c.ok ? 'info' : 'error'](`${mark} ${c.name} - ${c.detail}`);
   }
   log.info(`${pass}/${checks.length} checks passed`);
   if (fail > 0) process.exitCode = 1;

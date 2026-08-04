@@ -66,7 +66,7 @@ async function* walk(root: string, exts: Set<string>): AsyncGenerator<string> {
 const JS_HANDLER_RE =
   /\b(?:app|router|fastify|server)\.(get|post|put|patch|delete|options|head)\s*\(\s*['"`]([^'"`]+)['"`]/gi;
 // Captures url (group 1) and optional explicit method (group 2) from the
-// second-arg init object. Falls back to 'GET' (fetch's default) — not 'ANY' —
+// second-arg init object. Falls back to 'GET' (fetch's default) - not 'ANY' -
 // so the method-equality guard in buildRouteMatchEdges stays meaningful.
 const JS_FETCH_RE =
   /\bfetch\s*\(\s*['"`]([^'"`]+)['"`](?:\s*,\s*\{[^}]*?\bmethod\s*:\s*['"]([^'"]+)['"][^}]*\})?/g;

@@ -20,18 +20,18 @@
 
 - Commit messages describe the change, not the tool. No AI attribution footers, no "Co-Authored-By: Claude", no emoji signatures
 - Verify current branch before making changes
-- Use `gh` CLI for PRs, issues, and all GitHub operations. `git` + `gh` only — no wrappers
+- Use `gh` CLI for PRs, issues, and all GitHub operations. `git` + `gh` only - no wrappers
 
 ## Cleanup & Deprecation
 
 - After migration/rename/removal: search entire codebase for leftover references (barrel exports, config, env vars, imports)
-- Before removing code, understand why it exists (Chesterton's Fence) — ask if unclear
+- Before removing code, understand why it exists (Chesterton's Fence) - ask if unclear
 - Deprecation order: remove consumers first, then implementation
 
 ## Incremental Delivery
 
-- Implement in thin vertical slices — each slice is one complete path through the stack, not a horizontal layer
-- Each increment leaves the system in a working, testable state — never break green between slices
+- Implement in thin vertical slices - each slice is one complete path through the stack, not a horizontal layer
+- Each increment leaves the system in a working, testable state - never break green between slices
 - Rough target: ~100 lines per increment. If a change touches more, look for a natural split point
 - Commit after each passing slice, not after accumulating a batch
 

@@ -39,7 +39,7 @@ export interface DeepCheck {
  * Probe whether the legacy Qdrant + Ollama Docker stack is active. The
  * default v0.5.0 install runs sqlite-vec + fastembed in-process, so the
  * docker/qdrant/ollama checks are noise for those users. Returns the
- * Set of running metalmind container names — empty Set means no stack.
+ * Set of running metalmind container names - empty Set means no stack.
  */
 async function detectLegacyStack(): Promise<Set<string>> {
   const res = await runCommand('docker', ['ps', '--format', '{{.Names}}']);
@@ -104,7 +104,7 @@ export async function checkQdrantCollection(): Promise<DeepCheck> {
       ok: points > 0,
       detail: `${points} points`,
       remediation:
-        points === 0 ? 'Collection is empty — run `metalmind-vault-rag-indexer`.' : undefined,
+        points === 0 ? 'Collection is empty - run `metalmind-vault-rag-indexer`.' : undefined,
     };
   } catch (err) {
     return {
@@ -170,7 +170,7 @@ export async function checkRecallHttp(): Promise<DeepCheck> {
     return {
       name: 'recall-http',
       ok: false,
-      detail: 'fast-path endpoint unreachable — tap copper will fall back to stdio MCP',
+      detail: 'fast-path endpoint unreachable - tap copper will fall back to stdio MCP',
       remediation: 'Watcher not running or port 17317 in use. Check `vault-watcher-status`.',
     };
   }
@@ -399,7 +399,7 @@ export async function checkCodexInstall(
     out.push({
       name: 'codex-agents-mirror',
       ok: false,
-      detail: `~/.agents/skills/{${mirrorIssues.join(',')}} stale vs ~/.claude/skills/ — Codex skips these on every launch with "Skipped loading N skill(s) due to invalid SKILL.md files"`,
+      detail: `~/.agents/skills/{${mirrorIssues.join(',')}} stale vs ~/.claude/skills/ - Codex skips these on every launch with "Skipped loading N skill(s) due to invalid SKILL.md files"`,
       remediation: `rm -rf ${mirrorIssues.map((s) => `~/.agents/skills/${s}`).join(' ')}`,
     });
   } else if (existsSync(agentsSkillsDir)) {
@@ -418,7 +418,7 @@ export async function checkCodexInstall(
   // Disambiguate "binary missing" from "command failed/timed out" via a
   // first `which codex` probe. `codex mcp list --json` may legitimately
   // time out (5s default in runCommand) when the user has live stdio MCP
-  // servers (e.g. MCP_DOCKER) registered — Codex pings each one to report
+  // servers (e.g. MCP_DOCKER) registered - Codex pings each one to report
   // status, which can exceed 5s. Misattributing that as "binary not on
   // PATH" was the v0.8.0 doctor lie this v0.8.1 patch fixes.
   if (opts.checkMcp) {
@@ -427,7 +427,7 @@ export async function checkCodexInstall(
       out.push({
         name: 'codex-mcp',
         ok: true,
-        detail: 'codex binary not on PATH — MCP check skipped (opt-in feature)',
+        detail: 'codex binary not on PATH - MCP check skipped (opt-in feature)',
       });
     } else {
       const res = await runCommand('codex', ['mcp', 'list', '--json']);
@@ -436,7 +436,7 @@ export async function checkCodexInstall(
           name: 'codex-mcp',
           ok: true,
           detail:
-            'codex mcp list failed or timed out — MCP check skipped (opt-in feature; common when live MCP servers slow Codex to ping)',
+            'codex mcp list failed or timed out - MCP check skipped (opt-in feature; common when live MCP servers slow Codex to ping)',
         });
       } else {
         try {
@@ -446,7 +446,7 @@ export async function checkCodexInstall(
             out.push({
               name: 'codex-mcp',
               ok: true,
-              detail: 'not registered — opt-in via `metalmind stamp --host codex --with-mcp`',
+              detail: 'not registered - opt-in via `metalmind stamp --host codex --with-mcp`',
             });
           } else {
             const urlMatches = ours.url === DEFAULT_METALMIND_HTTP_URL;
@@ -634,7 +634,7 @@ async function runRecallAudit(opts: DoctorOptions): Promise<void> {
   );
 
   if (weak.length === 0) {
-    log.success('No weak or zero-hit queries — recall is healthy on the recent window.');
+    log.success('No weak or zero-hit queries - recall is healthy on the recent window.');
     return;
   }
 
@@ -695,7 +695,7 @@ export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Pr
     log.info(`flavor:         ${config.flavor}`);
     log.info(`vaultPath:      ${config.vaultPath}`);
     log.info(`hosts:          ${config.hosts.join(', ')}`);
-    log.info(`outputStyle:    ${config.outputStyle.installed ?? '(none — codex-only install)'}`);
+    log.info(`outputStyle:    ${config.outputStyle.installed ?? '(none - codex-only install)'}`);
     log.info(`embeddings:     ${config.embeddings.provider}`);
     log.info(`recall.default: ${config.recall.defaultTier}`);
     log.info(`mcp:            ${config.mcp.registered.join(', ') || '(none)'}`);
@@ -706,7 +706,7 @@ export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Pr
     if (obsidian.found) {
       log.info(`obsidian:       detected (${obsidian.location})`);
     } else {
-      log.info('obsidian:       not detected — vault works without it');
+      log.info('obsidian:       not detected - vault works without it');
       log.info(`  install hint: ${obsidian.installHint}`);
     }
   }
@@ -730,8 +730,8 @@ export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Pr
     totalFailed === 0 && config
       ? 'All systems nominal.'
       : totalFailed > 0
-        ? `${totalFailed} issue(s) flagged — see remediation above.`
-        : 'Prereqs ok; no config — run `metalmind init`.';
+        ? `${totalFailed} issue(s) flagged - see remediation above.`
+        : 'Prereqs ok; no config - run `metalmind init`.';
   outro(summary);
 
   if (totalFailed > 0) process.exitCode = 1;

@@ -44,7 +44,7 @@ describe('detectObsidian', () => {
     await mkdir(join(tmp, 'Applications', 'Obsidian.app'), { recursive: true });
     const result = await detectObsidian();
     // /Applications/Obsidian.app may or may not exist on the host; we only assert
-    // that one of the candidates resolved — either the host's or our fake.
+    // that one of the candidates resolved - either the host's or our fake.
     expect(result.found).toBe(true);
     expect(result.location).toMatch(/Obsidian\.app$/);
   });

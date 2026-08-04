@@ -1,14 +1,14 @@
 ---
 name: metalmind-cli
-description: "Full operational reference for the metalmind CLI — vault recall, note CRUD, daily notes, forge, archive, and notifications. Use when writing vault notes, managing daily action items, running forge commands, archiving notes, or when you need metalmind command flags and gotchas beyond the basic recall pattern in CLAUDE.md. Also use when the user mentions 'scribe', 'atium', 'forge', 'gold', 'flare', or asks about vault note conventions."
+description: "Full operational reference for the metalmind CLI - vault recall, note CRUD, daily notes, forge, archive, and notifications. Use when writing vault notes, managing daily action items, running forge commands, archiving notes, or when you need metalmind command flags and gotchas beyond the basic recall pattern in CLAUDE.md. Also use when the user mentions 'scribe', 'atium', 'forge', 'gold', 'flare', or asks about vault note conventions."
 model: sonnet
 ---
 
 # metalmind CLI Reference
 
-Full operational reference. The CLAUDE.md memory section covers when and why to recall; this skill covers how — flags, gotchas, and conventions for each command family.
+Full operational reference. The CLAUDE.md memory section covers when and why to recall; this skill covers how - flags, gotchas, and conventions for each command family.
 
-## Recall — `metalmind tap copper`
+## Recall - `metalmind tap copper`
 
 ```bash
 metalmind tap copper "<query>"          # Fast semantic search
@@ -18,7 +18,7 @@ metalmind tap copper "<query>" --expand # Full linked-context graph
 
 The retriever is a single embedding pass. If the vault uses different wording, run 2-3 queries with rephrasings (literal terms, synonyms, acronym, spelled-out form) and union the hits before concluding nothing is there.
 
-## Note CRUD — `metalmind scribe`
+## Note CRUD - `metalmind scribe`
 
 ### Mutating verbs
 
@@ -73,7 +73,7 @@ metalmind scribe show "learning:foo"   # Show note content + frontmatter
 - **MOC auto-linking**: when `project:` is set in frontmatter, scribe ensures the note is linked from `Work/MOCs/<project>.md`
 - **Wikilink rewriting**: `scribe rename` updates all `[[wikilinks]]` referencing the old name across the vault
 
-## Daily notes — `metalmind atium`
+## Daily notes - `metalmind atium`
 
 Canonical interface for daily action items. Prefer over `scribe` for daily checklists.
 
@@ -90,7 +90,7 @@ metalmind atium add --date today "Review PR for auth feature"  # Add action item
 
 Every mutating scribe verb **refuses to touch** `Daily/YYYY-MM-DD.md` when the date isn't today, unless `--date <YYYY-MM-DD>` explicitly acknowledges the target date. Error messages name the date and print the exact flag needed.
 
-## Forge — cross-repo route edges
+## Forge - cross-repo route edges
 
 OpenAPI specs for cross-repo route edges live on the metalmind shelf, not inside target repos.
 
@@ -100,7 +100,7 @@ metalmind forge spec-list                           # List stored specs
 metalmind forge spec-remove <repo>                  # Remove spec
 ```
 
-## Archive — `metalmind gold`
+## Archive - `metalmind gold`
 
 Shortcut for `metalmind scribe archive`:
 
@@ -109,7 +109,7 @@ metalmind gold "learning:outdated-pattern"    # Archive a note
 metalmind gold "plan:2026-01-15-old-plan"     # Archive a plan
 ```
 
-## Notifications — `metalmind flare`
+## Notifications - `metalmind flare`
 
 macOS native notifications:
 
@@ -122,7 +122,7 @@ metalmind flare sticky "Tests running..."     # Persistent notification
 ## Writing conventions
 
 - **Write vault notes via metalmind, not raw `Write`/`Edit`**. Direct writes bypass MOC linking, frontmatter stamping, and the watcher's indexing contract.
-- If no metalmind command fits the target, **stop and surface the gap** — do not reach for `Write` as a fallback.
+- If no metalmind command fits the target, **stop and surface the gap** - do not reach for `Write` as a fallback.
 - Save decisions, not code. Use the `/save` skill.
 - Propose path + content before writing; do not save silently.
 

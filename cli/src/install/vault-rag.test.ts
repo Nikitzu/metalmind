@@ -57,7 +57,7 @@ describe('installVaultRag (isVaultRagInstalled via uv tool list)', () => {
     );
   });
 
-  it('does not match on substring — requires start-of-line package name', async () => {
+  it('does not match on substring - requires start-of-line package name', async () => {
     runCommand
       .mockResolvedValueOnce(
         mockResult({ stdout: 'other-tool v1 (provides metalmind-vault-rag-helper)\n' }),
@@ -98,7 +98,7 @@ describe('installVaultRag (isVaultRagInstalled via uv tool list)', () => {
   });
 });
 
-describe('installVaultRag — version-aware reinstall', () => {
+describe('installVaultRag - version-aware reinstall', () => {
   let tmp: string;
 
   beforeEach(async () => {

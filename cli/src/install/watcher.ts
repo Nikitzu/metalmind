@@ -7,8 +7,6 @@ export type WatcherPlatform = 'darwin' | 'linux';
 export interface InstallWatcherOptions {
   vaultPath: string;
   watcherBin: string;
-  /** @deprecated unused since v0.9.0 — watcher unit invokes the entry-point shim directly. */
-  uvBin?: string;
   platformOverride?: WatcherPlatform;
   launchAgentsDir?: string;
   systemdUserDir?: string;
@@ -51,7 +49,6 @@ export async function installWatcher(opts: InstallWatcherOptions): Promise<Insta
     const r = await installLaunchdWatcher({
       vaultPath: opts.vaultPath,
       watcherBin: opts.watcherBin,
-      uvBin: opts.uvBin,
       templatesDir: opts.templatesDir,
       launchAgentsDir: opts.launchAgentsDir,
       skipLoad: opts.skipStart,
@@ -67,7 +64,6 @@ export async function installWatcher(opts: InstallWatcherOptions): Promise<Insta
   const r = await installSystemdWatcher({
     vaultPath: opts.vaultPath,
     watcherBin: opts.watcherBin,
-    uvBin: opts.uvBin,
     templatesDir: opts.templatesDir,
     systemdUserDir: opts.systemdUserDir,
     skipEnable: opts.skipStart,

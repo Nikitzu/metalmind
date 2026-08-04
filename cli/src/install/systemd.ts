@@ -11,8 +11,6 @@ export const DEFAULT_SYSTEMD_USER_DIR = join(homedir(), '.config', 'systemd', 'u
 export interface InstallSystemdOptions {
   vaultPath: string;
   watcherBin: string;
-  /** @deprecated unused since v0.9.0 — watcher unit invokes the entry-point shim directly. */
-  uvBin?: string;
   templatesDir?: string;
   systemdUserDir?: string;
   skipEnable?: boolean;

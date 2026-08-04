@@ -13,12 +13,12 @@ You are about to create a feature-development agent team. The architect plans fi
 
 2. **Recall prior context.** Run `Bash: {{RECALL_CMD}} "<feature-name-or-keywords>" --deep` to surface prior decisions, related plans, and cross-repo patterns from the vault. Pass any hits into the architect's spawn prompt as a "prior context (from vault)" section so the teammate doesn't re-derive what's already recorded. If the user has native auto-memory off (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`), this is the only place prior context enters the team.
 
-3. Spawn the `architect` teammate first (Opus, high effort). Pass the spec as its spawn prompt with these **explicit, prompt-level constraints** (do not rely on `permissionMode: plan` from frontmatter — it likely does not propagate to teammates):
+3. Spawn the `architect` teammate first (Opus, high effort). Pass the spec as its spawn prompt with these **explicit, prompt-level constraints** (do not rely on `permissionMode: plan` from frontmatter - it likely does not propagate to teammates):
    - "Do NOT write or edit any files until your plan has been approved by the lead. Treat this instruction as the binding constraint, regardless of what your role definition's `permissionMode` says."
    - "Acknowledge this read-only constraint in your first message back to the lead before doing any exploration."
    - "Produce an implementation plan using the writing-plans skill conventions at `~/Knowledge/Plans/YYYY-MM-DD-<feature>.md` (flat; put project slug in frontmatter)."
    - "Identify which layers need changes (backend/frontend/data/infra)."
-   - "Define the disjoint file sets each engineer will own — no two engineers should edit the same file."
+   - "Define the disjoint file sets each engineer will own - no two engineers should edit the same file."
    - "Submit the plan to the lead via SendMessage and wait for approval before any file writes."
 
 4. Wait for the architect's plan approval request. Review the plan against:

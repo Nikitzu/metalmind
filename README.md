@@ -3,31 +3,32 @@
 [![npm version](https://img.shields.io/npm/v/metalmind.svg?color=%23d4a14a&label=npm&cacheSeconds=300)](https://www.npmjs.com/package/metalmind)
 [![license](https://img.shields.io/npm/l/metalmind.svg?color=%23d4a14a&cacheSeconds=300)](LICENSE)
 
-**The missing standard library for Claude Code — memory, code intelligence, daily workflow, deliberation. Local, integrated, zero standing MCP-schema tax. Claude never meets you cold again.**
+**The missing standard library for Claude Code - memory, code intelligence, daily workflow, deliberation. Local, integrated, zero standing MCP-schema tax. Claude never meets you cold again.**
 
-Every `claude` invocation is a first meeting. Yesterday's architectural call, the reason you rejected that library, the 40-minute debug you just finished — gone by tomorrow. **Memory** is metalmind's headline. **Code intelligence** (cross-repo graphs, symbol nav, coordinated rename), **daily workflow** (action-item carry-forward, EOD routines), and **deliberation** (a 7-persona synod for hard calls) ship with it — every module integrated through one vault, one CLI, one stamped `CLAUDE.md` rule.
+Every `claude` invocation is a first meeting. Yesterday's architectural call, the reason you rejected that library, the 40-minute debug you just finished - gone by tomorrow. **Memory** is metalmind's headline. **Code intelligence** (cross-repo graphs, symbol nav, coordinated rename), **daily workflow** (action-item carry-forward, EOD routines), and **deliberation** (a 7-persona synod for hard calls) ship with it - every module integrated through one vault, one CLI, one stamped `CLAUDE.md` rule.
 
 Website: **[metalmind.mzyx.dev](https://metalmind.mzyx.dev)**
 
 ## What's in the standard library
 
-Six modules. Each closes a gap Claude Code itself doesn't fill. All share state through your vault. None register an MCP tool schema.
+Seven modules. Each closes a gap Claude Code itself doesn't fill. All share state through your vault. None register an MCP tool schema.
 
 | Module | Surface | What it owns |
 |---|---|---|
 | **Memory** | `tap copper` / `store copper` / `scribe` | Recall + save + vault CRUD. The headline; the rest of the library compounds back into it. |
 | **Code intelligence** | `forge` / `burn bronze\|iron\|steel` | Cross-repo graph (HTTP-route edges with provenance), symbol-aware navigation, coordinated rename through Serena's LSP. |
-| **Daily workflow** | `atium` / `gold` / `routine install eod` | Daily-note action items with `--from` carry-forward, one-shot archive, launchd-backed Mon–Fri EOD carry-and-archive. |
-| **Deliberation** | `synod` | 7-persona deliberative council for the questions that affect the next 6 months — spawned as parallel subagents, synthesised into a structured verdict. |
+| **Vault sync** | `duralumin` / `sync` | Commit and push the vault in one command, refusing change sets that look like note loss. |
+| **Daily workflow** | `atium` / `gold` / `routine install eod` | Daily-note action items with `--from` carry-forward, one-shot archive, launchd-backed Mon-Fri EOD carry-and-archive. |
+| **Deliberation** | `synod` | 7-persona deliberative council for the questions that affect the next 6 months - spawned as parallel subagents, synthesised into a structured verdict. |
 | **Desktop integration** | `flare` | macOS banner / dialog / sticky notifications wired into the EOD routine and `/save`. |
 | **Health** | `pulse` / `doctor --recall-audit` | Install verification + the first memory tool that tells you when recall is failing you. |
 
-**The four rules every module clears** — name the moat in negative:
+**The four rules every module clears** - name the moat in negative:
 
 1. Zero standing MCP-schema tax in Claude Code.
-2. Reversible to zero — `metalmind uninstall` never touches your notes.
+2. Reversible to zero - `metalmind uninstall` never touches your notes.
 3. No accounts, no cloud, no third-party services.
-4. Closes a gap Claude Code itself doesn't fill — no duplication of host primitives.
+4. Closes a gap Claude Code itself doesn't fill - no duplication of host primitives.
 
 This bar refuses, by construction, anything that would make metalmind a chat assistant, a cloud-sync product, or a hosted memory service.
 
@@ -35,12 +36,12 @@ This bar refuses, by construction, anything that would make metalmind a chat ass
 
 ## What it's actually for
 
-metalmind pays off when your knowledge lives across **more than one repo**. A single-repo user gets a lot from Claude Code's native `/memory` — text in `CLAUDE.md`, free, no moving parts. A multi-repo engineer — same vault across every project, decisions that outlive any single codebase, code graphs that cross service boundaries — is who metalmind is built for.
+metalmind pays off when your knowledge lives across **more than one repo**. A single-repo user gets a lot from Claude Code's native `/memory` - text in `CLAUDE.md`, free, no moving parts. A multi-repo engineer - same vault across every project, decisions that outlive any single codebase, code graphs that cross service boundaries - is who metalmind is built for.
 
 - **One vault, every project.** `project:` frontmatter plus a MOC per project. A decision written in repo A surfaces when you `tap copper` in repo B if it's topically relevant. Native `CLAUDE.md` is scoped per-project; learnings don't cross-pollinate.
-- **Cross-repo code graph via forge.** `metalmind burn bronze "<q>" --forge <group>` queries every repo in a group. HTTP-route edges connect a caller in one service to a handler in another — Claude native has no concept of "the other service's code." More on the [forge page](https://metalmind.mzyx.dev/forge).
-- **Knowledge that compounds.** Each new project starts with every learning you've documented elsewhere. `Learnings/` is intentionally flat — "CLIs should never paste weird package-manager invocations" applies to every repo. With native memory you'd copy-paste the insight into every project's `CLAUDE.md` separately.
-- **Decisions that outlive the codebase.** Repos get archived, rewritten, replaced. The vault doesn't — plain markdown in your own directory, searchable forever.
+- **Cross-repo code graph via forge.** `metalmind burn bronze "<q>" --forge <group>` queries every repo in a group. HTTP-route edges connect a caller in one service to a handler in another - Claude native has no concept of "the other service's code." More on the [forge page](https://metalmind.mzyx.dev/forge).
+- **Knowledge that compounds.** Each new project starts with every learning you've documented elsewhere. `Learnings/` is intentionally flat - "CLIs should never paste weird package-manager invocations" applies to every repo. With native memory you'd copy-paste the insight into every project's `CLAUDE.md` separately.
+- **Decisions that outlive the codebase.** Repos get archived, rewritten, replaced. The vault doesn't - plain markdown in your own directory, searchable forever.
 
 **Where native `/memory` still wins:** solo repo, under ~50 notes of context, no historical lookback needed. Below that break-even, it's simpler and free. metalmind earns its install cost when you've got more to remember than a single `CLAUDE.md` can cheaply hold.
 
@@ -52,10 +53,10 @@ metalmind pays off when your knowledge lives across **more than one repo**. A si
 
 - **Save once.** `metalmind store copper "<insight>"` (alias: `save`) deposits a decision into your local vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes.
 
-- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session — most memory tools silently inject a handful of tool schemas — often heavily over-specified — into every host session before you've typed a prompt (measured: [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/)). We stamp the command into your `CLAUDE.md` (and `~/.codex/AGENTS.md` when Codex is installed) so the model reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback for hosts that need it.
+- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session - most memory tools silently inject a handful of tool schemas - often heavily over-specified - into every host session before you've typed a prompt (measured: [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/)). We stamp the command into your `CLAUDE.md` (and `~/.codex/AGENTS.md` when Codex is installed) so the model reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback for hosts that need it.
   <br><sub>**Measured** on the 12-note fake vault in [`bench/recall-v0/`](bench/recall-v0/): **hit@5 = 90%**, **hit@3 = 85%**, **hit@1 = 70%**, latency **median 45 ms / p95 87 ms**. Hit payloads are billed like any other bash output; the MCP tax we avoid is the standing tool-schema cost, not the result tokens.</sub>
 
-- **Session-start awareness without nagging.** metalmind installs a Claude Code SessionStart hook plus a top-of-file block in `~/.claude/CLAUDE.md` with explicit WHEN→DO triggers, so every new Claude session discovers the vault on its own — no "did you check memory?" prompting. Re-stamp anytime with `metalmind burn brass` (alias: `stamp`) after an upgrade.
+- **Session-start awareness without nagging.** metalmind installs a Claude Code SessionStart hook plus a top-of-file block in `~/.claude/CLAUDE.md` with explicit WHEN→DO triggers, so every new Claude session discovers the vault on its own - no "did you check memory?" prompting. Re-stamp anytime with `metalmind burn brass` (alias: `stamp`) after an upgrade.
 
 - **Vault writes without drift.** `metalmind scribe <create|update|patch|delete|archive|list|show|rename>` (alias: `note`) is the CRUD interface agents use *instead of* raw `Write`. It stamps frontmatter, picks the right folder (`Plans/ Learnings/ Work/ Work/MOCs/ Daily/ Inbox/ Memory/ Personal/ Archive/`), auto-links the project MOC, and on `rename` rewrites `[[wikilinks]]` across the vault. Body on stdin; every mutating verb supports `--dry-run`. Daily notes for non-today dates require `--date <YYYY-MM-DD>` to acknowledge the target explicitly.
 
@@ -63,9 +64,9 @@ metalmind pays off when your knowledge lives across **more than one repo**. A si
 
 - **Sight across repos, not just one.** `metalmind burn bronze "<query>"` (alias: `graph`) queries a code graph of every repo in your *forge*. HTTP-route-match edges connect caller → handler *across services* in three tiers: OpenAPI specs on the metalmind shelf (never inside your repos), Java RestTemplate/WebClient/Feign callers, and URL literals as an opt-in fallback. Every inferred edge carries `INFERRED_NAME` / `INFERRED_ROUTE` / `INFERRED_URL_LITERAL` provenance so Claude can trust-grade what it reads.
 
-- **Symbol-aware navigation and rename.** `metalmind burn iron <symbol>` (alias: `symbol`) returns a symbol's neighbors — who calls it, what it calls, its module. `metalmind burn steel <old> <new>` (alias: `rename`) drives a coordinated rename through Serena's LSP backend.
+- **Symbol-aware navigation and rename.** `metalmind burn iron <symbol>` (alias: `symbol`) returns a symbol's neighbors - who calls it, what it calls, its module. `metalmind burn steel <old> <new>` (alias: `rename`) drives a coordinated rename through Serena's LSP backend.
 
-- **Team-debug, dispatched.** `metalmind burn zinc "<bug>"` (alias: `debug`) hands a bug to the `/team-debug` skill with the code graph already primed — the team agents start with context, not cold.
+- **Team-debug, dispatched.** `metalmind burn zinc "<bug>"` (alias: `debug`) hands a bug to the `/team-debug` skill with the code graph already primed - the team agents start with context, not cold.
 
 ### Daily workflow
 
@@ -73,19 +74,19 @@ metalmind pays off when your knowledge lives across **more than one repo**. A si
 
 - **Archive shortcut.** `metalmind gold <kind:slug>` (alias: `scribe archive`) moves a note to `Archive/` and stamps `status: archived` in one verb.
 
-- **EOD launchd routine.** `metalmind routine install eod` registers a Mon–Fri 17:30 launchd agent that carries unchecked items to the next workday and archives today's daily. `routine remove eod` reverses it.
+- **EOD launchd routine.** `metalmind routine install eod` registers a Mon-Fri 17:30 launchd agent that carries unchecked items to the next workday and archives today's daily. `routine remove eod` reverses it.
 
 ### Deliberation
 
-- **Convene the synod.** `metalmind synod "<question>"` spawns a 7-persona deliberative council in parallel subagents (Adversary, Strategist, Scientist, Visionary, Engineer, Philosopher, Humanist — or Kelsier's crew under Scadrial flavor) and synthesises a structured verdict (position, confidence %, 3 critical risks, 5 next steps, minority report). For decisions that affect the next 6 months, not the next 60 minutes.
+- **Convene the synod.** `metalmind synod "<question>"` spawns a 7-persona deliberative council in parallel subagents (Adversary, Strategist, Scientist, Visionary, Engineer, Philosopher, Humanist - or Kelsier's crew under Scadrial flavor) and synthesises a structured verdict (position, confidence %, 3 critical risks, 5 next steps, minority report). For decisions that affect the next 6 months, not the next 60 minutes.
 
 ### Desktop integration (macOS)
 
-- **Banner / dialog / sticky.** `metalmind flare banner|dialog|sticky <title> <message>` (alias: `notify`) — desktop notifications wired into the EOD routine and into the `/save` skill.
+- **Banner / dialog / sticky.** `metalmind flare banner|dialog|sticky <title> <message>` (alias: `notify`) - desktop notifications wired into the EOD routine and into the `/save` skill.
 
 ### Health
 
-- **`metalmind pulse` (alias: `doctor`).** End-to-end install check — watcher, recall HTTP fast-path, stamped sentinels. Add `--deep` for live-service probes; add `--recall-audit` to replay the opt-in recall log and surface zero-hit / weak-hit queries as `/save` candidates.
+- **`metalmind pulse` (alias: `doctor`).** End-to-end install check - watcher, recall HTTP fast-path, stamped sentinels. Add `--deep` for live-service probes; add `--recall-audit` to replay the opt-in recall log and surface zero-hit / weak-hit queries as `/save` candidates.
 
 - **Reversible to zero.** `metalmind uninstall` (alias: `burn aluminum`) stops the watcher, restores prior settings, clears shell aliases, and strips every sentinel-bounded block we wrote. **It never touches your notes.**
 
@@ -93,9 +94,9 @@ metalmind pays off when your knowledge lives across **more than one repo**. A si
 
 Most memory tools register themselves as MCP servers. That design injects a handful of tool schemas (`search_memory`, `recall`, `store`, …) into **every** Claude session before you prompt anything. Those schemas eat context tokens you could be using for the actual task.
 
-metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the command once from your stamped `CLAUDE.md`, and every session starts with a clean context. The watcher, indexer, and embedding stack still live locally — they just don't live in Claude's tool registry.
+metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the command once from your stamped `CLAUDE.md`, and every session starts with a clean context. The watcher, indexer, and embedding stack still live locally - they just don't live in Claude's tool registry.
 
-**Measured** in [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/) — first-turn token tax on a cold session:
+**Measured** in [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/) - first-turn token tax on a cold session:
 
 | System | Transport | Tools | First-turn tokens |
 |---|---|---:|---:|
@@ -104,11 +105,11 @@ metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the
 | metalmind (stdio MCP fallback) | MCP stdio | 3 | ~157 |
 | mem0 (`pinkpixel-dev/mem0-mcp`) | MCP stdio | 3 | ~1,319 |
 
-**~2.5× lower than mem0 as shipped** (loopback-HTTP vs stdio MCP), **~8.4× lower on the apples-to-apples MCP comparison** (metalmind's stdio fallback vs mem0 — same transport, different schema discipline). The ~519 tokens metalmind spends up front are prose in `~/.claude/CLAUDE.md` that teaches Claude *when* to recall — work that mem0's schema-tax doesn't do. Approximation via `chars / 4`; re-run with `ANTHROPIC_API_KEY=... pnpm bench:mcp-tax` for exact counts. `bench/mcp-tax-v0/README.md` details methodology and limits.
+**~2.5× lower than mem0 as shipped** (loopback-HTTP vs stdio MCP), **~8.4× lower on the apples-to-apples MCP comparison** (metalmind's stdio fallback vs mem0 - same transport, different schema discipline). The ~519 tokens metalmind spends up front are prose in `~/.claude/CLAUDE.md` that teaches Claude *when* to recall - work that mem0's schema-tax doesn't do. Approximation via `chars / 4`; re-run with `ANTHROPIC_API_KEY=... pnpm bench:mcp-tax` for exact counts. `bench/mcp-tax-v0/README.md` details methodology and limits.
 
 ## Recall quality at scale
 
-Token cost is only half the story — recall has to actually find your note. `v0.5.0` runs the entire retrieval stack in-process (sqlite-vec for vectors, fastembed for embeddings, FTS5 for keyword) — no Docker, no Ollama daemon. Hybrid retrieval fuses semantic + keyword via RRF with a top-rank bonus and per-list weights. Measured in [`bench/recall-v0/`](bench/recall-v0/) on 12 hand-authored gold notes plus up to 988 seeded same-domain distractors, 20 paraphrase-ish queries:
+Token cost is only half the story - recall has to actually find your note. `v0.5.0` runs the entire retrieval stack in-process (sqlite-vec for vectors, fastembed for embeddings, FTS5 for keyword) - no Docker, no Ollama daemon. Hybrid retrieval fuses semantic + keyword via RRF with a top-rank bonus and per-list weights. Measured in [`bench/recall-v0/`](bench/recall-v0/) on 12 hand-authored gold notes plus up to 988 seeded same-domain distractors, 20 paraphrase-ish queries:
 
 | Vault size | sem-only hit@5 | **hybrid hit@1** | **hybrid hit@5** | **+rerank hit@1** | **+rerank hit@5** |
 |---:|---:|---:|---:|---:|---:|
@@ -117,7 +118,7 @@ Token cost is only half the story — recall has to actually find your note. `v0
 | 500 notes | 90% | **85%** | **90%** | **90%** | 95% |
 | 1,000 notes | 90% | **85%** | **85%** | **90%** | 95% |
 
-Hybrid is the default. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query. `--semantic-only` and `--keyword-only` flags let you A/B any query. The `BAAI/bge-small-en-v1.5` embedding model is a 30 MB ONNX wheel cached at `~/.cache/fastembed/`.
+Hybrid is the default. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query. `--semantic-only` and `--keyword-only` flags let you A/B any query. The `BAAI/bge-small-en-v1.5` embedding model is a 30 MB ONNX wheel cached at `~/.metalmind/cache/fastembed/`.
 
 **Side-by-side with [qmd 2.1.0](https://github.com/tobi/qmd) on the same fixture:**
 
@@ -128,24 +129,24 @@ Hybrid is the default. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s 
 | 500 notes | **90%** | 85% | **95%** | 90% |
 | 1,000 notes | **90%** | 80% | **95%** | 90% |
 
-qmd ships the same shape (BM25 + vector + RRF + rerank) with different defaults — `qwen3-reranker`, a fine-tuned 1.7B query expansion model, GGUF stack, ~2 GB on first run. qmd wins hit@5 at small scales (more recall headroom from query expansion); metalmind wins hit@1 across every scale (better top-of-list precision after the v0.4.0 weighted-RRF fix). Reproduce with `node bench/recall-v0/run.mjs --scales 12,100,500,1000 --rerank` from the repo root.
+qmd ships the same shape (BM25 + vector + RRF + rerank) with different defaults - `qwen3-reranker`, a fine-tuned 1.7B query expansion model, GGUF stack, ~2 GB on first run. qmd wins hit@5 at small scales (more recall headroom from query expansion); metalmind wins hit@1 across every scale (better top-of-list precision after the v0.4.0 weighted-RRF fix). Reproduce with `node bench/recall-v0/run.mjs --scales 12,100,500,1000 --rerank` from the repo root.
 
 ## How metalmind compares
 
-Numbers above are recall on a fixed corpus. The shape comparison — what each tool stores, how the agent reaches it, where the data lives — matters just as much when picking one:
+Numbers above are recall on a fixed corpus. The shape comparison - what each tool stores, how the agent reaches it, where the data lives - matters just as much when picking one:
 
 | Dimension | metalmind | native `/memory` | [qmd](https://github.com/tobi/qmd) | [mem0](https://mem0.ai) | [Letta](https://www.letta.com) | [Mastra](https://mastra.ai) |
 |---|---|---|---|---|---|---|
 | Memory primitive | Markdown chunks (file-mapped) | Markdown text in `CLAUDE.md` (per-project) | Markdown chunks (file-mapped) | LLM-extracted facts | Managed memory blocks | Threads + working memory |
-| Source preservation | Yes — notes intact | Yes — text intact | Yes — files intact | No — facts replace docs | Partial — buffer + summaries | Yes — message history |
-| Recall determinism | Deterministic | N/A — text always-loaded | Deterministic | LLM extracts on every write | LLM mediates updates | Deterministic + LLM summary |
+| Source preservation | Yes - notes intact | Yes - text intact | Yes - files intact | No - facts replace docs | Partial - buffer + summaries | Yes - message history |
+| Recall determinism | Deterministic | N/A - text always-loaded | Deterministic | LLM extracts on every write | LLM mediates updates | Deterministic + LLM summary |
 | How agents call it | Bash → loopback HTTP | Always loaded into context | Bash CLI (MCP optional) | MCP server or SDK | HTTP server (own runtime) | TS framework API |
-| Standing tokens in Claude Code | ~519 (prose in `CLAUDE.md`) | Full `CLAUDE.md` per session, per repo | ~0 (CLI; MCP opt-in) | ~1,319 (3 MCP schemas) | n/a — different host model | n/a — different host model |
-| Cross-repo | Yes — one vault, every project | No — scoped per repo | Yes — one config, every project | Yes — cloud-mediated | Yes — Letta server | Yes — store-dependent |
-| Where state lives | Local vault + sqlite-vec | Local — `CLAUDE.md` in repo | Local files + sqlite | Cloud or self-hosted vector DB | Cloud or self-hosted Letta server | Pluggable (pgvector / cloud) |
-| Walk-away cost | Zero — vault is plain markdown | Zero — files stay readable | Zero — files stay readable | Export needed; facts ≠ docs | Export needed; data lives in Letta | Depends on chosen store |
+| Standing tokens in Claude Code | ~519 (prose in `CLAUDE.md`) | Full `CLAUDE.md` per session, per repo | ~0 (CLI; MCP opt-in) | ~1,319 (3 MCP schemas) | n/a - different host model | n/a - different host model |
+| Cross-repo | Yes - one vault, every project | No - scoped per repo | Yes - one config, every project | Yes - cloud-mediated | Yes - Letta server | Yes - store-dependent |
+| Where state lives | Local vault + sqlite-vec | Local - `CLAUDE.md` in repo | Local files + sqlite | Cloud or self-hosted vector DB | Cloud or self-hosted Letta server | Pluggable (pgvector / cloud) |
+| Walk-away cost | Zero - vault is plain markdown | Zero - files stay readable | Zero - files stay readable | Export needed; facts ≠ docs | Export needed; data lives in Letta | Depends on chosen store |
 
-**Native `/memory`** (text in `CLAUDE.md`) is the zero-install baseline every Claude Code user already has. metalmind earns its install cost once knowledge crosses repo boundaries — the row that flips is *Cross-repo*. **Letta and Mastra are agent frameworks with built-in memory** — different category from metalmind / qmd / mem0 (memory *tools* you bolt onto an existing host). Listed because they show up in "memory for AI" searches; "different host model" rows are honest about the apples-vs-oranges shape, not a metalmind win.
+**Native `/memory`** (text in `CLAUDE.md`) is the zero-install baseline every Claude Code user already has. metalmind earns its install cost once knowledge crosses repo boundaries - the row that flips is *Cross-repo*. **Letta and Mastra are agent frameworks with built-in memory** - different category from metalmind / qmd / mem0 (memory *tools* you bolt onto an existing host). Listed because they show up in "memory for AI" searches; "different host model" rows are honest about the apples-vs-oranges shape, not a metalmind win.
 
 **Pick metalmind** when your knowledge crosses repo boundaries and you want Claude Code to read it verbatim with zero standing tax. Pick **native `/memory`** if everything you care about lives in one repo. Pick **mem0** for fact extraction from conversations. Pick **Letta** or **Mastra** when you're building agents inside their framework. Pick **qmd** if you want the same shape on a non-Claude host.
 
@@ -153,10 +154,10 @@ Numbers above are recall on a fixed corpus. The shape comparison — what each t
 
 Fair question for any solo-maintainer tool. The sustainability story:
 
-- **Your notes outlive metalmind.** The vault is plain markdown in your own `~/Knowledge/` directory. If this project goes unmaintained tomorrow, you keep everything — Obsidian still opens the files, `grep` still searches them, `git` still versions them. metalmind is the layer that makes Claude use them well, not the layer that holds them hostage.
-- **No cloud, no accounts, no phone-home.** Embeddings, indexing, recall, code graphs — all local. There is no metalmind backend to shut down, no API quota to throttle, no subscription to lapse. The only network call is the one you were already making to Claude.
-- **Reversible in one command.** `metalmind uninstall` stops the watcher, strips the sentinel-bounded blocks from your `CLAUDE.md` files (user content outside markers is preserved), and clears shell aliases. Your vault is never touched. Try it — then reinstall if you like it.
-- **MIT licensed.** Fork it, vendor it, swap the embedding backend. The architecture decisions are documented (`docs/`, `bench/`, `CHANGELOG.md`) specifically so a contributor — or a future-you — can keep it running.
+- **Your notes outlive metalmind.** The vault is plain markdown in your own `~/Knowledge/` directory. If this project goes unmaintained tomorrow, you keep everything - Obsidian still opens the files, `grep` still searches them, `git` still versions them. metalmind is the layer that makes Claude use them well, not the layer that holds them hostage.
+- **No cloud, no accounts, no phone-home.** Embeddings, indexing, recall, code graphs - all local. There is no metalmind backend to shut down, no API quota to throttle, no subscription to lapse. The only network call is the one you were already making to Claude.
+- **Reversible in one command.** `metalmind uninstall` stops the watcher, strips the sentinel-bounded blocks from your `CLAUDE.md` files (user content outside markers is preserved), and clears shell aliases. Your vault is never touched. Try it - then reinstall if you like it.
+- **MIT licensed.** Fork it, vendor it, swap the embedding backend. The architecture decisions are documented (`docs/`, `bench/`, `CHANGELOG.md`) specifically so a contributor - or a future-you - can keep it running.
 
 ## Install
 
@@ -167,7 +168,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.8.0`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.10.1`.
 
 **From source (for hacking on metalmind itself):**
 
@@ -178,23 +179,25 @@ pnpm install && pnpm build && pnpm link --global
 metalmind init
 ```
 
-`metalmind init` detects `~/.claude/` and `~/.codex/` and shows a multi-select prompt — stamps only the hosts you choose. Skip the prompt with `--host`:
+`metalmind init` detects `~/.claude/`, `~/.codex/`, and `~/.cursor/` and shows a multi-select prompt - stamps only the hosts you choose. Skip the prompt with `--host`:
 
 ```bash
 metalmind init --host claude          # Claude Code only
 metalmind init --host codex           # Codex CLI only
-metalmind init --host both            # both (when both are detected)
+metalmind init --host cursor          # Cursor only
+metalmind init --host both            # Claude Code + Codex (when both are detected)
+metalmind init --host all             # every detected host
 metalmind init --host codex --with-mcp   # Codex + opt-in MCP server
 ```
 
-The wizard walks five steps: prereq check (Python + uv + git + Claude Code or Codex), vault scaffold, Python engines via `uv tool install` (sqlite-vec + fastembed bundled), watcher service (launchd on macOS, systemd on Linux), then per-host stamping. See the [install-flow diagram](https://metalmind.mzyx.dev/#demo) for what each step does. Pass `--legacy` to opt into the old Qdrant + Ollama Docker stack instead.
+The wizard walks five steps: prereq check (Python + uv + git + at least one supported host), vault scaffold, Python engines via `uv tool install` (sqlite-vec + fastembed bundled), watcher service (launchd on macOS, systemd on Linux), then per-host stamping. See the [install-flow diagram](https://metalmind.mzyx.dev/#demo) for what each step does. Pass `--legacy` to opt into the old Qdrant + Ollama Docker stack instead.
 
 ## Requirements
 
-**Supported hosts (v0.8.0): [Claude Code](https://claude.ai/code) and [Codex CLI](https://github.com/openai/codex) (terminal).** The Codex desktop app (`codex app`) is on the v1.1 roadmap but not yet shipped. Cursor, Copilot, and Gemini CLI remain on the longer-term roadmap; per `Learnings/multi-host-distribution-thesis-bash-required` (vault), Cursor and Codex both honor AGENTS.md so the AGENTS.md template extracted in v0.8.0 is reusable.
+**Supported hosts (v0.9.0+): [Claude Code](https://claude.ai/code), [Codex CLI](https://github.com/openai/codex) (terminal), and [Cursor](https://cursor.com).** On Cursor, recall rides on the `metalmind-recall` skill rather than a session-start hook (the hook is stamped but latent until Cursor restores `sessionStart` additional context). The Codex desktop app (`codex app`) is on the v1.1 roadmap but not yet shipped. Copilot and Gemini CLI remain on the longer-term roadmap.
 
 - macOS or Linux (WSL2 works; native Windows not supported)
-- [Claude Code CLI](https://claude.ai/code) v2.1+
+- At least one supported host: [Claude Code CLI](https://claude.ai/code) v2.1+, Codex CLI, or Cursor
 - Python 3.11+, [uv](https://docs.astral.sh/uv/), git, Node 20+
 
 (`--legacy` mode also requires Docker for the Qdrant + Ollama containers. Default install runs the entire retrieval stack in-process.)
@@ -203,14 +206,14 @@ Run `metalmind pulse` (alias: `doctor`) any time to check environment + install 
 
 ## Commands
 
-Every themed (Scadrial) verb has a classic alias. Both always resolve — theming is cosmetic.
+Every themed (Scadrial) verb has a classic alias. Both always resolve - theming is cosmetic.
 
 | Scadrial | Classic | What it does |
 |---|---|---|
 | `metalmind init` | `metalmind init` | Interactive setup wizard |
 | `metalmind pulse` | `metalmind doctor` | Verify install state |
 | `metalmind store copper <insight>` | `metalmind save <insight>` | Deposit a decision into the vault |
-| `metalmind tap copper "<query>"` | `metalmind recall "<query>"` | Recall — add `--deep` or `--expand` for more depth |
+| `metalmind tap copper "<query>"` | `metalmind recall "<query>"` | Recall - add `--deep` or `--expand` for more depth |
 | `metalmind burn bronze "<query>"` | `metalmind graph "<query>"` | Code-graph query |
 | `metalmind burn iron <symbol>` | `metalmind symbol <symbol>` | Pull a symbol + neighbors |
 | `metalmind burn steel <old> <new>` | `metalmind rename <old> <new>` | Coordinated rename |
@@ -218,16 +221,17 @@ Every themed (Scadrial) verb has a classic alias. Both always resolve — themin
 | `metalmind burn pewter` | `metalmind reindex` | Rebuild code graph |
 | `metalmind forge <…>` | `metalmind group <…>` | Cross-repo graph groups; `forge capture-spec` seeds OpenAPI shelf |
 | `metalmind scribe <verb>` | `metalmind note <verb>` | Vault CRUD: `create \| update \| patch \| delete \| archive \| rename \| list \| show` |
-| `metalmind atium new \| add` | `metalmind daily new \| add` | Future daily notes — `--date today\|tomorrow\|next-workday\|YYYY-MM-DD`, `--from` carries unchecked items |
-| `metalmind gold <note>` | `metalmind scribe archive <note>` | One-shot archive — move note to `Archive/` |
+| `metalmind atium new \| add` | `metalmind daily new \| add` | Future daily notes - `--date today\|tomorrow\|next-workday\|YYYY-MM-DD`, `--from` carries unchecked items |
+| `metalmind gold <note>` | `metalmind scribe archive <note>` | One-shot archive - move note to `Archive/` |
 | `metalmind duralumin` | `metalmind sync` | Commit and push the vault, refusing change sets that look like note loss |
 | `metalmind flare banner\|dialog\|sticky` | `metalmind notify banner\|dialog\|sticky` | macOS desktop notifications |
-| `metalmind routine install eod` | `metalmind routine install eod` | Launchd EOD agent — carries unchecked items to next workday and archives today's note, Mon–Fri |
-| `metalmind release-check` | `metalmind release-check` | Preflight — working tree, branch, version sync, tests, build, stamped-block present |
+| `metalmind routine install eod` | `metalmind routine install eod` | Launchd EOD agent - carries unchecked items to next workday and archives today's note, Mon-Fri |
+| `metalmind release-check` | `metalmind release-check` | Preflight - working tree, branch, version sync, tests, build, stamped-block present |
 | `metalmind burn brass` | `metalmind stamp` | Re-imprint metalmind managed files (upgrade in place) |
+| `metalmind burn tin` | `metalmind verbose` | Toggle verbose recall metadata on/off |
 | `metalmind burn aluminum` | `metalmind uninstall` | Reversible teardown |
 
-Pick a flavor during `init` — it only changes which variant your stamped `CLAUDE.md` recommends to Claude. The CLI always accepts both.
+Pick a flavor during `init` - it only changes which variant your stamped `CLAUDE.md` recommends to Claude. The CLI always accepts both.
 
 ## Under the metalmind
 
@@ -240,7 +244,7 @@ One verb, one job. Each engine is swappable:
 | Symbol navigation + rename | [Serena](https://github.com/oraios/serena) (LSP-backed) |
 | Code graph + cross-repo edges | [graphify](https://pypi.org/project/graphifyy/) |
 | Incremental indexing | [watchfiles](https://github.com/samuelcolvin/watchfiles) + launchd / systemd |
-| Forge (cross-repo merge) | metalmind itself — HTTP-route match + name-match edges with provenance |
+| Forge (cross-repo merge) | metalmind itself - HTTP-route match + name-match edges with provenance |
 
 Your notes, embeddings, and code graphs never leave your machine. The only network calls metalmind makes are the ones you already make to Claude Code's own API.
 
@@ -250,21 +254,21 @@ Your notes, embeddings, and code graphs never leave your machine. The only netwo
 metalmind uninstall
 ```
 
-Stops and removes the Docker containers, unloads the watcher service, strips the metalmind managed blocks from `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md` (user content outside the sentinel markers is preserved), removes the SessionStart hook + its entry in `~/.claude/settings.json` (other hooks stay), strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, restores your prior output-style, and removes shell aliases. Four interactive prompts ask whether to also `uv tool uninstall` Serena, graphify, `metalmind-vault-rag`, and whether to remove Docker volumes (keep them if you don't want to re-embed the vault).
+Unloads the watcher service, strips the metalmind managed blocks from `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md` (user content outside the sentinel markers is preserved), removes the SessionStart hook + its entry in `~/.claude/settings.json` (other hooks stay), strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, restores your prior output-style, and removes shell aliases. Four interactive prompts ask whether to also `uv tool uninstall` Serena, graphify, `metalmind-vault-rag`, and whether to remove the embedding index (keep it if you don't want to re-embed the vault). On a `--legacy` install it also stops and removes the Qdrant + Ollama Docker containers and offers to remove their volumes.
 
 **Never touches your notes.**
 
 ## Docs
 
-- [`docs/architecture.md`](docs/architecture.md) — module overview + how the six modules share state
-- [`docs/cookbook.md`](docs/cookbook.md) — opinionated patterns for using each module well
-- [`CHANGELOG.md`](CHANGELOG.md) — release notes, one entry per tag
-- [`docs/prerequisites.md`](docs/prerequisites.md) — what to install before `metalmind init`
-- [`docs/post-install.md`](docs/post-install.md) — verification + troubleshooting
-- [`docs/customization.md`](docs/customization.md) — swapping embedding model, relocating vault, etc.
-- [`docs/plugins.md`](docs/plugins.md) — recommended Claude Code plugins
-- [`docs/teams.md`](docs/teams.md) — the experimental agent-teams feature
-- [`bench/recall-v0/`](bench/recall-v0/) · [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/) · [`bench/recall-at-scale/`](bench/recall-at-scale/) — reproducible benches
+- [`docs/architecture.md`](docs/architecture.md) - module overview + how the six modules share state
+- [`docs/cookbook.md`](docs/cookbook.md) - opinionated patterns for using each module well
+- [`CHANGELOG.md`](CHANGELOG.md) - release notes, one entry per tag
+- [`docs/prerequisites.md`](docs/prerequisites.md) - what to install before `metalmind init`
+- [`docs/post-install.md`](docs/post-install.md) - verification + troubleshooting
+- [`docs/customization.md`](docs/customization.md) - swapping embedding model, relocating vault, etc.
+- [`docs/plugins.md`](docs/plugins.md) - recommended Claude Code plugins
+- [`docs/teams.md`](docs/teams.md) - the experimental agent-teams feature
+- [`bench/recall-v0/`](bench/recall-v0/) · [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/) · [`bench/recall-at-scale/`](bench/recall-at-scale/) - reproducible benches
 
 ## Hacking on the CLI
 
@@ -272,4 +276,4 @@ Dev setup lives in [`cli/README.md`](cli/README.md).
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE). Inspired by Brandon Sanderson's Mistborn Era 1 novels. Not affiliated.
+MIT - see [`LICENSE`](LICENSE). Inspired by Brandon Sanderson's Mistborn Era 1 novels. Not affiliated.

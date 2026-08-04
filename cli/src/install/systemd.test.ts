@@ -54,7 +54,6 @@ Environment=PATH={{PATH_VALUE}}
     const result = await installSystemdWatcher({
       vaultPath: '/home/alice/Knowledge',
       watcherBin: '/home/alice/.local/bin/metalmind-vault-rag-watcher',
-      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
     });
@@ -77,7 +76,6 @@ Environment=PATH={{PATH_VALUE}}
     const result = await installSystemdWatcher({
       vaultPath: '/v',
       watcherBin: '/b',
-      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
     });
@@ -86,7 +84,7 @@ Environment=PATH={{PATH_VALUE}}
     const contents = await readFile(servicePath, 'utf8');
     expect(contents).not.toBe('# stale\n');
     expect(contents).toContain('ExecStart=/b');
-    // daemon-reload, enable --now, restart — three systemctl calls on stale-rewrite.
+    // daemon-reload, enable --now, restart - three systemctl calls on stale-rewrite.
     const cmds = runCommand.mock.calls.map((c) => c[1]?.[1]);
     expect(cmds).toContain('daemon-reload');
     expect(cmds).toContain('enable');
@@ -107,7 +105,6 @@ Environment=PATH={{PATH_VALUE}}
     const result = await installSystemdWatcher({
       vaultPath: '/v',
       watcherBin: '/b',
-      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
     });
@@ -122,7 +119,6 @@ Environment=PATH={{PATH_VALUE}}
     const result = await installSystemdWatcher({
       vaultPath: '/v',
       watcherBin: '/b',
-      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       systemdUserDir,
       skipEnable: true,

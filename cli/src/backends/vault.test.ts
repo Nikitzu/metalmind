@@ -101,7 +101,7 @@ describe('saveToVault', () => {
     expect(second.bytesWritten).toBe(0);
   });
 
-  it('dedup ignores frontmatter differences — matches by body hash', async () => {
+  it('dedup ignores frontmatter differences - matches by body hash', async () => {
     const first = await saveToVault({
       vaultPath: tmp,
       content: 'shared body text',

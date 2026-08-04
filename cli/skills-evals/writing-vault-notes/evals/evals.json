@@ -52,7 +52,7 @@
       "prompt": "Create a note about the metalmind project's decision to use loopback HTTP instead of MCP for recall.",
       "expected_output": "The response picks --kind learning or --kind work based on content intent, NOT a per-project subfolder. Project affiliation goes in --project flag, not the folder.",
       "assertions": [
-        "The output uses --kind learning or --kind work — not a custom project subfolder.",
+        "The output uses --kind learning or --kind work - not a custom project subfolder.",
         "The output uses --project metalmind (or similar) to set project affiliation in frontmatter.",
         "The note is placed by intent folder (Learnings/ or Work/), not in a metalmind/ subfolder."
       ]

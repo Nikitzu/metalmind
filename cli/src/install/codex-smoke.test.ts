@@ -57,13 +57,13 @@ describe('codex install end-to-end smoke', () => {
     ]);
     expect(installResult.mcp).toBe('skipped');
 
-    // DOCTOR — every check green (mcp skipped because we didn't pass checkMcp).
+    // DOCTOR - every check green (mcp skipped because we didn't pass checkMcp).
     const doctorAfterInstall = await checkCodexInstall({ codexDir, homeDir: codexDir });
     for (const check of doctorAfterInstall) {
       expect(check.ok, `${check.name} expected ok, got: ${check.detail}`).toBe(true);
     }
 
-    // UNINSTALL — removeMcp:false so the smoke doesn't depend on a codex binary.
+    // UNINSTALL - removeMcp:false so the smoke doesn't depend on a codex binary.
     const uninstallResult = await uninstallCodex({ codexDir, removeMcp: false });
     expect(uninstallResult.agentsMd).toBe(true);
     expect(uninstallResult.hooksJson).toBe(true);
@@ -78,13 +78,13 @@ describe('codex install end-to-end smoke', () => {
       'writing-vault-notes',
     ]);
 
-    // DOCTOR — every check red.
+    // DOCTOR - every check red.
     const doctorAfterUninstall = await checkCodexInstall({ codexDir, homeDir: codexDir });
     for (const check of doctorAfterUninstall) {
       expect(check.ok, `${check.name} expected fail, got: ${check.detail}`).toBe(false);
     }
 
-    // RESIDUE — every metalmind artifact gone.
+    // RESIDUE - every metalmind artifact gone.
     expect(existsSync(join(codexDir, 'AGENTS.md'))).toBe(false);
     expect(existsSync(join(codexDir, 'hooks.json'))).toBe(false);
     expect(existsSync(join(codexDir, 'hooks', 'metalmind-session-start.sh'))).toBe(false);
@@ -103,7 +103,7 @@ describe('codex install end-to-end smoke', () => {
     expect(await readFile(defaultRulesPath, 'utf8')).toBe(defaultRulesContent);
   });
 
-  it('install is idempotent — second installCodex returns unchanged actions', async () => {
+  it('install is idempotent - second installCodex returns unchanged actions', async () => {
     await installCodex({
       vaultPath: '/x',
       flavor: 'classic',
@@ -177,7 +177,7 @@ describe('codex install end-to-end smoke', () => {
 });
 
 // v0.8.1 follow-up: doctor surfaces stale ~/.agents/skills/ mirror.
-describe('checkCodexInstall — agents-mirror divergence detection', () => {
+describe('checkCodexInstall - agents-mirror divergence detection', () => {
   let homeDir: string;
 
   beforeEach(async () => {

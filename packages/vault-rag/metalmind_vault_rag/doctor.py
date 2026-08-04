@@ -23,7 +23,7 @@ def file_index() -> dict[str, Path]:
 
 def check_duplicates() -> None:
     print("\n== Near-duplicates (cosine > 0.92, cross-file) ==")
-    # Iterating every stored vector is not part of the VectorStore Protocol —
+    # Iterating every stored vector is not part of the VectorStore Protocol -
     # only the Qdrant backend's `scroll` API supports it cheaply. Skip
     # gracefully on other backends; this is an opt-in doctor command, not
     # a smoke check.
@@ -31,7 +31,7 @@ def check_duplicates() -> None:
 
     store = vector_store()
     if not isinstance(store, QdrantStore):
-        print("  skip — duplicate scan is Qdrant-only today (sqlite-vec backend has no scroll API)")
+        print("  skip - duplicate scan is Qdrant-only today (sqlite-vec backend has no scroll API)")
         return
     c = store._client  # noqa: SLF001
     points, _ = c.scroll(COLLECTION, limit=10000, with_vectors=True, with_payload=True)
@@ -99,7 +99,7 @@ def check_dead_links() -> None:
 def check_fts_index() -> None:
     """FTS5 backs the keyword half of hybrid recall. A zero-row FTS5 table
     alongside a non-empty Qdrant collection means hybrid search silently
-    degrades to semantic-only — exactly the class of bug the v0.3.0 upgrade
+    degrades to semantic-only - exactly the class of bug the v0.3.0 upgrade
     path was supposed to close."""
     print("\n== FTS5 keyword index ==")
     try:
@@ -110,7 +110,7 @@ def check_fts_index() -> None:
     try:
         store = vector_store()
         if not store.collection_exists():
-            print("  fresh install — vector store collection does not exist yet (OK)")
+            print("  fresh install - vector store collection does not exist yet (OK)")
             return
         vec_points = store.count()
     except Exception as e:
@@ -119,12 +119,12 @@ def check_fts_index() -> None:
     print(f"  Vector points: {vec_points}")
     print(f"  FTS5 rows:     {fts_rows}")
     if vec_points > 0 and fts_rows == 0:
-        print("  WARN: FTS5 empty while vector store populated — hybrid search is running semantic-only.")
+        print("  WARN: FTS5 empty while vector store populated - hybrid search is running semantic-only.")
         print("        Fix: restart the watcher (auto-backfills) or run `metalmind-vault-rag-indexer`.")
     elif vec_points > 0 and fts_rows < vec_points // 2:
         print(
             f"  WARN: FTS5 has {fts_rows} rows vs {vec_points} vector points "
-            "— significant drift. Consider `metalmind-vault-rag-indexer`."
+            "- significant drift. Consider `metalmind-vault-rag-indexer`."
         )
     else:
         print("  OK")
@@ -140,7 +140,7 @@ def check_rerank() -> None:
     """
     print("\n== Rerank healthcheck ==")
     if not rerank_mod.is_dep_available():
-        print("  [rerank] extra not installed — hybrid+rerank mode is unavailable.")
+        print("  [rerank] extra not installed - hybrid+rerank mode is unavailable.")
         print(f"  Fix: uv tool install --force --reinstall 'metalmind-vault-rag[rerank]'")
         return
     hits = [
@@ -157,11 +157,11 @@ def check_rerank() -> None:
         return
     top = out[0]
     if top.get("prev_score") is None:
-        print("  WARN: reranker returned hits without prev_score — silent fallback.")
+        print("  WARN: reranker returned hits without prev_score - silent fallback.")
         print("        This usually means transformers ≥ 5 is installed alongside FlagEmbedding 1.3.")
         print("        Fix: uv tool install --force --reinstall 'metalmind-vault-rag[rerank]'")
         return
-    print(f"  OK — cross-encoder rescored top hit (embedder score {top['prev_score']} → cross-enc {top['score']})")
+    print(f"  OK - cross-encoder rescored top hit (embedder score {top['prev_score']} → cross-enc {top['score']})")
 
 
 def check_stale_inbox() -> None:

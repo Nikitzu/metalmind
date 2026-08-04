@@ -6,7 +6,7 @@
 // the whole file). Codex auto-loads any *.rules file in ~/.codex/rules/
 // per codex-rs/core/src/exec_policy.rs:988.
 //
-// CRITICAL: never touch ~/.codex/rules/default.rules — that's Codex's own
+// CRITICAL: never touch ~/.codex/rules/default.rules - that's Codex's own
 // user-acceptance log (it appends user-approved escalations there per
 // codex-rs/core/src/exec_policy.rs:399).
 

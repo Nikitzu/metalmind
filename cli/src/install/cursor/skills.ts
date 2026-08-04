@@ -4,7 +4,7 @@
 // markdown body. It has no `model:` field (unlike Claude Code), so the
 // vault-writing skills run on the session model.
 //
-// We ship metalmind-recall (the recall backbone — Cursor auto-discovers it
+// We ship metalmind-recall (the recall backbone - Cursor auto-discovers it
 // and the agent self-invokes it), plus writing-vault-notes, synod, and save.
 //
 // metalmind-recall is Cursor-specific (cli/templates/cursor/skills/). The
@@ -57,7 +57,7 @@ async function copyTreeRecursive(
     if (entry.isDirectory()) {
       await copyTreeRecursive(srcPath, destPath, render);
     } else if (entry.isFile()) {
-      // Render only markdown — binary skill assets must be copied byte-for-byte.
+      // Render only markdown - binary skill assets must be copied byte-for-byte.
       if (render && entry.name.endsWith('.md')) {
         const raw = await readFile(srcPath, 'utf8');
         const rendered = await render(raw);

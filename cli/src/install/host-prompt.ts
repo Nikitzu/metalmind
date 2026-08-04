@@ -56,7 +56,7 @@ export async function promptHosts(opts: PromptHostsOptions = {}): Promise<Prompt
   }
 
   // Headless (CI, agent, piped stdin): clack's multiselect dies with
-  // uv_tty_init EINVAL — fall back to the previously-chosen set instead.
+  // uv_tty_init EINVAL - fall back to the previously-chosen set instead.
   const isTTY = opts.isTTY ?? process.stdin.isTTY === true;
   if (opts.noPrompt || !isTTY) {
     return { hosts: intersect(opts.preChecked, detected), cancelled: false };

@@ -1,6 +1,6 @@
 # metalmind on Codex CLI
 
-> **Codex CLI integration ships in v0.8.0.** Codex desktop app integration is on the **v1.1** roadmap — not yet shipped.
+> **Codex CLI integration ships in v0.8.0.** Codex desktop app integration is on the **v1.1** roadmap - not yet shipped.
 
 ## What gets installed
 
@@ -9,7 +9,7 @@
 | File | Purpose |
 |---|---|
 | `~/.codex/AGENTS.md` (sentinel block) | Static recall-first instructions Codex injects on every turn |
-| `~/.codex/hooks.json` (SessionStart entry) | Dynamic injection at session start — same hook shape as Claude Code |
+| `~/.codex/hooks.json` (SessionStart entry) | Dynamic injection at session start - same hook shape as Claude Code |
 | `~/.codex/hooks/metalmind-session-start.sh` | The hook script (reused verbatim from Claude Code) |
 | `~/.codex/config.toml` (`[sandbox_workspace_write] network_access = true`, sentinel block) | Allows the model's shell tool to reach the local watcher at `127.0.0.1:17317` |
 | `~/.codex/rules/metalmind.rules` | Pre-approves the `metalmind` command surface so the first recall doesn't ask for permission |
@@ -21,8 +21,8 @@ All of these are sentinel-bounded or live in their own `metalmind`-named files s
 
 ## What we don't touch
 
-- **`~/.codex/memories/`** — Codex's native memory layer; orthogonal to metalmind. Use both, or pick one.
-- **`~/.codex/rules/default.rules`** — Codex's user-acceptance log. Auto-managed by Codex when you click "Allow + Remember" in the TUI.
+- **`~/.codex/memories/`** - Codex's native memory layer; orthogonal to metalmind. Use both, or pick one.
+- **`~/.codex/rules/default.rules`** - Codex's user-acceptance log. Auto-managed by Codex when you click "Allow + Remember" in the TUI.
 - Any other file outside our sentinel-bounded blocks.
 
 ## Verifying the install
@@ -43,7 +43,7 @@ The Codex section reports six (or seven with `--with-mcp`) green/red checks: AGE
 
 ## Opt-in: register a Codex MCP server
 
-By default metalmind does **not** register an MCP server in Codex. The headline path is bare-bash recall (`metalmind tap copper "..."` via the model's shell tool), which keeps the standing token cost at zero — matching the same architecture we ship for Claude Code.
+By default metalmind does **not** register an MCP server in Codex. The headline path is bare-bash recall (`metalmind tap copper "..."` via the model's shell tool), which keeps the standing token cost at zero - matching the same architecture we ship for Claude Code.
 
 If you want explicit tool-call ergonomics, add `--with-mcp`:
 
@@ -57,7 +57,7 @@ This runs `codex mcp add metalmind --url http://127.0.0.1:17317/mcp`. Trade-offs
 
 | | Bare bash (default) | `--with-mcp` |
 |---|---|---|
-| Standing token cost | 0 | ~150–400 tokens (tool schema, every turn) |
+| Standing token cost | 0 | ~150-400 tokens (tool schema, every turn) |
 | Model UX | Shell tool call | First-class tool call |
 | Removal | `metalmind uninstall` | Same; also runs `codex mcp remove metalmind` |
 | Matches v0.7.0 site honesty bar (zero MCP-tax) | ✅ | ❌ asterisk |
@@ -88,9 +88,9 @@ Re-running `metalmind stamp` re-prompts so newly-installed hosts surface. To ski
 metalmind stamp --no-prompt
 ```
 
-## Codex desktop app — coming in v1.1
+## Codex desktop app - coming in v1.1
 
-The `codex app` desktop client is **NOT** covered by this integration. v1.1 will verify whether the desktop app shares `~/.codex/` storage and whether the model has shell-exec; until then, treat metalmind as Codex CLI–only.
+The `codex app` desktop client is **NOT** covered by this integration. v1.1 will verify whether the desktop app shares `~/.codex/` storage and whether the model has shell-exec; until then, treat metalmind as Codex CLI-only.
 
 ## Syncing the vault
 

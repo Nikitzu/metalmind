@@ -5,10 +5,10 @@
 //   - verbose : current default (full JSON dump per hit, incl. prev_score)
 //   - compact : `--compact` (lean per-hit envelope, snippet-truncated text)
 //
-// Unlike mcp-tax-v0 (which measures the STANDING schema tax — already zero for
+// Unlike mcp-tax-v0 (which measures the STANDING schema tax - already zero for
 // metalmind), this measures the per-RECALL payload tax: the bytes billed every
 // time the agent runs a recall. The compact path is display-only, so the set of
-// files returned is identical between modes — the runner asserts this per query
+// files returned is identical between modes - the runner asserts this per query
 // and refuses to report a saving if retrieval drifted (that would mean compact
 // changed what was recalled, not just how it was rendered).
 //
@@ -50,7 +50,7 @@ function parseArgs(argv) {
 }
 
 // Queries tuned to land on a real metalmind-development vault. The absolute
-// topic doesn't matter — we measure render cost over whatever hits come back.
+// topic doesn't matter - we measure render cost over whatever hits come back.
 const QUERIES = [
   'why is recall a bash command instead of an MCP tool',
   'how does the vault-rag watcher serve recall over HTTP',
@@ -112,7 +112,7 @@ function runCli(query, tier, k, compact) {
 
 // Pull the ordered primary-hit file list from either render to assert compact
 // changed only the rendering, never the retrieval. Strip the deep/expand tail
-// first — the related/expansions block lists LINKED notes, not hits, and only
+// first - the related/expansions block lists LINKED notes, not hits, and only
 // the verbose render dumps them, so counting it would be a false drift signal.
 function headBeforeTail(text) {
   const idx = text.search(/\n(?:---related|---expansions|\+\d+ linked|\+related)/);

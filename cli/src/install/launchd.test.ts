@@ -62,7 +62,6 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/Users/me/Knowledge',
       watcherBin: '/opt/homebrew/bin/metalmind-vault-rag-watcher',
-      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
     });
@@ -87,7 +86,6 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/v',
       watcherBin: '/u/metalmind-vault-rag-watcher',
-      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
     });
@@ -103,7 +101,7 @@ describe('launchd watcher', () => {
   it('reports wrotePlist=false when the rendered template matches the existing plist', async () => {
     await mkdir(launchAgentsDir, { recursive: true });
     const plistPath = join(launchAgentsDir, 'com.metalmind.vault-indexer.plist');
-    // Render the template ourselves and write it — matches what installer would render.
+    // Render the template ourselves and write it - matches what installer would render.
     const identical = plistTemplate
       .replace(/\{\{WATCHER_BIN\}\}/g, '/u/w')
       .replace(/\{\{PATH_VALUE\}\}/g, process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin')
@@ -115,13 +113,12 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/v',
       watcherBin: '/u/w',
-      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
     });
 
     expect(result.wrotePlist).toBe(false);
-    // No unload call when content is unchanged — only the load at the end.
+    // No unload call when content is unchanged - only the load at the end.
     expect(runCommand.mock.calls[0]?.[1]?.[0]).toBe('load');
   });
 
@@ -132,7 +129,6 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/v',
       watcherBin: '/u/metalmind-vault-rag-watcher',
-      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
     });
@@ -148,7 +144,6 @@ describe('launchd watcher', () => {
     const result = await installLaunchdWatcher({
       vaultPath: '/v',
       watcherBin: '/u/metalmind-vault-rag-watcher',
-      uvBin: '/opt/homebrew/bin/uv',
       templatesDir,
       launchAgentsDir,
       skipLoad: true,
@@ -193,7 +188,6 @@ describe('launchd watcher', () => {
       installLaunchdWatcher({
         vaultPath: '/v',
         watcherBin: '/u/metalmind-vault-rag-watcher',
-        uvBin: '/opt/homebrew/bin/uv',
         templatesDir,
         launchAgentsDir,
         skipLoad: true,

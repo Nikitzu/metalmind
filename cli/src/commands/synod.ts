@@ -2,7 +2,7 @@ import { log } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import { runCommand } from '../util/exec.js';
 
-// Convene the synod skill from the shell. Mirrors burnZinc — shells out to
+// Convene the synod skill from the shell. Mirrors burnZinc - shells out to
 // `claude -p` so the conversation runs in a real Claude Code session and the
 // skill's parallel-subagent orchestration works. Streams output live.
 export async function synod(question: string | undefined): Promise<void> {

@@ -5,7 +5,7 @@ parametrize value; pytest IDs make failures point at the offender. When
 adding a new store, add a fixture entry and the suite runs against it
 unchanged.
 
-Tests are hermetic — Qdrant uses :memory:, sqlite-vec uses a temp file.
+Tests are hermetic - Qdrant uses :memory:, sqlite-vec uses a temp file.
 No external services, no Docker.
 """
 
@@ -136,7 +136,7 @@ def test_query_respects_k_limit(store) -> None:
 
 
 def test_payload_is_round_tripped_verbatim(store) -> None:
-    """Stores must preserve payload contents exactly — callers use it
+    """Stores must preserve payload contents exactly - callers use it
     for `file`, `heading`, `text` and don't expect mutation."""
     store.ensure_collection()
     store.upsert([_point(_ID1, [1.0, 0.0, 0.0, 0.0], file="x.md", heading="H1", text="body")])

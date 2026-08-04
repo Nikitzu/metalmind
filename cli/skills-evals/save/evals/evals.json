@@ -10,7 +10,7 @@
         "The output proposes a note kind of 'learning' (not 'work' or 'inbox').",
         "The output includes a recall check before writing (metalmind tap copper or metalmind recall).",
         "The output drafts a note body that explains WHY loopback HTTP was chosen over MCP.",
-        "The output uses metalmind scribe or metalmind note to write — never the Write tool directly.",
+        "The output uses metalmind scribe or metalmind note to write - never the Write tool directly.",
         "The output does NOT include hand-written YAML frontmatter (no --- blocks in the proposed body)."
       ]
     },
@@ -23,7 +23,7 @@
         "The output runs a recall query before proposing a write.",
         "The output recognizes the topic overlaps with an existing note about cache fingerprints.",
         "The output proposes updating or patching the existing note rather than creating a new one.",
-        "The output uses metalmind scribe update or metalmind scribe patch — not scribe create."
+        "The output uses metalmind scribe update or metalmind scribe patch - not scribe create."
       ]
     },
     {
@@ -42,9 +42,9 @@
       "prompt": "Save this: I prefer using strict equality (=== and !==) in all TypeScript code, and tabs over spaces with 2-space indent width.",
       "expected_output": "The response proposes saving as a memory or personal preference note, not a learning or work note.",
       "assertions": [
-        "The output picks 'memory' or 'personal' as the note kind — not 'learning' or 'work'.",
+        "The output picks 'memory' or 'personal' as the note kind - not 'learning' or 'work'.",
         "The output captures the preference about strict equality and indentation.",
-        "The output writes via metalmind scribe create — not the Write tool."
+        "The output writes via metalmind scribe create - not the Write tool."
       ]
     }
   ]

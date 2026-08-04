@@ -102,7 +102,7 @@ export async function applyMemoryRouting(opts: MemoryRoutingOptions): Promise<Me
 /**
  * Wire (or unwire) Claude Code agent teams in ~/.claude/settings.json.
  * Per the official docs (code.claude.com/docs/en/agent-teams), both keys
- * live in settings.json — env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 to
+ * live in settings.json - env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 to
  * enable the feature, and teammateMode="tmux" to drive iTerm2/tmux split
  * panes. Idempotent: a second call with the same `enable` is a no-op.
  */
@@ -263,7 +263,7 @@ export async function clearOutputStyleSessionStartHook(settingsPath?: string): P
 
 /**
  * Register the output-style re-anchor hook on UserPromptSubmit. Mirrors the
- * SessionStart sibling, but fires every user message — emits a *short* (~25
+ * SessionStart sibling, but fires every user message - emits a *short* (~25
  * token) reminder so the active style survives long sessions and post-compact
  * drift. Independent group so users can disable one without losing the other.
  * Idempotent: same hookCommand → no-op.

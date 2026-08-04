@@ -2,7 +2,7 @@
 //
 // Cursor reads Claude Code agent frontmatter (name/description/model) directly.
 // We copy the metalmind specialist agents from cli/templates/claude/agents/
-// as-is — the Cursor-only fields (readonly, is_background) default correctly.
+// as-is - the Cursor-only fields (readonly, is_background) default correctly.
 
 import { existsSync } from 'node:fs';
 import { copyFile, mkdir, readdir, rm } from 'node:fs/promises';

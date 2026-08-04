@@ -70,7 +70,7 @@
   color: var(--ink-faint);
 }
 
-/* MODULES — pill nav (direct links) */
+/* MODULES - pill nav (direct links) */
 .mod-pills {
   display: flex;
   flex-wrap: wrap;
@@ -370,7 +370,7 @@
 .install-doc { margin-top: var(--space-2); }
 .install-term { max-width: 560px; }
 
-/* COMMANDS — periodic table */
+/* COMMANDS - periodic table */
 .verb-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

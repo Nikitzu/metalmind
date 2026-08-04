@@ -2,15 +2,15 @@
 
 ## First things first
 
-1. **Restart Claude Code** — so it picks up the new MCP servers (`serena`), settings env (`CLAUDE_CODE_DISABLE_AUTO_MEMORY`, if you chose vault-only memory routing), and the stamped CLAUDE.md block.
-2. **Open a new terminal** (or `exec zsh`) — so shell aliases load.
+1. **Restart Claude Code** - so it picks up the new MCP servers (`serena`), settings env (`CLAUDE_CODE_DISABLE_AUTO_MEMORY`, if you chose vault-only memory routing), and the stamped CLAUDE.md block.
+2. **Open a new terminal** (or `exec zsh`) - so shell aliases load.
 
 ## Verify
 
 In a new shell:
 
 ```bash
-metalmind pulse --deep    # or: metalmind doctor --deep — end-to-end runtime check
+metalmind pulse --deep    # or: metalmind doctor --deep - end-to-end runtime check
 ```
 
 `metalmind pulse --deep` probes:
@@ -30,14 +30,14 @@ metalmind-vault-rag-doctor --rerank --fts
 
 `metalmind tap copper` has two transport paths:
 
-1. **HTTP fast-path** (default, ~170ms median): hits the loopback endpoint co-hosted inside the watcher process — no Python spawn, no MCP handshake. `127.0.0.1:17317` only; nothing leaves your machine.
+1. **HTTP fast-path** (default, ~170ms median): hits the loopback endpoint co-hosted inside the watcher process - no Python spawn, no MCP handshake. `127.0.0.1:17317` only; nothing leaves your machine.
 2. **Stdio MCP fallback** (~570ms): spawns `metalmind-vault-rag-server` via stdio if the HTTP endpoint is down (watcher not running, port in use, etc).
 
-You never need to pick — the CLI tries HTTP first and falls back automatically. Override the endpoint with `METALMIND_RECALL_HTTP=...` if you want.
+You never need to pick - the CLI tries HTTP first and falls back automatically. Override the endpoint with `METALMIND_RECALL_HTTP=...` if you want.
 
 Each failing check suggests the exact remediation command.
 
-In Claude Code, ask a conceptual question — Claude should call `Bash: metalmind tap copper "<query>"` (or `metalmind recall` on classic flavor). No MCP tool schemas are injected for vault recall; the stamped CLAUDE.md block tells Claude to reach for the CLI. Fresh vaults are empty — save a first note:
+In Claude Code, ask a conceptual question - Claude should call `Bash: metalmind tap copper "<query>"` (or `metalmind recall` on classic flavor). No MCP tool schemas are injected for vault recall; the stamped CLAUDE.md block tells Claude to reach for the CLI. Fresh vaults are empty - save a first note:
 
 ```
 /save
@@ -73,9 +73,9 @@ The installer registers nothing by default. In Claude Code:
 activate_project /path/to/your/repo
 ```
 
-Serena auto-detects the primary language (TS, Python, Java, Go, Rust, …) and spins up the language server. First activation for a new language downloads the LSP binary (~100–200 MB). Cached after that.
+Serena auto-detects the primary language (TS, Python, Java, Go, Rust, …) and spins up the language server. First activation for a new language downloads the LSP binary (~100-200 MB). Cached after that.
 
-Project configs live in `~/.serena/projects-data/<name>/` — outside your repos.
+Project configs live in `~/.serena/projects-data/<name>/` - outside your repos.
 
 ## Recommended plugin pack
 
@@ -84,7 +84,7 @@ See [`plugins.md`](plugins.md).
 ## Troubleshooting
 
 **`metalmind pulse --deep` says "sentinel block missing"**
-Run `metalmind burn brass` — this re-applies all managed blocks without touching your custom content.
+Run `metalmind burn brass` - this re-applies all managed blocks without touching your custom content.
 
 **Claude Code doesn't recall from the vault**
 Ensure `metalmind-vault-rag-server` is on PATH (`which metalmind-vault-rag-server`). Confirm the watcher is running (`vault-watcher-status`). Ask Claude to run `Bash: metalmind tap copper "test"` directly to verify the CLI path. Tail `~/.metalmind/logs/watcher.log` for Python-side errors.
@@ -103,7 +103,7 @@ The watcher isn't running or the recall HTTP server failed to bind. `vault-watch
 Docker isn't running, or containers crashed. `vault-up` to restart. `vault-logs` for details.
 
 **Vault path elsewhere**
-Re-run `metalmind init` and provide the new path at the prompt. Teardown + re-init is the supported path — there's no in-place mover.
+Re-run `metalmind init` and provide the new path at the prompt. Teardown + re-init is the supported path - there's no in-place mover.
 
 **Serena prompts on each tool call**
 Edit `~/.claude/settings.json` `permissions.allow` to auto-approve additional Serena tools.

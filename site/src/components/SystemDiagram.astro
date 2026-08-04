@@ -1,5 +1,5 @@
 ---
-// Animated SVG diagram — six modules orbiting the vault.
+// Animated SVG diagram - six modules orbiting the vault.
 // Static SVG; CSS toggles the labels for classic/scadrial via [data-lang].
 const modules = [
   { key: 'memory',  classic: 'memory',       scadrial: 'copper',  classicVerb: 'recall',     scadrialVerb: 'tap copper',  color: 'var(--metal-copper)', angle: -90 },
@@ -65,7 +65,7 @@ function pos(angle: number) {
           <circle cx={x} cy={y} r="6" fill={m.color} opacity="0.6">
             <animate attributeName="r" values="6;9;6" dur={`${2.5 + i * 0.4}s`} repeatCount="indefinite" />
           </circle>
-          {/* labels — render both, CSS toggles */}
+          {/* labels - render both, CSS toggles */}
           <text x={x} y={metalY} text-anchor="middle" fill="var(--ink)" font-family="var(--font-mono)" font-size="11" class="lang-classic">{m.classic}</text>
           <text x={x} y={metalY} text-anchor="middle" fill="var(--ink)" font-family="var(--font-mono)" font-size="11" class="lang-scadrial">{m.scadrial}</text>
           <text x={x} y={verbY} text-anchor="middle" fill="var(--ink-faint)" font-family="var(--font-mono)" font-size="9" letter-spacing="0.05em" class="lang-classic">{m.classicVerb}</text>

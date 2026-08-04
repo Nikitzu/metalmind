@@ -110,10 +110,10 @@ export async function routineInstallEodCmd(opts: { time?: string }): Promise<voi
     const hour = Number.parseInt(hStr ?? '17', 10);
     const minute = Number.parseInt(mStr ?? '30', 10);
     if (!Number.isFinite(hour) || hour < 0 || hour > 23) {
-      throw new Error(`invalid --time hour '${hStr}' (expected 0–23)`);
+      throw new Error(`invalid --time hour '${hStr}' (expected 0-23)`);
     }
     if (!Number.isFinite(minute) || minute < 0 || minute > 59) {
-      throw new Error(`invalid --time minute '${mStr}' (expected 0–59)`);
+      throw new Error(`invalid --time minute '${mStr}' (expected 0-59)`);
     }
 
     const metalmindBin = await resolveMetalmindBin();
@@ -130,7 +130,7 @@ export async function routineInstallEodCmd(opts: { time?: string }): Promise<voi
     if (code !== 0) throw new Error(stderr.trim() || `launchctl load exited ${code}`);
 
     log.success(
-      `installed ${LABEL_PREFIX}.eod at ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} Mon–Fri`,
+      `installed ${LABEL_PREFIX}.eod at ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} Mon-Fri`,
     );
     log.info(`  plist: ${target}`);
     log.info(`  logs:  ${logDir}/metalmind-eod.{log,err}`);

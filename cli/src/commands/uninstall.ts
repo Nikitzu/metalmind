@@ -120,7 +120,7 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
 
     const v = await confirm({
       message:
-        'Also uninstall metalmind-vault-rag (uv tool uninstall — the watcher, indexer, and HTTP recall server)?',
+        'Also uninstall metalmind-vault-rag (uv tool uninstall - the watcher, indexer, and HTTP recall server)?',
       initialValue: true,
     });
     if (isCancel(v)) {
@@ -156,7 +156,7 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
       if (codex.skills.length > 0) log.success(`Removed Codex skills: ${codex.skills.join(', ')}`);
       if (codex.mcp === 'removed') log.success('codex mcp remove metalmind succeeded');
       else if (codex.mcp === 'codex-not-found')
-        log.info('codex binary not on PATH — skipped MCP unregister (no-op since not registered)');
+        log.info('codex binary not on PATH - skipped MCP unregister (no-op since not registered)');
     }
 
     if (cursorInstalled) {

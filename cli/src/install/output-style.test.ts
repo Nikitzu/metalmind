@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   installOutputStyle,
   migrateTerseToTelegraph,
+  refreshOutputStyleAssets,
   uninstallOutputStyle,
 } from './output-style.js';
 
@@ -151,37 +152,10 @@ Custom body the user edited.
     expect(settings.outputStyle).toBeUndefined();
   });
 
-  it('re-run is idempotent — does not re-migrate when file already exists', async () => {
-    await mkdir(outputStylesDir, { recursive: true });
-    await writeFile(join(outputStylesDir, 'marsh.md'), 'existing marsh\n', 'utf8');
-
-    const result = await installOutputStyle({
-      choice: 'marsh',
-      assetsDir,
-      outputStylesDir,
-      settingsPath,
-    });
-
-    expect(result.installed).toBe(false);
-    expect(result.migrated).toBe(false);
-    expect(result.healed).toBe(false);
-    expect(await readFile(result.stylePath, 'utf8')).toBe('existing marsh\n');
-  });
-
-  describe('self-heal — case-mismatched twin recovery (v0.8.0–v0.8.2 broken stamps)', () => {
-    const brokenStampOf = async (assetName: string, capName: string) => {
-      const asset = await readFile(join(assetsDir, `${assetName}.md`), 'utf8');
-      const body = asset.replace(/^---\n[\s\S]*?\n---\n?/, '');
-      return `---\nname: ${capName}\ndescription: ${capName} description\nkeep-coding-instructions: true\n---\n${body}`;
-    };
-
-    it('heals a broken-stamp marsh.md (name: Marsh) when body matches current asset', async () => {
+  describe('asset refresh - stamp owns the style file', () => {
+    it('overwrites a stale on-disk body from the bundled asset (updated: true)', async () => {
       await mkdir(outputStylesDir, { recursive: true });
-      await writeFile(
-        join(outputStylesDir, 'marsh.md'),
-        await brokenStampOf('marsh', 'Marsh'),
-        'utf8',
-      );
+      await writeFile(join(outputStylesDir, 'marsh.md'), 'stale previous-release body\n', 'utf8');
 
       const result = await installOutputStyle({
         choice: 'marsh',
@@ -192,79 +166,84 @@ Custom body the user edited.
 
       expect(result.installed).toBe(false);
       expect(result.migrated).toBe(false);
-      expect(result.healed).toBe(true);
-      const written = await readFile(result.stylePath, 'utf8');
-      expect(written).toContain('name: marsh');
-      expect(written).not.toContain('name: Marsh');
-      expect(written).not.toContain('keep-coding-instructions');
+      expect(result.updated).toBe(true);
+      const asset = await readFile(join(assetsDir, 'marsh.md'), 'utf8');
+      expect(await readFile(result.stylePath, 'utf8')).toBe(asset);
     });
 
-    it('heals a broken-stamp telegraph.md (name: Telegraph) when body matches current asset', async () => {
+    it('leaves a byte-identical file untouched (updated: false)', async () => {
       await mkdir(outputStylesDir, { recursive: true });
+      const asset = await readFile(join(assetsDir, 'marsh.md'), 'utf8');
+      await writeFile(join(outputStylesDir, 'marsh.md'), asset, 'utf8');
+
+      const result = await installOutputStyle({
+        choice: 'marsh',
+        assetsDir,
+        outputStylesDir,
+        settingsPath,
+      });
+
+      expect(result.installed).toBe(false);
+      expect(result.updated).toBe(false);
+    });
+
+    it('overwrites a broken-stamp case-twin (name: Marsh) with the asset', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      const asset = await readFile(join(assetsDir, 'marsh.md'), 'utf8');
+      const body = asset.replace(/^---\n[\s\S]*?\n---\n?/, '');
       await writeFile(
-        join(outputStylesDir, 'telegraph.md'),
-        await brokenStampOf('telegraph', 'Telegraph'),
+        join(outputStylesDir, 'marsh.md'),
+        `---\nname: Marsh\ndescription: Marsh description\nkeep-coding-instructions: true\n---\n${body}`,
         'utf8',
       );
 
       const result = await installOutputStyle({
-        choice: 'telegraph',
+        choice: 'marsh',
         assetsDir,
         outputStylesDir,
         settingsPath,
       });
 
-      expect(result.healed).toBe(true);
+      expect(result.updated).toBe(true);
       const written = await readFile(result.stylePath, 'utf8');
-      expect(written).toContain('name: telegraph');
+      expect(written).toContain('name: marsh');
+      expect(written).not.toContain('keep-coding-instructions');
+    });
+  });
+
+  describe('refreshOutputStyleAssets - stamp-time refresh without settings takeover', () => {
+    it('refreshes every existing stale style file and reports which', async () => {
+      await mkdir(outputStylesDir, { recursive: true });
+      await writeFile(join(outputStylesDir, 'marsh.md'), 'old marsh body\n', 'utf8');
+      await writeFile(join(outputStylesDir, 'telegraph.md'), 'old telegraph body\n', 'utf8');
+
+      const result = await refreshOutputStyleAssets({ assetsDir, outputStylesDir });
+
+      expect(result.refreshed.sort()).toEqual(['marsh', 'telegraph']);
+      const marshAsset = await readFile(join(assetsDir, 'marsh.md'), 'utf8');
+      expect(await readFile(join(outputStylesDir, 'marsh.md'), 'utf8')).toBe(marshAsset);
     });
 
-    it('does NOT heal when body has been edited by user (case-twin name but body diverges)', async () => {
+    it('skips missing files and byte-identical files', async () => {
       await mkdir(outputStylesDir, { recursive: true });
-      const userEdited = `---\nname: Marsh\ndescription: Marsh description\n---\n\n# Marsh Voice\n\nUser-customised body — leave alone.\n`;
-      await writeFile(join(outputStylesDir, 'marsh.md'), userEdited, 'utf8');
+      const asset = await readFile(join(assetsDir, 'telegraph.md'), 'utf8');
+      await writeFile(join(outputStylesDir, 'telegraph.md'), asset, 'utf8');
 
-      const result = await installOutputStyle({
-        choice: 'marsh',
-        assetsDir,
-        outputStylesDir,
-        settingsPath,
-      });
+      const result = await refreshOutputStyleAssets({ assetsDir, outputStylesDir });
 
-      expect(result.healed).toBe(false);
-      expect(await readFile(result.stylePath, 'utf8')).toBe(userEdited);
+      expect(result.refreshed).toEqual([]);
+      expect(existsSync(join(outputStylesDir, 'marsh.md'))).toBe(false);
     });
 
-    it('does NOT heal when on-disk name is unrelated (e.g. caveman) — only case-twins are healed', async () => {
+    it('never touches settings.json', async () => {
       await mkdir(outputStylesDir, { recursive: true });
-      const unrelated = `---\nname: caveman\ndescription: x\n---\n\n# caveman\n\nbody\n`;
-      await writeFile(join(outputStylesDir, 'marsh.md'), unrelated, 'utf8');
+      await writeFile(join(outputStylesDir, 'marsh.md'), 'old body\n', 'utf8');
+      await writeFile(settingsPath, JSON.stringify({ outputStyle: 'my-custom-style' }), 'utf8');
 
-      const result = await installOutputStyle({
-        choice: 'marsh',
-        assetsDir,
-        outputStylesDir,
-        settingsPath,
-      });
+      await refreshOutputStyleAssets({ assetsDir, outputStylesDir });
 
-      expect(result.healed).toBe(false);
-      expect(await readFile(result.stylePath, 'utf8')).toBe(unrelated);
-    });
-
-    it('does NOT heal when name is already correct lowercase (no-op)', async () => {
-      await mkdir(outputStylesDir, { recursive: true });
-      const correct = `---\nname: marsh\ndescription: Marsh description\n---\n\n# marsh Voice\n\nbody content\n`;
-      await writeFile(join(outputStylesDir, 'marsh.md'), correct, 'utf8');
-
-      const result = await installOutputStyle({
-        choice: 'marsh',
-        assetsDir,
-        outputStylesDir,
-        settingsPath,
-      });
-
-      expect(result.healed).toBe(false);
-      expect(await readFile(result.stylePath, 'utf8')).toBe(correct);
+      const settings = JSON.parse(await readFile(settingsPath, 'utf8'));
+      expect(settings.outputStyle).toBe('my-custom-style');
     });
   });
 

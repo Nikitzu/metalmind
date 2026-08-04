@@ -1,18 +1,18 @@
 """fastembed-backed EmbeddingBackend. Runs an ONNX embedding model
-in-process — no Ollama daemon, no HTTP. Becomes the default in v0.5.0.
+in-process - no Ollama daemon, no HTTP. Becomes the default in v0.5.0.
 
 Default model is BAAI/bge-small-en-v1.5 (384-dim, ~30 MB). First call
 auto-downloads the ONNX weights to ~/.metalmind/cache/fastembed/ and
 caches them across processes; subsequent calls reuse the disk cache
 without network access. fastembed's own default lives in the system
-temp dir, which macOS purges periodically — that leaves a snapshot
+temp dir, which macOS purges periodically - that leaves a snapshot
 directory with the model file missing and recall failing with
 NO_SUCHFILE until the cache is cleared. A home-dir cache is durable.
 Override the location via FASTEMBED_CACHE_PATH, the model via
 VAULT_EMBED_MODEL; the matching dimension is read from VAULT_EMBED_DIM
 (default 384 for bge-small).
 
-The TextEmbedding model is held lazily — first call to `embed` triggers
+The TextEmbedding model is held lazily - first call to `embed` triggers
 construction (which may download). That keeps watcher startup fast for
 users who never recall.
 """
@@ -39,7 +39,7 @@ def resolve_cache_dir() -> str:
 class FastEmbedBackend:
     """In-process ONNX embedding backend. One model instance per process.
 
-    The fastembed import is at module top-level by design — the [rerank]
+    The fastembed import is at module top-level by design - the [rerank]
     canary pattern showed silent-fallback bugs win when imports are
     deferred. Failing fast here surfaces missing wheels immediately.
     """

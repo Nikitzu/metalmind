@@ -95,7 +95,7 @@ describe('extractOpenApiRoutes (shelf-only)', () => {
     await expect(extractOpenApiRoutes(repo)).resolves.toEqual([]);
   });
 
-  it('ignores specs inside the target repo — shelf only', async () => {
+  it('ignores specs inside the target repo - shelf only', async () => {
     await copyFile(join(FIXTURES, 'springdoc.yaml'), join(repo, 'openapi.yaml'));
     await expect(extractOpenApiRoutes(repo)).resolves.toEqual([]);
   });

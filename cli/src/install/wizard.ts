@@ -26,7 +26,7 @@ import {
 } from './templates.js';
 import { installUv, UV_INSTALL_COMMAND } from './uv.js';
 import { promptVaultPath, setupVault } from './vault.js';
-import { installVaultRag, resolveUvBinPath, resolveWatcherBinPath } from './vault-rag.js';
+import { installVaultRag, resolveWatcherBinPath } from './vault-rag.js';
 import { installWatcher } from './watcher.js';
 
 export interface RunWizardOptions {
@@ -66,7 +66,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   log.step('Checking prerequisites');
   // Docker is only needed if the user explicitly wants the legacy
   // Qdrant + Ollama stack. The default v0.5.0 path is sqlite-vec +
-  // fastembed in-process — Python + uv carry the whole load.
+  // fastembed in-process - Python + uv carry the whole load.
   let prereqs = await detectPrereqs({ includeDocker: !opts.skipDocker });
   let summary = summarisePrereqs(prereqs);
 
@@ -79,7 +79,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       runIt = opts.autoInstallUv;
     } else {
       const answer = await confirm({
-        message: `uv not found — install it now via the official Astral installer? (\`${UV_INSTALL_COMMAND}\`)`,
+        message: `uv not found - install it now via the official Astral installer? (\`${UV_INSTALL_COMMAND}\`)`,
         initialValue: true,
       });
       checkCancelled(answer, 'uv auto-install prompt');
@@ -149,11 +149,11 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     flavor = opts.flavor;
   } else {
     const answer = await select({
-      message: 'Theme — affects command spelling and help text',
+      message: 'Theme - affects command spelling and help text',
       initialValue: 'scadrial',
       options: [
-        { value: 'scadrial', label: 'Scadrial — Mistborn Era 1 verbs (burn bronze, tap copper)' },
-        { value: 'classic', label: 'Classic — neutral verbs (graph, recall)' },
+        { value: 'scadrial', label: 'Scadrial - Mistborn Era 1 verbs (burn bronze, tap copper)' },
+        { value: 'classic', label: 'Classic - neutral verbs (graph, recall)' },
       ],
     });
     checkCancelled(answer, 'theme prompt');
@@ -166,7 +166,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     memoryRouting = opts.memoryRouting;
   } else {
     const answer = await select({
-      message: 'Memory routing — where should Claude persist recalled context?',
+      message: 'Memory routing - where should Claude persist recalled context?',
       initialValue: 'vault-only',
       options: [
         {
@@ -201,7 +201,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   } else {
     const answer = await confirm({
       message:
-        "End-of-day hook in /save: when you save between 16:00–18:00 local, offer to push pending items into tomorrow's daily note?",
+        "End-of-day hook in /save: when you save between 16:00-18:00 local, offer to push pending items into tomorrow's daily note?",
       initialValue: true,
     });
     checkCancelled(answer, 'EOD hook prompt');
@@ -230,7 +230,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   } else {
     const answer = await confirm({
       message:
-        'Track the vault in git? (versioning + multi-device sync via your own remote — skipped cleanly if it is already a repo)',
+        'Track the vault in git? (versioning + multi-device sync via your own remote - skipped cleanly if it is already a repo)',
       initialValue: true,
     });
     checkCancelled(answer, 'Vault git prompt');
@@ -252,7 +252,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     const git = await setupVaultGit({ vaultPath: vault.vaultPath, enable: true });
     if (git.action === 'initialized') log.success(`  git init at ${vault.vaultPath}`);
     else if (git.action === 'already-tracked')
-      log.info('  vault was already a git repo — skipped init');
+      log.info('  vault was already a git repo - skipped init');
     if (git.gitignoreAction === 'created') log.info('  wrote .gitignore');
     else if (git.gitignoreAction === 'inserted')
       log.info('  inserted metalmind block into .gitignore');
@@ -266,7 +266,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   if (serena) {
     log.step('Installing Serena');
     const result = await installSerena();
-    if (result.alreadyInstalled) log.info('  serena already on PATH — skipped install');
+    if (result.alreadyInstalled) log.info('  serena already on PATH - skipped install');
     if (result.installed) log.success('  uv tool install serena-agent complete');
     if (result.wroteConfig) log.info(`  wrote ${result.configPath}`);
   }
@@ -275,7 +275,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   if (graphify) {
     log.step('Installing graphify');
     const result = await installGraphify();
-    if (result.alreadyInstalled) log.info('  graphify already on PATH — skipped install');
+    if (result.alreadyInstalled) log.info('  graphify already on PATH - skipped install');
     if (result.installed) log.success('  uv tool install graphifyy complete');
     if (result.claudeWired)
       log.info('  graphify claude install wired PreToolUse hook (no $HOME stamp)');
@@ -285,7 +285,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
 
   log.step('Installing vault-rag (MCP server + watcher + indexer + doctor)');
   const vaultRag = await installVaultRag();
-  if (vaultRag.alreadyInstalled) log.info('  metalmind-vault-rag already on PATH — skipped');
+  if (vaultRag.alreadyInstalled) log.info('  metalmind-vault-rag already on PATH - skipped');
   if (vaultRag.installed) log.success('  uv tool install metalmind-vault-rag complete');
 
   if (!opts.skipDocker) {
@@ -294,7 +294,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     log.success(`  stack at ${stack.stackDir}`);
     if (stack.modelPulled) log.info('  nomic-embed-text pulled');
   } else {
-    log.info('Embedded backend (sqlite-vec + fastembed) — no Docker stack needed');
+    log.info('Embedded backend (sqlite-vec + fastembed) - no Docker stack needed');
   }
 
   if (opts.skipWatcher) {
@@ -302,11 +302,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   } else {
     log.step('Installing watcher service');
     const watcherBinPath = await resolveWatcherBinPath();
-    const uvBinPath = await resolveUvBinPath();
     const watcher = await installWatcher({
       vaultPath: vault.vaultPath,
       watcherBin: watcherBinPath,
-      uvBin: uvBinPath,
     });
     if (watcher.wroteUnit) log.success(`  wrote ${watcher.unitPath}`);
     if (watcher.started) {
@@ -318,7 +316,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     }
   }
 
-  // Host selection — always prompted so newly-installed hosts (e.g. user
+  // Host selection - always prompted so newly-installed hosts (e.g. user
   // installed Codex after a CC-only stamp) surface for opt-in. Forced via
   // opts.hosts (--host claude|codex|both); pre-checks v0.7.x default of
   // ['claude'] when no prior choice is recorded.
@@ -432,8 +430,8 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     const style = await installOutputStyle({ choice: styleChoice });
     if (style.migrated) log.success(`  migrated legacy style → ${style.stylePath}`);
     else if (style.installed) log.success(`  copied bundled style → ${style.stylePath}`);
-    else if (style.healed) log.success(`  healed broken-stamp frontmatter → ${style.stylePath}`);
-    else log.info(`  ${style.stylePath} already present — kept`);
+    else if (style.updated) log.success(`  refreshed stale style from asset → ${style.stylePath}`);
+    else log.info(`  ${style.stylePath} already present - kept`);
     if (style.priorValue) log.info(`  prior settings.json outputStyle: ${style.priorValue}`);
     stylePriorValue = style.priorValue;
     stampedOutputStyle = styleChoice;

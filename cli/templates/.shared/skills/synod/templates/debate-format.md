@@ -2,12 +2,12 @@
 
 Use this exact structure when composing the synod's debate section. The skill spawns one subagent per persona in parallel; this template is how the main agent assembles their statements into the final output.
 
-The order is intentional, not arbitrary. The Adversary opens because someone has to name the stakes before the room talks itself into anything. The Humanist closes because the conversation should return to the people the decision actually affects. The middle five are sequenced to maximise productive collision — Strategist after Adversary so the upside meets the downside immediately; Scientist next to ground the dispute; Visionary fourth to break the frame; Engineer fifth to test the reframe against reality; Philosopher sixth to lift the question above tactics.
+The order is intentional, not arbitrary. The Adversary opens because someone has to name the stakes before the room talks itself into anything. The Humanist closes because the conversation should return to the people the decision actually affects. The middle five are sequenced to maximise productive collision - Strategist after Adversary so the upside meets the downside immediately; Scientist next to ground the dispute; Visionary fourth to break the frame; Engineer fifth to test the reframe against reality; Philosopher sixth to lift the question above tactics.
 
 ## Header
 
 ```markdown
-# The Synod — "[restate the core question in quotes, ≤15 words]"
+# The Synod - "[restate the core question in quotes, ≤15 words]"
 ```
 
 If the user's input is a statement or description rather than a question, extract the implied decision: *"Should I X?"* or *"Is X a good idea?"*
@@ -98,7 +98,7 @@ assumption. References at least one other persona by name where useful.]
 
 Before finalising, verify the debate actually is a debate, not seven monologues:
 
-- Do any two persona statements sound the same? If yes, the less distinctive one needs a rewrite — push the subagent for that role to dig deeper into its persona file.
+- Do any two persona statements sound the same? If yes, the less distinctive one needs a rewrite - push the subagent for that role to dig deeper into its persona file.
 - Does every persona make at least one specific claim (number, name, mechanism)?
 - Does at least one persona directly push back on or respond to another by name?
 - Is the Adversary genuinely uncomfortable to read? If not, it's too soft.
@@ -106,4 +106,4 @@ Before finalising, verify the debate actually is a debate, not seven monologues:
 - Is the Philosopher asking a question the others didn't ask?
 - Is the Humanist talking about actual humans (relationships, psychology), not just being optimistic?
 
-If the debate fails any of these, regenerate the offending persona's statement before producing the verdict — the verdict is only as good as the debate it synthesises.
+If the debate fails any of these, regenerate the offending persona's statement before producing the verdict - the verdict is only as good as the debate it synthesises.

@@ -26,9 +26,9 @@ Parse `$ARGUMENTS` as:
    - The specific repo path to `cd` into
    - The pattern/concern to audit for (verbatim from the user's argument)
    - Instruction to report findings with file:line citations relative to that repo root
-   - Instruction NOT to modify any files — this is a read-only audit
+   - Instruction NOT to modify any files - this is a read-only audit
 
-5. Teammates work independently. They should NOT talk to each other — findings should be independent per repo.
+5. Teammates work independently. They should NOT talk to each other - findings should be independent per repo.
 
 6. When all teammates report back, produce a cross-repo synthesis:
 
@@ -37,7 +37,7 @@ Parse `$ARGUMENTS` as:
    
    ### Per-repo findings
    #### <repo-1>
-   - file:line — finding
+   - file:line - finding
    - ...
    
    #### <repo-2>

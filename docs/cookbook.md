@@ -18,11 +18,11 @@ A note that recall can find quickly is one that's *aligned* on three axes: title
 
 ### Frontmatter discipline (the biggest single lever)
 
-`metalmind scribe` stamps frontmatter automatically when you pipe a body through it — but the fields you pass on the command line shape how recall treats the note for the rest of its life:
+`metalmind scribe` stamps frontmatter automatically when you pipe a body through it - but the fields you pass on the command line shape how recall treats the note for the rest of its life:
 
-- **`--project <slug>`** — the strongest discoverability signal. Notes with `project: foo` automatically link to `Work/MOCs/foo.md` and surface together. Use a slug, not a label (`metalmind` not `metalmind project`). One project per note.
-- **`--tags a,b,c`** — for cross-cutting *themes*, not categories. `caching`, `auth`, `regression-postmortem` are tags. `metalmind` would be a tag if it weren't already the project — don't double-encode. Three focused tags beat ten generic ones.
-- **`--kind <plan|learning|work|moc|daily|inbox|memory|personal>`** — the folder. See [What lives where](#what-lives-where).
+- **`--project <slug>`** - the strongest discoverability signal. Notes with `project: foo` automatically link to `Work/MOCs/foo.md` and surface together. Use a slug, not a label (`metalmind` not `metalmind project`). One project per note.
+- **`--tags a,b,c`** - for cross-cutting *themes*, not categories. `caching`, `auth`, `regression-postmortem` are tags. `metalmind` would be a tag if it weren't already the project - don't double-encode. Three focused tags beat ten generic ones.
+- **`--kind <plan|learning|work|moc|daily|inbox|memory|personal>`** - the folder. See [What lives where](#what-lives-where).
 
 A frontmatter that looks right:
 
@@ -66,20 +66,20 @@ The title is the H1. The first sentence is the highest-weighted text the embedde
 
 If a future-you scans the first line of the file, can they tell whether it's the right note? If no, rewrite.
 
-### Wikilinks — plain stems only
+### Wikilinks - plain stems only
 
 Write wikilinks as plain stems: `[[cache-fingerprints]]`, never `[[learning:cache-fingerprints]]` and never `[[Learnings/cache-fingerprints.md]]`.
 
-A `kind:` prefix inside `[[ ]]` is **broken in Obsidian** — there is no `kind:` link resolver, so `[[learning:slug]]` is read as a filename containing an illegal `:` and a click raises `File name cannot contain any of the following characters: \ / :`. Path links rot the moment the file moves. Stem links resolve vault-wide and `scribe rename` rewrites them cleanly; keep slugs unique so the stem stays unambiguous.
+A `kind:` prefix inside `[[ ]]` is **broken in Obsidian** - there is no `kind:` link resolver, so `[[learning:slug]]` is read as a filename containing an illegal `:` and a click raises `File name cannot contain any of the following characters: \ / :`. Path links rot the moment the file moves. Stem links resolve vault-wide and `scribe rename` rewrites them cleanly; keep slugs unique so the stem stays unambiguous.
 
-`kind:slug` is a metalmind **CLI argument** form for addressing **existing** notes (`scribe update learning:foo`, `scribe patch learning:foo`, `gold plan:bar`) — it is not wikilink syntax. Note `scribe create` does **not** take `kind:slug`; it takes a plain title plus `--kind` (`scribe create "foo" --kind learning`).
+`kind:slug` is a metalmind **CLI argument** form for addressing **existing** notes (`scribe update learning:foo`, `scribe patch learning:foo`, `gold plan:bar`) - it is not wikilink syntax. Note `scribe create` does **not** take `kind:slug`; it takes a plain title plus `--kind` (`scribe create "foo" --kind learning`).
 
 ```markdown
-Reasoning lives in [[silent-fallback-bugs-compound]] —
+Reasoning lives in [[silent-fallback-bugs-compound]] -
 the same pattern bit us in [[2026-04-30-metalmind-v0-4-0]].
 ```
 
-### MOC linking — every project's index
+### MOC linking - every project's index
 
 `Work/MOCs/<project>.md` is the project's table of contents. Scribe auto-appends a backlink to the relevant MOC when you create a note with `--project`. Two failure modes worth catching:
 
@@ -89,9 +89,9 @@ the same pattern bit us in [[2026-04-30-metalmind-v0-4-0]].
 ### Anti-patterns to avoid
 
 - **Orphan notes.** A note that nothing links to and that doesn't have a project is invisible to graph traversal. Either link it from a MOC, give it a project, or accept that it's a one-off you may never find again.
-- **Duplicate notes.** The most expensive failure mode: re-deriving what's already in the vault. **Always recall first** (`metalmind tap copper "<topic>" --deep`) before writing — if there's a 50%+ overlap with an existing note, `scribe update` it instead of forking a new one.
-- **Inline frontmatter when piping through scribe.** Scribe stamps frontmatter automatically. If your body starts with a `---` block, you'll end up with two — and the second one wins, silently overriding your fields. Body only when piping.
-- **Diary-as-decision.** A daily note (`Daily/YYYY-MM-DD.md`) is a logbook. A learning (`Learnings/<topic>.md`) is a decision. Don't bury reusable insights in a daily — they won't surface in cross-project recall. Promote to a learning when you spot one.
+- **Duplicate notes.** The most expensive failure mode: re-deriving what's already in the vault. **Always recall first** (`metalmind tap copper "<topic>" --deep`) before writing - if there's a 50%+ overlap with an existing note, `scribe update` it instead of forking a new one.
+- **Inline frontmatter when piping through scribe.** Scribe stamps frontmatter automatically. If your body starts with a `---` block, you'll end up with two - and the second one wins, silently overriding your fields. Body only when piping.
+- **Diary-as-decision.** A daily note (`Daily/YYYY-MM-DD.md`) is a logbook. A learning (`Learnings/<topic>.md`) is a decision. Don't bury reusable insights in a daily - they won't surface in cross-project recall. Promote to a learning when you spot one.
 - **Long notes with multiple topics.** One note = one topic. If a single note answers three questions, recall will return it for all three queries with weak-but-not-best scores. Split.
 
 ---
@@ -104,25 +104,25 @@ the same pattern bit us in [[2026-04-30-metalmind-v0-4-0]].
 |---|---|---|
 | *(none)* | Default. Fast semantic + BM25 hybrid. The right answer 90% of the time. | ~8 ms median |
 | `--deep` | One hit looks right but you want adjacent context. Walks backlinks one hop. | One extra round-trip; +1 hop of payload tokens. |
-| `--expand` | Researching a topic broadly — you want hits *and* the linked-context graph. | Heavier — every linked note loaded. Use sparingly on large vaults. |
+| `--expand` | Researching a topic broadly - you want hits *and* the linked-context graph. | Heavier - every linked note loaded. Use sparingly on large vaults. |
 | `--rerank` | Top-of-list precision matters more than latency (cross-encoder rescore). | ~2 s per query; first call downloads ~150 MB ONNX weights. |
-| `--list-recent N` | "What was I working on yesterday?" — no query, just the N most-recently-modified notes. | Cheap — pure file-mtime scan. |
+| `--list-recent N` | "What was I working on yesterday?" - no query, just the N most-recently-modified notes. | Cheap - pure file-mtime scan. |
 | `-k <n>` | Limit hits returned. Default is 10. | Smaller payload. |
 | `--json` | Scripted consumers. Tabular by default. | Same retrieval cost. |
 
 **Default rule of thumb:** start with no flag. Escalate to `--deep` if the top hit is right but lacking context. Escalate to `--expand` only when you're researching *broadly*, not when you have a specific question. `--rerank` is for moments when you'll quote the top hit verbatim.
 
-### The 2–3 rephrasings rule
+### The 2-3 rephrasings rule
 
-The retriever is a single embedding pass over your phrasing. If the vault uses different wording, one query will miss. Rephrase 2–3 times and union the hits before deciding nothing is there.
+The retriever is a single embedding pass over your phrasing. If the vault uses different wording, one query will miss. Rephrase 2-3 times and union the hits before deciding nothing is there.
 
 A good rephrasing ladder:
 
-1. **Literal** — the words you'd use in a slack message. *"why did we reject Auth0?"*
-2. **Domain term** — the technical primitive. *"auth provider rejection rationale"*
-3. **Acronym ↔ spelled out** — *"OAuth PKCE flow decision"* / *"Proof Key for Code Exchange decision"*
-4. **Verb-vs-noun** — sometimes flipping from "saved decision X" to "decision about X" finds the right note.
-5. **Negative framing** — *"why we don't use Auth0"* instead of *"why we use X"*.
+1. **Literal** - the words you'd use in a slack message. *"why did we reject Auth0?"*
+2. **Domain term** - the technical primitive. *"auth provider rejection rationale"*
+3. **Acronym ↔ spelled out** - *"OAuth PKCE flow decision"* / *"Proof Key for Code Exchange decision"*
+4. **Verb-vs-noun** - sometimes flipping from "saved decision X" to "decision about X" finds the right note.
+5. **Negative framing** - *"why we don't use Auth0"* instead of *"why we use X"*.
 
 If three rephrasings still find nothing, you genuinely don't have a note on that topic. Time to write one.
 
@@ -136,23 +136,23 @@ metalmind doctor --recall-audit --recall-audit-days 14
 
 Output shows top 25 unique candidates ranked by frequency, classified as:
 
-- **`ok`** — recall hit something with score ≥ 0.3.
-- **`weak-hit`** — top score < 0.3. Either the query is unusual or the matching note is buried.
-- **`zero-hit`** — no hits at all. Either you genuinely don't have a note on that topic, or your wording diverges hard from the vault's wording. Worth investigating each.
+- **`ok`** - recall hit something with score ≥ 0.3.
+- **`weak-hit`** - top score < 0.3. Either the query is unusual or the matching note is buried.
+- **`zero-hit`** - no hits at all. Either you genuinely don't have a note on that topic, or your wording diverges hard from the vault's wording. Worth investigating each.
 
 The recall log is local-only, opt-in, and never leaves your machine. Don't enable it on a vault that contains client secrets.
 
 ### When recall fails: triage ladder
 
-1. **Try 2–3 rephrasings** (see above).
-2. **Run `--list-recent 20`** — sometimes you remember writing it, you just don't remember the topic words. Recent-list often surfaces the right note.
-3. **Check the project MOC** — if the topic is project-scoped, `Work/MOCs/<project>.md` is the curated index.
-4. **Check the watcher** — `metalmind pulse --deep`. If the watcher is down, recall falls back to MCP stdio (~570ms) and the index may be stale.
-5. **`metalmind-vault-rag-doctor --fts`** — surfaces the FTS5 row count. If FTS5 is empty, hybrid retrieval has only the semantic side and BM25 hits go missing.
+1. **Try 2-3 rephrasings** (see above).
+2. **Run `--list-recent 20`** - sometimes you remember writing it, you just don't remember the topic words. Recent-list often surfaces the right note.
+3. **Check the project MOC** - if the topic is project-scoped, `Work/MOCs/<project>.md` is the curated index.
+4. **Check the watcher** - `metalmind pulse --deep`. If the watcher is down, recall falls back to MCP stdio (~570ms) and the index may be stale.
+5. **`metalmind-vault-rag-doctor --fts`** - surfaces the FTS5 row count. If FTS5 is empty, hybrid retrieval has only the semantic side and BM25 hits go missing.
 
 ### Save what's not there
 
-If a triage walk concludes "we should have had a note on this and didn't" — that's a `/save` moment. The recall-audit pattern compounds: the more weak-hit queries you turn into notes, the fewer your future weak-hit queries.
+If a triage walk concludes "we should have had a note on this and didn't" - that's a `/save` moment. The recall-audit pattern compounds: the more weak-hit queries you turn into notes, the fewer your future weak-hit queries.
 
 ---
 
@@ -160,9 +160,9 @@ If a triage walk concludes "we should have had a note on this and didn't" — th
 
 Folder-by-intent, not by project. Project affiliation is in the `project:` frontmatter field; folders are about *what kind of thing* the note is.
 
-### `Plans/` — implementation plans
+### `Plans/` - implementation plans
 
-**What goes here:** plans for feature work, refactors, migrations. Dated filename (`YYYY-MM-DD-<topic>.md`). Kept flat — no per-project subfolders.
+**What goes here:** plans for feature work, refactors, migrations. Dated filename (`YYYY-MM-DD-<topic>.md`). Kept flat - no per-project subfolders.
 
 **Anchors:** `kind: plan`. `project: <slug>` for affiliation. `status: active | partially-shipped | archived`.
 
@@ -170,73 +170,73 @@ Folder-by-intent, not by project. Project affiliation is in the `project:` front
 
 **Anti-pattern:** plans that read like meeting notes. A plan should answer *"what are we shipping, in what order, with what done-criteria"*. If it's just a brain-dump, it's a `Work/` note, not a plan.
 
-### `Learnings/` — durable cross-session lessons
+### `Learnings/` - durable cross-session lessons
 
 **What goes here:** the "I will never again..." file. Reusable engineering insights, language tricks, tooling gotchas, debug postmortems where the lesson generalises. Filename is `kebab-case-of-the-lesson.md`.
 
-**Anchors:** `kind: learning`. `tags: [topic, …]` for cross-cutting themes. `project:` only if the lesson is project-specific (rare — most learnings are general).
+**Anchors:** `kind: learning`. `tags: [topic, …]` for cross-cutting themes. `project:` only if the lesson is project-specific (rare - most learnings are general).
 
 **Lifecycle:** evergreen. A learning is a permanent note. Edit it as new evidence arrives; rarely archive.
 
 **The framing test:** *"would this insight apply to a different repo or a different team?"* If yes → learning. If no → it's a `Work/` decision scoped to that project.
 
-### `Work/` — active project notes, decisions, architecture
+### `Work/` - active project notes, decisions, architecture
 
 **What goes here:** project-scoped decisions, architecture notes, design docs, debugging notes that don't generalise into a learning. Free-form filename (`auth-flow-decision.md`).
 
-**Anchors:** `kind: work`. `project: <slug>` (essentially required — work without a project is hard to find).
+**Anchors:** `kind: work`. `project: <slug>` (essentially required - work without a project is hard to find).
 
 **Lifecycle:** active while the project is active. Archive when the project ships or sunsets.
 
-### `Work/MOCs/<project>.md` — Map of Content per project
+### `Work/MOCs/<project>.md` - Map of Content per project
 
 **What goes here:** *one* MOC per project. The "current state" paragraph + a curated linked-list of every note in the project + a Dataview query as a fallback for anything not curated.
 
 **Anchors:** `kind: moc`. `project: <slug>` (matches the filename stem).
 
-**Discipline:** maintained by hand for the *current state* paragraph. The Dataview list at the bottom is auto-populated. Update the current-state paragraph after every shipped milestone — that paragraph is the most-recalled-from-context note in the entire project.
+**Discipline:** maintained by hand for the *current state* paragraph. The Dataview list at the bottom is auto-populated. Update the current-state paragraph after every shipped milestone - that paragraph is the most-recalled-from-context note in the entire project.
 
-### `Daily/YYYY-MM-DD.md` — journal entries
+### `Daily/YYYY-MM-DD.md` - journal entries
 
 **What goes here:** time-bound stuff. End-of-day reflections. Open action items via `metalmind atium add`. The "I noticed X today and want to revisit" thread.
 
 **Anchors:** `kind: daily`. Filename is the date.
 
-**Discipline:** scribe writes daily notes only for today (the date guard refuses non-today writes without explicit `--date`). For tomorrow's daily, use `metalmind atium new --date tomorrow`. For action items, `metalmind atium add "<item>" --date <date>` is the canonical surface — not scribe.
+**Discipline:** scribe writes daily notes only for today (the date guard refuses non-today writes without explicit `--date`). For tomorrow's daily, use `metalmind atium new --date tomorrow`. For action items, `metalmind atium add "<item>" --date <date>` is the canonical surface - not scribe.
 
-**The promotion rule:** when a daily entry contains a reusable insight, *promote it* — copy it into a `Learnings/<topic>.md` and reference back. Daily notes age out of recall context faster than learnings; they're a lifelogging surface, not a knowledge base.
+**The promotion rule:** when a daily entry contains a reusable insight, *promote it* - copy it into a `Learnings/<topic>.md` and reference back. Daily notes age out of recall context faster than learnings; they're a lifelogging surface, not a knowledge base.
 
-### `Inbox/` — transient triage bucket
+### `Inbox/` - transient triage bucket
 
-**What goes here:** captures that need to be triaged but you don't know where they belong yet. Filename is whatever — `random-thought.md`, `2026-05-04-thing.md`.
+**What goes here:** captures that need to be triaged but you don't know where they belong yet. Filename is whatever - `random-thought.md`, `2026-05-04-thing.md`.
 
 **Anchors:** `kind: inbox`.
 
-**Discipline:** Inbox files untouched >14 days are a triage prompt — `/save` will surface them. Triage means: move the file to the right folder (via `scribe rename`) or archive it. Inbox should not be a permanent home for anything.
+**Discipline:** Inbox files untouched >14 days are a triage prompt - `/save` will surface them. Triage means: move the file to the right folder (via `scribe rename`) or archive it. Inbox should not be a permanent home for anything.
 
-### `Memory/` — model-managed context
+### `Memory/` - model-managed context
 
 **What goes here:** notes that an agent (typically `/save` or a custom skill) wrote on its own initiative. Migrated content from native Claude Code memory. Rarely written by hand.
 
 **Anchors:** `kind: memory`.
 
-**Discipline:** mostly read-only from the user side. Treat as "things Claude noticed about me/my preferences." Don't promote — let it accumulate; recall will surface it when relevant.
+**Discipline:** mostly read-only from the user side. Treat as "things Claude noticed about me/my preferences." Don't promote - let it accumulate; recall will surface it when relevant.
 
-### `Personal/` — non-work
+### `Personal/` - non-work
 
 **What goes here:** anything not work-related. Reading notes, life decisions, side-project journals.
 
 **Anchors:** `kind: personal`. No `project:` unless it's a personal project.
 
-**Discipline:** kept separate from work for context-isolation — when you're in a work session and recall surfaces a personal note, that's the wrong shape.
+**Discipline:** kept separate from work for context-isolation - when you're in a work session and recall surfaces a personal note, that's the wrong shape.
 
-### `Archive/` — shipped or superseded
+### `Archive/` - shipped or superseded
 
 **What goes here:** notes whose lifecycle is done. Shipped plans. Sunset projects. Old MOCs.
 
 **Anchors:** `status: archived` (set automatically by `scribe archive` / `gold`). The original folder structure is preserved under `Archive/Plans/`, `Archive/Work/`, etc.
 
-**Discipline:** archived ≠ deleted. Recall still searches `Archive/` (with rank penalty) — it answers the "why did we decide X in April?" question. Don't mass-delete; future-you will want the trail.
+**Discipline:** archived ≠ deleted. Recall still searches `Archive/` (with rank penalty) - it answers the "why did we decide X in April?" question. Don't mass-delete; future-you will want the trail.
 
 ### The decision question
 
@@ -278,7 +278,7 @@ From an agent, `/sync` and `/save-sync` wrap the same command.
 
 ## See also
 
-- [`architecture.md`](architecture.md) — module overview + how the modules share state.
-- Repo root [`README.md`](../README.md) — module list + comparison matrix.
-- `metalmind --help` — full CLI reference.
-- `metalmind scribe --help` / `metalmind atium --help` — vault-write specifics.
+- [`architecture.md`](architecture.md) - module overview + how the modules share state.
+- Repo root [`README.md`](../README.md) - module list + comparison matrix.
+- `metalmind --help` - full CLI reference.
+- `metalmind scribe --help` / `metalmind atium --help` - vault-write specifics.

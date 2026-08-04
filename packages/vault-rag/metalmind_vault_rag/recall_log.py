@@ -9,7 +9,7 @@ Format (one JSON object per line):
     {"ts": "2026-05-01T08:30:00Z", "query": "...", "mode": "hybrid",
      "rerank": false, "k": 5, "hit_count": 3, "top_files": [...], "top_score": 0.71}
 
-The `query` is captured verbatim — same caveat as shell history. If you don't
+The `query` is captured verbatim - same caveat as shell history. If you don't
 want it, don't enable the log."""
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ def record(
 ) -> None:
     """Append one query record. Best-effort: any error is swallowed so a log
     failure cannot break the search response. Caller is on the request thread,
-    so this needs to be cheap — a single appended line is fine for normal vaults."""
+    so this needs to be cheap - a single appended line is fine for normal vaults."""
     path = log_path()
     if path is None:
         return

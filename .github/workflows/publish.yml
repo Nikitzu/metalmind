@@ -48,7 +48,7 @@ jobs:
           cache: 'pnpm'
 
       # npm 10.x (bundled with Node 20) had incomplete OIDC trusted-publisher
-      # support — provenance signing works but the final registry PUT 404s
+      # support - provenance signing works but the final registry PUT 404s
       # because auth falls back to the empty token written by setup-node.
       # Latest npm (11+) fixes the handshake. npm 12 requires Node >=22,
       # which is why the runner is on Node 24 above.

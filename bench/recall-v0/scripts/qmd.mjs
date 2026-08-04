@@ -46,7 +46,7 @@ function runCmd(cmd, args, opts = {}) {
  * @param {string} opts.vault    Absolute path to the vault directory.
  * @param {string} opts.indexPath Absolute path for qmd's sqlite DB.
  * @param {string} opts.configDir Absolute dir for qmd's YAML collection config (qmd persists collection metadata here, separate from INDEX_PATH).
- * @param {number} [opts.timeoutMs] Per-subprocess timeout (default 600s — first call downloads models).
+ * @param {number} [opts.timeoutMs] Per-subprocess timeout (default 600s - first call downloads models).
  * @returns {Promise<{ query: (q: string, k: number) => Promise<Array<{file: string, score: number}>>, available: boolean, errorMessage?: string }>}
  */
 export async function buildQmdScorer({ vault, indexPath, configDir, timeoutMs = 600_000 }) {

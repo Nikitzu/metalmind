@@ -109,7 +109,7 @@ describe('forge loader', () => {
     // Second call still reflects the cached routes (graph.json unchanged).
     expect(second.routeMatchEdgeCount).toBe(first.routeMatchEdgeCount);
 
-    // Now bump graph.json — cache invalidates, fresh walk picks up new source.
+    // Now bump graph.json - cache invalidates, fresh walk picks up new source.
     await new Promise((r) => setTimeout(r, 10));
     await writeGraph(repoA, [
       { id: 'fn', label: 'x' },
@@ -189,7 +189,7 @@ describe('forge loader', () => {
   });
 
   it('busts route cache when OpenAPI spec on the shelf changes', async () => {
-    // Shelf mtime must participate in the per-repo fingerprint — otherwise
+    // Shelf mtime must participate in the per-repo fingerprint - otherwise
     // editing a spec via `forge capture-spec` would silently return stale
     // route edges until someone bumps the graph.
     const shelfDir = join(tmp, 'specs');
@@ -215,7 +215,7 @@ describe('forge loader', () => {
       const second = await loadOrBuildMerged('g', group, { cacheDir });
       expect(second.generatedAt).not.toBe(first.generatedAt);
       // Route count may be the same for a single-repo forge (no cross-repo
-      // match target), but the cache must rebuild — generatedAt proves that.
+      // match target), but the cache must rebuild - generatedAt proves that.
       expect(second.routeMatchEdgeCount).toBeGreaterThanOrEqual(firstRoutes);
     } finally {
       if (originalShelf === undefined) delete process.env.METALMIND_SHELF_DIR;
@@ -236,7 +236,7 @@ describe('forge loader', () => {
       JSON.stringify({ repo: '/still/no/such/repo', mtime: 0, routes: [] }),
       'utf8',
     );
-    // Warm cache hit — buildMergedGraph would not run, but prune should still fire.
+    // Warm cache hit - buildMergedGraph would not run, but prune should still fire.
     await loadOrBuildMerged('warm', group, { cacheDir });
     expect(existsSync(join(routesDir, 'orphan.json'))).toBe(false);
   });

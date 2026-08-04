@@ -1,7 +1,7 @@
 """Cross-encoder reranker. Lazy-loaded on first use so the watcher startup
 stays fast and users who never opt-in pay nothing.
 
-Design (v0.5.x ONNX path — replaces the FlagEmbedding/torch path):
+Design (v0.5.x ONNX path - replaces the FlagEmbedding/torch path):
 - Opt-in via `rerank=True` on search_vault. Off by default.
 - Backend: onnxruntime CPU, tokenizers (Rust), huggingface_hub for download.
   Drops ~2 GB of torch + transformers + FlagEmbedding from the [rerank] extra.
@@ -39,7 +39,7 @@ DEFAULT_MAX_LENGTH = int(os.environ.get("METALMIND_RERANK_MAX_LEN", "512"))
 def is_dep_available() -> bool:
     """Are the optional ONNX-runtime deps importable in this process?
 
-    Does NOT trigger a model download — just tells the CLI whether the
+    Does NOT trigger a model download - just tells the CLI whether the
     package has been installed with the `[rerank]` extra. Used by the
     `/rerank/status` endpoint so `metalmind tap copper --rerank` can
     auto-install + restart the watcher on first use instead of asking the
@@ -84,7 +84,7 @@ def _load() -> tuple[Any, Any] | None:
     flavor = (os.environ.get("METALMIND_FLAVOR") or "classic").lower()
     themed = flavor == "scadrial"
     lead = (
-        "metalmind: lighting the duralumin — reranker warming up"
+        "metalmind: lighting the duralumin - reranker warming up"
         if themed
         else "metalmind: reranker warming up"
     )

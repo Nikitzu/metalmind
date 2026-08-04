@@ -153,7 +153,7 @@ async function extractRoutesCached(
         return cached.routes;
       }
     } catch {
-      // corrupt cache — fall through and rewalk
+      // corrupt cache - fall through and rewalk
     }
   }
 
@@ -168,7 +168,7 @@ async function extractRoutesCached(
 
 /** Delete cached route files whose recorded repo path no longer exists on
  *  disk. Keeps the cache from accumulating orphans (typical cause: tmp dirs
- *  from tests that macOS sweeps). Best-effort — never throws. */
+ *  from tests that macOS sweeps). Best-effort - never throws. */
 export async function pruneOrphanRouteCaches(cacheDir: string): Promise<number> {
   const routesDir = join(cacheDir, 'routes');
   let files: string[];
@@ -189,7 +189,7 @@ export async function pruneOrphanRouteCaches(cacheDir: string): Promise<number> 
         pruned++;
       }
     } catch {
-      // corrupt or unreadable — drop it
+      // corrupt or unreadable - drop it
       try {
         await unlink(abs);
         pruned++;
@@ -251,7 +251,7 @@ export async function loadOrBuildMerged(
   opts: { forceRebuild?: boolean; cacheDir?: string; includeLiterals?: boolean } = {},
 ): Promise<MergedForgeGraph> {
   const dir = opts.cacheDir ?? FORGE_CACHE_DIR;
-  // Prune orphans on every call — buildMergedGraph is skipped on the warm
+  // Prune orphans on every call - buildMergedGraph is skipped on the warm
   // path when the merged cache is fresh, so a prune there would never run
   // for long-lived forges.
   await pruneOrphanRouteCaches(dir);
@@ -291,7 +291,7 @@ export interface CrossRepoHighlight {
 /** Pull every INFERRED_NAME / INFERRED_ROUTE edge in a merged graph whose
  *  source, target, label or route matches the user's query (case-insensitive
  *  substring). Answers "given this concept/symbol, where does it surface in
- *  OTHER repos?" — the whole point of a forge. */
+ *  OTHER repos?" - the whole point of a forge. */
 export function crossRepoHighlights(merged: MergedForgeGraph, query: string): CrossRepoHighlight[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return [];
@@ -324,7 +324,7 @@ export function crossRepoHighlights(merged: MergedForgeGraph, query: string): Cr
 
 export function formatCrossRepoHighlight(h: CrossRepoHighlight): string {
   if (h.confidence === 'INFERRED_ROUTE') {
-    return `  ${h.source}  —[${h.method ?? 'ANY'} ${h.path ?? ''}]→  ${h.target}`;
+    return `  ${h.source}  -[${h.method ?? 'ANY'} ${h.path ?? ''}]→  ${h.target}`;
   }
-  return `  ${h.source}  —[name: ${h.label}]→  ${h.target}`;
+  return `  ${h.source}  -[name: ${h.label}]→  ${h.target}`;
 }

@@ -16,7 +16,7 @@ Schema (one DB per collection at `~/.metalmind/vec-<col>.db`):
     );
     CREATE INDEX payload_file_idx ON payloads(file);
 
-`chunks.rowid` and `payloads.rowid` are joined together — every vec0 row
+`chunks.rowid` and `payloads.rowid` are joined together - every vec0 row
 has a corresponding payload row. UUIDs from `core.point_id` map to
 INTEGER rowids via the `point_id` column.
 
@@ -50,7 +50,7 @@ def _pack_vector(vec: list[float], dim: int) -> bytes:
 
 
 class SqliteVecStore:
-    """In-process vec0 store. Owns a single sqlite3 connection — vec0 is
+    """In-process vec0 store. Owns a single sqlite3 connection - vec0 is
     safe for concurrent reads from one connection, and the watcher is
     single-process by design."""
 
@@ -68,7 +68,7 @@ class SqliteVecStore:
                 str(pathlib.Path.home() / ".metalmind" / f"vec-{self._collection}.db"),
             )
         self._db_path = pathlib.Path(db_path)
-        # Per-thread connections — sqlite3 forbids sharing a connection
+        # Per-thread connections - sqlite3 forbids sharing a connection
         # across threads, and the watcher's ThreadingHTTPServer fans
         # requests out to worker threads. Each thread lazily opens its
         # own connection; cheap for SQLite (~1 ms).

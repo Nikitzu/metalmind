@@ -2,7 +2,7 @@
 //
 // Sentinel-bounded block in ~/.codex/AGENTS.md (HTML-comment markers since
 // AGENTS.md is markdown). Codex injects this block wrapped in
-// <INSTRUCTIONS> on every turn — verified via `codex debug prompt-input`.
+// <INSTRUCTIONS> on every turn - verified via `codex debug prompt-input`.
 
 import { existsSync } from 'node:fs';
 import { mkdir, readFile } from 'node:fs/promises';

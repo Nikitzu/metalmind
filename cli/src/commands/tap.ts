@@ -1,5 +1,5 @@
 import { log } from '@clack/prompts';
-import { type RecallTier, recall } from '../backends/recall.js';
+import { type RecallMode, type RecallTier, recall } from '../backends/recall.js';
 import { ensureRerankExtra } from '../backends/rerank-bootstrap.js';
 import { listRecentNotes } from '../backends/vault-browse.js';
 import { readConfig } from '../config.js';
@@ -8,11 +8,19 @@ export interface TapOptions {
   deep?: boolean;
   expand?: boolean;
   rerank?: boolean;
+  semanticOnly?: boolean;
+  keywordOnly?: boolean;
   k?: number;
   json?: boolean;
   compact?: boolean;
   verbose?: boolean;
   listRecent?: number;
+}
+
+function resolveMode(opts: TapOptions): RecallMode {
+  if (opts.semanticOnly) return 'semantic-only';
+  if (opts.keywordOnly) return 'keyword-only';
+  return 'hybrid';
 }
 
 function resolveTier(opts: TapOptions, defaultTier: RecallTier): RecallTier {
@@ -43,6 +51,12 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
     return;
   }
 
+  if (opts.semanticOnly && opts.keywordOnly) {
+    log.error('--semantic-only and --keyword-only are mutually exclusive.');
+    process.exitCode = 1;
+    return;
+  }
+
   if (!query?.trim()) {
     log.error('Usage: metalmind tap copper "<query>"  |  metalmind tap copper --list-recent N');
     process.exitCode = 1;
@@ -62,7 +76,7 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       onProgress: (msg) => log.info(msg),
     });
     if (!ready && showMeta) {
-      log.warn('rerank bootstrap incomplete — proceeding without rerank.');
+      log.warn('rerank bootstrap incomplete - proceeding without rerank.');
     }
   }
 
@@ -73,6 +87,7 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       tier,
       k: opts.k,
       rerank: opts.rerank,
+      mode: resolveMode(opts),
       verbose: showMeta,
       compact: opts.compact,
       httpEndpoint: config.recall.httpEndpoint,

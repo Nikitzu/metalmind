@@ -1,7 +1,7 @@
 [project]
 name = "metalmind-vault-rag"
 version = "0.3.1"
-description = "Obsidian vault RAG service for metalmind — MCP server, watcher, indexer, doctor."
+description = "Obsidian vault RAG service for metalmind - MCP server, watcher, indexer, doctor."
 requires-python = ">=3.11"
 dependencies = [
     "httpx>=0.27",
@@ -23,7 +23,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
 ]
-# `rerank` is the cross-encoder rescore tier. Opt-in — the default install
+# `rerank` is the cross-encoder rescore tier. Opt-in - the default install
 # stays slim. Users enable via `uv tool install 'metalmind-vault-rag[rerank]'`.
 #
 # As of v0.5.2 we run the reranker through onnxruntime + the Rust-backed

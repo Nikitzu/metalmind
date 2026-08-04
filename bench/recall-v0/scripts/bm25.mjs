@@ -1,4 +1,4 @@
-// BM25 scorer — pure Node, no deps. Used as a baseline column in recall-v0.
+// BM25 scorer - pure Node, no deps. Used as a baseline column in recall-v0.
 //
 // Standard Okapi BM25 with k1=1.5, b=0.75. Tokenization:
 //   - Strip YAML frontmatter (--- ... ---).
@@ -6,7 +6,7 @@
 //   - Split on non-word characters.
 //   - Drop 1-char tokens and a minimal English stop-word set.
 //
-// Scored against the same vault the semantic path sees — tmp-vault assembled
+// Scored against the same vault the semantic path sees - tmp-vault assembled
 // per-scale by run.mjs. Reading ≤1k small markdown files per run is cheap;
 // we rebuild the index per call rather than caching.
 
@@ -89,7 +89,7 @@ export async function scoreQuery(vaultDir, query, k) {
   return scored.slice(0, k).filter((h) => h.score > 0);
 }
 
-// Cached variant — index once per vault, score many queries. Used by the
+// Cached variant - index once per vault, score many queries. Used by the
 // runner to avoid rebuilding for each of the 20 questions at each scale.
 export async function buildScorer(vaultDir) {
   const docs = await loadVault(vaultDir);

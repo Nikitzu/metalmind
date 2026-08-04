@@ -31,7 +31,7 @@ cli/templates/vault-rag-pkg/
 # Astro
 .astro/
 
-# recall-v0 bench — generator is source of truth; distractors and scratch
+# recall-v0 bench - generator is source of truth; distractors and scratch
 # results regenerate deterministically.
 bench/recall-v0/fake-vault-distractors/
 bench/recall-v0/results/*

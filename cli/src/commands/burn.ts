@@ -48,7 +48,7 @@ function ironQuery(symbol: string): string {
 async function burnSingleRepo(opts: BurnOptions, repoRoot: string): Promise<void> {
   const ready = await ensureGraph(repoRoot, opts);
   if (!ready) {
-    log.info(`${repoRoot}: graph not available — skipping.`);
+    log.info(`${repoRoot}: graph not available - skipping.`);
     return;
   }
   const query = opts.metal === 'iron' ? ironQuery(opts.input) : opts.input;

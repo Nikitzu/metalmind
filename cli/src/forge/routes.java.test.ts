@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseJava } from './routes.js';
 
-describe('parseJava — RestTemplate', () => {
+describe('parseJava - RestTemplate', () => {
   it('extracts getForObject / postForEntity with URL literal', () => {
     const src = `
       String body = restTemplate.getForObject("/shortened-uri/123", String.class);
@@ -32,7 +32,7 @@ describe('parseJava — RestTemplate', () => {
   });
 });
 
-describe('parseJava — WebClient', () => {
+describe('parseJava - WebClient', () => {
   it('extracts fluent .get().uri("...")', () => {
     const src = `
       webClient.get().uri("/health").retrieve();
@@ -53,7 +53,7 @@ describe('parseJava — WebClient', () => {
   });
 });
 
-describe('parseJava — Feign', () => {
+describe('parseJava - Feign', () => {
   it('extracts @GetMapping / @PostMapping only inside @FeignClient interfaces', () => {
     const src = `
       @FeignClient(name = "bookings", url = "\${bookings.url}")
@@ -97,7 +97,7 @@ describe('parseJava — Feign', () => {
   });
 });
 
-describe('parseJava — cross-repo wiring', () => {
+describe('parseJava - cross-repo wiring', () => {
   it('java caller buckets with openapi handler via canonicalizePath', async () => {
     const { buildRouteMatchEdges } = await import('./routes.js');
     const caller = parseJava(

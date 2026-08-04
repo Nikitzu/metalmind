@@ -6,7 +6,7 @@ name: CI
 #
 # Runs the unit suite on every PR and every push to main, across macOS +
 # Ubuntu. Kept separate from publish.yml so a Linux-only test failure does
-# not block a tag-driven release — the release pipeline is still pinned
+# not block a tag-driven release - the release pipeline is still pinned
 # to macos-latest.
 
 on:
@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           # 22: astro-check (site typecheck) requires >=22.12. publish.yml
-          # stays on 20 because it doesn't run the site typecheck at all —
+          # stays on 20 because it doesn't run the site typecheck at all -
           # that pipeline only tests + publishes the CLI.
           node-version: 22
           cache: pnpm

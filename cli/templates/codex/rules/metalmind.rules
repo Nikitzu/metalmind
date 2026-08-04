@@ -1,10 +1,10 @@
-# metalmind execpolicy — pre-approves the metalmind CLI surface so the
+# metalmind execpolicy - pre-approves the metalmind CLI surface so the
 # model doesn't hit an escalation prompt on first recall in a fresh Codex
 # workspace. This file is metalmind-owned end-to-end; metalmind uninstall
 # deletes it. Add your own custom rules in a separate *.rules file in
 # this directory (Codex loads all *.rules files in ~/.codex/rules/).
 #
-# DO NOT confuse with default.rules — that is Codex's user-acceptance
+# DO NOT confuse with default.rules - that is Codex's user-acceptance
 # log (Codex appends to it when you click "Allow + Remember" in the TUI).
 
 prefix_rule(["metalmind", "tap"], decision="allow")

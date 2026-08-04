@@ -1,4 +1,4 @@
-/* subpage styles — page hero, feature grids, module-specific centerpieces */
+/* subpage styles - page hero, feature grids, module-specific centerpieces */
 
 .page-hero {
   padding: var(--space-12) 0 var(--space-10);
@@ -183,7 +183,7 @@
   background: linear-gradient(90deg, var(--accent), color-mix(in oklch, var(--accent) 60%, white));
 }
 
-/* daily — week grid */
+/* daily - week grid */
 .week-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-3); }
 .week-cell {
   padding: var(--space-4);
@@ -212,7 +212,7 @@
 
 .memory-table { width: 100%; border-collapse: collapse; }
 
-/* brass — desktop notify mocks */
+/* brass - desktop notify mocks */
 .brass-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -341,7 +341,7 @@
   padding-top: 8px;
 }
 
-/* iron — doctor card */
+/* iron - doctor card */
 .doctor-card {
   background: var(--bg-elev);
   border: 1px solid var(--line);

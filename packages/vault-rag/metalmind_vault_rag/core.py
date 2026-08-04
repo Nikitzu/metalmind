@@ -14,7 +14,7 @@ MAX_CHUNK_CHARS = int(os.environ.get("VAULT_MAX_CHUNK_CHARS", "3500"))
 
 # FTS5 keyword index lives alongside Qdrant. Same chunk granularity (one row
 # per heading-chunk). Per-collection so bench runs and user vaults never
-# collide — default derived from VAULT_COLLECTION.
+# collide - default derived from VAULT_COLLECTION.
 FTS_DB_PATH = pathlib.Path(
     os.environ.get(
         "VAULT_FTS_DB_PATH",
@@ -59,7 +59,7 @@ def ensure_collection() -> None:
 def fts_conn() -> sqlite3.Connection:
     """Open (and lazily create) the FTS5 keyword index. One row per chunk.
 
-    Porter tokenizer — stems English words so `running` → `run`, closes common
+    Porter tokenizer - stems English words so `running` → `run`, closes common
     query/doc vocabulary gaps. Unicode61 is the SQLite default; switching to
     porter is a deliberate choice for English-heavy vaults. Revisit if
     multilingual users show up.

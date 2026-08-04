@@ -4,22 +4,141 @@ import cliPkg from '../../../cli/package.json';
 const version = cliPkg.version;
 
 const title = 'Releases · metalmind';
-const description = 'Release notes and changelog for metalmind — one entry per tag.';
+const description = 'Release notes and changelog for metalmind - one entry per tag.';
 
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.10.1',
+    date: '2026-08-04',
+    headline: 'Shell-alias install reports what actually happened',
+    summary: 'stamp printed "sourced in 0 shell rc file(s)" after a successful re-run because the append helper returned the same false for "already present" and "file missing", and the wizard hardcoded .zshrc in its success line even on bash-only machines. The helper now returns a three-way outcome and both commands name the actual files touched. templates/zsh/ renamed to templates/shell/ since the file has been shell-agnostic since bash support landed.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.10.0',
+    date: '2026-08-04',
+    headline: 'metalmind duralumin: vault sync with note-loss guards',
+    summary: 'One command pulls with rebase and autostash, stages, checks the change set, commits, pushes, and then asks git whether the remote actually advanced instead of trusting the push exit code. It refuses three shapes: a deleted note whose content survives nowhere in the commit, a commit that only removes notes, and entries left unstaged after git add -A. Matching is by blob SHA, so undetected renames pass while genuine deletions do not. Born from a real incident: the vault lost 19 notes to an archive move that staged its deletions and dropped its additions. --dry-run, --no-push, and --force available; a refusal resets the index cleanly.',
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.9.5',
+    date: '2026-07-19',
+    headline: 'stamp --no-prompt works headless',
+    summary: 'Commander parses --no-prompt as a negation (opts.prompt = false) but both call sites read the nonexistent opts.noPrompt, so the documented CI flag was a silent no-op that fell through to a TTY-requiring multi-select and crashed with uv_tty_init EINVAL. Now wired correctly, and promptHosts falls back to the previously-chosen host set when stdin is not a TTY.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.9.4',
+    date: '2026-07-19',
+    headline: 'Recall no longer surfaces trashed notes',
+    summary: 'scribe delete moves a note into .trash/, and the live watcher indexed that move as a fresh note, letting trashed notes outrank their replacements. Bulk indexer, watcher, and incremental reindex now share one SKIP_DIRS set, and reindex treats skip-dir paths as delete-only so polluted entries self-heal. Also bumps vault-rag to 0.3.1 so the 0.9.3 cache fix actually reaches installed machines on the next stamp.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.9.3',
+    date: '2026-07-19',
+    headline: 'Scribe path-resolution fixes and a durable model cache',
+    summary: 'scribe rename with a bare-slug destination silently moved notes to the vault root without .md; plan slugs that already carried a date prefix got double-dated; and macOS periodically purged the fastembed model cache from the system temp dir, breaking recall until the half-cache was cleared by hand. The cache now lives at ~/.metalmind/cache/fastembed/ where temp cleanup cannot reach it.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.9.2',
+    date: '2026-07-01',
+    headline: 'Bundled agents bumped to Opus 4.8',
+    summary: 'All 15 bundled agent templates pin an explicit model, and the pin had fallen a version behind. Refreshed from claude-opus-4-7[1m] to claude-opus-4-8[1m]; re-stamp propagates the new pin. No behavioural change.',
+    tag_kind: 'changed',
+  },
+  {
+    tag: '0.9.1',
+    date: '2026-06-12',
+    headline: '--compact recall: 74% fewer output tokens, zero retrieval drift',
+    summary: 'New --compact flag on tap copper / recall renders each hit as a lean envelope (score, path, heading, snippet) instead of full per-hit JSON; the path is the recovery handle for scribe show. Measured at roughly 74% fewer recall-output tokens on a real vault with the returned file set byte-identical between modes, gated by the new bench/compact-v0/ harness. Session stamps now steer agents to compact-by-default; the CLI default stays verbose for scripts.',
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.9.0',
+    date: '2026-05-29',
+    headline: 'Cursor as the third metalmind host',
+    summary: 'metalmind init auto-detects ~/.cursor and stamps it alongside Claude Code and Codex CLI; --host gains cursor and all. Recall rides on the metalmind-recall skill because Cursor 3.1.15 drops sessionStart additional context (staff-confirmed bug); a correct hook ships latent and activates when Cursor fixes it. Also installs 15 subagents, three skills, and opt-in --with-mcp. doctor --deep reports Cursor health; uninstall strips the footprint. 440 tests pass.',
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.8.15',
+    date: '2026-05-29',
+    headline: 'Colons in note titles no longer break frontmatter',
+    summary: 'A title like "Topic: subtitle" was interpolated raw into the YAML title field, producing malformed frontmatter that Obsidian, Dataview, and scribe show all failed to parse, invisibly, because the filename slug was already sanitised. Both frontmatter writers now route scalars through a yamlScalar helper that double-quotes any value carrying a YAML indicator character.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.8.14',
+    date: '2026-05-20',
+    headline: 'Persona-first output styles; terse renamed telegraph',
+    summary: 'Rule-list styles drift under load because they compete with the content prior; persona prompts swap the distribution wholesale and stick. Both bundled styles now open with an identity (Marsh the Steel Inquisitor; the Telegraph operator for whom every word costs money) with the rules as supporting material. stamp migrates a legacy terse.md in place, frontmatter rewritten, body preserved.',
+    tag_kind: 'changed',
+  },
+  {
+    tag: '0.8.13',
+    date: '2026-05-20',
+    headline: 'Per-turn output-style re-anchor hook',
+    summary: 'The SessionStart anchor from 0.8.10 handles fresh sessions, but styles still faded on long sessions. A new UserPromptSubmit hook emits a ~25-token reminder every turn, keeping the active style at the top of attention. Claude Code only; independent settings entry so either hook can be disabled alone.',
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.8.12',
+    date: '2026-05-19',
+    headline: 'scribe create examples corrected in skill and cookbook',
+    summary: 'Follow-up to 0.8.11: scribe create takes a plain title plus --kind, never a kind:slug argument; that shortcut only addresses existing notes (update, patch, gold, delete, show, rename). The writing-vault-notes skill and cookbook now state the distinction explicitly.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.8.11',
+    date: '2026-05-18',
+    headline: 'Wikilink guidance is plain-stem only',
+    summary: 'The skill and cookbook told agents to write [[kind:slug]] wikilinks. Obsidian has no kind: resolver and : is an illegal filename character, so every such link was broken by construction. Guidance is now plain stems only ([[cache-fingerprints]]), which resolve vault-wide and survive archives.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.8.10',
+    date: '2026-05-13',
+    headline: 'Output styles stop drifting after /compact',
+    summary: 'Claude Code loads a style body into the system prompt once at session start; the section then loses weight against accumulating context. A new SessionStart hook re-anchors the active style body as additionalContext every session, and marsh / terse skill bundles add phrase-match self-triggering ("be brief", "marsh mode") for mid-session activation.',
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.8.9',
+    date: '2026-05-13',
+    headline: 'Shipped rules trimmed under the 12k cap; Obsidian is optional, says so',
+    summary: 'The bundled rules/ set carried ~14k chars across 7 files, over the recommended 12k combined limit that Opus 4.7 punishes more literally than 4.6 did. principles.md is cut to six load-bearing sections and tool-philosophy.md is deleted, including from existing installs on next stamp. Fourteen call sites stopped implying Obsidian is a runtime dependency: the vault is plain markdown and Obsidian is one optional viewer.',
+    tag_kind: 'changed',
+  },
+  {
+    tag: '0.8.6',
+    date: '2026-05-09',
+    headline: 'Claude and Codex managed blocks share one source of truth',
+    summary: 'The two host block templates were maintained as parallel files and had drifted: the Codex variant silently omitted classic aliases, --dry-run, and the entire Forge paragraph. Both now reduce to a shared partial include, with a regression test that fails if either ever holds inline body content again. Shipped rules also stop naming the maintainer’s private tools and scope JS/TS-only guidance under explicit subsections.',
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.8.5',
+    date: '2026-05-07',
+    headline: 'Watcher unit crash-looped on every fresh install',
+    summary: 'The launchd/systemd unit invoked uv tool run --from metalmind-vault-rag, which resolves against PyPI where the package has never been published, so the watcher exited 1 on a 10-second restart throttle and recall silently fell back to a broken stdio path while pulse reported all systems nominal. Units now invoke the entry-point shim uv tool install already creates at ~/.local/bin/. A new regression test reads the real bundled templates instead of synthetic ones.',
+    tag_kind: 'fixed',
+  },
+  {
     tag: '0.8.4',
     date: '2026-05-07',
     headline: 'metalmind stamp self-heals broken output-style frontmatter',
-    summary: 'v0.8.3 fixed fresh installs but the installer (output-style.ts:122 — if !existsSync) skipped the file on upgrade — so every v0.8.0–v0.8.2 user kept the broken name: Marsh stamp and silent default voice through any number of metalmind stamp re-runs. installOutputStyle now detects the case-mismatched twin pattern (on-disk name differs from choice only by case AND body is byte-equal to the bundled asset) and overwrites from the asset. User-edited bodies (case-twin name but diverged body) are left alone. Five tests cover heal-fires / skips-on-edit / skips-on-unrelated-name / skips-when-correct / terse-twin. No rm step required to recover.',
+    summary: 'v0.8.3 fixed fresh installs but the installer (output-style.ts:122 - if !existsSync) skipped the file on upgrade - so every v0.8.0-v0.8.2 user kept the broken name: Marsh stamp and silent default voice through any number of metalmind stamp re-runs. installOutputStyle now detects the case-mismatched twin pattern (on-disk name differs from choice only by case AND body is byte-equal to the bundled asset) and overwrites from the asset. User-edited bodies (case-twin name but diverged body) are left alone. Five tests cover heal-fires / skips-on-edit / skips-on-unrelated-name / skips-when-correct / terse-twin. No rm step required to recover.',
     tag_kind: 'fixed',
   },
   {
     tag: '0.8.3',
     date: '2026-05-07',
     headline: 'Bundled output styles silently inactive on fresh install',
-    summary: 'Claude Code matches settings.outputStyle against the name: frontmatter case-sensitively. The CLI wrote settings.outputStyle = "marsh" (lowercase) but the bundled cli/assets/marsh.md shipped with name: Marsh (capitalized) — so on every fresh install the file landed, the setting pointed at it, the file looked correct, and the style never applied. Same for terse. Caught only because the user had a pre-existing hand-authored lowercase copy. Fixed by lowercasing the asset name field and the legacy-migration write path. Bonus: dropped keep-coding-instructions: true from both shipped frontmatters — not a recognized output-style field.',
+    summary: 'Claude Code matches settings.outputStyle against the name: frontmatter case-sensitively. The CLI wrote settings.outputStyle = "marsh" (lowercase) but the bundled cli/assets/marsh.md shipped with name: Marsh (capitalized) - so on every fresh install the file landed, the setting pointed at it, the file looked correct, and the style never applied. Same for terse. Caught only because the user had a pre-existing hand-authored lowercase copy. Fixed by lowercasing the asset name field and the legacy-migration write path. Bonus: dropped keep-coding-instructions: true from both shipped frontmatters - not a recognized output-style field.',
     tag_kind: 'fixed',
   },
   {
@@ -33,21 +152,21 @@ const releases = [
     tag: '0.8.1',
     date: '2026-05-06',
     headline: 'Three v0.8.0 follow-ups cleared',
-    summary: '(1) doctor codex-mcp check no longer misattributes 5s timeouts as "binary not on PATH" — disambiguated via a `which codex` probe first. (2) synod + writing-vault-notes skill bundles extracted to cli/templates/.shared/skills/ — drift impossible by construction. (3) New doctor codex-agents-mirror check warns when ~/.agents/skills/ holds stale broken copies. No template-content changes, no re-stamp required for v0.8.0 users.',
+    summary: '(1) doctor codex-mcp check no longer misattributes 5s timeouts as "binary not on PATH" - disambiguated via a `which codex` probe first. (2) synod + writing-vault-notes skill bundles extracted to cli/templates/.shared/skills/ - drift impossible by construction. (3) New doctor codex-agents-mirror check warns when ~/.agents/skills/ holds stale broken copies. No template-content changes, no re-stamp required for v0.8.0 users.',
     tag_kind: 'fixed',
   },
   {
     tag: '0.8.0',
     date: '2026-05-06',
     headline: 'Codex CLI as a first-class metalmind host',
-    summary: 'metalmind init --host codex (or via the new multi-select prompt) stamps Codex with the same recall-first behaviour Claude Code gets. Seven artifacts: AGENTS.md sentinel block, SessionStart hook (reuses CC hook script verbatim — Codex JSON shape is identical), [sandbox_workspace_write] network_access=true, ~/.codex/rules/metalmind.rules pre-approving the metalmind command surface, three skills (writing-vault-notes, synod, save), opt-in --with-mcp. /save body extracted to .shared partial; CC slash-command + Codex skill source from one body — drift impossible by construction.',
+    summary: 'metalmind init --host codex (or via the new multi-select prompt) stamps Codex with the same recall-first behaviour Claude Code gets. Seven artifacts: AGENTS.md sentinel block, SessionStart hook (reuses CC hook script verbatim - Codex JSON shape is identical), [sandbox_workspace_write] network_access=true, ~/.codex/rules/metalmind.rules pre-approving the metalmind command surface, three skills (writing-vault-notes, synod, save), opt-in --with-mcp. /save body extracted to .shared partial; CC slash-command + Codex skill source from one body - drift impossible by construction.',
     tag_kind: 'added',
   },
   {
     tag: '0.7.0',
     date: '2026-05-05',
     headline: 'Repositioned as the Claude Code standard library',
-    summary: 'Six modules — memory, code intelligence, daily workflow, deliberation, desktop integration, health — share state through one vault, one CLI, one stamped CLAUDE.md rule. Memory stays the headline; the rest is the moat. New site, new comparison-matrix rows, new Architecture + Cookbook docs.',
+    summary: 'Six modules - memory, code intelligence, daily workflow, deliberation, desktop integration, health - share state through one vault, one CLI, one stamped CLAUDE.md rule. Memory stays the headline; the rest is the moat. New site, new comparison-matrix rows, new Architecture + Cookbook docs.',
     tag_kind: 'changed',
   },
   {
@@ -61,7 +180,7 @@ const releases = [
     tag: '0.6.1',
     date: '2026-05-05',
     headline: 'Stamped rules no longer contradict the CLI contract',
-    summary: 'Scribe daily-date guard (Fixed + Breaking) — every mutating scribe verb refuses non-today daily writes without --date. Plus eight stamped-rule contradictions closed across CLAUDE.md.block.template, save.md, and writing-vault-notes/SKILL.md.',
+    summary: 'Scribe daily-date guard (Fixed + Breaking) - every mutating scribe verb refuses non-today daily writes without --date. Plus eight stamped-rule contradictions closed across CLAUDE.md.block.template, save.md, and writing-vault-notes/SKILL.md.',
     tag_kind: 'fixed',
   },
   {
@@ -91,7 +210,7 @@ const releases = [
       </div>
       <h1 class="display page-hero-title">Release notes.</h1>
       <p class="page-hero-sub">
-        One entry per tag. Recent highlights below — the full CHANGELOG with every entry, breaking-change migration notes, and bench numbers lives in the repo.
+        One entry per tag. Recent highlights below - the full CHANGELOG with every entry, breaking-change migration notes, and bench numbers lives in the repo.
       </p>
       <p style="margin-top: var(--space-4)">
         <a class="btn btn-ghost" href="https://github.com/Nikitzu/metalmind/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Full CHANGELOG on GitHub →</a>

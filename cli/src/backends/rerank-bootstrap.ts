@@ -8,13 +8,13 @@ const STATUS_TIMEOUT_MS = 2_000;
 const POST_RESTART_POLL_MS = 10_000;
 const POST_RESTART_INTERVAL_MS = 250;
 // First rerank call triggers a ~500 MB model download from HuggingFace. Cap
-// generous — we'd rather block bootstrap for a minute than dump the user into
+// generous - we'd rather block bootstrap for a minute than dump the user into
 // a state where their next real `--rerank` call silently falls back to stdio.
 const WARMUP_TIMEOUT_MS = 5 * 60_000;
 
 /** Issue a throwaway `rerank: true` search so the cross-encoder model is
  *  downloaded + loaded inside the fresh watcher process. Keeps the user's
- *  first real query off the cold path. Best-effort — if this times out we
+ *  first real query off the cold path. Best-effort - if this times out we
  *  still report "available" since the default recall path already has its
  *  own longer timeout for rerank calls. */
 async function warmupRerank(ep: string): Promise<boolean> {
@@ -51,7 +51,7 @@ type RerankStatus = 'available' | 'unavailable' | 'stale-watcher' | 'no-watcher'
 /** Distinguishes the failure modes the bootstrap has to react to differently:
  *  - `available`        → nothing to do
  *  - `unavailable`      → watcher is current, but the `[rerank]` extra missing
- *  - `stale-watcher`    → watcher answered 404 on /rerank/status — Python
+ *  - `stale-watcher`    → watcher answered 404 on /rerank/status - Python
  *                         package predates v0.2.1. Reinstalling with the
  *                         `[rerank]` extra upgrades the package *and* adds the
  *                         dep in one shot.
@@ -78,7 +78,7 @@ async function rerankStatus(ep: string): Promise<RerankStatus> {
  *  extra install and restart the watcher so the new process picks them up.
  *
  *  Returns `true` when rerank is (or was just made) available. Returns `false`
- *  when the watcher HTTP endpoint is unreachable — caller decides whether to
+ *  when the watcher HTTP endpoint is unreachable - caller decides whether to
  *  fall through to stdio or abort. Surfaces install errors via thrown Error.
  */
 export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise<boolean> {
@@ -88,7 +88,7 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
   const initial = await rerankStatus(ep);
   if (initial === 'available') return true;
   if (initial === 'no-watcher') {
-    // Nothing listening on the recall endpoint — likely a cold CLI with no
+    // Nothing listening on the recall endpoint - likely a cold CLI with no
     // watcher service at all. Don't install blindly; let the stdio fallback
     // handle the recall and return.
     return false;
@@ -96,11 +96,11 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
 
   if (initial === 'stale-watcher') {
     progress(
-      'watcher predates the reranker feature — upgrading the vault-rag package and enabling the extra (one-time ~210 MB download)…',
+      'watcher predates the reranker feature - upgrading the vault-rag package and enabling the extra (one-time ~210 MB download)…',
     );
   } else {
     progress(
-      'enabling reranker — one-time install (~210 MB: onnxruntime + tokenizers + ~150 MB ONNX model on first use)…',
+      'enabling reranker - one-time install (~210 MB: onnxruntime + tokenizers + ~150 MB ONNX model on first use)…',
     );
   }
   await installVaultRag({ extras: ['rerank'] });
@@ -108,7 +108,7 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
   const outcome = await restartWatcher();
   if (outcome === 'no-unit-found') {
     progress(
-      'watcher unit not found — if you run the watcher manually, restart it yourself before retrying.',
+      'watcher unit not found - if you run the watcher manually, restart it yourself before retrying.',
     );
     return false;
   }
@@ -119,19 +119,19 @@ export async function ensureRerankExtra(opts: EnsureRerankOptions = {}): Promise
     const after = await rerankStatus(ep);
     if (after === 'available') {
       progress(
-        'reranker installed — downloading + warming the cross-encoder (first time only, ~500 MB)…',
+        'reranker installed - downloading + warming the cross-encoder (first time only, ~500 MB)…',
       );
       const warmed = await warmupRerank(ep);
       progress(
         warmed
           ? 'reranker ready.'
-          : 'reranker installed but warmup did not complete in time — first real call may be slow.',
+          : 'reranker installed but warmup did not complete in time - first real call may be slow.',
       );
       return true;
     }
   }
   progress(
-    'reranker install reported success but /rerank/status never flipped — retry `--rerank`.',
+    'reranker install reported success but /rerank/status never flipped - retry `--rerank`.',
   );
   return false;
 }

@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-# Import-time checks — fail fast if any module has a syntax/import error.
+# Import-time checks - fail fast if any module has a syntax/import error.
 from metalmind_vault_rag import (  # noqa: F401
     core,
     doctor,

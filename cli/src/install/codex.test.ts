@@ -58,7 +58,7 @@ describe('stampCodexAgentsMd', () => {
     });
     const content = await readFile(join(codexDir, 'AGENTS.md'), 'utf8');
     expect(content).toContain('metalmind tap copper');
-    // No 'metalmind recall ' (with trailing space) — scadrial flavor must not leak the classic verb.
+    // No 'metalmind recall ' (with trailing space) - scadrial flavor must not leak the classic verb.
     expect(content).not.toMatch(/metalmind recall\b/);
   });
 
@@ -649,7 +649,7 @@ describe('copyCodexSkills', () => {
   it('save SKILL.md body equals CC save.md body (shared partial parity)', async () => {
     // Render both consumers and compare the body section (everything after
     // their respective frontmatter blocks). This proves the {{> .shared/...}}
-    // partial is the single source of truth — no drift possible.
+    // partial is the single source of truth - no drift possible.
     await copyCodexSkills({
       flavor: 'classic',
       templatesDir: TEMPLATES_DIR,

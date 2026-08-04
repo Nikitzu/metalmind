@@ -1,13 +1,13 @@
-# recall-v0 — recall quality + latency bench
+# recall-v0 - recall quality + latency bench
 
 > Benchmark for the **memory** module of the [metalmind standard library](../../README.md#whats-in-the-standard-library).
 
 Measures hit@K and latency of the HTTP recall endpoint (`/search`) against a
 fictional drone-company vault. Two modes:
 
-- **Single-scale** (default) — 12 hand-authored gold notes, talks to whatever
+- **Single-scale** (default) - 12 hand-authored gold notes, talks to whatever
   watcher is already running. Unit-level smoke.
-- **Multi-scale** (`--scales`) — runner owns the lifecycle. For each scale N
+- **Multi-scale** (`--scales`) - runner owns the lifecycle. For each scale N
   it assembles an isolated tmp vault (12 gold + first N−12 distractors),
   spawns a dedicated watcher on an isolated port + Qdrant collection,
   indexes, queries, tears down. Reports hit@K as a function of vault size.
@@ -19,10 +19,10 @@ Zero PII, zero real internal content. Distractors are synthetic Quillfly
 
 Three questions:
 
-1. **Latency** — is `/search` actually sub-100 ms cold / sub-20 ms warm?
-2. **Recall quality at scale** — does the embedder still find the right note
+1. **Latency** - is `/search` actually sub-100 ms cold / sub-20 ms warm?
+2. **Recall quality at scale** - does the embedder still find the right note
    when the vault has 100 / 500 / 1000 notes of plausible same-domain noise?
-3. **Recall quality baseline** — on the 12-note smoke set, how many of 20
+3. **Recall quality baseline** - on the 12-note smoke set, how many of 20
    realistic questions (mix of keyword and paraphrase) find the target?
 
 ## Multi-scale (recommended)
@@ -55,7 +55,7 @@ Your real vault (at `~/Knowledge`) and real collection (`vault` on port
 
 - `metalmind-vault-rag-indexer` + `metalmind-vault-rag-watcher` installed
   from this repo's `packages/vault-rag/` (the watcher must honor
-  `VAULT_HTTP_PORT` — versions ≥ 0.2.0). Reinstall from local source:
+  `VAULT_HTTP_PORT` - versions ≥ 0.2.0). Reinstall from local source:
 
   ```sh
   uv tool install --force --reinstall ./packages/vault-rag
@@ -71,14 +71,14 @@ Your real vault (at `~/Knowledge`) and real collection (`vault` on port
 
 - (`--legacy` only) Qdrant reachable at `$VAULT_QDRANT_URL` (default
   `http://localhost:6333`). The default embedded backend has no daemon
-  prereq — sqlite-vec runs inside the watcher process.
+  prereq - sqlite-vec runs inside the watcher process.
 
 ## Single-scale (legacy / quick smoke)
 
 Talks to whatever watcher is already running on `METALMIND_RECALL_HTTP`
 (defaults to `http://127.0.0.1:17317`). Two options:
 
-**A — Dedicated bench vault.** Point the watcher at the 12 gold notes:
+**A - Dedicated bench vault.** Point the watcher at the 12 gold notes:
 
 ```sh
 export BENCH_VAULT="$(pwd)/bench/recall-v0/fake-vault"
@@ -87,7 +87,7 @@ VAULT_PATH="$BENCH_VAULT" metalmind-vault-rag-watcher &
 node bench/recall-v0/run.mjs
 ```
 
-**B — Point at existing watcher.** Copy the 12 notes into your vault's
+**B - Point at existing watcher.** Copy the 12 notes into your vault's
 `Inbox/`, let the watcher reindex, then:
 
 ```sh
@@ -101,7 +101,7 @@ Prefer multi-scale mode for any serious run.
 
 | env / flag | default | meaning |
 | --- | --- | --- |
-| `--scales 12,100,500,1000` | — | Run multi-scale mode with these note counts. |
+| `--scales 12,100,500,1000` | - | Run multi-scale mode with these note counts. |
 | `--port <N>` | `17400` | Port for the bench-spawned watcher (multi-scale only). |
 | `--rerank` / `METALMIND_BENCH_RERANK=1` | off | Ask the server to cross-encode top-N and re-sort. First call downloads ~500 MB; timeout bumps to ≥180s automatically. |
 | `METALMIND_BENCH_ENDPOINT` | `$METALMIND_RECALL_HTTP` → `http://127.0.0.1:17317` | Single-scale endpoint. Ignored in multi-scale. |
@@ -111,9 +111,9 @@ Prefer multi-scale mode for any serious run.
 
 ## Exit code
 
-- `0` — hit@5 ≥ 60% (at the largest scale, in multi-scale mode)
-- `1` — hit@5 < 60% (regression gate)
-- `2` — runner error
+- `0` - hit@5 ≥ 60% (at the largest scale, in multi-scale mode)
+- `1` - hit@5 < 60% (regression gate)
+- `2` - runner error
 
 ## Distractor generator
 
@@ -121,7 +121,7 @@ Prefer multi-scale mode for any serious run.
 produces byte-identical output. 16 topic templates (warehouse inventory,
 travel approvals, vendor contracts, sprint retros, OKR check-ins, firmware
 notes, QA logs, privacy reviews, marketing plans, support macros, RFCs,
-platform notes, policies, project updates, CI notes) — all plausible
+platform notes, policies, project updates, CI notes) - all plausible
 same-domain Quillfly content, none overlapping with the 12 gold notes'
 subjects. Filenames `distractor-0001.md` … `distractor-1000.md` are sorted,
 so `--scales 100` and `--scales 500` share a prefix.
@@ -147,7 +147,7 @@ Edit `questions.json`. Each entry:
 - **Questions authored by the tool author.** Confirmation-bias risk. A
   held-out set is not yet in place.
 - **One embedder.** Whatever the watcher is configured for. No embedder sweep.
-- **Distractors are same-domain.** That is by design — off-domain noise (e.g.
+- **Distractors are same-domain.** That is by design - off-domain noise (e.g.
   Wikipedia paragraphs) produces trivially easy benchmarks. Same-domain noise
   is what gold competes against in real vaults.
 - **One run per query.** Latency reports single-shot values, not p50/p95/p99

@@ -2,6 +2,8 @@ import { extractText, type McpToolResult, StdioMcpClient } from './mcp-client.js
 
 export type RecallTier = 'fast' | 'deep' | 'expand';
 
+export type RecallMode = 'hybrid' | 'semantic-only' | 'keyword-only';
+
 export interface RecallOptions {
   vaultPath: string;
   query: string;
@@ -11,6 +13,7 @@ export interface RecallOptions {
    *  top-N hits before returning top-k. Opt-in. Silent no-op on stdio fallback
    *  (the reranker lives in the watcher's HTTP server). */
   rerank?: boolean;
+  mode?: RecallMode;
   /** When true, log the HTTP-path failure to stderr before falling back. */
   verbose?: boolean;
   compact?: boolean;
@@ -22,7 +25,7 @@ export interface RecallResult {
   tool: string;
   text: string;
   raw: McpToolResult;
-  /** Transport used — 'http' is the fast local path, 'stdio' is the MCP fallback. */
+  /** Transport used - 'http' is the fast local path, 'stdio' is the MCP fallback. */
   transport: 'http' | 'stdio';
 }
 
@@ -31,7 +34,7 @@ const DEFAULT_HTTP_ENDPOINT = 'http://127.0.0.1:17317';
 // 6s covers a cold local host without starving the stdio fallback on a real
 // outage (we still fall through after the timeout).
 const HTTP_TIMEOUT_MS = 6_000;
-// Rerank calls can legitimately run much longer on the first request — the
+// Rerank calls can legitimately run much longer on the first request - the
 // cross-encoder model warms up in-process and may trigger a download if the
 // bootstrap warmup step was skipped. 90s gives headroom without leaving the
 // user staring forever if something is genuinely wrong.
@@ -105,7 +108,7 @@ function snippet(text: unknown, max = COMPACT_SNIPPET_CHARS): string {
 function formatHitsCompact(hits: Array<Record<string, unknown>>): string {
   return hits
     .map((h, i) => {
-      const score = typeof h.score === 'number' ? h.score.toFixed(3) : '—';
+      const score = typeof h.score === 'number' ? h.score.toFixed(3) : '-';
       const file = typeof h.file === 'string' ? h.file : '(unknown)';
       const head = lastHeadingSegment(h.heading);
       const headPart = head ? ` › ${head}` : '';
@@ -136,7 +139,12 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
     const hits = (await httpPost(
       endpoint,
       '/search',
-      { query: opts.query, k: opts.k ?? 5, rerank: opts.rerank ?? false },
+      {
+        query: opts.query,
+        k: opts.k ?? 5,
+        rerank: opts.rerank ?? false,
+        mode: opts.mode ?? 'hybrid',
+      },
       { rerank: opts.rerank },
     )) as { hits: Array<Record<string, unknown>> };
     if (opts.tier === 'fast') {

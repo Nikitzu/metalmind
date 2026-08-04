@@ -1,36 +1,36 @@
 # Knowledge Vault
 
-Personal markdown vault. Claude persists insights via the `/save` skill and recalls them via the `metalmind` CLI (Bash) — no MCP tools are registered for recall, which keeps session-start context clean.
+Personal markdown vault. Claude persists insights via the `/save` skill and recalls them via the `metalmind` CLI (Bash) - no MCP tools are registered for recall, which keeps session-start context clean.
 
 ## Folders
 
 `Plans/` (dated, flat) · `Work/` · `Work/MOCs/` · `Learnings/` · `Daily/` (YYYY-MM-DD.md) · `Inbox/` (triage bucket) · `Memory/` (migrated native memory) · `Personal/` · `Archive/` (stale).
 
-MOCs live at `Work/MOCs/<project>.md` and index all notes on that project. Project affiliation is in the `project:` frontmatter field, not the folder — no per-project subfolders.
+MOCs live at `Work/MOCs/<project>.md` and index all notes on that project. Project affiliation is in the `project:` frontmatter field, not the folder - no per-project subfolders.
 
 ## Note conventions
 
 - **Filename**: `kebab-case.md`. H1 matches.
 - **One note = one topic.** Before creating, `{{RECALL_CMD}} "<topic>"` first; if a close match exists, edit it.
 - **Frontmatter** (every note): `tags:`, `created:`, `updated:`, `project:` (opt), `status: active|draft|archived`.
-- **Link aggressively** with `[[wikilinks]]`. No orphans — every note has ≥1 in/out link.
+- **Link aggressively** with `[[wikilinks]]`. No orphans - every note has ≥1 in/out link.
 - **No secrets** in any note.
 
 ## Claude's behavior
 
 **Lookup order** (pick one, don't combine):
 
-1. `Bash: {{RECALL_CMD}} "<query>"` — semantic search, default for conceptual questions.
-2. `Bash: {{RECALL_CMD}} "<query>" --deep` — hits + related notes in one call.
-3. `Bash: {{RECALL_CMD}} "<query>" --expand` — hits + linked context graph.
-4. `Read` — only when user gave an exact path.
-5. `Grep` — only for exact string matches.
-6. `Glob` — only for file-pattern listing.
+1. `Bash: {{RECALL_CMD}} "<query>"` - semantic search, default for conceptual questions.
+2. `Bash: {{RECALL_CMD}} "<query>" --deep` - hits + related notes in one call.
+3. `Bash: {{RECALL_CMD}} "<query>" --expand` - hits + linked context graph.
+4. `Read` - only when user gave an exact path.
+5. `Grep` - only for exact string matches.
+6. `Glob` - only for file-pattern listing.
 
-**Writing** (full contract lives in the global stamped block — this section names the vault-local rules only):
+**Writing** (full contract lives in the global stamped block - this section names the vault-local rules only):
 
-- Every vault write goes through `metalmind scribe <verb>` / `metalmind atium` / `metalmind gold` — **never raw `Write`/`Edit`** on vault files. If no metalmind command fits, stop and surface the gap.
-- Propose the note (path + draft) before writing — never save silently.
+- Every vault write goes through `metalmind scribe <verb>` / `metalmind atium` / `metalmind gold` - **never raw `Write`/`Edit`** on vault files. If no metalmind command fits, stop and surface the gap.
+- Propose the note (path + draft) before writing - never save silently.
 - Daily notes for non-today dates require `--date <YYYY-MM-DD>` (scribe) or live under `metalmind atium` (canonical for daily action items).
 - Never touch `Welcome.md` or `.obsidian/`.
 

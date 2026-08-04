@@ -78,7 +78,7 @@ def backend(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch):
             return real_client(*args, **kwargs)
 
         monkeypatch.setattr(httpx, "Client", fake_client)
-        # batch_size=10 so 3 inputs fit a single batch — keeps the parametric
+        # batch_size=10 so 3 inputs fit a single batch - keeps the parametric
         # one-hot assertions interpretable across both backends. Ollama's
         # cross-batch order is exercised separately in test_ollama_batches_*.
         yield OllamaBackend(url="http://fake", model="fake-model", dim=4, batch_size=10)
@@ -166,7 +166,7 @@ def test_ollama_batches_across_input(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_cache_dir_defaults_to_metalmind_home(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Model cache must live under ~/.metalmind, not the system temp dir —
+    """Model cache must live under ~/.metalmind, not the system temp dir -
     macOS purges temp files, leaving a broken half-cache (NO_SUCHFILE)."""
     from metalmind_vault_rag.backends.fastembed_backend import resolve_cache_dir
 

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { getTemplatesDir } from '../util/paths.js';
 
-// Placeholders we know about — rendered at install time by the relevant
+// Placeholders we know about - rendered at install time by the relevant
 // installer. Anything else in a template is a bug: Claude would see the
 // literal {{WHATEVER}} string at runtime.
 const KNOWN_PLACEHOLDERS = new Set([
@@ -60,7 +60,7 @@ describe('template placeholders', () => {
     for await (const path of walk(templatesDir)) {
       const st = await stat(path);
       if (st.isDirectory()) continue;
-      // Only check text files — .template, .md, .sh, .yml.
+      // Only check text files - .template, .md, .sh, .yml.
       if (!/\.(template|md|sh|ya?ml|toml|py)$/i.test(path)) continue;
 
       const content = await readFile(path, 'utf8');
@@ -105,7 +105,7 @@ describe('template placeholders', () => {
     // missing classic aliases, --dry-run callouts, the Forge paragraph, etc.)
     // The fix is the same shape as v0.8.0's .shared/save-body.md extraction:
     // both consumers reduce to a single {{> ...}} include of one source file.
-    // This test enforces the contract — if either file ever holds inline
+    // This test enforces the contract - if either file ever holds inline
     // body content again, the test fails before drift can ship.
     const templatesDir = getTemplatesDir();
     const PARTIAL_REF = '{{> .shared/managed-block-body.md}}';
@@ -128,7 +128,7 @@ describe('template placeholders', () => {
   it('watcher unit templates invoke the entry-point shim, not `uv tool run --from`', async () => {
     // Regression for v0.8.x bug: plist used `uv tool run --from metalmind-vault-rag`,
     // which resolves the package name against PyPI. metalmind-vault-rag is never
-    // published — it's installed locally from a bundled path — so launchd hit
+    // published - it's installed locally from a bundled path - so launchd hit
     // "package not found in registry", exit 1, KeepAlive restart loop, recall dead.
     const templatesDir = getTemplatesDir();
     for (const rel of [

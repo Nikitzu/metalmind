@@ -51,7 +51,7 @@ export async function setupVaultGit(opts: SetupVaultGitOptions): Promise<SetupVa
   }
 
   if (!(await isGitInstalled())) {
-    throw new Error('git not found on PATH — install git or re-run with no git tracking');
+    throw new Error('git not found on PATH - install git or re-run with no git tracking');
   }
 
   const dotGit = join(vaultPath, '.git');
@@ -102,7 +102,7 @@ export async function setupVaultGit(opts: SetupVaultGitOptions): Promise<SetupVa
       } else {
         commitWarning =
           commit.stderr.trim() ||
-          'commit failed — check that user.name and user.email are configured (git config --global ...)';
+          'commit failed - check that user.name and user.email are configured (git config --global ...)';
       }
     }
   }

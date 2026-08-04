@@ -4,7 +4,7 @@ import { describeAliasSourcing, installAliases } from '../install/aliases.js';
 import { installCodex } from '../install/codex.js';
 import { installCursor } from '../install/cursor.js';
 import { promptHosts } from '../install/host-prompt.js';
-import { migrateTerseToTelegraph } from '../install/output-style.js';
+import { migrateTerseToTelegraph, refreshOutputStyleAssets } from '../install/output-style.js';
 import {
   applyMemoryRouting,
   applyMetalmindSessionStartHook,
@@ -16,7 +16,6 @@ import { setupVault } from '../install/vault.js';
 import {
   hasRerankExtraInstalled,
   installVaultRag,
-  resolveUvBinPath,
   resolveWatcherBinPath,
 } from '../install/vault-rag.js';
 import { installWatcher } from '../install/watcher.js';
@@ -36,7 +35,7 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
 
   const config = await readConfig();
   if (!config) {
-    log.error('No ~/.metalmind/config.json — run `metalmind init` first.');
+    log.error('No ~/.metalmind/config.json - run `metalmind init` first.');
     process.exitCode = 1;
     return;
   }
@@ -103,6 +102,14 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     } else {
       log.info('  no legacy terse style found; nothing to migrate');
     }
+
+    log.step('Output-style asset refresh');
+    const styleRefresh = await refreshOutputStyleAssets();
+    log.info(
+      styleRefresh.refreshed.length > 0
+        ? `  refreshed from bundled assets: ${styleRefresh.refreshed.join(', ')}`
+        : '  installed styles already match bundled assets',
+    );
 
     log.step('Output-style activation hook');
     const outputStyleHookReg = await applyOutputStyleSessionStartHook({
@@ -205,8 +212,7 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     log.step('Watcher unit file');
     try {
       const watcherBin = await resolveWatcherBinPath();
-      const uvBin = await resolveUvBinPath();
-      const watcher = await installWatcher({ vaultPath: config.vaultPath, watcherBin, uvBin });
+      const watcher = await installWatcher({ vaultPath: config.vaultPath, watcherBin });
       log.info(
         watcher.wroteUnit
           ? `  refreshed ${watcher.unitPath} (service restarted)`

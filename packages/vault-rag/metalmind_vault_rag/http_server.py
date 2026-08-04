@@ -1,6 +1,6 @@
 """Loopback HTTP recall endpoint. Co-hosted inside the watcher process so that
 `metalmind tap copper` can hit a long-running server instead of spawning a new
-Python MCP every call. Bound to 127.0.0.1 only — nothing leaves the machine."""
+Python MCP every call. Bound to 127.0.0.1 only - nothing leaves the machine."""
 import json
 import os
 import threading

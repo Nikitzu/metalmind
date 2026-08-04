@@ -21,7 +21,7 @@ function fail(message: string): void {
 
 async function ctx(): Promise<ScribeOpts> {
   const cfg = await readConfig();
-  if (!cfg) throw new Error('metalmind not initialized — run `metalmind init` first');
+  if (!cfg) throw new Error('metalmind not initialized - run `metalmind init` first');
   return { vaultRoot: cfg.vaultPath };
 }
 
@@ -83,7 +83,7 @@ export async function scribeUpdateCmd(
 ): Promise<void> {
   try {
     const body = opts.body ?? (await readStdin());
-    if (!body.trim()) throw new Error('empty body — pipe content on stdin or pass --body');
+    if (!body.trim()) throw new Error('empty body - pipe content on stdin or pass --body');
     const res = await scribeUpdate(notePath, body, await ctx(), {
       date: opts.date,
       dryRun: opts.dryRun,
@@ -100,7 +100,7 @@ export async function scribePatchCmd(
 ): Promise<void> {
   try {
     const body = opts.body ?? (await readStdin());
-    if (!body.trim()) throw new Error('empty body — pipe content on stdin or pass --body');
+    if (!body.trim()) throw new Error('empty body - pipe content on stdin or pass --body');
     const occurrence = opts.occurrence ? Number.parseInt(opts.occurrence, 10) : undefined;
     const res = await scribePatch(
       notePath,
@@ -165,7 +165,7 @@ export async function scribeListCmd(opts: { project?: string; kind?: string }): 
     }
     for (const e of entries) {
       log.info(
-        `  ${e.relPath}${e.title ? ` — ${e.title}` : ''}${e.project ? ` [${e.project}]` : ''}${e.status && e.status !== 'active' ? ` (${e.status})` : ''}`,
+        `  ${e.relPath}${e.title ? ` - ${e.title}` : ''}${e.project ? ` [${e.project}]` : ''}${e.status && e.status !== 'active' ? ` (${e.status})` : ''}`,
       );
     }
   } catch (err) {

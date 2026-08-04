@@ -17,13 +17,13 @@ You are about to create an agent team for parallel code review.
 2. **Recall prior context.** Run `Bash: {{RECALL_CMD}} "<pr-scope-keywords>" --deep` to surface prior review notes, known patterns, and domain conventions from the vault (auth, API contracts, perf hot paths, conventions drift). Include any hits in each reviewer's spawn prompt as "prior context (from vault)" so reviewers apply project-specific rules, not just generic ones. If the user has native auto-memory off (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`), this is the only place prior context enters the team.
 
 3. Create an agent team with these teammates, each given the full diff as part of its spawn prompt:
-   - `security-reviewer` — Opus, high effort. Audit per `~/.claude/rules/security-boundaries.md`.
-   - `api-contract-reviewer` — Opus, medium effort. Audit per `~/.claude/rules/api-design.md`.
-   - `performance-reviewer` — Sonnet, medium effort.
-   - `conventions-reviewer` — Sonnet, low effort.
-   - Only if `--a11y` is in the arguments: add `a11y-reviewer` — Sonnet, low effort.
+   - `security-reviewer` - Opus, high effort. Audit per `~/.claude/rules/security-boundaries.md`.
+   - `api-contract-reviewer` - Opus, medium effort. Audit per `~/.claude/rules/api-design.md`.
+   - `performance-reviewer` - Sonnet, medium effort.
+   - `conventions-reviewer` - Sonnet, low effort.
+   - Only if `--a11y` is in the arguments: add `a11y-reviewer` - Sonnet, low effort.
 
-4. Each reviewer reports independently to you in its own output format. Do not have reviewers talk to each other — reviews should stay independent to avoid anchoring bias.
+4. Each reviewer reports independently to you in its own output format. Do not have reviewers talk to each other - reviews should stay independent to avoid anchoring bias.
 
 5. When all reviewers have finished, produce a **consolidated report** for the user with the following structure:
 
@@ -31,12 +31,12 @@ You are about to create an agent team for parallel code review.
    ## Consolidated PR review: <pr ref>
    
    ### Critical (must fix before merge)
-   - [security] file:line — title — suggested fix
-   - [api-contract] file:line — title — suggested fix
+   - [security] file:line - title - suggested fix
+   - [api-contract] file:line - title - suggested fix
    
    ### Should fix
-   - [performance] file:line — title — suggested fix
-   - [conventions] file:line — title — suggested fix
+   - [performance] file:line - title - suggested fix
+   - [conventions] file:line - title - suggested fix
    
    ### Suggestions
    - ...
@@ -50,4 +50,4 @@ You are about to create an agent team for parallel code review.
 
 6. Do not propose fixes beyond what the reviewers suggested. If the user wants fixes applied, they can spawn engineers in a follow-up.
 
-7. Clean up the team when the consolidated report is delivered: tell the user "Team done — say 'cleanup team' to release resources" and wait for that instruction before calling cleanup. Do not auto-cleanup; the user may want to ask reviewers follow-up questions.
+7. Clean up the team when the consolidated report is delivered: tell the user "Team done - say 'cleanup team' to release resources" and wait for that instruction before calling cleanup. Do not auto-cleanup; the user may want to ask reviewers follow-up questions.

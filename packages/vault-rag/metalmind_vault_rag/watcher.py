@@ -3,12 +3,12 @@ Also hosts a loopback HTTP server so `metalmind tap copper` can bypass the
 per-call MCP stdio spawn cost.
 
 Batches burst saves within DEBOUNCE_SECONDS, then upserts only the changed
-files. Never wipes the collection — queries remain answerable during reindex.
+files. Never wipes the collection - queries remain answerable during reindex.
 
 The watch loop sets ``yield_on_timeout`` so the iterator wakes up periodically
 even when no files changed. Without that, a single save that landed inside the
 debounce window would sit unindexed until *some other* change re-entered the
-loop — the "lone-save starvation" bug.
+loop - the "lone-save starvation" bug.
 
 All stdout/stderr output is also tee'd to ``~/.metalmind/logs/watcher.log``
 with rotation (5 MB × 3 backups) so the long-running watcher never fills the
@@ -108,7 +108,7 @@ def _maybe_backfill() -> None:
         return
 
     if vec_points > 0 and fts_rows > 0:
-        return  # both populated — happy path
+        return  # both populated - happy path
 
     files = files_to_index()
     if not files:
@@ -121,7 +121,7 @@ def _maybe_backfill() -> None:
         reason_bits.append("FTS5 empty")
     print(
         f"backfill: {' / '.join(reason_bits)} with {len(files)} source files present "
-        f"— reindexing once (~1 min per 1k notes on M1).",
+        f"- reindexing once (~1 min per 1k notes on M1).",
         flush=True,
     )
     try:
@@ -143,7 +143,7 @@ def main() -> None:
     print(f"watching {VAULT}", flush=True)
     _maybe_backfill()
     # Fire up the co-hosted HTTP recall endpoint (127.0.0.1 only). If the port
-    # is busy or binding fails, watcher keeps working — CLI falls back to stdio.
+    # is busy or binding fails, watcher keeps working - CLI falls back to stdio.
     http_server.serve_forever()
     pending: set[Path] = set()
     first_pending_ts = 0.0
@@ -164,7 +164,7 @@ def main() -> None:
         if not pending:
             continue
 
-        # Flush once the oldest pending item has aged past DEBOUNCE_SECONDS —
+        # Flush once the oldest pending item has aged past DEBOUNCE_SECONDS -
         # not when the last flush is fresh. A single save without a follow-up
         # still gets indexed within DEBOUNCE + TICK_MS.
         if time.time() - first_pending_ts < DEBOUNCE_SECONDS:

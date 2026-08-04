@@ -7,7 +7,7 @@ export type WatcherRestartOutcome = 'restarted' | 'no-unit-found' | 'unsupported
 
 /** Kick the vault-indexer watcher so a fresh Python process picks up newly
  *  installed dependencies. Used after `metalmind tap copper --rerank` triggers
- *  the one-time install of the `[rerank]` extra — the old watcher has already
+ *  the one-time install of the `[rerank]` extra - the old watcher has already
  *  stuck its "rerank deps missing" flag and would refuse to rerank forever
  *  without a restart. Best-effort: returns `no-unit-found` quietly if the user
  *  is running the watcher some other way. */

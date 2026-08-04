@@ -13,7 +13,7 @@ describe('setupVaultGit', () => {
   const savedEnv: Record<string, string | undefined> = {};
 
   beforeAll(() => {
-    // Ensure git commits succeed regardless of host config — we only override
+    // Ensure git commits succeed regardless of host config - we only override
     // identity for this test process; nothing leaks beyond it.
     for (const key of [
       'GIT_AUTHOR_NAME',

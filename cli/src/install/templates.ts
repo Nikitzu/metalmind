@@ -51,7 +51,7 @@ export function renderSkillSentinels(
 // Skill bundles can carry parallel branches for both flavours of metalmind
 // (e.g. persona labels in `synod`). At install time we keep the chosen
 // flavour's branch and discard the other entirely, so the file on disk is
-// flavour-pure — no runtime branching needed.
+// flavour-pure - no runtime branching needed.
 export function renderFlavorSentinels(source: string, flavor: 'scadrial' | 'classic'): string {
   const otherFlavor = flavor === 'scadrial' ? 'classic' : 'scadrial';
   let out = source;
@@ -68,7 +68,7 @@ export interface CopyClaudeTemplatesResult {
 /**
  * Files we used to ship under `~/.claude/rules/` but have since retired.
  * On every `metalmind init` we remove them from the user's `claudeDir` so
- * old installs converge on the current template set. Safe by construction —
+ * old installs converge on the current template set. Safe by construction -
  * only files metalmind itself shipped are listed here.
  */
 export const LEGACY_RULES_FILES = ['tool-philosophy.md'];
@@ -139,7 +139,7 @@ export const METALMIND_HOOK_FILENAME = 'metalmind-session-start.sh';
 export const OUTPUT_STYLE_HOOK_FILENAME = 'metalmind-output-style-activate.sh';
 export const OUTPUT_STYLE_REANCHOR_HOOK_FILENAME = 'metalmind-output-style-reanchor.sh';
 
-// Renderer may be sync OR async — async needed for renderers that call
+// Renderer may be sync OR async - async needed for renderers that call
 // resolvePartials (which reads files) to compose cleanly into the copy flow.
 type SyncRenderer = (content: string) => string;
 type Renderer = SyncRenderer | ((content: string) => Promise<string>);
@@ -209,7 +209,7 @@ async function copyTreeRecursive(
     if (entry.isDirectory()) {
       await copyTreeRecursive(srcPath, destPath, render);
     } else if (entry.isFile()) {
-      // Render only markdown — binary skill assets (icons, fonts) must be
+      // Render only markdown - binary skill assets (icons, fonts) must be
       // copied byte-for-byte. The renderer is a no-op on files without
       // sentinel/placeholder markup, so it's safe to apply universally.
       if (render && entry.name.endsWith('.md')) {
@@ -255,7 +255,7 @@ export async function copyClaudeTemplates(
 
   const renderRecall: SyncRenderer = (raw) => raw.replace(/\{\{RECALL_CMD\}\}/g, recall);
   // save.md uses {{> .shared/save-body.md}} to source its body from the
-  // partial shared with Codex's skills/save/SKILL.md — extract once,
+  // partial shared with Codex's skills/save/SKILL.md - extract once,
   // both hosts wrap it. Resolution must run BEFORE recall/sentinel
   // rendering so placeholders inside the partial get processed.
   const renderPartials: Renderer = async (raw) => {
@@ -285,9 +285,9 @@ export async function copyClaudeTemplates(
     (name) => (PARTIAL_COMMANDS.has(name) ? renderPartials : null),
   );
   // Skills come from two source trees:
-  // - cli/templates/claude/skills/ — CC-specific bundles (using-teams,
+  // - cli/templates/claude/skills/ - CC-specific bundles (using-teams,
   //   obsidian-markdown).
-  // - cli/templates/.shared/skills/ — host-agnostic bundles shared with
+  // - cli/templates/.shared/skills/ - host-agnostic bundles shared with
   //   Codex (writing-vault-notes, synod). Single source of truth post-v0.8.1.
   const ccSkills = await copySkillBundles(
     join(srcRoot, 'skills'),
@@ -366,7 +366,7 @@ export async function copyClaudeHooks(
 
   // Output-style activation hook: re-anchors the active output-style body on
   // every SessionStart so the rules survive context compaction. No template
-  // variables — bash reads ~/.claude/settings.json + output-styles/ at runtime.
+  // variables - bash reads ~/.claude/settings.json + output-styles/ at runtime.
   const outputStyleHookScriptPath = join(hooksDir, OUTPUT_STYLE_HOOK_FILENAME);
   const outputStyleSrc = join(templatesDir, 'claude', 'hooks', 'output-style-activate.sh.template');
   const outputStyleRaw = await readFile(outputStyleSrc, 'utf8');
@@ -384,7 +384,7 @@ export async function copyClaudeHooks(
   // Output-style re-anchor hook: UserPromptSubmit sibling that emits a short
   // (~25 token) reminder every turn. Anchors the style against mid-session
   // drift even after the SessionStart body fades from attention. No template
-  // variables — bash reads ~/.claude/settings.json at runtime.
+  // variables - bash reads ~/.claude/settings.json at runtime.
   const outputStyleReanchorHookScriptPath = join(hooksDir, OUTPUT_STYLE_REANCHOR_HOOK_FILENAME);
   const outputStyleReanchorSrc = join(
     templatesDir,

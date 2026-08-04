@@ -27,7 +27,7 @@ import { uninstallWatcher } from './watcher.js';
 
 export interface TeardownOptions {
   /**
-   * REQUIRED. Directory the teardown operates on — typically `~/.claude` in
+   * REQUIRED. Directory the teardown operates on - typically `~/.claude` in
    * production, a tmp dir in tests. We do NOT default to the real home dir:
    * silently stomping a user's `~/.claude/CLAUDE.md` from a test run is the
    * kind of bug that costs a day to find. Callers (the uninstall command,
@@ -36,7 +36,7 @@ export interface TeardownOptions {
   claudeDir: string;
   /**
    * REQUIRED. Path to the Claude Code settings.json the teardown may mutate.
-   * Same reasoning as `claudeDir` — no silent fallback to the real user file.
+   * Same reasoning as `claudeDir` - no silent fallback to the real user file.
    */
   settingsPath: string;
   config?: Config;

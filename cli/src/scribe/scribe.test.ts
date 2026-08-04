@@ -18,7 +18,7 @@ const fixedNow = () => new Date('2026-04-21T10:00:00.000Z');
 
 describe('slugify', () => {
   it('normalises spaces and punctuation', () => {
-    expect(slugify('NPM OIDC & CI — gotchas!')).toBe('npm-oidc-ci-gotchas');
+    expect(slugify('NPM OIDC & CI - gotchas!')).toBe('npm-oidc-ci-gotchas');
   });
 });
 
@@ -64,7 +64,7 @@ describe('scribe CRUD', () => {
     expect(note).toContain('# Do X');
     expect(note).toContain('hello');
     const moc = await readFile(join(vault, 'Work/MOCs/metalmind.md'), 'utf8');
-    expect(moc).toContain('[[Plans/2026-04-21-do-x]] — Do X');
+    expect(moc).toContain('[[Plans/2026-04-21-do-x]] - Do X');
   });
 
   it('create: does not double-date a plan slug that already starts with a date', async () => {
@@ -455,7 +455,7 @@ describe('daily-date guard', () => {
     );
   });
 
-  it('today daily is unaffected — no --date needed for update or patch', async () => {
+  it('today daily is unaffected - no --date needed for update or patch', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     await scribeCreate({ kind: 'daily', title: 'morning', body: '## A\n\nseed' }, ctx);
     await scribeUpdate('daily:2026-04-21', 'more', ctx);

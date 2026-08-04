@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Measures the first-turn token tax each memory system imposes on a fresh
-// Claude session — before the user has typed anything. Reads tool-manifest
+// Claude session - before the user has typed anything. Reads tool-manifest
 // fixtures from ./fixtures, calls Anthropic's /v1/messages/count_tokens with
 // each manifest as the `tools` parameter, and writes results to ./results.
 //
@@ -61,7 +61,7 @@ async function measureFixture(name, fixture, instructionBlockText) {
   const tools = toAnthropicTools(fixture.tools ?? []);
   const toolsSerialized = JSON.stringify(tools);
 
-  // Baseline: minimal user message, no tools, no system — the floor any call pays.
+  // Baseline: minimal user message, no tools, no system - the floor any call pays.
   // Tax: baseline + tools vs. baseline alone.
   const result = {
     name,
@@ -84,7 +84,7 @@ async function measureFixture(name, fixture, instructionBlockText) {
   result.mode = 'anthropic-count-tokens';
   result.model = MODEL;
 
-  // Baseline the empty call once — same for all fixtures.
+  // Baseline the empty call once - same for all fixtures.
   const baseline = await countTokensApi({});
   result._baseline_tokens = baseline;
 
@@ -117,7 +117,7 @@ async function main() {
     const name = basename(file, '.json');
     const raw = await readFile(join(FIXTURES_DIR, file), 'utf8');
     const fixture = JSON.parse(raw);
-    // Attach the instruction block only to the metalmind-loopback fixture —
+    // Attach the instruction block only to the metalmind-loopback fixture -
     // that is where the "text-block-instead-of-schema" trade happens.
     const attachInstructionBlock = name === 'metalmind-loopback';
     const res = await measureFixture(
@@ -192,7 +192,7 @@ function printMarkdownTable(results) {
       const suffix = n === 'metalmind-loopback' ? ' *(one-time CLAUDE.md block)*' : '';
       return `| ${n} | ${r.transport} | ${r.tool_count} | ${tokensOf(r)}${suffix} |`;
     });
-  console.log('\n### MCP-tax v0 — first-turn token tax\n');
+  console.log('\n### MCP-tax v0 - first-turn token tax\n');
   console.log('| System | Transport | Tools | First-turn tokens |');
   console.log('|---|---|---:|---:|');
   for (const row of rows) console.log(row);

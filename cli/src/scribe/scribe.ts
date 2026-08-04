@@ -194,11 +194,11 @@ async function appendMocLink(
   title: string,
 ): Promise<void> {
   const moc = mocPathFor(vaultRoot, project);
-  const link = `- [[${relPath.replace(/\.md$/, '')}]] — ${title}`;
+  const link = `- [[${relPath.replace(/\.md$/, '')}]] - ${title}`;
   if (!(await exists(moc))) {
     const scaffold =
       buildFrontmatter({ project, kind: 'moc', created: isoDate(new Date()) }) +
-      `\n# ${project} — MOC\n\n${LINKED_NOTES_HEADING}\n\n${link}\n`;
+      `\n# ${project} - MOC\n\n${LINKED_NOTES_HEADING}\n\n${link}\n`;
     await mkdir(dirname(moc), { recursive: true });
     await writeFile(moc, scaffold, 'utf8');
     return;
@@ -219,7 +219,7 @@ async function stripMocLink(vaultRoot: string, project: string, relPath: string)
   const raw = await readFile(moc, 'utf8');
   const slug = relPath.replace(/\.md$/, '');
   const pattern = new RegExp(
-    `^- \\[\\[${slug.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\]\\] —.*\\n?`,
+    `^- \\[\\[${slug.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\]\\] -.*\\n?`,
     'gm',
   );
   const updated = raw.replace(pattern, '');
@@ -239,7 +239,7 @@ export async function scribeCreate(
       if (opts.slug && opts.slug !== dailyDate) {
         throw new Error(
           `--slug '${opts.slug}' conflicts with --date '${opts.date}' (resolves to ${dailyDate}). ` +
-            `Drop --slug for daily kind — --date is the canonical knob for the target date.`,
+            `Drop --slug for daily kind - --date is the canonical knob for the target date.`,
         );
       }
     } else if (opts.slug && opts.slug !== today) {
@@ -278,7 +278,7 @@ export async function scribeCreate(
     const section = `\n\n## ${opts.title}\n\n${body}`;
     await writeFile(abs, existing.trimEnd() + section, 'utf8');
   } else if (await exists(abs)) {
-    throw new Error(`note already exists at ${relPath} — use scribe update to modify`);
+    throw new Error(`note already exists at ${relPath} - use scribe update to modify`);
   } else {
     await writeFile(abs, content, 'utf8');
   }
@@ -326,7 +326,7 @@ export async function scribePatch(
   if (matches.length === 0) throw new Error(`section '## ${opts.section}' not found`);
   if (matches.length > 1 && opts.occurrence === undefined) {
     throw new Error(
-      `section '## ${opts.section}' has ${matches.length} occurrences — pass --occurrence N (1-indexed)`,
+      `section '## ${opts.section}' has ${matches.length} occurrences - pass --occurrence N (1-indexed)`,
     );
   }
   const target = matches[(opts.occurrence ?? 1) - 1];

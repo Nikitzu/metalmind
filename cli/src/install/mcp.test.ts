@@ -78,7 +78,7 @@ describe('MCP registration', () => {
 
   it('leaves any pre-existing teammateMode in ~/.claude.json untouched', async () => {
     // Older Claude Code clients used to mirror teammateMode here. Don't strip
-    // user state we no longer manage — just leave it alone.
+    // user state we no longer manage - just leave it alone.
     await writeFile(claudeJsonPath, JSON.stringify({ teammateMode: 'manual' }), 'utf8');
     await registerMcpServers({ claudeJsonPath });
     const data = await readJson(claudeJsonPath);

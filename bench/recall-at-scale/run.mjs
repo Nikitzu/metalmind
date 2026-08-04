@@ -239,7 +239,7 @@ async function runScale(scale, port, questions, cache) {
         process.stdout.write(`[scale=${scale}] rerank=engaged\n`);
       } else {
         process.stdout.write(
-          `[scale=${scale}] rerank=DISABLED — install metalmind-vault-rag[rerank] in the watcher venv.\n`,
+          `[scale=${scale}] rerank=DISABLED - install metalmind-vault-rag[rerank] in the watcher venv.\n`,
         );
       }
     } catch {

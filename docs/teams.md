@@ -16,18 +16,18 @@ No external dependencies. Works out of the box in in-process mode.
 
 | Command | Use when |
 |---|---|
-| `/team-debug <bug>` | Root cause isn't obvious — 3-5 adversaries form competing hypotheses, argue via `SendMessage`, converge on the theory with strongest evidence. |
-| `/team-feature <feature>` | Feature touches backend + frontend + tests — architect plans, each layer owned by a different teammate. |
-| `/team-multi-repo-audit <concern>` | Same pattern or concern across multiple repos — one reviewer per repo, in parallel, findings synthesized. |
-| `/team-pr-review <pr>` | Deep PR review — security, api-contract, performance, conventions reviewers in parallel. |
+| `/team-debug <bug>` | Root cause isn't obvious - 3-5 adversaries form competing hypotheses, argue via `SendMessage`, converge on the theory with strongest evidence. |
+| `/team-feature <feature>` | Feature touches backend + frontend + tests - architect plans, each layer owned by a different teammate. |
+| `/team-multi-repo-audit <concern>` | Same pattern or concern across multiple repos - one reviewer per repo, in parallel, findings synthesized. |
+| `/team-pr-review <pr>` | Deep PR review - security, api-contract, performance, conventions reviewers in parallel. |
 
 ## Display modes
 
-Two modes — `teammateMode` in `~/.claude.json` controls which:
+Two modes - `teammateMode` in `~/.claude.json` controls which:
 
-- **`"auto"`** (default in this stack) — split panes if already in a supported terminal, else in-process. Safe default.
-- **`"in-process"`** — all teammates in your current terminal. Use `Shift+Down` to cycle, type to message directly, `Enter` to view a teammate's full session. Works everywhere.
-- **`"tmux"`** — split-pane mode. Auto-detects whether to use iTerm2 or tmux. See [iTerm2 setup](#iterm2-split-panes-optional).
+- **`"auto"`** (default in this stack) - split panes if already in a supported terminal, else in-process. Safe default.
+- **`"in-process"`** - all teammates in your current terminal. Use `Shift+Down` to cycle, type to message directly, `Enter` to view a teammate's full session. Works everywhere.
+- **`"tmux"`** - split-pane mode. Auto-detects whether to use iTerm2 or tmux. See [iTerm2 setup](#iterm2-split-panes-optional).
 
 ## iTerm2 split panes (optional)
 
@@ -42,7 +42,7 @@ If you want each teammate in its own iTerm2 pane instead of cycling via Shift+Do
 2. **Enable the iTerm2 Python API**:
    iTerm2 → Settings → General → Magic → **Enable Python API**
 
-3. **Set mode to `"tmux"`** in `~/.claude.json` (this is the split-pane mode name — it auto-detects iTerm2, despite the name):
+3. **Set mode to `"tmux"`** in `~/.claude.json` (this is the split-pane mode name - it auto-detects iTerm2, despite the name):
    ```json
    { "teammateMode": "tmux" }
    ```
@@ -77,10 +77,10 @@ Tell the lead: `Clean up the team`. This removes shared resources at `~/.claude/
 
 ## Known limitations
 
-- No `/resume` or `/rewind` support for in-process teammates — a resumed lead may reference teammates that no longer exist
+- No `/resume` or `/rewind` support for in-process teammates - a resumed lead may reference teammates that no longer exist
 - One team per session at a time
 - No nested teams (teammates can't spawn their own teammates)
-- Permissions set at spawn time — all teammates inherit the lead's mode
+- Permissions set at spawn time - all teammates inherit the lead's mode
 
 ## Disabling
 
@@ -89,7 +89,7 @@ If teams get in the way:
 - Remove the `/team-*.md` commands from `~/.claude/commands/`
 - Set `env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` in `~/.claude/settings.json`
 
-Or leave everything in place and just don't invoke them — they're opt-in.
+Or leave everything in place and just don't invoke them - they're opt-in.
 
 ## References
 

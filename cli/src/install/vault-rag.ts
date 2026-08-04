@@ -27,7 +27,7 @@ export interface InstallVaultRagResult {
 }
 
 async function isVaultRagInstalled(): Promise<boolean> {
-  // `uv tool list` is non-blocking and authoritative — asking the server binary
+  // `uv tool list` is non-blocking and authoritative - asking the server binary
   // for --help used to block on stdin (FastMCP ignores argv and starts the
   // stdio loop), racing the 5s default timeout every init.
   const res = await runCommand('uv', ['tool', 'list'], { timeoutMs: 10_000 });
@@ -60,10 +60,10 @@ async function bundledVaultRagVersion(packageDir: string): Promise<string | null
 }
 
 /** Probe the installed vault-rag venv for the `[rerank]` extra. Returns true
- *  iff `onnxruntime` is importable there — i.e. the user opted into the
+ *  iff `onnxruntime` is importable there - i.e. the user opted into the
  *  rerank tier at some point. Lets `stamp` preserve that state on
  *  upgrade-triggered reinstall instead of silently dropping the extra.
- *  (v0.5.2 swapped FlagEmbedding/torch for onnxruntime — same probe shape.) */
+ *  (v0.5.2 swapped FlagEmbedding/torch for onnxruntime - same probe shape.) */
 export async function hasRerankExtraInstalled(): Promise<boolean> {
   const res = await runCommand(
     'uv',
@@ -85,7 +85,7 @@ export async function installVaultRag(
   // uv `tool install --from <path> <pkg>[extra]` errors with "conflicts with
   // install request". The working incantation for a local path + extras is
   // `tool install <path>[extra]` (positional, no --from). Without extras, the
-  // --from + package-name form stays — it's what every metalmind release since
+  // --from + package-name form stays - it's what every metalmind release since
   // v0.1.0 has used.
   const extras = opts.extras ?? [];
   const hasExtras = extras.length > 0;
@@ -94,7 +94,7 @@ export async function installVaultRag(
   // force-reinstall so the newer bundled code (e.g. v0.3.0's FTS5 writes,
   // the `transformers<5` pin on [rerank], the VAULT_HTTP_PORT env var) lands
   // on upgrade. Without this, `uv tool list` says "already installed" and we
-  // skip — leaving users with stale code until they manually --force.
+  // skip - leaving users with stale code until they manually --force.
   let versionMismatch = false;
   let alreadyInstalledPackage = false;
   if (!opts.reinstall && !hasExtras) {
@@ -133,17 +133,8 @@ export async function resolveWatcherBinPath(): Promise<string> {
   const path = res.stdout.trim();
   if (!res.ok || !path) {
     throw new Error(
-      `${VAULT_RAG_WATCHER_BIN} not found on PATH after install — check uv tool bin dir is on your PATH`,
+      `${VAULT_RAG_WATCHER_BIN} not found on PATH after install - check uv tool bin dir is on your PATH`,
     );
-  }
-  return path;
-}
-
-export async function resolveUvBinPath(): Promise<string> {
-  const res = await runCommand('which', ['uv']);
-  const path = res.stdout.trim();
-  if (!res.ok || !path) {
-    throw new Error('uv not found on PATH — install uv first: https://docs.astral.sh/uv/');
   }
   return path;
 }

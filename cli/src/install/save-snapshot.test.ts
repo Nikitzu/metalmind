@@ -6,7 +6,7 @@ import { copyClaudeTemplates } from './templates.js';
 
 // Snapshot truth: the rendered CC commands/save.md as it shipped in v0.7.x,
 // captured BEFORE the .shared/save-body.md partial extraction. After the
-// extraction this test MUST still match — proves CC behavior is byte-identical.
+// extraction this test MUST still match - proves CC behavior is byte-identical.
 //
 // Snapshot lives at __snapshots__/save-snapshot.test.ts.snap and is committed.
 

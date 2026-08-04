@@ -1,13 +1,13 @@
 """Vector storage abstraction.
 
-The watcher, indexer, and search layer all talk to a `VectorStore` —
+The watcher, indexer, and search layer all talk to a `VectorStore` -
 never to a concrete vector backend. Two implementations:
 
 - `QdrantStore` (legacy, v0.4.x default): HTTP to a Qdrant server.
 - `SqliteVecStore` (v0.5.0 default): in-process sqlite-vec virtual table.
 
 Selection happens once via `make_store()` based on `METALMIND_BACKEND`.
-Callers should never import an implementation directly — that defeats
+Callers should never import an implementation directly - that defeats
 the abstraction and makes A/B benching impossible. Use the factory.
 """
 
@@ -33,7 +33,7 @@ class VectorPoint:
 class VectorHit:
     """One search result from a store. `payload` is the same dict the
     caller upserted alongside the vector. `score` is cosine similarity in
-    [0, 1] for both implementations — semantic similarity, higher is more
+    [0, 1] for both implementations - semantic similarity, higher is more
     similar (Qdrant's native convention; sqlite-vec returns cosine
     distance which we convert at the boundary)."""
 
@@ -66,7 +66,7 @@ class VectorStore(Protocol):
 
     def delete_collection(self) -> None:
         """Drop the entire collection / table. For schema or dimension
-        changes — never call from the recall path."""
+        changes - never call from the recall path."""
 
     def count(self) -> int:
         """Total stored points. Doctor smoke checks read this for drift
@@ -81,7 +81,7 @@ def make_store() -> VectorStore:
     """Pick the active store from `METALMIND_BACKEND`.
 
     Default is `embedded` (sqlite-vec, in-process). Set
-    `METALMIND_BACKEND=legacy` to fall back to a Qdrant server — kept as
+    `METALMIND_BACKEND=legacy` to fall back to a Qdrant server - kept as
     an escape hatch in case sqlite-vec hits a ceiling at scale.
     """
     backend = os.environ.get("METALMIND_BACKEND", "embedded").lower()

@@ -23,7 +23,7 @@ export interface InstallGraphifyResult {
 
 /**
  * graphify claude install stamps a `CLAUDE.md` in the inherited cwd as part
- * of its install. We don't want that file in $HOME — it would inject
+ * of its install. We don't want that file in $HOME - it would inject
  * graphify-specific instructions into every Claude Code session under
  * $HOME, including unrelated repos. Strip the graphify section if it
  * exists and the file is otherwise empty (or remove the section but keep
@@ -111,7 +111,7 @@ export async function installGraphify(
     // `graphify claude install` writes its `## graphify` block into the
     // CLAUDE.md of the cwd it inherits. We only want the user-scope effect
     // (the conditional PreToolUse hook in ~/.claude/settings.json), NOT a
-    // CLAUDE.md stamp at $HOME — that would inject graphify-specific
+    // CLAUDE.md stamp at $HOME - that would inject graphify-specific
     // instructions into every Claude Code session under $HOME, including
     // unrelated repos. Workaround: spawn from a throwaway temp dir, then
     // delete it. graphify writes ~/.claude/settings.json from a fixed path

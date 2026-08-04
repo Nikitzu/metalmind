@@ -46,7 +46,7 @@ describe('graphify install', () => {
     expect(runCommand.mock.calls[1]?.[1]).toEqual(['tool', 'install', 'graphifyy']);
     expect(runCommand.mock.calls[3]?.[0]).toBe('graphify');
     expect(runCommand.mock.calls[3]?.[1]).toEqual(['claude', 'install']);
-    // cwd must be a throwaway temp dir, NOT $HOME — graphify stamps a
+    // cwd must be a throwaway temp dir, NOT $HOME - graphify stamps a
     // CLAUDE.md in cwd, and we don't want that file at $HOME polluting
     // every Claude Code session in any subfolder of home.
     const claudeInstallOpts = runCommand.mock.calls[3]?.[2] as { cwd?: string } | undefined;
@@ -58,7 +58,7 @@ describe('graphify install', () => {
 
   it('skips uv tool install when graphify already on PATH', async () => {
     runCommand
-      .mockResolvedValueOnce(ok('graphify 0.9.0')) // pre-install version probe — already present
+      .mockResolvedValueOnce(ok('graphify 0.9.0')) // pre-install version probe - already present
       .mockResolvedValueOnce(ok()); // graphify claude install
 
     const { installGraphify } = await import('./graphify.js');

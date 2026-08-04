@@ -61,9 +61,9 @@ describe('prereqs', () => {
 
   it('checkPython falls back to python3.12 when python3 is too old', async () => {
     runCommand
-      .mockResolvedValueOnce(mockResult({ stdout: 'Python 3.10.6' })) // python3 — too old (3.10 now rejected)
-      .mockResolvedValueOnce(mockResult({ ok: false })) // python3.13 — missing
-      .mockResolvedValueOnce(mockResult({ stdout: 'Python 3.12.13' })); // python3.12 — accepted
+      .mockResolvedValueOnce(mockResult({ stdout: 'Python 3.10.6' })) // python3 - too old (3.10 now rejected)
+      .mockResolvedValueOnce(mockResult({ ok: false })) // python3.13 - missing
+      .mockResolvedValueOnce(mockResult({ stdout: 'Python 3.12.13' })); // python3.12 - accepted
     const { checkPython } = await import('./prereqs.js');
     const r = await checkPython();
     expect(r.ok).toBe(true);

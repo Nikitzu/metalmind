@@ -17,7 +17,7 @@ from .stores import VectorPoint
 
 def _chunk_file(path: Path) -> tuple[str, list[tuple[str, str]]]:
     """Return (relative-path, chunks). Split out so FTS writes and vector
-    writes share the same chunk list — ensures per-chunk parity between
+    writes share the same chunk list - ensures per-chunk parity between
     the two retrievers."""
     rel = str(path.relative_to(VAULT))
     text = path.read_text(encoding="utf-8", errors="ignore")
@@ -59,7 +59,7 @@ UPSERT_BATCH = 500
 def reindex_all() -> int:
     """Stream-rebuild: walk every file, overwrite its chunks in place, upsert
     in batches to the vector store and SQLite FTS5 in lockstep. Queries stay
-    answerable throughout — no delete_collection, no memory cliff. Use
+    answerable throughout - no delete_collection, no memory cliff. Use
     reindex_wipe() after a schema/dim change."""
     store = vector_store()
     store.ensure_collection()
@@ -104,7 +104,7 @@ def reindex_wipe() -> int:
 def reindex_paths(paths: list[Path]) -> int:
     """Incremental: upsert chunks for the given files to both the vector
     store and FTS5; delete entries from both for files that no longer exist.
-    Safe to call mid-query — never wipes the collection."""
+    Safe to call mid-query - never wipes the collection."""
     store = vector_store()
     store.ensure_collection()
 

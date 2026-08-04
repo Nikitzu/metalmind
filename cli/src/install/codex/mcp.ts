@@ -4,7 +4,7 @@
 // <name> --url <url>`. The metalmind watcher exposes /mcp at
 // 127.0.0.1:17317 so this is a one-line registration.
 //
-// Off by default — registering an MCP server adds the tool's JSON schema
+// Off by default - registering an MCP server adds the tool's JSON schema
 // to every Codex turn (~150-400 tokens), violating the "zero standing
 // MCP-schema tax" headline rule. Users who specifically want explicit
 // tool-call ergonomics opt in via --with-mcp.
@@ -61,7 +61,7 @@ export async function addCodexMcpServer(
     return { name, url, action: 'already-present' };
   }
   if (list.some((entry) => entry.name === name)) {
-    // Stale entry pointing elsewhere — remove first so we can re-add cleanly.
+    // Stale entry pointing elsewhere - remove first so we can re-add cleanly.
     // We surface the remove failure as part of the add error if the subsequent
     // add fails; otherwise the stale-remove failure is benign (Codex sometimes
     // returns non-zero on remove of an entry it then accepts as overwritten).

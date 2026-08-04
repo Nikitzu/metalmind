@@ -1,5 +1,5 @@
 ---
-// Comparison matrix — adds two new rows (Scope + hit@1 @ 1k) so the
+// Comparison matrix - adds two new rows (Scope + hit@1 @ 1k) so the
 // metalmind-vs-qmd distinction is visible. Caption clarifies the
 // "standing tokens vs no-CLAUDE.md-instruction" trade-off honestly.
 
@@ -8,10 +8,10 @@ const cols = ['metalmind', 'native /memory', 'qmd', 'mem0', 'Letta'];
 const rows = [
   { k: 'Scope',                  v: ['memory + code intel + daily + synod + flare + pulse', 'memory only', 'memory only', 'memory only (LLM facts)', 'memory + agent runtime'] },
   { k: 'Memory primitive',       v: ['Markdown chunks', 'CLAUDE.md text', 'Markdown chunks', 'LLM-extracted facts', 'Managed blocks'] },
-  { k: 'Source preserved',       v: ['✓', '✓', '✓', '—', 'partial'] },
+  { k: 'Source preserved',       v: ['✓', '✓', '✓', '-', 'partial'] },
   { k: 'Standing tokens',        v: ['~519 (one-time prose)', 'full file', '~0', '~1,319', 'n/a'] },
   { k: 'hit@1 @ 1k notes',       v: ['90%', 'n/a', '80%', 'n/a', 'n/a'] },
-  { k: 'Cross-repo',             v: ['✓', '—', '✓', '✓', '✓'] },
+  { k: 'Cross-repo',             v: ['✓', '-', '✓', '✓', '✓'] },
   { k: 'State location',         v: ['local vault', 'local repo', 'local files', 'cloud / vector DB', 'cloud / Letta server'] },
   { k: 'Walk-away cost',         v: ['zero', 'zero', 'zero', 'export needed', 'export needed'] },
 ];
@@ -21,7 +21,7 @@ const rows = [
     <div class="section-head">
       <div class="eyebrow">§ Where it earns its install cost</div>
       <h2>Different tools, different bets.</h2>
-      <p>Native /memory wins below ~50 notes in one repo. metalmind earns its install cost once knowledge crosses repo boundaries — and where you want the rest of the standard library too.</p>
+      <p>Native /memory wins below ~50 notes in one repo. metalmind earns its install cost once knowledge crosses repo boundaries - and where you want the rest of the standard library too.</p>
     </div>
 
     <div class="cmp-table">
@@ -41,7 +41,7 @@ const rows = [
 
     <p class="cmp-caption">
       <strong>Honest read on standing tokens:</strong> our ~519 is one-time prose in <code>CLAUDE.md</code> that teaches Claude
-      <em>when</em> to recall — work that qmd skips. qmd wins the row, but the <em>Scope</em> and <em>hit@1</em> rows above are
+      <em>when</em> to recall - work that qmd skips. qmd wins the row, but the <em>Scope</em> and <em>hit@1</em> rows above are
       where metalmind earns it back. Pick whichever bet matches the work.
     </p>
   </div>

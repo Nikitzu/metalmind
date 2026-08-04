@@ -15,10 +15,10 @@ describe('resolveDate', () => {
   it('returns tomorrow', () => {
     expect(resolveDate('tomorrow', tueMidday())).toBe('2026-04-22');
   });
-  it('returns next workday — Tue→Wed', () => {
+  it('returns next workday - Tue→Wed', () => {
     expect(resolveDate('next-workday', tueMidday())).toBe('2026-04-22');
   });
-  it('returns next workday — Fri→Mon', () => {
+  it('returns next workday - Fri→Mon', () => {
     expect(resolveDate('next-workday', friMidday())).toBe('2026-04-27');
   });
   it('accepts explicit YYYY-MM-DD', () => {

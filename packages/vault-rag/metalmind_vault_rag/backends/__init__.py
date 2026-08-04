@@ -8,10 +8,10 @@ implementations:
   daemon running `nomic-embed-text` (768-dim).
 - `FastEmbedBackend` (v0.5.0 default): in-process ONNX via the
   fastembed wheel. Default model `BAAI/bge-small-en-v1.5` (384-dim,
-  ~30 MB cached at `~/.cache/fastembed/`).
+  ~30 MB cached at `~/.metalmind/cache/fastembed/`).
 
 Selection happens once via `make_backend()` keyed on `METALMIND_BACKEND`
-— the same env var that picks the vector store. Backends and stores
+- the same env var that picks the vector store. Backends and stores
 move in lockstep: legacy Qdrant + Ollama, embedded sqlite-vec +
 fastembed.
 """
@@ -43,7 +43,7 @@ def make_backend() -> EmbeddingBackend:
     """Pick the active backend from METALMIND_BACKEND.
 
     Default is `embedded` (fastembed, in-process). Set
-    `METALMIND_BACKEND=legacy` to fall back to a local Ollama daemon —
+    `METALMIND_BACKEND=legacy` to fall back to a local Ollama daemon -
     kept as an escape hatch for users who want a different model and
     don't mind running the daemon.
     """

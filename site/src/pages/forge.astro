@@ -4,7 +4,7 @@ import PageHero from '../components/PageHero.astro';
 import PageCTA from '../components/PageCTA.astro';
 import TermSwap from '../components/TermSwap.astro';
 
-const title = 'Forge — code intelligence · metalmind';
+const title = 'Forge - code intelligence · metalmind';
 const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware navigation, and coordinated rename through Serena\'s LSP backend.';
 ---
 <BaseLayout title={title} description={description}>
@@ -13,7 +13,7 @@ const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware n
     eyebrow="graph"
     eyebrowScadrial="burn bronze"
     title="Sight across repos, not just one."
-    sub="Forge is metalmind's cross-repo code graph. HTTP-route edges connect a caller in service A to its handler in service B — across language, framework, and repo boundaries — with provenance Claude can trust-grade."
+    sub="Forge is metalmind's cross-repo code graph. HTTP-route edges connect a caller in service A to its handler in service B - across language, framework, and repo boundaries - with provenance Claude can trust-grade."
   />
 
   <section>
@@ -29,7 +29,7 @@ const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware n
           <h3 class="display feat-h">Symbol-aware navigation</h3>
           <p>
             <TermSwap classic="symbol" scadrial="burn iron" mono />
-            returns a symbol's neighbors — who calls it, what it calls, its module.
+            returns a symbol's neighbors - who calls it, what it calls, its module.
             <TermSwap classic="rename" scadrial="burn steel" mono />
             drives a coordinated rename through Serena's LSP backend, across every repo in the forge.
           </p>
@@ -57,7 +57,7 @@ const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware n
       <div class="term forge-term">
         <div class="term-bar">
           <div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div>
-          <div class="term-title mono">forge — graph query</div>
+          <div class="term-title mono">forge - graph query</div>
         </div>
         <div class="term-body">
           <div><span class="meta"># add both repos to a forge group</span></div>
@@ -91,17 +91,17 @@ const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware n
       </div>
       <div class="prov-grid">
         <div class="prov-card prov-strong">
-          <div class="prov-h mono">tier 1 — strongest</div>
+          <div class="prov-h mono">tier 1 - strongest</div>
           <div class="prov-tag mono">openapi specs</div>
           <p>Pulled from your <span class="kbd">~/.metalmind/specs/</span> shelf. Routes match exactly; types are checked.</p>
         </div>
         <div class="prov-card prov-medium">
-          <div class="prov-h mono">tier 2 — medium</div>
+          <div class="prov-h mono">tier 2 - medium</div>
           <div class="prov-tag mono">framework callers</div>
           <p>Java RestTemplate, WebClient, Feign clients with annotated routes. Strong enough for navigation; verify before refactor.</p>
         </div>
         <div class="prov-card prov-weak">
-          <div class="prov-h mono">tier 3 — opt-in</div>
+          <div class="prov-h mono">tier 3 - opt-in</div>
           <div class="prov-tag mono">url literals</div>
           <p>String-literal URL matching as a last resort. Off by default; surfaces with explicit <span class="kbd">INFERRED_URL_LITERAL</span> grade.</p>
         </div>

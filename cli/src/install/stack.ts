@@ -73,7 +73,7 @@ export async function waitForHttp(
       const res = await fetchFn(url);
       if (res.ok) return true;
     } catch {
-      // service not up yet — keep polling
+      // service not up yet - keep polling
     }
     await new Promise((r) => setTimeout(r, intervalMs));
   }

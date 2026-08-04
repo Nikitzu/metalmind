@@ -21,7 +21,7 @@ export interface InstallOutputStyleResult {
   stylePath: string;
   installed: boolean;
   migrated: boolean;
-  healed: boolean;
+  updated: boolean;
   priorValue: string | null;
 }
 
@@ -55,23 +55,8 @@ function flavorName(choice: FlavorChoice): string {
 
 function flavorDescription(choice: FlavorChoice): string {
   return choice === 'marsh'
-    ? 'Era-1 Inquisitor voice — spikes through eyes, no warmth, no filler'
-    : 'Telegraph operator voice — every word costs, every word counts';
-}
-
-interface ParsedFrontmatter {
-  body: string;
-  nameValue: string | null;
-}
-
-function parseFrontmatter(content: string): ParsedFrontmatter {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n?/);
-  if (!match) return { body: content, nameValue: null };
-  const fm = match[1] ?? '';
-  const body = content.slice(match[0].length);
-  const nameLine = fm.split('\n').find((line) => line.trimStart().startsWith('name:'));
-  const nameValue = nameLine ? (nameLine.split(':')[1] ?? '').trim() : null;
-  return { body, nameValue };
+    ? 'Era-1 Inquisitor voice - spikes through eyes, no warmth, no filler'
+    : 'Telegraph operator voice - every word costs, every word counts';
 }
 
 function rewriteFrontmatter(body: string, choice: FlavorChoice): string {
@@ -134,7 +119,7 @@ export interface MigrateTerseToTelegraphResult {
 
 /**
  * Rename a previously-installed `terse` output style to `telegraph` (the new
- * persona-named slug shipped in 0.8.14). Safe to call on every stamp — no-ops
+ * persona-named slug shipped in 0.8.14). Safe to call on every stamp - no-ops
  * when no `terse` state is present.
  *
  * Behaviour:
@@ -172,11 +157,11 @@ export async function migrateTerseToTelegraph(
     await unlink(tersePath);
     fileRenamed = true;
   } else if (hasTerse && hasTelegraph) {
-    // telegraph already present — drop the legacy file
+    // telegraph already present - drop the legacy file
     await unlink(tersePath);
     fileRenamed = true;
   } else if (!hasTerse && pointsAtTerse && !hasTelegraph) {
-    // settings point at a missing file — fall back to bundled asset
+    // settings point at a missing file - fall back to bundled asset
     await mkdir(outputStylesDir, { recursive: true });
     await copyFile(join(assetsDir, 'telegraph.md'), telegraphPath);
     fileRenamed = true;
@@ -207,7 +192,7 @@ export async function installOutputStyle(
 
   let installed = false;
   let migrated = false;
-  let healed = false;
+  let updated = false;
   if (!existsSync(stylePath)) {
     const legacyFile = await findLegacyFile(outputStylesDir, priorValue ?? undefined);
     if (legacyFile) {
@@ -220,26 +205,42 @@ export async function installOutputStyle(
       installed = true;
     }
   } else {
+    const assetContent = await readFile(join(assetsDir, `${opts.choice}.md`), 'utf8');
     const onDisk = await readFile(stylePath, 'utf8');
-    const onDiskParsed = parseFrontmatter(onDisk);
-    const isCaseMismatchedTwin =
-      onDiskParsed.nameValue !== null &&
-      onDiskParsed.nameValue !== opts.choice &&
-      onDiskParsed.nameValue.toLowerCase() === opts.choice.toLowerCase();
-    if (isCaseMismatchedTwin) {
-      const assetContent = await readFile(join(assetsDir, `${opts.choice}.md`), 'utf8');
-      const assetBody = parseFrontmatter(assetContent).body;
-      if (onDiskParsed.body === assetBody) {
-        await writeFile(stylePath, assetContent, 'utf8');
-        healed = true;
-      }
+    if (onDisk !== assetContent) {
+      await writeFile(stylePath, assetContent, 'utf8');
+      updated = true;
     }
   }
 
   settings.outputStyle = opts.choice;
   await writeSettings(settingsPath, settings);
 
-  return { stylePath, installed, migrated, healed, priorValue };
+  return { stylePath, installed, migrated, updated, priorValue };
+}
+
+export interface RefreshOutputStyleAssetsOptions {
+  assetsDir?: string;
+  outputStylesDir?: string;
+}
+
+export async function refreshOutputStyleAssets(
+  opts: RefreshOutputStyleAssetsOptions = {},
+): Promise<{ refreshed: string[] }> {
+  const assetsDir = opts.assetsDir ?? getAssetsDir();
+  const outputStylesDir = opts.outputStylesDir ?? DEFAULT_OUTPUT_STYLES_DIR;
+  const refreshed: string[] = [];
+  for (const slug of ['marsh', 'telegraph']) {
+    const stylePath = join(outputStylesDir, `${slug}.md`);
+    if (!existsSync(stylePath)) continue;
+    const assetContent = await readFile(join(assetsDir, `${slug}.md`), 'utf8');
+    const onDisk = await readFile(stylePath, 'utf8');
+    if (onDisk !== assetContent) {
+      await writeFile(stylePath, assetContent, 'utf8');
+      refreshed.push(slug);
+    }
+  }
+  return { refreshed };
 }
 
 export async function uninstallOutputStyle(

@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# metalmind output-style activation hook — SessionStart event.
+# metalmind output-style activation hook - SessionStart event.
 #
 # Why this exists: Claude Code loads `~/.claude/output-styles/<name>.md` into
 # the system prompt once at session start. After context compaction, long
 # turns, or task pressure, the style section loses weight relative to recent
 # context and the model drifts back to verbose prose. This hook re-emits the
 # active style's full body as `additionalContext` every session start, so the
-# rules are anchored at the *top* of the visible context window — not the
+# rules are anchored at the *top* of the visible context window - not the
 # bottom of a buried system section.
 #
 # Reads `outputStyle` from ~/.claude/settings.json (or $CLAUDE_CONFIG_DIR),
 # loads the matching style file, strips its frontmatter, and emits the body
 # as JSON additionalContext. No-ops silently when no style is active or the
-# file is missing — never breaks a session.
+# file is missing - never breaks a session.
 
 set -euo pipefail
 
@@ -43,7 +43,7 @@ BODY=$(awk '
 [ -n "$BODY" ] || exit 0
 
 # Emit as SessionStart additionalContext. The leading reminder text tells the
-# model this is a re-anchor of an already-loaded style — not a new instruction.
+# model this is a re-anchor of an already-loaded style - not a new instruction.
 PREAMBLE="Output style '$ACTIVE' is active. The rules below are re-anchored at session start to survive compaction and prevent drift. Follow them from the first token of every response, including acknowledgements and confirmations. No warm-up phrases. No drift under task load."
 
 jq -nc --arg ctx "$PREAMBLE"$'\n\n'"$BODY" '{

@@ -15,7 +15,7 @@ describe('renderEodPlist', () => {
     expect(out).toContain('gold "daily:$TODAY"');
   });
 
-  it('schedules Mon–Fri only', () => {
+  it('schedules Mon-Fri only', () => {
     const out = renderEodPlist(opts);
     for (const day of [1, 2, 3, 4, 5]) {
       expect(out).toContain(`<integer>${day}</integer>`);

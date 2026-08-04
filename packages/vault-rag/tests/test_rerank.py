@@ -1,7 +1,7 @@
 """Unit tests for the rerank module (ONNX path, v0.5.2+).
 
 Intentionally does NOT import the optional ONNX deps (`onnxruntime`,
-`tokenizers`, `huggingface_hub`) — the module must behave gracefully
+`tokenizers`, `huggingface_hub`) - the module must behave gracefully
 when the `[rerank]` extra is absent. That's the whole point of
 `uv tool install metalmind-vault-rag[rerank]` being optional.
 """

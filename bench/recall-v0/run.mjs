@@ -17,7 +17,7 @@
 // Isolation env vars (multi-scale mode):
 //   VAULT_PATH          = tmp vault root
 //   VAULT_COLLECTION    = metalmind_bench_recall_v0_<scale>   (per-scale, dropped on teardown)
-//   VAULT_HTTP_PORT     = METALMIND_BENCH_PORT (default 17400) — does not collide with user watcher at 17317
+//   VAULT_HTTP_PORT     = METALMIND_BENCH_PORT (default 17400) - does not collide with user watcher at 17317
 //   VAULT_QDRANT_URL    = passed through from user env (defaults to localhost:6333)
 
 import { spawn } from 'node:child_process';
@@ -67,7 +67,7 @@ function parseArgs(argv) {
 }
 
 // -----------------------------------------------------------------------------
-// Teardown registry — ensures cleanup on normal exit, signal, or crash.
+// Teardown registry - ensures cleanup on normal exit, signal, or crash.
 // -----------------------------------------------------------------------------
 
 const teardowns = [];
@@ -228,7 +228,7 @@ async function runScale(scale, port, questions) {
 
   // Pre-flight: if the user passed --rerank, the watcher must have the
   // [rerank] extra installed. Without it, rerank silently falls back to
-  // embedder ordering and the column would mirror hybrid — historically
+  // embedder ordering and the column would mirror hybrid - historically
   // a misleading "rerank lifts hit@1 to N%" claim. Refuse to populate the
   // column if the dep is missing; print a single loud line either way.
   let rerankAvailable = false;
@@ -240,13 +240,13 @@ async function runScale(scale, port, questions) {
         rerankAvailable = Boolean(body.available);
       }
     } catch {
-      // leave false — same effect as missing
+      // leave false - same effect as missing
     }
     if (rerankAvailable) {
       process.stdout.write(`[scale=${scale}] rerank=engaged (cross-encoder loadable)\n`);
     } else {
       process.stdout.write(
-        `[scale=${scale}] rerank=DISABLED — ONNX rerank deps not installed in the watcher venv.\n` +
+        `[scale=${scale}] rerank=DISABLED - ONNX rerank deps not installed in the watcher venv.\n` +
         `  Install with \`uv pip install --python <venv>/bin/python "metalmind-vault-rag[rerank]"\`\n` +
         `  or \`uv sync --extra rerank\` from packages/vault-rag. The rr column will be left null.\n`,
       );
@@ -255,7 +255,7 @@ async function runScale(scale, port, questions) {
 
   // Build BM25 scorer over the same tmp vault (in-process, no HTTP).
   // Kept as an independent-implementation sanity check alongside the server's
-  // FTS5 BM25 — any large divergence points at a tokenizer bug or stale index.
+  // FTS5 BM25 - any large divergence points at a tokenizer bug or stale index.
   const bm25Node = await buildBm25Scorer(vault);
 
   // Build a qmd-backed scorer for the cross-tool comparison column. qmd
@@ -275,7 +275,7 @@ async function runScale(scale, port, questions) {
     process.stdout.write('[scale=' + scale + '] qmd: ready\n');
   } else {
     process.stdout.write(
-      `[scale=${scale}] qmd: DISABLED — ${qmdScorer.errorMessage?.split('\n')[0] ?? 'setup failed'}. Column will be n/a.\n`,
+      `[scale=${scale}] qmd: DISABLED - ${qmdScorer.errorMessage?.split('\n')[0] ?? 'setup failed'}. Column will be n/a.\n`,
     );
   }
   registerTeardown(() => teardownQmd(qmdIndexPath, qmdConfigDir));
@@ -486,12 +486,12 @@ function summarizeModes(perQ) {
 
 function renderSingleScaleMd({ meta, summary, perQ }) {
   const lines = [];
-  lines.push(`# recall-v0 bench — ${meta.ts}`);
+  lines.push(`# recall-v0 bench - ${meta.ts}`);
   lines.push('');
   lines.push(`- endpoint: \`${meta.endpoint}\``);
   lines.push(`- k: ${meta.k}`);
   lines.push(`- rerank: ${meta.rerank ? 'on (--rerank)' : 'off (embedder-only baseline)'}`);
-  lines.push(`- vault: ${meta.vault ?? '(unknown — set METALMIND_BENCH_VAULT)'}`);
+  lines.push(`- vault: ${meta.vault ?? '(unknown - set METALMIND_BENCH_VAULT)'}`);
   lines.push(`- questions: ${summary.total}`);
   lines.push('');
   lines.push('## Summary');
@@ -512,7 +512,7 @@ function renderSingleScaleMd({ meta, summary, perQ }) {
   lines.push('| --- | --- | --- | --- | --- | --- |');
   for (const r of perQ) {
     lines.push(
-      `| ${r.id} | ${r.query} | ${r.expected.join(', ')} | ${r.rank ?? '—'} | ${r.latencyMs.toFixed(1)} | ${r.ok ? 'y' : 'n'} |`,
+      `| ${r.id} | ${r.query} | ${r.expected.join(', ')} | ${r.rank ?? '-'} | ${r.latencyMs.toFixed(1)} | ${r.ok ? 'y' : 'n'} |`,
     );
   }
   lines.push('');
@@ -521,7 +521,7 @@ function renderSingleScaleMd({ meta, summary, perQ }) {
 
 function renderMultiScaleMd({ meta, perScale }) {
   const lines = [];
-  lines.push(`# recall-v0 scaled bench — ${meta.ts}`);
+  lines.push(`# recall-v0 scaled bench - ${meta.ts}`);
   lines.push('');
   lines.push(`- k: ${meta.k}`);
   lines.push(`- rerank column: ${meta.rerank ? 'populated (--rerank passed)' : 'skipped (run with --rerank to populate)'}`);
@@ -535,7 +535,7 @@ function renderMultiScaleMd({ meta, perScale }) {
   for (const s of perScale) {
     const m = s.summary.modes;
     lines.push(
-      `| ${s.scale} | ${pct(m.semanticOnly.hitAt5.rate)} | ${pct(m.keywordOnly.hitAt5.rate)} | ${pct(m.hybrid.hitAt5.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt5.rate) : 'n/a') : '—'} | ${s.qmdAvailable ? pct(s.summary.qmd.hitAt5.rate) : 'n/a'} | ${pct(s.summary.bm25Node.hitAt5.rate)} |`,
+      `| ${s.scale} | ${pct(m.semanticOnly.hitAt5.rate)} | ${pct(m.keywordOnly.hitAt5.rate)} | ${pct(m.hybrid.hitAt5.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt5.rate) : 'n/a') : '-'} | ${s.qmdAvailable ? pct(s.summary.qmd.hitAt5.rate) : 'n/a'} | ${pct(s.summary.bm25Node.hitAt5.rate)} |`,
     );
   }
   lines.push('');
@@ -546,7 +546,7 @@ function renderMultiScaleMd({ meta, perScale }) {
   for (const s of perScale) {
     const m = s.summary.modes;
     lines.push(
-      `| ${s.scale} | ${pct(m.semanticOnly.hitAt1.rate)} | ${pct(m.keywordOnly.hitAt1.rate)} | ${pct(m.hybrid.hitAt1.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt1.rate) : 'n/a') : '—'} | ${s.qmdAvailable ? pct(s.summary.qmd.hitAt1.rate) : 'n/a'} | ${pct(s.summary.bm25Node.hitAt1.rate)} |`,
+      `| ${s.scale} | ${pct(m.semanticOnly.hitAt1.rate)} | ${pct(m.keywordOnly.hitAt1.rate)} | ${pct(m.hybrid.hitAt1.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt1.rate) : 'n/a') : '-'} | ${s.qmdAvailable ? pct(s.summary.qmd.hitAt1.rate) : 'n/a'} | ${pct(s.summary.bm25Node.hitAt1.rate)} |`,
     );
   }
   lines.push('');
@@ -557,7 +557,7 @@ function renderMultiScaleMd({ meta, perScale }) {
   for (const s of perScale) {
     const m = s.summary.modes;
     lines.push(
-      `| ${s.scale} | ${m.semanticOnly.latencyMs.median.toFixed(0)} | ${m.keywordOnly.latencyMs.median.toFixed(0)} | ${m.hybrid.latencyMs.median.toFixed(0)} | ${meta.rerank ? (s.rerankAvailable ? m.hybridRerank.latencyMs.median.toFixed(0) : 'n/a') : '—'} |`,
+      `| ${s.scale} | ${m.semanticOnly.latencyMs.median.toFixed(0)} | ${m.keywordOnly.latencyMs.median.toFixed(0)} | ${m.hybrid.latencyMs.median.toFixed(0)} | ${meta.rerank ? (s.rerankAvailable ? m.hybridRerank.latencyMs.median.toFixed(0) : 'n/a') : '-'} |`,
     );
   }
   lines.push('');
@@ -568,7 +568,7 @@ function renderMultiScaleMd({ meta, perScale }) {
     lines.push('| --- | --- | --- | --- | --- | --- | --- | --- |');
     for (const r of s.perQ) {
       lines.push(
-        `| ${r.id} | ${r.semanticOnly?.rank ?? '—'} | ${r.keywordOnly?.rank ?? '—'} | ${r.hybrid?.rank ?? '—'} | ${r.hybridRerank?.skipped ? 'skip' : r.hybridRerank?.unavailable ? 'n/a' : (r.hybridRerank?.rank ?? '—')} | ${r.qmd?.available === false ? 'n/a' : (r.qmd?.rank ?? '—')} | ${r.bm25Node?.rank ?? '—'} | ${r.query} |`,
+        `| ${r.id} | ${r.semanticOnly?.rank ?? '-'} | ${r.keywordOnly?.rank ?? '-'} | ${r.hybrid?.rank ?? '-'} | ${r.hybridRerank?.skipped ? 'skip' : r.hybridRerank?.unavailable ? 'n/a' : (r.hybridRerank?.rank ?? '-')} | ${r.qmd?.available === false ? 'n/a' : (r.qmd?.rank ?? '-')} | ${r.bm25Node?.rank ?? '-'} | ${r.query} |`,
       );
     }
     lines.push('');

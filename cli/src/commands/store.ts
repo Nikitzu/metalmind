@@ -71,7 +71,7 @@ export async function store(content: string | undefined, opts: StoreOptions = {}
         const res = await runCommand('metalmind-vault-rag-indexer', ['--paths', result.path], {
           timeoutMs: 60_000,
         });
-        if (res.ok) log.info('  indexed (spawned indexer — watcher not running)');
+        if (res.ok) log.info('  indexed (spawned indexer - watcher not running)');
         else log.warn('  watcher will reindex (sync index failed silently)');
       }
     }

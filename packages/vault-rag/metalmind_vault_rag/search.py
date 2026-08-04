@@ -1,4 +1,4 @@
-"""Pure search functions — shared by the MCP server, the HTTP server, and anything else that wants them. No MCP/HTTP coupling here."""
+"""Pure search functions - shared by the MCP server, the HTTP server, and anything else that wants them. No MCP/HTTP coupling here."""
 import os
 import re
 from pathlib import Path
@@ -8,7 +8,7 @@ from .rerank import overfetch_k, rerank_hits
 
 # RRF k=60 is the standard from Cormack/Clarke/Büttcher (SIGIR 2009); higher
 # k flattens the fusion (all ranks contribute more equally), lower k amplifies
-# top positions. 60 is well-tested across IR workloads — no reason to deviate
+# top positions. 60 is well-tested across IR workloads - no reason to deviate
 # without bench-driven evidence.
 RRF_K = 60
 SEARCH_MODES = ("hybrid", "semantic-only", "keyword-only")
@@ -84,7 +84,7 @@ def _backlink_index() -> dict[str, list[str]]:
 def _semantic_search(query: str, k: int) -> list[dict]:
     """Cosine-similarity top-k from the active vector store. Returns
     {file, heading, score, text}. Score is similarity in [-1, 1] for
-    both backends — see VectorStore protocol contract."""
+    both backends - see VectorStore protocol contract."""
     vec = embed([query])[0]
     hits = vector_store().query(vec, k)
     return [
@@ -104,7 +104,7 @@ def _semantic_search(query: str, k: int) -> list[dict]:
 # join with OR. BM25's `rank` column naturally ranks docs that match more
 # tokens higher, so OR gives recall without hurting precision ordering.
 # (An AND conjunction over a paraphrased query like "what is Project Wingspan"
-# excludes every doc that doesn't also contain "what" and "is" — empty result
+# excludes every doc that doesn't also contain "what" and "is" - empty result
 # even when the topical doc exists. OR avoids that failure mode.)
 _FTS_WORD = re.compile(r"[A-Za-z0-9]+")
 
@@ -120,7 +120,7 @@ def _fts_query_expr(query: str) -> str | None:
 
 
 def _keyword_search(query: str, k: int) -> list[dict]:
-    """BM25 over the FTS5 index. Returns {file, heading, score, text} —
+    """BM25 over the FTS5 index. Returns {file, heading, score, text} -
     `score` is BM25 (more-negative = better in SQLite; we flip sign so
     higher-is-better matches semantic's convention)."""
     expr = _fts_query_expr(query)
@@ -135,7 +135,7 @@ def _keyword_search(query: str, k: int) -> list[dict]:
             )
             rows = cur.fetchall()
         except Exception:
-            # Malformed query or FTS5 syntax error — return empty, let semantic
+            # Malformed query or FTS5 syntax error - return empty, let semantic
             # carry the search. Better than 500-ing a legitimate recall.
             return []
     return [
@@ -154,7 +154,7 @@ def _rrf_merge(
 ) -> list[dict]:
     """Reciprocal Rank Fusion. Each hit list contributes weight/(RRF_K + rank)
     to each unique (file, heading) key. De-dup keeps the first-seen
-    text/score. Ranks, not scores — no calibration between BM25 and cosine.
+    text/score. Ranks, not scores - no calibration between BM25 and cosine.
 
     `weights` (optional) is a per-list multiplier matching `hit_lists` order.
     Defaults to 1.0 per list. Used to bias fusion toward backends that are
@@ -210,7 +210,7 @@ def search_vault(
 
     `rerank=True` pulls a larger top-N from the chosen strategy, re-scores
     with a cross-encoder (see rerank.py), and returns the top-k from the new
-    ordering. Opt-in — first call triggers a ~500 MB model download.
+    ordering. Opt-in - first call triggers a ~500 MB model download.
     """
     k = max(1, min(k, 20))
     fetch = overfetch_k(k) if rerank else k
@@ -225,7 +225,7 @@ def search_vault(
     else:
         # Hybrid: overfetch both legs deeply so RRF has enough cross-coverage
         # to break ties at the top. RRF_OVERFETCH (default 50) is independent
-        # of `fetch` — even a non-rerank k=5 query pulls 50 candidates per
+        # of `fetch` - even a non-rerank k=5 query pulls 50 candidates per
         # backend before fusion, then truncates to `fetch` after merging.
         leg_k = max(fetch, RRF_OVERFETCH)
         sem = _semantic_search(query, leg_k)

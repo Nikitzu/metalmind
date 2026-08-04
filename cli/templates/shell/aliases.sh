@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# metalmind aliases — sourced from ~/.zshrc / ~/.bashrc by metalmind init.
+# metalmind aliases - sourced from ~/.zshrc / ~/.bashrc by metalmind init.
 # Regenerated on each `metalmind init`; do not hand-edit.
 
 export VAULT_PATH="${VAULT_PATH:-$HOME/Knowledge}"
@@ -15,7 +15,7 @@ alias vault-logs='docker compose -f "$METALMIND_STACK/compose.yml" logs -f --tai
 alias vault-index='metalmind-vault-rag-indexer'
 alias vault-doctor='metalmind-vault-rag-doctor'
 
-# Watcher service control — platform-aware
+# Watcher service control - platform-aware
 case "$(uname -s)" in
     Darwin)
         _METALMIND_PLIST="$HOME/Library/LaunchAgents/com.metalmind.vault-indexer.plist"

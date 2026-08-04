@@ -33,7 +33,7 @@ function parseArgs(argv) {
   return out;
 }
 
-// mulberry32 — small, fast, seedable PRNG. Deterministic across Node versions.
+// mulberry32 - small, fast, seedable PRNG. Deterministic across Node versions.
 function mulberry32(seed) {
   let s = seed >>> 0;
   return () => {
@@ -65,7 +65,7 @@ function makeRng(seed) {
 
 // -----------------------------------------------------------------------------
 // Vocabulary. Same domain as gold notes (Quillfly drone co.) but strictly
-// DISJOINT subjects — nothing here should match any question in questions.json.
+// DISJOINT subjects - nothing here should match any question in questions.json.
 // -----------------------------------------------------------------------------
 
 const SKU = [
@@ -168,7 +168,7 @@ const TEMPLATES = [
     const year = r.pick(YEAR);
     const vendor = r.pick(VENDOR);
     return {
-      name: `inventory snapshot — ${sku} ${mo} ${year}`,
+      name: `inventory snapshot - ${sku} ${mo} ${year}`,
       type: 'inventory',
       body: `${sku} on-hand count is ${count} units as of ${mo} ${year}.\n\nPrimary supplier ${vendor}; reorder threshold 60 units, lead time 22 days. Warehouse bin is W-${r.int(1, 24)}-${r.int(1, 48)}.`,
     };
@@ -186,7 +186,7 @@ const TEMPLATES = [
     const city = r.pick(['Berlin', 'Dallas', 'Singapore', 'Toronto', 'Lisbon', 'Dubai']);
     const mo = r.pick(MONTH);
     return {
-      name: `travel approved — ${person} / ${conf}`,
+      name: `travel approved - ${person} / ${conf}`,
       type: 'travel',
       body: `${person} attending ${conf} in ${city}, ${mo}. Budget cap $${r.int(1500, 4800)}, return flight economy, per diem standard. Approved by finance ${r.pick(PERSON)}.`,
     };
@@ -197,7 +197,7 @@ const TEMPLATES = [
     const quarter = r.pick(QUARTER);
     const year = r.pick(YEAR);
     return {
-      name: `contract renewal — ${vendor} ${quarter} ${year}`,
+      name: `contract renewal - ${vendor} ${quarter} ${year}`,
       type: 'contract',
       body: `Renewal with ${vendor} closes ${quarter} ${year}. Price locked for 18 months, ${r.int(3, 12)}% volume rebate above ${r.int(500, 2000)} units/yr. Owner: ${r.pick(PERSON)} (partnerships). No exclusivity clause.`,
     };
@@ -207,7 +207,7 @@ const TEMPLATES = [
     const team = r.pick(TEAM);
     const n = r.int(14, 78);
     return {
-      name: `${team} retro — sprint ${n}`,
+      name: `${team} retro - sprint ${n}`,
       type: 'retro',
       body: `What went well: shipped ${r.int(2, 6)} stories, paired on the ${r.pick(['camera pipeline', 'nav controller', 'telemetry flush', 'OTA queue'])} refactor.\n\nWhat didn't: code-review latency crept to ${r.int(26, 72)}h p95. Action: rotate reviewers weekly, cap at 2 open reviews per person.\n\nKudos to ${r.pick(PERSON)} for the weekend pager cover.`,
     };
@@ -221,19 +221,19 @@ const TEMPLATES = [
     return {
       name: `${team} OKRs ${quarter} ${year} check-in`,
       type: 'okr',
-      body: `KR1: ${pct}% complete. KR2: on track. KR3: at risk — ${r.pick(['vendor slipped', 'hiring gap', 'scope larger than sized', 'dependency on edge-firmware team'])}. Mitigation owner: ${r.pick(PERSON)}.`,
+      body: `KR1: ${pct}% complete. KR2: on track. KR3: at risk - ${r.pick(['vendor slipped', 'hiring gap', 'scope larger than sized', 'dependency on edge-firmware team'])}. Mitigation owner: ${r.pick(PERSON)}.`,
     };
   },
   // 5: onboarding doc
   (r) => {
     const team = r.pick(TEAM);
     return {
-      name: `onboarding — ${team} week 1`,
+      name: `onboarding - ${team} week 1`,
       type: 'onboarding',
-      body: `Day 1: laptop setup, access requests (filed by IT, ~${r.int(2, 5)}h turnaround), intro meetings.\n\nDay 2–3: shadow an on-call rotation. Read the ${team} runbook in the wiki.\n\nWeek-1 goal: ship one trivial PR (doc typo is fine). Buddy: ${r.pick(PERSON)}.`,
+      body: `Day 1: laptop setup, access requests (filed by IT, ~${r.int(2, 5)}h turnaround), intro meetings.\n\nDay 2-3: shadow an on-call rotation. Read the ${team} runbook in the wiki.\n\nWeek-1 goal: ship one trivial PR (doc typo is fine). Buddy: ${r.pick(PERSON)}.`,
     };
   },
-  // 6: firmware release notes (distinct from SDK — internal edge firmware)
+  // 6: firmware release notes (distinct from SDK - internal edge firmware)
   (r) => {
     const sku = r.pick(SKU);
     const major = r.int(1, 4);
@@ -250,7 +250,7 @@ const TEMPLATES = [
     const sku = r.pick(SKU);
     const runs = r.int(8, 42);
     return {
-      name: `flight test log — ${sku} week ${r.int(1, 52)}`,
+      name: `flight test log - ${sku} week ${r.int(1, 52)}`,
       type: 'qa',
       body: `Runs: ${runs}. Pass: ${runs - r.int(0, 3)}. Issues: ${r.pick(['battery sag under 20% charge', 'GPS reacquisition >8s after tunnel egress', 'camera autofocus hunts in low light', 'rotor harmonic at 87% throttle'])}. Filed as QF-${r.int(200, 900)}. Pilot: ${r.pick(PERSON)}.`,
     };
@@ -264,7 +264,7 @@ const TEMPLATES = [
       'maintenance photo gallery',
     ]);
     return {
-      name: `privacy review — ${feature}`,
+      name: `privacy review - ${feature}`,
       type: 'legal',
       body: `Reviewed by ${r.pick(PERSON)} (legal). Data classes: operational telemetry only, no PII beyond operator email. Retention: ${r.int(30, 365)} days, auto-purged. DPA update: not required. GDPR RoPA updated ${r.pick(MONTH)}.`,
     };
@@ -280,7 +280,7 @@ const TEMPLATES = [
     ]);
     const mo = r.pick(MONTH);
     return {
-      name: `launch plan — ${feature} ${mo}`,
+      name: `launch plan - ${feature} ${mo}`,
       type: 'marketing',
       body: `GA target: ${mo} ${r.pick(YEAR)}. Beta cohort: ${r.int(4, 18)} enterprise customers. Launch channels: blog post, newsletter, webinar with ${r.pick(PERSON)} presenting. Success metric: ${r.int(20, 60)}% beta-to-paid conversion.`,
     };
@@ -295,12 +295,12 @@ const TEMPLATES = [
       'camera stream buffering',
     ]);
     return {
-      name: `support macro — ${topic}`,
+      name: `support macro - ${topic}`,
       type: 'support',
       body: `Triage:\n1. Confirm firmware ≥ v${r.int(2, 4)}.${r.int(0, 10)}.\n2. Check console browser console for 4xx/5xx (common: stale session, hard refresh fixes).\n3. If persists, grab operator ID + timestamp, escalate to ${r.pick(TEAM)}.\n\nKB article ID: KB-${r.int(1000, 5000)}.`,
     };
   },
-  // 11: RFC — non-overlapping topic (not tech-stack, not deployment)
+  // 11: RFC - non-overlapping topic (not tech-stack, not deployment)
   (r) => {
     const topic = r.pick([
       'rate-limit tier redesign',
@@ -312,7 +312,7 @@ const TEMPLATES = [
     ]);
     const n = r.int(10, 180);
     return {
-      name: `RFC-${String(n).padStart(3, '0')} — ${topic}`,
+      name: `RFC-${String(n).padStart(3, '0')} - ${topic}`,
       type: 'rfc',
       body: `Status: draft. Author: ${r.pick(PERSON)}.\n\nProblem: current approach couples ${r.pick(['config', 'flags', 'lint', 'clients'])} across services, churn is ${r.int(3, 15)} PRs/week.\n\nProposal: extract to a shared package, opt-in migration, deprecate old path over ${r.int(2, 6)} quarters.\n\nOpen question: do we version the package semver-strict or calendar?`,
     };
@@ -327,7 +327,7 @@ const TEMPLATES = [
       'canary fleet size',
     ]);
     return {
-      name: `platform note — ${topic}`,
+      name: `platform note - ${topic}`,
       type: 'platform',
       body: `Observed: ${r.pick(['p95 spiked to ', 'error rate climbed past ', 'queue depth held above '])}${r.int(40, 900)}${r.pick(['ms', '% over 5m', ' messages'])} during the ${r.pick(['Monday peak', 'Friday ramp-down', 'Tuesday batch window'])}.\n\nCurrent theory: ${r.pick(['subscriber count grew faster than partition rebalance', 'GC pause during snapshot', 'TLS handshake cost from new region'])}. Next step: instrument, review ${r.pick(['next week', 'after this sprint', 'at the platform sync'])}.`,
     };
@@ -342,12 +342,12 @@ const TEMPLATES = [
       'equipment refresh cycle',
     ]);
     return {
-      name: `policy — ${topic}`,
+      name: `policy - ${topic}`,
       type: 'policy',
       body: `Effective ${r.pick(MONTH)} ${r.pick(YEAR)}. Applies to all ${r.pick(['full-time', 'regular', 'permanent'])} staff. Cap: $${r.int(200, 2400)}/${r.pick(['month', 'quarter', 'year'])}. Request flow: ${r.pick(PERSON)} approves in ${r.pick(['Ramp', 'the people-ops Slack', 'the HRIS'])}. Questions → people-ops.`,
     };
   },
-  // 14: project note — non-overlapping (not "wingspan")
+  // 14: project note - non-overlapping (not "wingspan")
   (r) => {
     const project = r.pick([
       'project-talon',
@@ -359,7 +359,7 @@ const TEMPLATES = [
     ]);
     const mo = r.pick(MONTH);
     return {
-      name: `${project} — ${mo} update`,
+      name: `${project} - ${mo} update`,
       type: 'project',
       body: `Scope: ${r.pick(['ground-control UX overhaul', 'telemetry compression', 'geofence authoring tool', 'maintenance intake form', 'accounting export pipeline'])}.\n\nStatus: ${r.pick(['on track', 'slipping one sprint', 'blocked on vendor', 'ready for review'])}. Owner: ${r.pick(PERSON)}. Dependency on ${r.pick(TEAM)}: ${r.pick(['resolved', 'pending', 'escalated'])}. Next checkpoint: ${r.pick(MONTH)}.`,
     };
@@ -367,9 +367,9 @@ const TEMPLATES = [
   // 15: CI / build note
   (r) => {
     return {
-      name: `CI note — ${r.pick(['flaky test', 'slow build', 'cache miss', 'artefact bloat'])} ${r.pick(QUARTER)} ${r.pick(YEAR)}`,
+      name: `CI note - ${r.pick(['flaky test', 'slow build', 'cache miss', 'artefact bloat'])} ${r.pick(QUARTER)} ${r.pick(YEAR)}`,
       type: 'ci',
-      body: `${r.pick(['e2e-smoke', 'integration-fleet', 'unit-edge', 'lint-all'])} duration crept from ${r.int(3, 9)}m to ${r.int(10, 24)}m over ${r.int(2, 8)} weeks. Culprit: ${r.pick(['pnpm cache thrash', 'Docker layer bust on every run', 'fixtures regenerated per-test', 'cross-compile hit after toolchain bump'])}. Fix landing ${r.pick(MONTH)} — tracked QF-${r.int(400, 990)}.`,
+      body: `${r.pick(['e2e-smoke', 'integration-fleet', 'unit-edge', 'lint-all'])} duration crept from ${r.int(3, 9)}m to ${r.int(10, 24)}m over ${r.int(2, 8)} weeks. Culprit: ${r.pick(['pnpm cache thrash', 'Docker layer bust on every run', 'fixtures regenerated per-test', 'cross-compile hit after toolchain bump'])}. Fix landing ${r.pick(MONTH)} - tracked QF-${r.int(400, 990)}.`,
     };
   },
 ];

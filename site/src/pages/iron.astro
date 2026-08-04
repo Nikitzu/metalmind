@@ -4,8 +4,8 @@ import PageHero from '../components/PageHero.astro';
 import PageCTA from '../components/PageCTA.astro';
 import TermSwap from '../components/TermSwap.astro';
 
-const title = 'Health — doctor · metalmind';
-const description = 'A clean diagnostic — or a precise reason it isn\'t clean. Eight subsystem probes, one verdict.';
+const title = 'Health - doctor · metalmind';
+const description = 'A clean diagnostic - or a precise reason it isn\'t clean. Eight subsystem probes, one verdict.';
 
 const checks = [
   { label: 'Vault is reachable + writable',     state: 'ok',   note: '' },
@@ -14,7 +14,7 @@ const checks = [
   { label: '~/.claude/CLAUDE.md stamp present',  state: 'ok',   note: '' },
   { label: 'Embedding index up to date',         state: 'warn', note: '12 notes pending re-embed' },
   { label: 'Serena LSP backend reachable',       state: 'ok',   note: '' },
-  { label: 'OpenAPI shelf parses cleanly',       state: 'fail', note: 'notif-svc-v3.yaml — invalid $ref' },
+  { label: 'OpenAPI shelf parses cleanly',       state: 'fail', note: 'notif-svc-v3.yaml - invalid $ref' },
   { label: 'EOD launchd agent loaded',           state: 'ok',   note: '' },
 ];
 const mark = (s: string) => (s === 'ok' ? '✓' : s === 'warn' ? '⚠' : '✗');
@@ -33,7 +33,7 @@ const mark = (s: string) => (s === 'ok' ? '✓' : s === 'warn' ? '⚠' : '✗');
       <div class="section-head">
         <div class="eyebrow">§ <TermSwap classic="metalmind doctor" scadrial="metalmind pulse" mono /></div>
         <h2>Eight probes, one verdict.</h2>
-        <p><span class="kbd">--recall-audit</span> extends the run with a benchmark over your own vault — same harness as the published recall numbers, against your own notes.</p>
+        <p><span class="kbd">--recall-audit</span> extends the run with a benchmark over your own vault - same harness as the published recall numbers, against your own notes.</p>
       </div>
 
       <div class="doctor-card">
@@ -67,7 +67,7 @@ const mark = (s: string) => (s === 'ok' ? '✓' : s === 'warn' ? '⚠' : '✗');
           <h3 class="display feat-h">Recall audit</h3>
           <p>
             <TermSwap classic="doctor" scadrial="pulse" mono />
-            <span class="kbd">--recall-audit</span> spawns the recall harness against your vault — hit@1, hit@5, latency p50/p95 — so you can see whether your data is still indexed clean.
+            <span class="kbd">--recall-audit</span> spawns the recall harness against your vault - hit@1, hit@5, latency p50/p95 - so you can see whether your data is still indexed clean.
           </p>
         </div>
         <div class="feat-card">

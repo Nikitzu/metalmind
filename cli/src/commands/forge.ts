@@ -64,7 +64,7 @@ function detectExt(source: string, contentType: string | null, body: string): 'j
 async function readSource(source: string): Promise<{ body: string; ext: 'json' | 'yaml' }> {
   if (/^https?:\/\//i.test(source)) {
     const res = await fetch(source);
-    if (!res.ok) throw new Error(`fetch ${source} — HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`fetch ${source} - HTTP ${res.status}`);
     const body = await res.text();
     return { body, ext: detectExt(source, res.headers.get('content-type'), body) };
   }
@@ -89,7 +89,7 @@ export async function forgeCaptureSpec(
         await stat(dup);
         await unlink(dup);
       } catch {
-        // not there — nothing to remove
+        // not there - nothing to remove
       }
     }
     const dest = join(shelfDir(), `${slug}.${ext}`);

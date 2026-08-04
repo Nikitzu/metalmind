@@ -51,6 +51,43 @@ describe('recall transport selection', () => {
     expect(res.text).toContain('decisions/auth.md');
   });
 
+  it('sends the requested search mode in the /search body', async () => {
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response(JSON.stringify({ hits: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await recall({
+      vaultPath: '/tmp/vault',
+      query: 'exact filename',
+      tier: 'fast',
+      mode: 'keyword-only',
+    });
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.mode).toBe('keyword-only');
+  });
+
+  it('defaults the /search mode to hybrid', async () => {
+    const fetchMock = vi.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response(JSON.stringify({ hits: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await recall({ vaultPath: '/tmp/vault', query: 'anything', tier: 'fast' });
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.mode).toBe('hybrid');
+  });
+
   it('falls back to stdio MCP when HTTP is unreachable', async () => {
     globalThis.fetch = vi.fn(async () => {
       throw new Error('ECONNREFUSED');

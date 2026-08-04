@@ -1,6 +1,6 @@
 // Opt-in MCP registration for Cursor (~/.cursor/mcp.json).
 //
-// metalmind's recall thesis is bash-over-loopback, NOT MCP — this is the
+// metalmind's recall thesis is bash-over-loopback, NOT MCP - this is the
 // fallback for users who explicitly want the tool-call shape (--with-mcp).
 // Cursor reads mcp.json; we edit it directly, no CLI dependency.
 

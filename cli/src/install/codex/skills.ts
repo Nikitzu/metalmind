@@ -5,7 +5,7 @@
 // body). We ship writing-vault-notes, synod, and save (host-agnostic
 // prompt content).
 //
-// using-teams is deliberately excluded — depends on CC's TeamCreate tool
+// using-teams is deliberately excluded - depends on CC's TeamCreate tool
 // which Codex doesn't have.
 //
 // The `save` skill wraps `cli/templates/.shared/save-body.md` via the
@@ -56,7 +56,7 @@ async function copyTreeRecursive(
     if (entry.isDirectory()) {
       await copyTreeRecursive(srcPath, destPath, render);
     } else if (entry.isFile()) {
-      // Render only markdown — binary skill assets (icons, fonts) must be
+      // Render only markdown - binary skill assets (icons, fonts) must be
       // copied byte-for-byte. Renderer composes resolvePartials (for
       // {{> .shared/...}} includes) + flavor-strip + sentinel-strip +
       // RECALL_CMD substitution.

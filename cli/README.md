@@ -1,6 +1,6 @@
 # metalmind CLI
 
-The Node/TypeScript CLI that drives every module of the **metalmind standard library for Claude Code** — memory, code intelligence, daily workflow, deliberation, desktop integration, health. Published as the [`metalmind`](https://www.npmjs.com/package/metalmind) npm package.
+The Node/TypeScript CLI that drives every module of the **metalmind standard library for Claude Code** - memory, code intelligence, daily workflow, deliberation, desktop integration, health. Published as the [`metalmind`](https://www.npmjs.com/package/metalmind) npm package.
 
 Every module ships through a single CLI surface so they share installer state, sentinel-bounded stamping discipline, and the watcher's loopback-HTTP fast-path. This is the package that owns wiring all of that together.
 
@@ -54,7 +54,7 @@ cli/
 
 ```bash
 pnpm install
-pnpm dev               # tsx watch — runs src/cli.ts directly
+pnpm dev               # tsx watch - runs src/cli.ts directly
 pnpm typecheck         # tsc --noEmit
 pnpm test              # vitest run (157 tests, ~800ms)
 pnpm test:watch
@@ -67,18 +67,18 @@ After a build, the installed shim picks up new code immediately (pnpm / npm glob
 
 ## Testing conventions
 
-- **Vitest** with `vi.hoisted()` for `runCommand` mocks — lets tests simulate uv / docker / launchctl / systemctl without touching the real system.
+- **Vitest** with `vi.hoisted()` for `runCommand` mocks - lets tests simulate uv / docker / launchctl / systemctl without touching the real system.
 - **Temp dirs** for all filesystem side-effects (`mkdtemp` in `beforeEach`, `rm -rf` in `afterEach`).
-- **Path overrides** on every installer — every function that writes to `~/.claude.json` / `~/Library/LaunchAgents` / `~/.config/systemd` accepts an override so tests can redirect to a temp path.
+- **Path overrides** on every installer - every function that writes to `~/.claude.json` / `~/Library/LaunchAgents` / `~/.config/systemd` accepts an override so tests can redirect to a temp path.
 - **No real network**: `setupStack` takes a `fetchFn` for polling; tests pass a fake that returns 200 immediately.
 
-Each installer has a mirror `*.test.ts` next to it — add tests alongside the code you touch.
+Each installer has a mirror `*.test.ts` next to it - add tests alongside the code you touch.
 
 ### Test tiers
 
 | Tier | Runner | Covers | Runtime |
 |---|---|---|---|
-| Unit | `pnpm test` | All TS modules — mocked runCommand, fetch, fs | ~800ms |
+| Unit | `pnpm test` | All TS modules - mocked runCommand, fetch, fs | ~800ms |
 | Python | `pnpm test:python` | packages/vault-rag: imports, search helpers, HTTP endpoint | ~4s |
 | Smoke | `pnpm test:smoke` | Scripted end-to-end: init --yes → stamp → save → uninstall | ~10s |
 
@@ -88,7 +88,7 @@ Smoke test uses a temp `$HOME`, skips Docker/Serena/graphify, and asserts every 
 
 1. Create `src/install/<thing>.ts` with `install<Thing>(): Promise<...>` + `uninstall<Thing>(): Promise<...>`. Return a result object so callers can log what happened.
 2. Accept path overrides as options (`<thingPath>?: string`) for testability.
-3. Wire into `src/install/wizard.ts` — a `log.step(...)` + success line.
+3. Wire into `src/install/wizard.ts` - a `log.step(...)` + success line.
 4. Wire the inverse into `src/install/teardown.ts`.
 5. Add tests under `src/install/<thing>.test.ts` following the existing mock pattern.
 
@@ -125,5 +125,5 @@ Before the first publish: make sure `npm whoami` returns the intended account.
 
 - **No hidden state**: every side-effect has a corresponding teardown. Users who run `metalmind uninstall` should be able to verify with their own eyes that we left nothing behind (except their notes, which we never touched).
 - **Idempotent**: re-running `metalmind init` is safe and should converge to the same state.
-- **Skill-first over MCP**: when a CLI call works, prefer it over registering an MCP tool — MCP schemas get injected into every session and cost tokens.
+- **Skill-first over MCP**: when a CLI call works, prefer it over registering an MCP tool - MCP schemas get injected into every session and cost tokens.
 - **Thin vertical slices**: prefer ~100-line commits that each leave the system green. See `.claude/rules/principles.md`.

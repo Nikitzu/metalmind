@@ -4,10 +4,10 @@
 // same events, same hookSpecificOutput.additionalContext payload (verified
 // in the openai/codex Rust binary strings + app-server's CC->Codex
 // migration logic). We reuse the existing CC session-start.sh.template
-// script verbatim — single source of truth across both hosts.
+// script verbatim - single source of truth across both hosts.
 //
 // JSON has no comment syntax, so we identify our hooks.json entry by a
-// marker substring in the command field — same pattern as
+// marker substring in the command field - same pattern as
 // applyMetalmindSessionStartHook in settings.ts.
 
 import { existsSync } from 'node:fs';

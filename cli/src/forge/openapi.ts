@@ -39,7 +39,7 @@ async function findShelfSpec(repo: string): Promise<string | null> {
 
 /** Returns the shelf OpenAPI spec's mtime for this repo, or 0 if there is no
  *  spec on the shelf. Used by the route-cache + merged-graph staleness
- *  fingerprint — without this, editing a spec on the shelf would not bust the
+ *  fingerprint - without this, editing a spec on the shelf would not bust the
  *  cache, and callers would silently read stale route edges. */
 export async function shelfSpecMtime(repo: string): Promise<number> {
   const abs = await findShelfSpec(repo);
@@ -111,7 +111,7 @@ export function parseOpenApiDoc(doc: unknown, file: string, repo: string): Route
 
 /** Read the OpenAPI spec for `repo` from metalmind's spec shelf at
  *  `~/.metalmind/specs/<repo-basename>.{yaml,yml,json}`. We deliberately do
- *  NOT read specs from inside the target repo — single-dev tool, zero repo
+ *  NOT read specs from inside the target repo - single-dev tool, zero repo
  *  pollution. Use `metalmind forge capture-spec` to populate the shelf. */
 export async function extractOpenApiRoutes(repo: string): Promise<RouteEntry[]> {
   const spec = await findShelfSpec(repo);
