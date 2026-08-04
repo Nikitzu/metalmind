@@ -250,6 +250,32 @@ If you can't answer the three questions in 30 seconds, the note isn't ready to w
 
 ---
 
+## Syncing the vault
+
+`metalmind sync` (scadrial: `metalmind duralumin`) pulls with rebase, stages everything, checks the change set, commits, pushes, and confirms the remote actually advanced.
+
+```bash
+metalmind sync -m "Add speed-alert design note"
+metalmind sync --dry-run          # report only, index untouched
+metalmind sync --no-push          # commit locally
+```
+
+It refuses to commit when the staged changes match a known note-loss pattern:
+
+| Guard | Fires when |
+|---|---|
+| `unexplained-deletion` | A note is deleted and its content appears nowhere else in the commit. This is the signature of a move whose destination never reached the index. |
+| `delete-only` | The commit removes notes and adds nothing. |
+| `incomplete-staging` | Entries remain unstaged after `git add -A`, meaning the index disagrees with the filesystem. |
+
+Matching is by blob SHA, not by path, so a move git did not detect as a rename still passes, while a genuine deletion does not.
+
+`--force` overrides the guards. Verify the diff first. These checks exist because a vault lost 19 notes to exactly this failure: an archive move staged its deletions and dropped its additions, and the commit looked entirely healthy.
+
+From an agent, `/sync` and `/save-sync` wrap the same command.
+
+---
+
 ## See also
 
 - [`architecture.md`](architecture.md) — module overview + how the modules share state.

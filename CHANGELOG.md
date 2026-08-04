@@ -6,6 +6,18 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## Unreleased
+
+### Added
+
+- `metalmind duralumin` / `metalmind sync` commits and pushes the vault to its git remote. It pulls with rebase and autostash, stages, checks the change set, commits, pushes, and then asks git whether the remote actually advanced rather than trusting the push exit code.
+
+  It refuses to commit three shapes: a note deleted whose content survives nowhere in the same commit, a commit that only removes notes, and entries left unstaged after `git add -A`. Matching is by blob SHA, so a move git did not detect as a rename still passes while a genuine deletion does not. The guards exist because the vault lost 19 notes on 2026-08-02 to an archive move that staged its deletions and dropped its additions; the commit looked healthy and nothing errored. `--dry-run`, `--no-push`, and `--force` are available, and a refusal resets the index so it leaves no residue.
+
+- `/sync` and `/save-sync` for Claude Code, plus the matching skills for Codex and Cursor. All three hosts share one prompt body, which explains the guards but carries no safety logic of its own.
+
+---
+
 ## 0.9.5 - 2026-07-19
 
 `stamp --no-prompt` crashed headless with `uv_tty_init EINVAL`. Two layers: Commander parses `--no-prompt` as a negation (`opts.prompt = false`), but both call sites read `opts.noPrompt` — always undefined, so the flag was a silent no-op and execution fell through to clack's host multi-select, which requires a TTY. The documented CI/scripted flag never worked.

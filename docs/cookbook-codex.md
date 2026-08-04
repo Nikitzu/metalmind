@@ -92,6 +92,28 @@ metalmind stamp --no-prompt
 
 The `codex app` desktop client is **NOT** covered by this integration. v1.1 will verify whether the desktop app shares `~/.codex/` storage and whether the model has shell-exec; until then, treat metalmind as Codex CLI–only.
 
+## Syncing the vault
+
+`metalmind sync` (scadrial: `metalmind duralumin`) pulls with rebase, stages everything, checks the change set, commits, pushes, and confirms the remote actually advanced.
+
+```
+metalmind sync -m "Add speed-alert design note"
+metalmind sync --dry-run
+metalmind sync --no-push
+```
+
+It refuses to commit when the staged changes match a known note-loss pattern:
+
+| Guard | Fires when |
+|---|---|
+| `unexplained-deletion` | A note is deleted and its content appears nowhere else in the commit. This is the signature of a move whose destination never reached the index. |
+| `delete-only` | The commit removes notes and adds nothing. |
+| `incomplete-staging` | Entries remain unstaged after `git add -A`, meaning the index disagrees with the filesystem. |
+
+`--force` overrides the guards. Verify the diff first. These checks exist because a vault lost 19 notes to exactly this failure.
+
+The `sync` and `save-sync` skills wrap the same command. Codex selects skills by description, so ask for a sync in plain words.
+
 ## Uninstall
 
 ```
