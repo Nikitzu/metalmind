@@ -45,6 +45,18 @@ metalmind pays off when your knowledge lives across **more than one repo**. A si
 
 **Where native `/memory` still wins:** solo repo, under ~50 notes of context, no historical lookback needed. Below that break-even, it's simpler and free. metalmind earns its install cost when you've got more to remember than a single `CLAUDE.md` can cheaply hold.
 
+### The three memory types, mapped
+
+Agent-memory research converges on a three-way taxonomy, and the vault's folders already implement it:
+
+| Memory type | What it holds | Where it lives |
+|---|---|---|
+| **Episodic** - what happened | Daily logs, session action items, time-bound state | `Daily/`, `Inbox/` |
+| **Semantic** - what is true | Decisions, architecture notes, durable learnings, project state | `Work/`, `Learnings/`, `Plans/`, `Memory/` |
+| **Procedural** - how to act | Rules, skills, command references stamped into every session | `~/.claude/rules/`, skills, the stamped `CLAUDE.md` block |
+
+Temporal supersedes keeps the semantic layer honest (old truths re-rank below their successors instead of being deleted), code refs keep it checkable against the repos it describes, and `ingest auto-memory` feeds the episodic exhaust of native memory into the semantic store.
+
 ---
 
 ## Module detail
