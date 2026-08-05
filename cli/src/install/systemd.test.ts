@@ -114,6 +114,30 @@ Environment=PATH={{PATH_VALUE}}
     expect(cmds).not.toContain('restart');
   });
 
+  it('forceRestart restarts even when the unit file is unchanged', async () => {
+    await mkdir(systemdUserDir, { recursive: true });
+    const servicePath = join(systemdUserDir, 'metalmind-vault-indexer.service');
+    const identical = serviceTemplate
+      .replace(/\{\{WATCHER_BIN\}\}/g, '/b')
+      .replace(/\{\{PATH_VALUE\}\}/g, process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin')
+      .replace(/\{\{VAULT_PATH\}\}/g, '/v');
+    await writeFile(servicePath, identical, 'utf8');
+    runCommand.mockResolvedValue(ok());
+
+    const { installSystemdWatcher } = await import('./systemd.js');
+    const result = await installSystemdWatcher({
+      vaultPath: '/v',
+      watcherBin: '/b',
+      templatesDir,
+      systemdUserDir,
+      forceRestart: true,
+    });
+
+    expect(result.wroteService).toBe(false);
+    const cmds = runCommand.mock.calls.map((c) => c[1]?.[1]);
+    expect(cmds).toContain('restart');
+  });
+
   it('skipEnable writes service without starting', async () => {
     const { installSystemdWatcher } = await import('./systemd.js');
     const result = await installSystemdWatcher({

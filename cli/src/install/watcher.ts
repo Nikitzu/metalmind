@@ -12,6 +12,7 @@ export interface InstallWatcherOptions {
   systemdUserDir?: string;
   templatesDir?: string;
   skipStart?: boolean;
+  forceRestart?: boolean;
 }
 
 export interface InstallWatcherResult {
@@ -52,6 +53,7 @@ export async function installWatcher(opts: InstallWatcherOptions): Promise<Insta
       templatesDir: opts.templatesDir,
       launchAgentsDir: opts.launchAgentsDir,
       skipLoad: opts.skipStart,
+      forceRestart: opts.forceRestart,
     });
     return {
       platform: 'darwin',
@@ -67,6 +69,7 @@ export async function installWatcher(opts: InstallWatcherOptions): Promise<Insta
     templatesDir: opts.templatesDir,
     systemdUserDir: opts.systemdUserDir,
     skipEnable: opts.skipStart,
+    forceRestart: opts.forceRestart,
   });
   return {
     platform: 'linux',

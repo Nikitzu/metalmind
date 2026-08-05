@@ -14,6 +14,7 @@ export interface InstallSystemdOptions {
   templatesDir?: string;
   systemdUserDir?: string;
   skipEnable?: boolean;
+  forceRestart?: boolean;
 }
 
 export interface InstallSystemdResult {
@@ -80,8 +81,7 @@ export async function installSystemdWatcher(
     throw new Error(`systemctl --user enable failed: ${enable.stderr || enable.stdout}`);
   }
 
-  // If we just rewrote the unit file, restart so the new config takes effect.
-  if (wroteService && prior !== null) {
+  if ((wroteService && prior !== null) || opts.forceRestart) {
     await runCommand('systemctl', ['--user', 'restart', SERVICE_NAME]);
   }
 

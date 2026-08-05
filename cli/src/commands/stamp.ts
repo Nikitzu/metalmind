@@ -188,6 +188,7 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
   }
 
   if (!opts.skipWatcher) {
+    let ragReinstalled = false;
     log.step('Python package (metalmind-vault-rag)');
     try {
       // Preserve the [rerank] extra across upgrades. Users who opted into the
@@ -196,6 +197,7 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
       const hadRerank = await hasRerankExtraInstalled();
       const rag = await installVaultRag(hadRerank ? { extras: ['rerank'] } : {});
       if (rag.installed) {
+        ragReinstalled = true;
         log.info(
           hadRerank
             ? '  refreshed from bundled source (kept [rerank] extra)'
@@ -212,11 +214,15 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     log.step('Watcher unit file');
     try {
       const watcherBin = await resolveWatcherBinPath();
-      const watcher = await installWatcher({ vaultPath: config.vaultPath, watcherBin });
+      const watcher = await installWatcher({
+        vaultPath: config.vaultPath,
+        watcherBin,
+        forceRestart: ragReinstalled,
+      });
       log.info(
         watcher.wroteUnit
           ? `  refreshed ${watcher.unitPath} (service restarted)`
-          : `  ${watcher.unitPath} already current`,
+          : `  ${watcher.unitPath} already current${ragReinstalled ? ' (service restarted for new vault-rag)' : ''}`,
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

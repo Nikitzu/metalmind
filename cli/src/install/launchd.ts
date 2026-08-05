@@ -14,6 +14,7 @@ export interface InstallWatcherOptions {
   templatesDir?: string;
   launchAgentsDir?: string;
   skipLoad?: boolean;
+  forceRestart?: boolean;
 }
 
 export interface InstallWatcherResult {
@@ -71,6 +72,10 @@ export async function installLaunchdWatcher(
 
   if (opts.skipLoad) {
     return { plistPath, wrotePlist, loaded: false };
+  }
+
+  if (!wrotePlist && opts.forceRestart && prior !== null) {
+    await runCommand('launchctl', ['unload', plistPath]);
   }
 
   const load = await runCommand('launchctl', ['load', plistPath]);
