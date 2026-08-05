@@ -213,6 +213,10 @@ function attachTapFlags<T extends Command>(cmd: T): T {
       'Lean per-hit render (drop prev_score, snippet text); full note via scribe show',
     )
     .option('--verbose', 'Include metadata line (overrides config.verbose)')
+    .option(
+      '--verify-code',
+      'Validate code: frontmatter refs on hits and flag stale ones (needs forge-registered repos; HTTP path only)',
+    )
     .option('--list-recent <n>', 'List the N most-recently-modified notes (no query needed)', (v) =>
       Number.parseInt(v, 10),
     ) as T;
@@ -229,6 +233,7 @@ type TapCliOpts = {
   compact?: boolean;
   verbose?: boolean;
   listRecent?: number;
+  verifyCode?: boolean;
 };
 
 function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
@@ -243,6 +248,7 @@ function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
     compact: cmdOpts.compact,
     verbose: cmdOpts.verbose,
     listRecent: cmdOpts.listRecent,
+    verifyCode: cmdOpts.verifyCode,
   };
 }
 

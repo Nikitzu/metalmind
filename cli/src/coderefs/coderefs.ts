@@ -133,7 +133,7 @@ export async function collectVaultCodeRefs(vaultPath: string): Promise<Map<strin
   const out = new Map<string, string[]>();
   const skip = new Set(['.obsidian', '.metalmind-stack', '.trash', '.git']);
   const walk = async (dir: string): Promise<void> => {
-    let items: Awaited<ReturnType<typeof readdir>>;
+    let items: import('node:fs').Dirent[];
     try {
       items = await readdir(dir, { withFileTypes: true });
     } catch {

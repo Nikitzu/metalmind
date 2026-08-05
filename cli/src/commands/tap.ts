@@ -15,6 +15,7 @@ export interface TapOptions {
   compact?: boolean;
   verbose?: boolean;
   listRecent?: number;
+  verifyCode?: boolean;
 }
 
 function resolveMode(opts: TapOptions): RecallMode {
@@ -90,6 +91,8 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       mode: resolveMode(opts),
       verbose: showMeta,
       compact: opts.compact,
+      verifyCode: opts.verifyCode,
+      forgeGroups: config.forge.groups,
       httpEndpoint: config.recall.httpEndpoint,
     });
     if (opts.json) {

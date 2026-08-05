@@ -1,3 +1,10 @@
+import { join } from 'node:path';
+import {
+  type CodeRefResult,
+  type ForgeGroups,
+  parseCodeRefsFromHead,
+  verifyCodeRefs,
+} from '../coderefs/coderefs.js';
 import { extractText, type McpToolResult, StdioMcpClient } from './mcp-client.js';
 
 export type RecallTier = 'fast' | 'deep' | 'expand';
@@ -17,6 +24,8 @@ export interface RecallOptions {
   /** When true, log the HTTP-path failure to stderr before falling back. */
   verbose?: boolean;
   compact?: boolean;
+  verifyCode?: boolean;
+  forgeGroups?: ForgeGroups;
   /** Override the co-hosted HTTP recall endpoint. Defaults to env or config. */
   httpEndpoint?: string | null;
 }
@@ -116,14 +125,45 @@ function formatHitsCompact(hits: Array<Record<string, unknown>>): string {
         typeof h.superseded_by === 'string' && h.superseded_by
           ? ` → superseded by [[${h.superseded_by}]]`
           : '';
-      return `${i + 1}. [${score}] ${file}${headPart}${superseded}\n   ${snippet(h.text)}`;
+      return `${i + 1}. [${score}] ${file}${headPart}${superseded}\n   ${snippet(h.text)}${codeRefWarnings(h)}`;
     })
     .join('\n');
+}
+
+async function annotateCodeRefs(
+  hits: Array<Record<string, unknown>>,
+  vaultPath: string,
+  groups: ForgeGroups,
+): Promise<void> {
+  const { readFile } = await import('node:fs/promises');
+  for (const h of hits) {
+    if (typeof h.file !== 'string') continue;
+    let head: string;
+    try {
+      head = (await readFile(join(vaultPath, h.file), 'utf8')).slice(0, 2048);
+    } catch {
+      continue;
+    }
+    const refs = parseCodeRefsFromHead(head);
+    if (refs.length === 0) continue;
+    h.code_refs = await verifyCodeRefs(refs, groups);
+  }
+}
+
+function codeRefWarnings(h: Record<string, unknown>): string {
+  if (!Array.isArray(h.code_refs)) return '';
+  return (h.code_refs as CodeRefResult[])
+    .filter((r) => r.status !== 'ok')
+    .map((r) => `\n   ⚠ code ref ${r.status}: ${r.ref}`)
+    .join('');
 }
 
 async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
   const endpoint = resolveEndpoint(opts.httpEndpoint);
   const fmt = opts.compact ? formatHitsCompact : formatHits;
+  const annotate = async (hits: Array<Record<string, unknown>>): Promise<void> => {
+    if (opts.verifyCode) await annotateCodeRefs(hits, opts.vaultPath, opts.forgeGroups ?? {});
+  };
   try {
     if (opts.tier === 'expand') {
       const body = (await httpPost(endpoint, '/expand', {
@@ -133,6 +173,7 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
         hits: Array<Record<string, unknown>>;
         expansions: unknown[];
       };
+      await annotate(body.hits);
       const expandTail = opts.compact
         ? `\n+${body.expansions.length} linked (use --json for full)`
         : `\n---expansions---\n${JSON.stringify(body.expansions, null, 2)}`;
@@ -151,6 +192,7 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
       },
       { rerank: opts.rerank },
     )) as { hits: Array<Record<string, unknown>> };
+    await annotate(hits.hits);
     if (opts.tier === 'fast') {
       const text = fmt(hits.hits);
       return { tool: 'http:search', text, raw: rawFromText(text), transport: 'http' };

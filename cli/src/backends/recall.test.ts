@@ -1,3 +1,6 @@
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { extractFirstFile, recall } from './recall.js';
 
@@ -49,6 +52,36 @@ describe('recall transport selection', () => {
     expect(res.transport).toBe('http');
     expect(res.tool).toBe('http:search');
     expect(res.text).toContain('decisions/auth.md');
+  });
+
+  it('--verify-code annotates hits whose code refs are stale', async () => {
+    const vault = await mkdtemp(join(tmpdir(), 'mm-recall-vault-'));
+    await mkdir(join(vault, 'Plans'), { recursive: true });
+    await writeFile(
+      join(vault, 'Plans', 'stale.md'),
+      '---\ncode: ["ghost-repo#gone"]\n---\n\nbody\n',
+    );
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hits: [{ file: 'Plans/stale.md', heading: '(root)', score: 0.9, text: 'stale note' }],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+    ) as typeof fetch;
+
+    const res = await recall({
+      vaultPath: vault,
+      query: 'q',
+      tier: 'fast',
+      compact: true,
+      verifyCode: true,
+      forgeGroups: {},
+    });
+
+    expect(res.text).toContain('⚠ code ref unresolvable-repo: ghost-repo#gone');
+    await rm(vault, { recursive: true, force: true });
   });
 
   it('compact output renders the superseded_by pointer on the hit line', async () => {
