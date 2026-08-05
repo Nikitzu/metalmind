@@ -40,6 +40,12 @@ metalmind scribe patch "learning:my-discovery" --find "stale fact" --replace "fr
 # Supersede (old note re-ranks below its successor in recall)
 metalmind scribe supersede "plan:old-approach" "plan:new-approach"
 
+# Stamp code refs so the note's claims stay checkable against the code
+echo "decision body" | metalmind scribe create "penalty toggle decision" --kind work --code "coreapi-bookings#PenaltyToggleService"
+
+# Validate code refs on recall hits (needs forge-registered repos)
+metalmind tap copper "penalty toggle" --verify-code
+
 # Delete
 metalmind scribe delete "learning:my-discovery"
 
