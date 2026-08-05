@@ -26,14 +26,14 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
           <h3 class="display feat-h">Carry-forward</h3>
           <p>
             <TermSwap classic="daily new" scadrial="atium new" mono />
-            <span class="kbd">--from yesterday</span> seeds tomorrow's note with every unchecked item from yesterday's. No more re-typing the same TODO three days running.
+            <span class="kbd">--date tomorrow --from today</span> seeds tomorrow's note with every unchecked item from today's. No more re-typing the same TODO three days running. Dates are explicit: <span class="kbd">today</span>, <span class="kbd">tomorrow</span>, <span class="kbd">next-workday</span>, or <span class="kbd">YYYY-MM-DD</span>.
           </p>
         </div>
         <div class="feat-card">
           <div class="feat-num mono accent-text">02</div>
           <h3 class="display feat-h">One-shot archive</h3>
           <p>
-            <TermSwap classic="archive" scadrial="gold" mono />
+            <TermSwap classic="scribe archive" scadrial="gold" mono />
             <span class="kbd">{`<note>`}</span> moves a note to <span class="kbd">Archive/</span> and stamps <span class="kbd">status: archived</span> in one verb. No drag-and-drop.
           </p>
         </div>

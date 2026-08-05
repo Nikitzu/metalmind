@@ -11,6 +11,7 @@
   --metal-atium:    #d8c5a3;
   --metal-gold:     #d4a14a;
   --metal-aluminum: #b8b8b8;
+  --metal-duralumin: #9fb1bd;
 
   --accent: var(--metal-copper);
   --accent-soft: color-mix(in oklch, var(--accent) 25%, transparent);

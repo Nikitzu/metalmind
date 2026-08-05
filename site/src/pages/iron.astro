@@ -5,17 +5,17 @@ import PageCTA from '../components/PageCTA.astro';
 import TermSwap from '../components/TermSwap.astro';
 
 const title = 'Health - doctor · metalmind';
-const description = 'A clean diagnostic - or a precise reason it isn\'t clean. Eight subsystem probes, one verdict.';
+const description = 'A clean diagnostic - or a precise reason it isn\'t clean. Every subsystem probed, one verdict.';
 
 const checks = [
-  { label: 'Vault is reachable + writable',     state: 'ok',   note: '' },
-  { label: 'Watcher loopback HTTP responding',   state: 'ok',   note: '' },
-  { label: 'MCP fallback channel registered',    state: 'ok',   note: '' },
-  { label: '~/.claude/CLAUDE.md stamp present',  state: 'ok',   note: '' },
-  { label: 'Embedding index up to date',         state: 'warn', note: '12 notes pending re-embed' },
-  { label: 'Serena LSP backend reachable',       state: 'ok',   note: '' },
-  { label: 'OpenAPI shelf parses cleanly',       state: 'fail', note: 'notif-svc-v3.yaml - invalid $ref' },
-  { label: 'EOD launchd agent loaded',           state: 'ok',   note: '' },
+  { label: 'watcher - service loaded + active',        state: 'ok',   note: '' },
+  { label: 'recall-http - 127.0.0.1:17317 reachable',  state: 'ok',   note: '' },
+  { label: 'global-claude-md - stamp present',         state: 'ok',   note: '' },
+  { label: 'vault-claude-md - stamp present',          state: 'ok',   note: '' },
+  { label: 'codex-agents-md - sentinel block',         state: 'ok',   note: '' },
+  { label: 'cursor-recall-skill - installed',          state: 'ok',   note: '' },
+  { label: 'supersede-integrity - pointers resolve',   state: 'warn', note: "old-plan: superseded_by 'gone' does not resolve" },
+  { label: 'code-refs-integrity - refs resolve',       state: 'fail', note: 'auth-decision: coreapi#LegacyGuard missing' },
 ];
 const mark = (s: string) => (s === 'ok' ? '✓' : s === 'warn' ? '⚠' : '✗');
 ---
@@ -23,7 +23,7 @@ const mark = (s: string) => (s === 'ok' ? '✓' : s === 'warn' ? '⚠' : '✗');
   <PageHero
     metal="iron"
     eyebrow="doctor · audit"
-    eyebrowScadrial="burn iron · pulse"
+    eyebrowScadrial="pulse"
     title="A clean diagnostic, or a precise reason it isn't clean."
     sub="Iron is metalmind's self-check. Eight subsystem probes, each printing pass or the exact path to the broken file. One command tells you whether the rest of the library can do its job."
   />
@@ -32,8 +32,8 @@ const mark = (s: string) => (s === 'ok' ? '✓' : s === 'warn' ? '⚠' : '✗');
     <div class="container">
       <div class="section-head">
         <div class="eyebrow">§ <TermSwap classic="metalmind doctor" scadrial="metalmind pulse" mono /></div>
-        <h2>Eight probes, one verdict.</h2>
-        <p><span class="kbd">--recall-audit</span> extends the run with a benchmark over your own vault - same harness as the published recall numbers, against your own notes.</p>
+        <h2>Every subsystem, one verdict.</h2>
+        <p><span class="kbd">--deep</span> adds live probes: watcher state, the loopback endpoint, per-host stamps, and the supersede and code-ref integrity checks over your own vault.</p>
       </div>
 
       <div class="doctor-card">
@@ -67,13 +67,13 @@ const mark = (s: string) => (s === 'ok' ? '✓' : s === 'warn' ? '⚠' : '✗');
           <h3 class="display feat-h">Recall audit</h3>
           <p>
             <TermSwap classic="doctor" scadrial="pulse" mono />
-            <span class="kbd">--recall-audit</span> spawns the recall harness against your vault - hit@1, hit@5, latency p50/p95 - so you can see whether your data is still indexed clean.
+            <span class="kbd">--recall-audit</span> replays your opt-in recall log and classifies past queries as ok, weak-hit, or zero-hit - the queries that came back empty are your best <span class="kbd">/save</span> candidates.
           </p>
         </div>
         <div class="feat-card">
           <div class="feat-num mono accent-text">03</div>
           <h3 class="display feat-h">CI-friendly</h3>
-          <p>Exit code 0 only on full green. Wire <span class="kbd"><TermSwap classic="doctor" scadrial="pulse" /> --json</span> into a pre-commit hook or your team's CI to fail fast on a broken vault.</p>
+          <p>Exit code 0 only on full green. Wire <span class="kbd"><TermSwap classic="doctor" scadrial="pulse" /> --deep</span> into a pre-commit hook or your team's CI to fail fast on a broken vault.</p>
         </div>
       </div>
     </div>

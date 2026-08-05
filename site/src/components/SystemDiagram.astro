@@ -1,13 +1,14 @@
 ---
-// Animated SVG diagram - six modules orbiting the vault.
+// Animated SVG diagram - seven modules orbiting the vault.
 // Static SVG; CSS toggles the labels for classic/scadrial via [data-lang].
 const modules = [
-  { key: 'memory',  classic: 'memory',       scadrial: 'copper',  classicVerb: 'recall',     scadrialVerb: 'tap copper',  color: 'var(--metal-copper)', angle: -90 },
-  { key: 'code',    classic: 'code intel',   scadrial: 'bronze',  classicVerb: 'graph',      scadrialVerb: 'burn bronze', color: 'var(--metal-bronze)', angle: -30 },
-  { key: 'daily',   classic: 'daily',        scadrial: 'atium',   classicVerb: 'daily new',  scadrialVerb: 'atium new',   color: 'var(--metal-atium)',  angle: 30  },
-  { key: 'synod',   classic: 'deliberation', scadrial: 'steel',   classicVerb: 'synod',      scadrialVerb: 'synod',       color: 'var(--metal-steel)',  angle: 90  },
-  { key: 'flare',   classic: 'desktop',      scadrial: 'brass',   classicVerb: 'notify',     scadrialVerb: 'flare',       color: 'var(--metal-brass)',  angle: 150 },
-  { key: 'pulse',   classic: 'health',       scadrial: 'iron',    classicVerb: 'doctor',     scadrialVerb: 'pulse',       color: 'var(--metal-iron)',   angle: 210 },
+  { key: 'memory',  classic: 'memory',       scadrial: 'copper',    classicVerb: 'recall',     scadrialVerb: 'tap copper',  color: 'var(--metal-copper)',    angle: -90 },
+  { key: 'sync',    classic: 'vault sync',   scadrial: 'duralumin', classicVerb: 'sync',       scadrialVerb: 'duralumin',   color: 'var(--metal-duralumin)', angle: -38.6 },
+  { key: 'code',    classic: 'code intel',   scadrial: 'bronze',    classicVerb: 'graph',      scadrialVerb: 'burn bronze', color: 'var(--metal-bronze)',    angle: 12.9 },
+  { key: 'daily',   classic: 'daily',        scadrial: 'atium',     classicVerb: 'daily new',  scadrialVerb: 'atium new',   color: 'var(--metal-atium)',     angle: 64.3 },
+  { key: 'synod',   classic: 'deliberation', scadrial: 'steel',     classicVerb: 'synod',      scadrialVerb: 'synod',       color: 'var(--metal-steel)',     angle: 115.7 },
+  { key: 'flare',   classic: 'desktop',      scadrial: 'brass',     classicVerb: 'notify',     scadrialVerb: 'flare',       color: 'var(--metal-brass)',     angle: 167.1 },
+  { key: 'pulse',   classic: 'health',       scadrial: 'iron',      classicVerb: 'doctor',     scadrialVerb: 'pulse',       color: 'var(--metal-iron)',      angle: 218.6 },
 ];
 const r = 150;
 function pos(angle: number) {

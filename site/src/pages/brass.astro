@@ -11,8 +11,8 @@ const description = 'Native macOS banner / dialog / sticky notifications, wired 
   <PageHero
     metal="brass"
     eyebrow="notify · desktop"
-    eyebrowScadrial="burn brass · flare"
-    title="The notch knows when Claude needs you. The headphones know when it's done."
+    eyebrowScadrial="flare"
+    title="The notch knows when Claude needs you. The desktop knows when it's done."
     sub="Brass is metalmind's macOS desktop bridge - native banners, modal dialogs, sticky notifications, and (optional) audio cues that fire from agent hooks the moment work stalls or completes."
   />
 
@@ -38,13 +38,13 @@ const description = 'Native macOS banner / dialog / sticky notifications, wired 
         </div>
         <div class="feat-card">
           <div class="feat-num mono accent-text">03</div>
-          <h3 class="display feat-h">Hook-driven</h3>
-          <p>A Stop hook fires a banner when Claude finishes; a PreToolUse hook escalates to a dialog when an agent is about to run a destructive command. Zero polling.</p>
+          <h3 class="display feat-h">Wired where it matters</h3>
+          <p>The end-of-day routine fires a sticky at 17:30 with tomorrow's carry-forward, and the <span class="kbd">/save</span> skill can surface a banner when a note lands. Notifications are a command you call, not a daemon that polls.</p>
         </div>
         <div class="feat-card">
           <div class="feat-num mono accent-text">04</div>
-          <h3 class="display feat-h">Audio cues</h3>
-          <p>Optional <span class="kbd">--sound</span> flag plays a short cue (chime / pulse / submarine) so you can step away from the screen and still hear when Claude needs you back.</p>
+          <h3 class="display feat-h">Sticky survives the session</h3>
+          <p>A sticky note outlives the terminal it came from: <span class="kbd">flare sticky</span> writes into Stickies.app, so an end-of-day summary is still on screen tomorrow morning after the shell is long gone.</p>
         </div>
       </div>
     </div>

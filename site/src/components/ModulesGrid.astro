@@ -8,12 +8,12 @@ const modules = [
     classic: 'Memory',
     scadrial: 'Copper',
     tag: 'headline',
-    desc: 'Recall, save, vault CRUD. The rest of the library compounds back into it.',
+    desc: 'Recall, save, vault CRUD, temporal supersedes, code-ref validation. The rest of the library compounds back into it.',
     stat: '45ms median · 90% hit@5',
     verbs: [
-      { c: 'recall', s: 'tap copper' },
-      { c: 'save', s: 'store copper' },
-      { c: 'note', s: 'scribe' },
+      { c: 'recall --compact', s: 'tap copper --compact' },
+      { c: 'note supersede', s: 'scribe supersede' },
+      { c: 'ingest auto-memory', s: 'ingest auto-memory' },
     ],
   },
   {
@@ -40,7 +40,7 @@ const modules = [
     stat: 'launchd · systemd',
     verbs: [
       { c: 'daily new', s: 'atium new' },
-      { c: 'archive', s: 'gold' },
+      { c: 'scribe archive', s: 'gold' },
       { c: 'routine install eod', s: 'routine install eod' },
     ],
   },
@@ -71,6 +71,19 @@ const modules = [
     ],
   },
   {
+    metal: 'duralumin',
+    href: '/releases',
+    classic: 'Vault sync',
+    scadrial: 'Duralumin',
+    tag: 'guarded',
+    desc: 'Commits and pushes the vault, then asks git whether the remote actually advanced. Refuses commits that would lose notes.',
+    stat: 'note-loss guards',
+    verbs: [
+      { c: 'sync', s: 'duralumin' },
+      { c: 'sync --dry-run', s: 'duralumin --dry-run' },
+    ],
+  },
+  {
     metal: 'iron',
     href: '/iron',
     classic: 'Health',
@@ -79,7 +92,7 @@ const modules = [
     desc: 'End-to-end install check. The first memory tool that tells you when recall is failing you.',
     stat: 'self-auditing',
     verbs: [
-      { c: 'doctor', s: 'pulse' },
+      { c: 'doctor --deep', s: 'pulse --deep' },
       { c: 'doctor --recall-audit', s: 'pulse --recall-audit' },
     ],
   },
@@ -88,8 +101,8 @@ const modules = [
 <section id="modules">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">§ The six modules</div>
-      <h2>One library. Six closed gaps.</h2>
+      <div class="eyebrow">§ The seven modules</div>
+      <h2>One library. Seven closed gaps.</h2>
       <p>Each module shares state through one vault, one CLI, one stamped <span class="kbd">CLAUDE.md</span> rule. None registers an MCP tool schema. None duplicates a Claude Code primitive. <strong>Click any module below for the deep dive.</strong></p>
     </div>
 

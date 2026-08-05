@@ -45,7 +45,36 @@ const description = 'Save once, recall in 45ms median, zero standing tool-schema
           <h3 class="display feat-h">Vault writes without drift</h3>
           <p>
             <TermSwap classic="note" scadrial="scribe" mono />
-            is the CRUD interface agents use instead of raw Write. It stamps frontmatter, picks the right folder, auto-links the project MOC, and rewrites <span class="kbd">[[wikilinks]]</span> across the vault on rename.
+            is the CRUD interface agents use instead of raw Write. Nine verbs - create, update, patch, supersede, delete, archive, rename, list, show. It stamps frontmatter, picks the right folder, auto-links the project MOC, and rewrites <span class="kbd">[[wikilinks]]</span> across the vault on rename.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">05</div>
+          <h3 class="display feat-h">Decisions that supersede, not vanish</h3>
+          <p>
+            <TermSwap classic="note supersede" scadrial="scribe supersede" mono />
+            <span class="kbd">{`<old> <new>`}</span> marks a decision replaced by its successor. Recall drops the old note to 0.4x and every hit from it carries <span class="kbd">superseded_by</span>, so an agent lands on current truth without the history being deleted.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">06</div>
+          <h3 class="display feat-h">Claims checked against the code</h3>
+          <p>
+            A note can carry <span class="kbd">code: ["repo#symbol"]</span> refs. <span class="kbd">--verify-code</span> and <span class="kbd">doctor</span> flag refs whose symbol no longer exists in your forge-registered repos - the decision outlives the code, but you find out when it does.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">07</div>
+          <h3 class="display feat-h">Native memory as a feeder</h3>
+          <p>
+            <span class="kbd">metalmind ingest auto-memory</span> imports Claude Code's own auto-memory topic files into the vault as <span class="kbd">Memory/</span> notes - hash-guarded and idempotent, and it reports a conflict rather than clobbering a note you edited.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">08</div>
+          <h3 class="display feat-h">Fusion that reads the query</h3>
+          <p>
+            Exact-match tokens (UUIDs, ticket IDs, hostnames) raise the keyword leg automatically. Fused scores are folder-weighted - <span class="kbd">Archive/</span> 0.4x, <span class="kbd">Inbox/</span> 0.7x - so stale notes re-rank below in-flight work instead of being excluded.
           </p>
         </div>
       </div>

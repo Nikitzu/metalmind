@@ -38,7 +38,7 @@ const description = 'Opinionated patterns for using metalmind well - writing not
       <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Anti-patterns</h3>
       <ul class="anti-list">
         <li><strong>Orphan notes.</strong> A note that nothing links to and that has no project is invisible to graph traversal. Either link from a MOC, give it a project, or accept it's a one-off you may never find.</li>
-        <li><strong>Duplicate notes.</strong> The most expensive failure mode. Always recall first. If &gt;50% overlap with an existing note, <span class="kbd">scribe update</span> it instead of forking a new one.</li>
+        <li><strong>Duplicate notes.</strong> The most expensive failure mode. Always recall first. If &gt;50% overlap with an existing note, <span class="kbd">scribe update / scribe patch --find</span> it instead of forking a new one.</li>
         <li><strong>Inline frontmatter when piping through scribe.</strong> Scribe stamps automatically. If your body starts with <span class="kbd">---</span>, you'll end up with two - and the second one wins, silently overriding your fields.</li>
         <li><strong>Long notes with multiple topics.</strong> One note = one topic. If a single note answers three questions, recall returns it for all three with weak-but-not-best scores. Split.</li>
       </ul>
@@ -58,10 +58,13 @@ const description = 'Opinionated patterns for using metalmind well - writing not
           <tr><th>flag</th><th>use when</th><th>cost</th></tr>
         </thead>
         <tbody>
-          <tr><td>(none)</td><td>Default. Right answer 90% of the time.</td><td>~8 ms median</td></tr>
+          <tr><td>(none)</td><td>Default. Right answer 90% of the time.</td><td>~45 ms median</td></tr>
           <tr><td>--deep</td><td>One hit looks right but you want adjacent context. Walks backlinks one hop.</td><td>One round-trip; +1 hop tokens.</td></tr>
           <tr><td>--expand</td><td>Researching a topic broadly - hits + linked-context graph.</td><td>Heavier; every linked note loaded.</td></tr>
-          <tr><td>--rerank</td><td>Top-of-list precision matters more than latency. Cross-encoder rescore.</td><td>~2 s per query; first call downloads ~150 MB.</td></tr>
+          <tr><td>--rerank</td><td>Top-of-list precision matters more than latency. Cross-encoder rescore.</td><td>~2 s per query; first call downloads ~500 MB.</td></tr>
+          <tr><td>--compact</td><td>Agent-facing recall. Lean per-hit render; full note via scribe show.</td><td>~74% fewer output tokens.</td></tr>
+          <tr><td>--semantic-only / --keyword-only</td><td>A/B one retriever leg when a query returns something odd.</td><td>Same as default; skips one leg.</td></tr>
+          <tr><td>--verify-code</td><td>The note claims something about code and you want to know if it still holds.</td><td>rg per ref; 2 s per repo, 10 s per run.</td></tr>
           <tr><td>--list-recent N</td><td>"What was I working on yesterday?" - no query, just recent files.</td><td>Cheap - file-mtime scan.</td></tr>
         </tbody>
       </table>
@@ -119,13 +122,13 @@ const description = 'Opinionated patterns for using metalmind well - writing not
   <section>
     <div class="container">
       <div class="section-head">
-        <div class="eyebrow">§ 04 - codex cli</div>
-        <h2>Running metalmind on Codex CLI.</h2>
-        <p>v0.8.0 makes Codex CLI a first-class metalmind host alongside Claude Code. The model gets the same recall-first behaviour with the same headline rule (zero standing MCP-schema tax, bare-bash recall as the default path).</p>
+        <div class="eyebrow">§ 04 - codex cli + cursor</div>
+        <h2>Running metalmind beyond Claude Code.</h2>
+        <p>Codex CLI became a first-class host in v0.8.0 and Cursor in v0.9.0, alongside Claude Code. Each gets the same recall-first behaviour with the same headline rule (zero standing MCP-schema tax, bare-bash recall as the default path).</p>
       </div>
 
       <p style="color: var(--ink-mute); max-width: 64ch; margin-top: var(--space-4)">
-        <span class="kbd">metalmind init</span> shows a multi-select of detected hosts (<span class="kbd">~/.claude/</span>, <span class="kbd">~/.codex/</span>) and stamps only what you choose. It writes seven things into <span class="kbd">~/.codex/</span>: a sentinel-bounded block in <span class="kbd">AGENTS.md</span>, a SessionStart hook entry in <span class="kbd">hooks.json</span> reusing the same hook script Claude Code uses, a <span class="kbd">[sandbox_workspace_write] network_access = true</span> block in <span class="kbd">config.toml</span> (without it Codex's default sandbox blocks loopback to the watcher), a <span class="kbd">rules/metalmind.rules</span> file pre-approving the <span class="kbd">metalmind</span> command surface so the first recall doesn't ask for permission, and three skills (<span class="kbd">writing-vault-notes</span>, <span class="kbd">synod</span>, <span class="kbd">save</span>).
+        <span class="kbd">metalmind init</span> shows a multi-select of detected hosts (<span class="kbd">~/.claude/</span>, <span class="kbd">~/.codex/</span>, <span class="kbd">~/.cursor/</span>) and stamps only what you choose. It writes seven things into <span class="kbd">~/.codex/</span>: a sentinel-bounded block in <span class="kbd">AGENTS.md</span>, a SessionStart hook entry in <span class="kbd">hooks.json</span> reusing the same hook script Claude Code uses, a <span class="kbd">[sandbox_workspace_write] network_access = true</span> block in <span class="kbd">config.toml</span> (without it Codex's default sandbox blocks loopback to the watcher), a <span class="kbd">rules/metalmind.rules</span> file pre-approving the <span class="kbd">metalmind</span> command surface so the first recall doesn't ask for permission, and three skills (<span class="kbd">writing-vault-notes</span>, <span class="kbd">synod</span>, <span class="kbd">save</span>).
       </p>
 
       <p style="color: var(--ink-mute); max-width: 64ch; margin-top: var(--space-4)">
@@ -139,7 +142,7 @@ const description = 'Opinionated patterns for using metalmind well - writing not
 
       <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Codex desktop app - coming in v1.1</h3>
       <p style="color: var(--ink-mute); max-width: 64ch;">
-        v0.8.0 covers the Codex CLI (<span class="kbd">codex</span> in your terminal). The desktop app (<span class="kbd">codex app</span>) is on the v1.1 roadmap - pending verification that it shares <span class="kbd">~/.codex/</span> storage and that the model has a shell-exec primitive there.
+        metalmind covers the Codex CLI (<span class="kbd">codex</span> in your terminal). The desktop app (<span class="kbd">codex app</span>) is on the v1.1 roadmap - pending verification that it shares <span class="kbd">~/.codex/</span> storage and that the model has a shell-exec primitive there.
       </p>
 
       <p style="margin-top: var(--space-5)">

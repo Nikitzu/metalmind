@@ -60,13 +60,14 @@ const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware n
           <div class="term-title mono">forge - graph query</div>
         </div>
         <div class="term-body">
-          <div><span class="meta"># add both repos to a forge group</span></div>
-          <div><span class="prompt">$</span> <span class="cmd">metalmind forge add</span> <span class="arg">payments billing-svc notif-svc</span></div>
+          <div><span class="meta"># add each repo to the forge group, one per call</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">metalmind forge add</span> <span class="arg">payments ~/repos/billing-svc</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">metalmind forge add</span> <span class="arg">payments ~/repos/notif-svc</span></div>
           <div><span class="ok">✓</span> <span class="meta">2 repos · indexed in 6.2s</span></div>
           <div>&nbsp;</div>
           <div><span class="meta"># query across both</span></div>
           <div>
-            <span class="prompt">$</span> <span class="cmd">metalmind <TermSwap classic="graph" scadrial="burn bronze" /></span> <span class="arg">"how does payment-failed reach the user?"</span> <span class="meta">--forge payments</span>
+            <span class="prompt">$</span> <span class="cmd">metalmind <TermSwap classic="graph" scadrial="burn bronze" /></span> <span class="arg">"how does payment-failed reach the user?"</span> <span class="meta"><TermSwap classic="--group" scadrial="--forge" /> payments</span>
           </div>
           <div>&nbsp;</div>
           <div><span class="hl">→ billing-svc/src/handlers/charge.ts:142</span></div>
