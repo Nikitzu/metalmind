@@ -373,6 +373,18 @@ describe('scribe CRUD', () => {
     );
   });
 
+  it('supersede: refuses two different non-today daily notes with a clear error', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await scribeCreate({ kind: 'daily', title: 'a', body: 'x', date: '2026-04-23' }, ctx);
+    await scribeCreate({ kind: 'daily', title: 'b', body: 'y', date: '2026-04-24' }, ctx);
+
+    await expect(
+      scribeSupersede(join(vault, 'Daily/2026-04-23.md'), join(vault, 'Daily/2026-04-24.md'), ctx, {
+        date: '2026-04-23',
+      }),
+    ).rejects.toThrow(/two non-today daily notes/);
+  });
+
   it('supersede: quotes a hand-created stem containing YAML metacharacters', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     const { path: oldP } = await scribeCreate({ kind: 'plan', title: 'plain old', body: 'x' }, ctx);

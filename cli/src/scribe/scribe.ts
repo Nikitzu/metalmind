@@ -413,6 +413,15 @@ export async function scribeSupersede(
   if (oldAbs === newAbs) throw new Error('a note cannot supersede itself');
 
   const now = ctx.now ? ctx.now() : new Date();
+  const oldDaily = dailyDateFromPath(oldAbs);
+  const newDaily = dailyDateFromPath(newAbs);
+  const today = isoDate(now);
+  if (oldDaily && newDaily && oldDaily !== newDaily && oldDaily !== today && newDaily !== today) {
+    throw new Error(
+      `cannot supersede between two non-today daily notes (${oldDaily}, ${newDaily}) - ` +
+        'no single --date acknowledges both. Move the content instead.',
+    );
+  }
   assertDailyDateAck(oldAbs, opts.date, now, 'supersede');
   assertDailyDateAck(newAbs, opts.date, now, 'supersede');
 

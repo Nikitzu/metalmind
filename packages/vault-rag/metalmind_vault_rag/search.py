@@ -67,7 +67,20 @@ def _fusion_weights(query: str) -> list[float]:
 
 FOLDER_PENALTIES = {"Archive": 0.4, "Inbox": 0.7}
 
-SUPERSEDE_PENALTY = float(os.environ.get("METALMIND_SUPERSEDE_PENALTY", "0.4"))
+def _env_float(name: str, default: float, lo: float, hi: float) -> float:
+    """Clamped env parse: a typo'd or hostile value ('abc', 'nan', 'inf')
+    must not crash every consumer of this module at import time, or - for
+    a penalty - invert the ranking it exists to enforce."""
+    try:
+        v = float(os.environ.get(name, default))
+    except ValueError:
+        return default
+    if v != v:
+        return default
+    return min(max(v, lo), hi)
+
+
+SUPERSEDE_PENALTY = _env_float("METALMIND_SUPERSEDE_PENALTY", 0.4, 0.0, 1.0)
 
 _FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---", re.DOTALL)
 _SUPERSEDE_CACHE: dict[str, str] | None = None

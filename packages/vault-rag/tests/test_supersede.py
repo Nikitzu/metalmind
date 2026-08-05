@@ -73,6 +73,25 @@ class TestAnnotation:
         assert "superseded_by" not in hits[0]
 
 
+class TestEnvFloat:
+    def test_valid_value_clamped_to_range(self):
+        from metalmind_vault_rag.search import _env_float
+
+        assert _env_float("MM_TEST_ABSENT", 0.4, 0.0, 1.0) == 0.4
+
+    def test_garbage_nan_and_out_of_range_fall_back(self, monkeypatch):
+        from metalmind_vault_rag.search import _env_float
+
+        monkeypatch.setenv("MM_TEST_VAL", "abc")
+        assert _env_float("MM_TEST_VAL", 0.4, 0.0, 1.0) == 0.4
+        monkeypatch.setenv("MM_TEST_VAL", "nan")
+        assert _env_float("MM_TEST_VAL", 0.4, 0.0, 1.0) == 0.4
+        monkeypatch.setenv("MM_TEST_VAL", "inf")
+        assert _env_float("MM_TEST_VAL", 0.4, 0.0, 1.0) == 1.0
+        monkeypatch.setenv("MM_TEST_VAL", "-3")
+        assert _env_float("MM_TEST_VAL", 0.4, 0.0, 1.0) == 0.0
+
+
 class TestEnvOverride:
     def test_penalty_constant_drives_multiplier(self, monkeypatch):
         import metalmind_vault_rag.search as s
