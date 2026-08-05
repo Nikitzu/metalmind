@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.13.1',
+    date: '2026-08-05',
+    headline: 'Frontmatter parsed with a real YAML parser',
+    summary: "metalmind already shipped the yaml package and used it only for OpenAPI specs, while ten files hand-rolled note frontmatter parsing - the source of a cluster of bugs. Quoted values kept their quotes, Obsidian's block-sequence lists were invisible, a value on the line below its key was missed, a multi-line block scalar could leak what looked like a nested key, and a fixed 2 KB read dropped the frontmatter of notes with many tags or links. One shared reader now backs scribe, code refs, doctor, ingest, and recall. The write path is untouched, so no existing note is reformatted.",
+    tag_kind: 'fixed',
+  },
+  {
     tag: '0.13.0',
     date: '2026-08-05',
     headline: 'Code-aware memory validation and auto-memory ingest',

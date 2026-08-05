@@ -6,6 +6,18 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.13.1 - 2026-08-05
+
+### Fixed
+
+- **Note frontmatter is parsed with the `yaml` package instead of ad-hoc regex.** The dependency was already shipped and used only for OpenAPI specs while ten files hand-rolled their own parsing, which is where a cluster of bugs came from: quoted values kept their quotes, Obsidian's block-sequence list form was invisible, a value written on the line below its key was missed, a multi-line block scalar could leak what looked like a nested key (a note whose `summary: |` block contained `status: superseded` read as superseded), and a fixed 2 KB read silently dropped the frontmatter of notes carrying many tags or links.
+
+  One shared reader now backs `scribe`, code refs, `doctor`, `ingest`, and recall; it reads a bounded head and falls back to the whole file only when the closing fence is not in it. The Python supersede scan gets the same treatment.
+
+  The write path is deliberately untouched: `buildFrontmatter`, `yamlScalar`, and `rewriteFrontmatterField` emit the same bytes as before, so no existing note is reformatted on its next update and the auto-memory ingest hash contract is unaffected.
+
+---
+
 ## 0.13.0 - 2026-08-05
 
 ### Added
