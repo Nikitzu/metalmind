@@ -37,6 +37,7 @@ import {
   forgeSpecList,
   forgeSpecRemove,
 } from './commands/forge.js';
+import { ingestAutoMemoryCmd } from './commands/ingest.js';
 import { init } from './commands/init.js';
 import { releaseCheck } from './commands/release-check.js';
 import {
@@ -447,6 +448,15 @@ attachScribeSubcommands(scribeCmd);
 
 const noteCmd = program.command('note').description('Classic alias: vault note CRUD');
 attachScribeSubcommands(noteCmd);
+
+const ingestCmd = program
+  .command('ingest')
+  .description('Import external memory sources into the vault');
+ingestCmd
+  .command('auto-memory')
+  .description("Import Claude Code's native auto-memory topic files as Memory/ notes")
+  .option('--dry-run', 'Preview only')
+  .action((cmdOpts: { dryRun?: boolean }) => ingestAutoMemoryCmd(cmdOpts));
 
 function attachAtiumSubcommands(parent: Command): void {
   parent

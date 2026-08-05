@@ -34,6 +34,30 @@ function fmField(fm: string, key: string): string | null {
   return m?.[1]?.trim().replace(/^['"]|['"]$/g, '') ?? null;
 }
 
+export async function ingestAutoMemoryCmd(opts: { dryRun?: boolean }): Promise<void> {
+  const { log } = await import('@clack/prompts');
+  const { readConfig } = await import('../config.js');
+  const config = await readConfig();
+  if (!config) {
+    log.error('No ~/.metalmind/config.json - run `metalmind init` first.');
+    process.exitCode = 1;
+    return;
+  }
+  const res = await ingestAutoMemory({ vaultRoot: config.vaultPath, dryRun: opts.dryRun });
+  const verb = opts.dryRun ? 'would import' : 'imported';
+  log.info(
+    `${verb}: ${res.created.length} created, ${res.updated.length} updated, ` +
+      `${res.skipped.length} skipped, ${res.conflicts.length} conflicts`,
+  );
+  for (const c of res.created) log.success(`  + ${c}`);
+  for (const u of res.updated) log.success(`  ~ ${u}`);
+  for (const x of res.conflicts)
+    log.warn(`  ! ${x} - locally edited and source changed; resolve by hand`);
+  if (res.created.length + res.updated.length + res.skipped.length + res.conflicts.length === 0) {
+    log.info('  no auto-memory files found under ~/.claude/projects/*/memory/');
+  }
+}
+
 export async function ingestAutoMemory(opts: IngestOptions): Promise<IngestResult> {
   const projectsDir = opts.projectsDir ?? join(homedir(), '.claude', 'projects');
   const now = opts.now ? opts.now() : new Date();
