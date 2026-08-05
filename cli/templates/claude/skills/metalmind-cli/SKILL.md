@@ -37,6 +37,9 @@ echo "fresh content" | metalmind scribe patch "learning:my-discovery" --section 
 # Patch a literal text block in place (frontmatter untouched; empty --replace deletes)
 metalmind scribe patch "learning:my-discovery" --find "stale fact" --replace "fresh fact"
 
+# Supersede (old note re-ranks below its successor in recall)
+metalmind scribe supersede "plan:old-approach" "plan:new-approach"
+
 # Delete
 metalmind scribe delete "learning:my-discovery"
 

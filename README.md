@@ -58,7 +58,7 @@ metalmind pays off when your knowledge lives across **more than one repo**. A si
 
 - **Session-start awareness without nagging.** metalmind installs a Claude Code SessionStart hook plus a top-of-file block in `~/.claude/CLAUDE.md` with explicit WHEN→DO triggers, so every new Claude session discovers the vault on its own - no "did you check memory?" prompting. Re-stamp anytime with `metalmind burn brass` (alias: `stamp`) after an upgrade.
 
-- **Vault writes without drift.** `metalmind scribe <create|update|patch|delete|archive|list|show|rename>` (alias: `note`) is the CRUD interface agents use *instead of* raw `Write`. It stamps frontmatter, picks the right folder (`Plans/ Learnings/ Work/ Work/MOCs/ Daily/ Inbox/ Memory/ Personal/ Archive/`), auto-links the project MOC, and on `rename` rewrites `[[wikilinks]]` across the vault. Body on stdin; every mutating verb supports `--dry-run`. Daily notes for non-today dates require `--date <YYYY-MM-DD>` to acknowledge the target explicitly.
+- **Vault writes without drift.** `metalmind scribe <create|update|patch|supersede|delete|archive|list|show|rename>` (alias: `note`) is the CRUD interface agents use *instead of* raw `Write`. It stamps frontmatter, picks the right folder (`Plans/ Learnings/ Work/ Work/MOCs/ Daily/ Inbox/ Memory/ Personal/ Archive/`), auto-links the project MOC, and on `rename` rewrites `[[wikilinks]]` across the vault. `supersede <old> <new>` marks a decision replaced by its successor - recall downweights the old note and every hit from it carries `superseded_by` so agents land on current truth. Body on stdin; every mutating verb supports `--dry-run`. Daily notes for non-today dates require `--date <YYYY-MM-DD>` to acknowledge the target explicitly.
 
 ### Code intelligence
 
@@ -220,7 +220,7 @@ Every themed (Scadrial) verb has a classic alias. Both always resolve - theming 
 | `metalmind burn zinc "<bug>"` | `metalmind debug "<bug>"` | Dispatch `/team-debug` |
 | `metalmind burn pewter` | `metalmind reindex` | Rebuild code graph |
 | `metalmind forge <…>` | `metalmind group <…>` | Cross-repo graph groups; `forge capture-spec` seeds OpenAPI shelf |
-| `metalmind scribe <verb>` | `metalmind note <verb>` | Vault CRUD: `create \| update \| patch \| delete \| archive \| rename \| list \| show` |
+| `metalmind scribe <verb>` | `metalmind note <verb>` | Vault CRUD: `create \| update \| patch \| supersede \| delete \| archive \| rename \| list \| show` |
 | `metalmind atium new \| add` | `metalmind daily new \| add` | Future daily notes - `--date today\|tomorrow\|next-workday\|YYYY-MM-DD`, `--from` carries unchecked items |
 | `metalmind gold <note>` | `metalmind scribe archive <note>` | One-shot archive - move note to `Archive/` |
 | `metalmind duralumin` | `metalmind sync` | Commit and push the vault, refusing change sets that look like note loss |
