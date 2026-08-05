@@ -67,6 +67,63 @@ def _fusion_weights(query: str) -> list[float]:
 
 FOLDER_PENALTIES = {"Archive": 0.4, "Inbox": 0.7}
 
+SUPERSEDE_PENALTY = float(os.environ.get("METALMIND_SUPERSEDE_PENALTY", "0.4"))
+
+_FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---", re.DOTALL)
+_SUPERSEDE_CACHE: dict[str, str] | None = None
+_SUPERSEDE_KEY: tuple[int, float] | None = None
+
+
+def _supersede_index() -> dict[str, str]:
+    """Relative path → superseded_by stem for every note whose frontmatter
+    says `status: superseded` (empty string when no successor is named).
+    Frontmatter is the source of truth - no index schema involvement, so a
+    supersede takes effect on the next query without a reindex. Same
+    process-lifetime, mtime-keyed cache discipline as `_backlink_index`."""
+    global _SUPERSEDE_CACHE, _SUPERSEDE_KEY
+    files = list(files_to_index())
+    max_mtime = 0.0
+    for p in files:
+        try:
+            m = p.stat().st_mtime
+        except OSError:
+            continue
+        if m > max_mtime:
+            max_mtime = m
+    key = (len(files), max_mtime)
+    if _SUPERSEDE_CACHE is not None and _SUPERSEDE_KEY == key:
+        return _SUPERSEDE_CACHE
+
+    smap: dict[str, str] = {}
+    for p in files:
+        try:
+            text = p.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        fm = _FRONTMATTER_RE.match(text)
+        if not fm:
+            continue
+        block = fm.group(1)
+        status = re.search(r"^status:\s*(.+)$", block, re.MULTILINE)
+        if not status or status.group(1).strip() != "superseded":
+            continue
+        by = re.search(r"^superseded_by:\s*(.+)$", block, re.MULTILINE)
+        smap[str(p.relative_to(VAULT))] = by.group(1).strip() if by else ""
+
+    _SUPERSEDE_CACHE = smap
+    _SUPERSEDE_KEY = key
+    return smap
+
+
+def _annotate_superseded(hits: list[dict], smap: dict[str, str]) -> None:
+    """Attach `superseded_by` to hits from superseded notes, in place.
+    A dangling stem is passed through unmodified - resolution is the
+    reader's (or a future doctor check's) problem, not recall's."""
+    for h in hits:
+        by = smap.get(h["file"])
+        if by:
+            h["superseded_by"] = by
+
 
 def _folder_multiplier(file: str) -> float:
     """Score multiplier for the fused RRF score, keyed on the top-level
@@ -201,7 +258,10 @@ def _keyword_search(query: str, k: int) -> list[dict]:
 
 
 def _rrf_merge(
-    hit_lists: list[list[dict]], k: int, weights: list[float] | None = None
+    hit_lists: list[list[dict]],
+    k: int,
+    weights: list[float] | None = None,
+    supersede_map: dict[str, str] | None = None,
 ) -> list[dict]:
     """Reciprocal Rank Fusion. Each hit list contributes weight/(RRF_K + rank)
     to each unique (file, heading) key. De-dup keeps the first-seen
@@ -232,7 +292,10 @@ def _rrf_merge(
         bonus = TOP_RANK_BONUS.get(entry["top_rank"])
         if bonus:
             entry["rrf"] += bonus
-        entry["rrf"] *= _folder_multiplier(entry["file"])
+        mult = _folder_multiplier(entry["file"])
+        if supersede_map is not None and entry["file"] in supersede_map:
+            mult *= SUPERSEDE_PENALTY
+        entry["rrf"] *= mult
     ordered = sorted(merged.values(), key=lambda r: r["rrf"], reverse=True)
     # Rewrite score to RRF so downstream code sees a consistent field; keep
     # the original embedder/BM25 score under `prev_score` for debugging.
@@ -270,6 +333,7 @@ def search_vault(
     if mode not in SEARCH_MODES:
         mode = "hybrid"
 
+    smap = _supersede_index()
     if mode == "semantic-only":
         hits = _semantic_search(query, fetch)
     elif mode == "keyword-only":
@@ -282,7 +346,11 @@ def search_vault(
         leg_k = max(fetch, RRF_OVERFETCH)
         sem = _semantic_search(query, leg_k)
         kw = _keyword_search(query, leg_k)
-        hits = _rrf_merge([sem, kw], k=fetch, weights=_fusion_weights(query))
+        hits = _rrf_merge(
+            [sem, kw], k=fetch, weights=_fusion_weights(query), supersede_map=smap
+        )
+
+    _annotate_superseded(hits, smap)
 
     if rerank:
         return rerank_hits(query, hits, k)
