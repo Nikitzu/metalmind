@@ -1,5 +1,5 @@
 import { access, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
-import { basename, dirname, join, relative } from 'node:path';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { type DateArg, resolveDate } from './daily.js';
 
 export type ScribeKind =
@@ -108,6 +108,7 @@ export function assertDailyDateAck(
 
 export function resolveNotePath(input: string, vaultRoot: string): string {
   const m = /^([a-z]+):(.+)$/.exec(input);
+  let candidate: string;
   if (m) {
     const kind = m[1] as ScribeKind;
     const slug = m[2] ?? '';
@@ -115,10 +116,18 @@ export function resolveNotePath(input: string, vaultRoot: string): string {
     if (!dir)
       throw new Error(`unknown kind '${kind}' (valid: ${Object.keys(KIND_DIRS).join(', ')})`);
     const filename = slug.endsWith('.md') ? slug : `${slug}.md`;
-    return join(vaultRoot, dir, filename);
+    candidate = join(vaultRoot, dir, filename);
+  } else if (input.startsWith('/')) {
+    candidate = input;
+  } else {
+    candidate = join(vaultRoot, input.endsWith('.md') ? input : `${input}.md`);
   }
-  if (input.startsWith('/')) return input;
-  return join(vaultRoot, input.endsWith('.md') ? input : `${input}.md`);
+  const abs = resolve(candidate);
+  const root = resolve(vaultRoot);
+  if (abs !== root && !abs.startsWith(root + sep)) {
+    throw new Error(`path escapes vault: ${input}`);
+  }
+  return abs;
 }
 
 function filenameFor(kind: ScribeKind, slug: string, now: Date, dailyDate?: string): string {

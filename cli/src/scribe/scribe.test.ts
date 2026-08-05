@@ -30,8 +30,8 @@ describe('resolveNotePath', () => {
     expect(resolveNotePath('memory:trip-contacts', '/v')).toBe('/v/Memory/trip-contacts.md');
     expect(resolveNotePath('personal:budget', '/v')).toBe('/v/Personal/budget.md');
   });
-  it('passes absolute through and joins relative to vault', () => {
-    expect(resolveNotePath('/abs/x.md', '/v')).toBe('/abs/x.md');
+  it('accepts absolute paths inside the vault and joins relative to vault', () => {
+    expect(resolveNotePath('/v/Plans/x.md', '/v')).toBe('/v/Plans/x.md');
     expect(resolveNotePath('Plans/a.md', '/v')).toBe('/v/Plans/a.md');
   });
   it('appends .md to relative paths that lack it', () => {
@@ -40,6 +40,13 @@ describe('resolveNotePath', () => {
   });
   it('rejects unknown kind', () => {
     expect(() => resolveNotePath('bogus:y', '/v')).toThrow(/unknown kind/);
+  });
+  it('rejects paths that escape the vault', () => {
+    expect(() => resolveNotePath('/abs/x.md', '/v')).toThrow(/escapes vault/);
+    expect(() => resolveNotePath('../../etc/passwd', '/v')).toThrow(/escapes vault/);
+    expect(() => resolveNotePath('Plans/../../outside.md', '/v')).toThrow(/escapes vault/);
+    expect(() => resolveNotePath('/vault-sibling/x.md', '/v')).toThrow(/escapes vault/);
+    expect(() => resolveNotePath('plan:../../../etc/x', '/v')).toThrow(/escapes vault/);
   });
 });
 
