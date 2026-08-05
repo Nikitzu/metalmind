@@ -266,4 +266,57 @@ describe('doctor deep checks', () => {
       expect(res.ok).toBe(true);
     });
   });
+
+  describe('checkCodeRefsIntegrity', () => {
+    let vault: string;
+    let repo: string;
+
+    beforeEach(async () => {
+      vault = await mkdtemp(join(tmpdir(), 'mm-doctor-coderefs-'));
+      repo = await mkdtemp(join(tmpdir(), 'mm-doctor-repo-'));
+      await mkdir(join(vault, 'Work'), { recursive: true });
+      await writeFile(join(repo, 'a.ts'), 'export function liveSymbol() {}\n');
+      runCommand.mockImplementation(async (_cmd, args = []) => {
+        const pattern = args.join(' ');
+        if (pattern.includes('liveSymbol')) return ok('a.ts');
+        return { stdout: '', stderr: '', ok: false, exitCode: 1 };
+      });
+    });
+    afterEach(async () => {
+      await rm(vault, { recursive: true, force: true });
+      await rm(repo, { recursive: true, force: true });
+    });
+
+    it('ok when every ref resolves', async () => {
+      const repoName = repo.split('/').pop() as string;
+      await writeFile(
+        join(vault, 'Work', 'n.md'),
+        `---\ncode: ["${repoName}#liveSymbol"]\n---\n\nbody\n`,
+      );
+      const { checkCodeRefsIntegrity } = await import('./doctor.js');
+      const res = await checkCodeRefsIntegrity(vault, { g: { repos: [repo] } });
+      expect(res.ok).toBe(true);
+    });
+
+    it('flags missing symbols and unregistered repos with note context', async () => {
+      const repoName = repo.split('/').pop() as string;
+      await writeFile(
+        join(vault, 'Work', 'n.md'),
+        `---\ncode: ["${repoName}#goneSymbol", "ghost-repo#x"]\n---\n\nbody\n`,
+      );
+      const { checkCodeRefsIntegrity } = await import('./doctor.js');
+      const res = await checkCodeRefsIntegrity(vault, { g: { repos: [repo] } });
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain(`n: ${repoName}#goneSymbol missing`);
+      expect(res.detail).toContain('n: ghost-repo#x unresolvable-repo');
+    });
+
+    it('ok on a vault with no code refs', async () => {
+      await writeFile(join(vault, 'Work', 'plain.md'), '---\ntitle: x\n---\n\nbody\n');
+      const { checkCodeRefsIntegrity } = await import('./doctor.js');
+      const res = await checkCodeRefsIntegrity(vault, { g: { repos: [repo] } });
+      expect(res.ok).toBe(true);
+      expect(res.detail).toContain('no code refs');
+    });
+  });
 });

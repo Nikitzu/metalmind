@@ -127,6 +127,39 @@ export async function checkSymbol(
   return { status: 'unresolvable-repo', detail: res.stderr.slice(0, 120) || 'search failed' };
 }
 
+export async function collectVaultCodeRefs(vaultPath: string): Promise<Map<string, string[]>> {
+  const { readdir, readFile } = await import('node:fs/promises');
+  const { join } = await import('node:path');
+  const out = new Map<string, string[]>();
+  const skip = new Set(['.obsidian', '.metalmind-stack', '.trash', '.git']);
+  const walk = async (dir: string): Promise<void> => {
+    let items: Awaited<ReturnType<typeof readdir>>;
+    try {
+      items = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const item of items) {
+      const full = join(dir, item.name);
+      if (item.isDirectory()) {
+        if (!skip.has(item.name)) await walk(full);
+        continue;
+      }
+      if (!item.name.endsWith('.md')) continue;
+      let head: string;
+      try {
+        head = (await readFile(full, 'utf8')).slice(0, 2048);
+      } catch {
+        continue;
+      }
+      const refs = parseCodeRefsFromHead(head);
+      if (refs.length > 0) out.set(item.name.replace(/\.md$/, ''), refs);
+    }
+  };
+  await walk(vaultPath);
+  return out;
+}
+
 export async function verifyCodeRefs(
   refs: string[],
   groups: ForgeGroups,

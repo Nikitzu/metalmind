@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { join } from 'node:path';
 import { intro, log, outro } from '@clack/prompts';
+import { collectVaultCodeRefs, type ForgeGroups, verifyCodeRefs } from '../coderefs/coderefs.js';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
 import {
   DEFAULT_CODEX_DIR,
@@ -538,6 +539,38 @@ export async function checkCursorInstall(opts: { cursorDir?: string } = {}): Pro
   return out;
 }
 
+export async function checkCodeRefsIntegrity(
+  vaultPath: string,
+  groups: ForgeGroups,
+): Promise<DeepCheck> {
+  const perNote = await collectVaultCodeRefs(vaultPath);
+  if (perNote.size === 0) {
+    return { name: 'code-refs-integrity', ok: true, detail: 'no code refs in vault frontmatter' };
+  }
+  const problems: string[] = [];
+  let total = 0;
+  for (const [stem, refs] of perNote) {
+    const results = await verifyCodeRefs(refs, groups);
+    total += results.length;
+    for (const r of results) {
+      if (r.status !== 'ok') problems.push(`${stem}: ${r.ref} ${r.status}`);
+    }
+  }
+  return {
+    name: 'code-refs-integrity',
+    ok: problems.length === 0,
+    detail:
+      problems.length === 0
+        ? `${total} code refs across ${perNote.size} notes all resolve`
+        : problems.slice(0, 5).join('; ') +
+          (problems.length > 5 ? ` (+${problems.length - 5} more)` : ''),
+    remediation:
+      problems.length === 0
+        ? undefined
+        : 'update the notes (scribe patch --find/--replace or --code), or register the repo with `metalmind forge add`',
+  };
+}
+
 interface SupersedeEntry {
   stem: string;
   supersededBy: string | null;
@@ -649,14 +682,15 @@ async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   const codexChecks = installCodex ? await checkCodexInstall({ checkMcp: true }) : [];
   const cursorChecks = installCursor ? await checkCursorInstall() : [];
 
-  const [watcher, http, supersede] = await Promise.all([
+  const [watcher, http, supersede, codeRefs] = await Promise.all([
     checkWatcherService(),
     checkRecallHttp(),
     checkSupersedeIntegrity(config.vaultPath),
+    checkCodeRefsIntegrity(config.vaultPath, config.forge.groups),
   ]);
 
   if (!onLegacy) {
-    return [watcher, http, supersede, ...stamps, ...codexChecks, ...cursorChecks];
+    return [watcher, http, supersede, codeRefs, ...stamps, ...codexChecks, ...cursorChecks];
   }
 
   const docker = await checkDockerContainers();
@@ -668,6 +702,7 @@ async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
     watcher,
     http,
     supersede,
+    codeRefs,
     ...stamps,
     ...codexChecks,
     ...cursorChecks,
