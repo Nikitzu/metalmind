@@ -1,0 +1,141 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PageCTA from '../components/PageCTA.astro';
+import TermSwap from '../components/TermSwap.astro';
+
+const title = 'Vault sync - guarded git push · metalmind';
+const description = 'One command commits and pushes your vault, then asks git whether the remote actually advanced. Refuses any change set that would lose notes.';
+
+const guards = [
+  {
+    name: 'unexplained-deletion',
+    when: 'A note disappears and its content survives nowhere else in the same commit.',
+    why: 'A move whose destination never got staged looks exactly like a healthy commit until the notes are gone.',
+  },
+  {
+    name: 'delete-only',
+    when: 'The change set removes notes and adds nothing.',
+    why: 'A legitimate cleanup passes with --force. A half-applied rename does not deserve a silent push.',
+  },
+  {
+    name: 'incomplete-staging',
+    when: 'Entries remain unstaged after git add -A.',
+    why: 'The index disagreeing with the filesystem means the commit is not the change you think it is.',
+  },
+];
+---
+<BaseLayout title={title} description={description}>
+  <PageHero
+    metal="duralumin"
+    eyebrow="sync · vault"
+    eyebrowScadrial="duralumin"
+    title="Push the vault. Verify it landed. Refuse to lose a note."
+    sub="Duralumin is metalmind's vault sync - pull with rebase, stage, inspect the change set, commit, push, and then ask git whether the remote actually moved. Three guards stand between a bad change set and a push you cannot undo."
+  />
+
+  <section>
+    <div class="container">
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">01</div>
+          <h3 class="display feat-h">One command, whole cycle</h3>
+          <p>
+            <TermSwap classic="sync" scadrial="duralumin" mono />
+            pulls with rebase and autostash, stages everything, checks the change set, commits, pushes, and verifies. No six-command muscle memory, no half-finished rebase left behind.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">02</div>
+          <h3 class="display feat-h">Exit 0 is not verification</h3>
+          <p>A push can report success and leave the remote where it was. After pushing, sync asks git whether the remote ref actually advanced, and only then calls the sync done.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">03</div>
+          <h3 class="display feat-h">Renames pass, deletions do not</h3>
+          <p>Matching is by blob SHA, so a move git failed to detect as a rename sails through - the content is still there under a new path - while a genuine deletion trips the guard.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-num mono accent-text">04</div>
+          <h3 class="display feat-h">A refusal leaves no residue</h3>
+          <p>When a guard fires, sync resets the index and stops. Nothing is committed, nothing is half-staged, and the message names the guard so you know which shape it saw.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ The three guards</div>
+        <h2>Born from losing 19 notes.</h2>
+        <p>On 2026-08-02 an archive move staged its deletions and dropped its additions. The commit looked healthy, nothing errored, and nineteen notes left the vault. Each guard below is that incident, generalised.</p>
+      </div>
+      <table class="proof-table mono" style="margin-top: var(--space-5)">
+        <thead>
+          <tr><th>guard</th><th>fires when</th><th>why it exists</th></tr>
+        </thead>
+        <tbody>
+          {guards.map((g) => (
+            <tr>
+              <td><span class="kbd">{g.name}</span></td>
+              <td>{g.when}</td>
+              <td>{g.why}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p style="color: var(--ink-mute); max-width: 64ch; margin-top: var(--space-4)">
+        <span class="kbd">--force</span> exists and is yours to reach for. It is never passed on your behalf: a guard reports what it saw and stops, and the decision to override stays a decision you make.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="terminal">
+        <div class="term-head">
+          <div class="term-title mono">sync - guarded push</div>
+        </div>
+        <div class="term-body">
+          <div><span class="meta"># check what would be committed, touch nothing</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">metalmind <TermSwap classic="sync" scadrial="duralumin" /></span> <span class="meta">--dry-run</span></div>
+          <div><span class="ok">✓</span> <span class="meta">4 notes changed · 1 added · 0 deleted</span></div>
+          <div>&nbsp;</div>
+          <div><span class="meta"># commit and push with a message</span></div>
+          <div>
+            <span class="prompt">$</span> <span class="cmd">metalmind <TermSwap classic="sync" scadrial="duralumin" /></span> <span class="meta">-m</span> <span class="arg">"Add supersede ship note"</span>
+          </div>
+          <div><span class="ok">✓</span> <span class="meta">Pushed and verified.</span></div>
+          <div>&nbsp;</div>
+          <div><span class="meta"># a guard refusing a bad change set</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">metalmind <TermSwap classic="sync" scadrial="duralumin" /></span></div>
+          <div><span class="hl">✗ unexplained-deletion - Work/auth-decision.md removed, content found nowhere in this commit</span></div>
+          <div><span class="meta">index reset · nothing committed · pass --force to override</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">§ Flags</div>
+        <h2>Four knobs, no surprises.</h2>
+      </div>
+      <table class="proof-table mono" style="margin-top: var(--space-5)">
+        <thead>
+          <tr><th>flag</th><th>use when</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>-m, --message</td><td>You want the commit message to say something. Omitted, it is generated from the change counts.</td></tr>
+          <tr><td>--dry-run</td><td>"What is unsynced?" Reports the change set, then resets the index.</td></tr>
+          <tr><td>--no-push</td><td>Commit locally now, push when you are back on a network you trust.</td></tr>
+          <tr><td>--force</td><td>A guard fired, you looked, and the change set is genuinely what you meant.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <PageCTA heading="Your notes survive the push." />
+</BaseLayout>
