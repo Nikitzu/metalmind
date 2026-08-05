@@ -6,6 +6,32 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.11.0 - 2026-08-05
+
+### Added
+
+- **Adaptive fusion weighting** (vault-rag 0.4.0). Queries carrying exact-match tokens - UUIDs, numeric IDs, ticket IDs like `RED-991`, hostnames, emails - now raise the keyword-leg RRF weight from 1.5 to 2.5, because BM25 beats embeddings on literal identifiers while embeddings blur them into their semantic neighbourhood (Dynamic Alpha Tuning, Hsu et al. 2025). Prose queries keep the fixed weights. `METALMIND_RRF_ADAPTIVE=0` restores fixed weighting; `METALMIND_RRF_KEYWORD_WEIGHT_EXACT` tunes the boost. Benched on `bench/recall-v0/` at no regression against fixed weights.
+
+- **Folder penalties in fusion** (vault-rag 0.4.0). Fused scores are multiplied by 0.4 for `Archive/` notes and 0.7 for `Inbox/` notes, so archived shipped plans and unsorted clippings re-rank below in-flight work of comparable relevance without being excluded - a decisively-matching archived note can still surface.
+
+- **`scribe patch --find/--replace`**: targeted in-place edits, closing the gap where `update` only appends and `patch --section` only replaces whole headings. Matches a literal text block in the note body (frontmatter is owned by the stamper and never touched), errors on ambiguity unless `--occurrence N` disambiguates, deletes when `--replace` is the empty string, bumps `updated:`, and supports `--dry-run`.
+
+- **Recall mode flags in the CLI**: `tap copper --semantic-only` / `--keyword-only` isolate one retriever leg for A/B comparison over the loopback HTTP path. Previously documented but unimplemented.
+
+- **Docs version drift gate**: `release-check` now diffs version claims in README and docs against `package.json`, so the README can no longer claim a stale release.
+
+### Changed
+
+- **Stamp owns the output-style files.** `metalmind stamp` and the wizard now overwrite `~/.claude/output-styles/marsh.md` and `telegraph.md` from the bundled assets whenever they differ, so style updates actually reach installed machines. Previously an existing file was left untouched forever. `settings.json` is never modified by the refresh.
+
+- Documentation cleanup: README and architecture docs caught up with Cursor support, the seven-module layout, vault sync, and the fastembed cache path; site release notes backfilled from 0.8.5 to 0.10.1; em and en dashes replaced with plain hyphens repo-wide (bench fixtures with published measurements excluded).
+
+### Fixed
+
+- Pinned `mcp>=1.0,<2` in vault-rag: mcp 2.0.0 removed `mcp.server.fastmcp`, which broke fresh installs resolving the unpinned range.
+
+---
+
 ## 0.10.1 - 2026-08-04
 
 ### Fixed

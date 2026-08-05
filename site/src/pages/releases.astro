@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.11.0',
+    date: '2026-08-05',
+    headline: 'Adaptive recall fusion, folder penalties, and in-place note edits',
+    summary: 'Recall fusion weights now adapt per query: exact-match tokens (UUIDs, numeric IDs, ticket IDs, hostnames, emails) raise the keyword-leg weight, since BM25 beats embeddings on literal identifiers. Fused scores are folder-weighted - Archive/ 0.4x, Inbox/ 0.7x - so stale notes re-rank below in-flight work without being excluded. scribe patch gains --find/--replace for targeted in-place edits (frontmatter protected, ambiguity resolved via --occurrence). tap copper gains --semantic-only/--keyword-only, previously documented but unimplemented. stamp now refreshes installed output styles from bundled assets, and release-check gates docs version claims against package.json.',
+    tag_kind: 'added',
+  },
+  {
     tag: '0.10.1',
     date: '2026-08-04',
     headline: 'Shell-alias install reports what actually happened',

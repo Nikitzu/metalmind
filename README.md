@@ -118,7 +118,7 @@ Token cost is only half the story - recall has to actually find your note. `v0.5
 | 500 notes | 90% | **85%** | **90%** | **90%** | 95% |
 | 1,000 notes | 90% | **85%** | **85%** | **90%** | 95% |
 
-Hybrid is the default. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query. `--semantic-only` and `--keyword-only` flags let you A/B any query. The `BAAI/bge-small-en-v1.5` embedding model is a 30 MB ONNX wheel cached at `~/.metalmind/cache/fastembed/`.
+Hybrid is the default. Fusion weights adapt per query: exact-match tokens (UUIDs, numeric IDs, ticket IDs like `RED-991`, hostnames, emails) raise the keyword-leg weight, since BM25 beats embeddings on literal identifiers (`METALMIND_RRF_ADAPTIVE=0` restores fixed weights). Fused scores are folder-weighted - `Archive/` 0.4x, `Inbox/` 0.7x - so stale notes re-rank below in-flight work. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query. `--semantic-only` and `--keyword-only` flags let you A/B any query. The `BAAI/bge-small-en-v1.5` embedding model is a 30 MB ONNX wheel cached at `~/.metalmind/cache/fastembed/`.
 
 **Side-by-side with [qmd 2.1.0](https://github.com/tobi/qmd) on the same fixture:**
 
@@ -168,7 +168,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.10.1`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.11.0`.
 
 **From source (for hacking on metalmind itself):**
 
