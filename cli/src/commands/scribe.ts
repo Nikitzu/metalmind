@@ -51,6 +51,7 @@ export async function scribeCreateCmd(
     body?: string;
     moc?: boolean;
     dryRun?: boolean;
+    code?: string;
   },
 ): Promise<void> {
   try {
@@ -61,6 +62,10 @@ export async function scribeCreateCmd(
         title,
         body,
         project: opts.project,
+        code: opts.code
+          ?.split(',')
+          .map((c) => c.trim())
+          .filter(Boolean),
         tags: opts.tags
           ?.split(',')
           .map((t) => t.trim())
@@ -80,7 +85,7 @@ export async function scribeCreateCmd(
 
 export async function scribeUpdateCmd(
   notePath: string,
-  opts: { body?: string; date?: string; dryRun?: boolean },
+  opts: { body?: string; date?: string; dryRun?: boolean; code?: string },
 ): Promise<void> {
   try {
     const body = opts.body ?? (await readStdin());
@@ -88,6 +93,10 @@ export async function scribeUpdateCmd(
     const res = await scribeUpdate(notePath, body, await ctx(), {
       date: opts.date,
       dryRun: opts.dryRun,
+      code: opts.code
+        ?.split(',')
+        .map((c) => c.trim())
+        .filter(Boolean),
     });
     log.success(`${opts.dryRun ? 'would update' : 'updated'} ${res.path}`);
   } catch (err) {

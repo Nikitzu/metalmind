@@ -1,5 +1,6 @@
 import { access, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+import { parseCodeRef } from '../coderefs/coderefs.js';
 import { type DateArg, resolveDate } from './daily.js';
 
 export type ScribeKind =
@@ -44,6 +45,7 @@ export interface CreateOpts {
   date?: DateArg;
   moc?: boolean;
   dryRun?: boolean;
+  code?: string[];
 }
 
 export interface DailyDateOpts {
@@ -241,6 +243,7 @@ export async function scribeCreate(
   opts: CreateOpts,
   ctx: ScribeOpts,
 ): Promise<{ path: string; relPath: string; created: boolean }> {
+  assertCodeRefs(opts.code);
   const now = ctx.now ? ctx.now() : new Date();
   let dailyDate: string | undefined;
   if (opts.kind === 'daily') {
@@ -278,6 +281,7 @@ export async function scribeCreate(
     created: isoDate(now),
     updated: isoDate(now),
     status: 'active',
+    code: opts.code,
   });
   const body = opts.body.endsWith('\n') ? opts.body : `${opts.body}\n`;
   const content = `${frontmatter}# ${opts.title}\n\n${body}`;
@@ -301,19 +305,35 @@ export async function scribeCreate(
   return { path: abs, relPath, created: true };
 }
 
+function assertCodeRefs(code: string[] | undefined): void {
+  for (const ref of code ?? []) {
+    if (!parseCodeRef(ref)) {
+      throw new Error(`malformed code ref: ${ref} (expected repo#symbol)`);
+    }
+  }
+}
+
 export async function scribeUpdate(
   notePath: string,
   body: string,
   ctx: ScribeOpts,
-  opts: { dryRun?: boolean; date?: DateArg } = {},
+  opts: { dryRun?: boolean; date?: DateArg; code?: string[] } = {},
 ): Promise<{ path: string }> {
+  assertCodeRefs(opts.code);
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   const now = ctx.now ? ctx.now() : new Date();
   assertDailyDateAck(abs, opts.date, now, 'update');
   if (opts.dryRun) return { path: abs };
   const raw = await readFile(abs, 'utf8');
-  const bumped = rewriteFrontmatterField(raw, 'updated', isoDate(now));
+  let bumped = rewriteFrontmatterField(raw, 'updated', isoDate(now));
+  if (opts.code && opts.code.length > 0) {
+    bumped = rewriteFrontmatterField(
+      bumped,
+      'code',
+      `[${opts.code.map((c) => JSON.stringify(c)).join(', ')}]`,
+    );
+  }
   const appended = `${bumped.trimEnd()}\n\n${body.trim()}\n`;
   await writeFile(abs, appended, 'utf8');
   return { path: abs };

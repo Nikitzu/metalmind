@@ -370,6 +370,7 @@ function attachScribeSubcommands(parent: Command): void {
     .option('--slug <slug>', 'Override derived slug')
     .option('--date <date>', dateFlagDescription)
     .option('--body <body>', 'Body inline (otherwise read from stdin)')
+    .option('--code <csv>', 'Comma-separated code refs (repo#symbol) this note is about')
     .option('--no-moc', 'Skip appending a link to the project MOC')
     .option('--dry-run', 'Preview only')
     .action((title: string, cmdOpts) => scribeCreateCmd(title, cmdOpts));
@@ -377,6 +378,7 @@ function attachScribeSubcommands(parent: Command): void {
     .command('update <note>')
     .description('Append body to an existing note and bump updated:. Accepts kind:slug shortcut.')
     .option('--body <body>', 'Body inline (otherwise read from stdin)')
+    .option('--code <csv>', 'Re-stamp the code: frontmatter refs (repo#symbol, comma-separated)')
     .option('--date <date>', dateFlagDescription)
     .option('--dry-run', 'Preview only')
     .action((note: string, cmdOpts) => scribeUpdateCmd(note, cmdOpts));

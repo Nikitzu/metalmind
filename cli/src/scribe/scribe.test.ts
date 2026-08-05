@@ -129,6 +129,31 @@ describe('scribe CRUD', () => {
     );
   });
 
+  it('create --code stamps the code list into frontmatter', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate(
+      { kind: 'work', title: 't', body: 'b', code: ['metalmind#resolveNotePath'] },
+      ctx,
+    );
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('code: ["metalmind#resolveNotePath"]');
+  });
+
+  it('create --code refuses malformed refs', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await expect(
+      scribeCreate({ kind: 'work', title: 't2', body: 'b', code: ['not a ref'] }, ctx),
+    ).rejects.toThrow(/malformed code ref/);
+  });
+
+  it('update --code re-stamps the code list', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate({ kind: 'work', title: 't3', body: 'b' }, ctx);
+    await scribeUpdate(path, 'more', ctx, { code: ['metalmind#stamp'] });
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('code: ["metalmind#stamp"]');
+  });
+
   it('update: appends body and bumps updated', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     const { path } = await scribeCreate(
