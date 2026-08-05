@@ -40,6 +40,8 @@ Plain-markdown vault with frontmatter (Obsidian-compatible, not required). Owned
 
 `scribe` is the canonical write surface for non-daily kinds. `atium` is the canonical surface for daily action items. `gold` archives in one shot. None of them ever touches files outside the sentinel-bounded blocks they own.
 
+The folder layout maps onto the episodic/semantic/procedural taxonomy from agent-memory research: `Daily/` and `Inbox/` are episodic (what happened, time-bound, penalised in recall as they age out of relevance), `Work/`/`Learnings/`/`Plans/`/`Memory/` are semantic (what is true, kept honest by supersedes and code refs), and the stamped rules/skills/CLAUDE.md blocks are procedural (how to act, re-stamped on every upgrade).
+
 ### 2. Sentinel-bounded stamped blocks
 
 metalmind writes blocks into user-owned files between sentinels:
@@ -53,8 +55,6 @@ metalmind writes blocks into user-owned files between sentinels:
 Stamped files (per host, only the hosts you chose at `init`):
 - `~/.claude/CLAUDE.md` - global rule for every Claude Code session
 - `<vault>/CLAUDE.md` - vault-local rules (folders, lookup ladder, daily-date contract)
-
-The folder layout maps onto the episodic/semantic/procedural taxonomy from agent-memory research: `Daily/` and `Inbox/` are episodic (what happened, time-bound, penalised in recall as they age out of relevance), `Work/`/`Learnings/`/`Plans/`/`Memory/` are semantic (what is true, kept honest by supersedes and code refs), and the stamped rules/skills/CLAUDE.md blocks are procedural (how to act, re-stamped on every upgrade).
 - `~/.claude/settings.json` - env vars + SessionStart hook entry (sentinel keys, not text)
 - `~/.codex/AGENTS.md` + `~/.codex/config.toml` - Codex CLI rules and config (v0.8.0)
 - `~/.cursor/skills/`, `~/.cursor/agents/`, `~/.cursor/hooks.json` - Cursor recall skill, subagents, and the latent sessionStart hook (v0.9.0)
