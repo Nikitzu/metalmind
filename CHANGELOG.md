@@ -6,6 +6,36 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.13.0 - 2026-08-05
+
+### Added
+
+- **Code-aware memory validation.** Notes can carry `code: ["repo#symbol"]` frontmatter refs, stamped via `scribe create --code` / `scribe update --code`. `tap copper --verify-code` (opt-in) annotates hits whose refs no longer resolve, and `doctor` gains a vault-wide `code-refs-integrity` check. Resolution goes through the forge registry and a definition-shaped ripgrep/grep search - no LSP, no index, no new dependency - with a 2-second per-repo cap and a 10-second budget shared across a run. Refs report `ok`, `missing`, or `unresolvable-repo`; a resolver failure is always a status, never an error that breaks recall.
+
+- **Auto-memory ingest.** `metalmind ingest auto-memory` imports Claude Code's native auto-memory topic files (`~/.claude/projects/*/memory/*.md`) as `Memory/auto-<project>-<topic>.md` notes carrying `source_path` and `imported_hash` provenance. Re-runs are idempotent: unchanged sources skip, changed sources update in place, and a note you edited locally is never clobbered - it reports a conflict instead. `--dry-run` on every path.
+
+- `doctor` gains `supersede-integrity`: dangling `superseded_by` stems, stale `supersedes` reverse links left by `--force` re-points, and supersede cycles.
+
+- The compact `tap copper` render now shows `→ superseded by [[stem]]`, so the pointer that motivates supersedes reaches humans and not just `--json` consumers.
+
+- Documentation maps the vault layout onto the episodic/semantic/procedural memory taxonomy the agent-memory literature has converged on.
+
+### Fixed
+
+- **Vault containment is now filesystem-level, not just lexical.** `resolveNotePath` gained a path-prefix check in this line of work, but reads and writes still followed symlinks - and the vault syncs over git, so a symlink pointing outside the vault can arrive from a remote rather than being created locally. Every scribe verb now canonicalises the target's parent and refuses symlinked notes outright; the frontmatter walkers skip symlinked files.
+
+- `yamlScalar` quotes control characters, so a value containing a newline can no longer inject arbitrary frontmatter keys (`superseded_by`, `status`, `code`) into a note.
+
+- `ingest auto-memory` no longer rebuilds the frontmatter block when following a changed source. It rewrites only `imported_hash`, `source_path`, and `updated:`, leaving `project`, links, tags, and supersede pointers intact.
+
+- Code-ref symbols are regex-escaped before interpolation, so `$`-prefixed identifiers (jQuery, Svelte stores, Drizzle) no longer report a permanent false `missing`.
+
+- `METALMIND_SUPERSEDE_PENALTY` parses through a clamped helper: a garbage, infinite, or NaN value falls back to the default instead of crashing every consumer at import or inverting the ranking.
+
+- Superseding between two different non-today daily notes refuses up front with an explanation, instead of failing an unsatisfiable `--date` guard.
+
+---
+
 ## 0.12.0 - 2026-08-05
 
 ### Added
