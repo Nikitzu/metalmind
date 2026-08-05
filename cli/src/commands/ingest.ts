@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { frontmatterString, parseFrontmatter, splitFrontmatter } from '../scribe/frontmatter.js';
 import { buildFrontmatter, rewriteFrontmatterField, slugify } from '../scribe/scribe.js';
 
 export interface IngestOptions {
@@ -20,18 +21,6 @@ export interface IngestResult {
 
 function sha1(s: string): string {
   return createHash('sha1').update(s).digest('hex');
-}
-
-function splitNote(raw: string): { fm: string; body: string } {
-  if (!raw.startsWith('---\n')) return { fm: '', body: raw };
-  const end = raw.indexOf('\n---\n', 4);
-  if (end < 0) return { fm: '', body: raw };
-  return { fm: raw.slice(4, end), body: raw.slice(end + 5) };
-}
-
-function fmField(fm: string, key: string): string | null {
-  const m = new RegExp(`^${key}:[ \\t]*(\\S.*)$`, 'm').exec(fm);
-  return m?.[1]?.trim().replace(/^['"]|['"]$/g, '') ?? null;
 }
 
 export async function ingestAutoMemoryCmd(opts: { dryRun?: boolean }): Promise<void> {
@@ -121,8 +110,8 @@ export async function ingestAutoMemory(opts: IngestOptions): Promise<IngestResul
         continue;
       }
 
-      const { fm, body } = splitNote(existing);
-      const importedHash = fmField(fm, 'imported_hash');
+      const { body } = splitFrontmatter(existing);
+      const importedHash = frontmatterString(parseFrontmatter(existing).fm, 'imported_hash');
       if (importedHash === sourceHash) {
         result.skipped.push(rel);
         continue;

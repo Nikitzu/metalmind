@@ -13,6 +13,7 @@ import {
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { parseCodeRef } from '../coderefs/coderefs.js';
 import { type DateArg, resolveDate } from './daily.js';
+import { frontmatterString, parseFrontmatter } from './frontmatter.js';
 
 export type ScribeKind =
   | 'plan'
@@ -184,22 +185,6 @@ export function buildFrontmatter(fields: Record<string, unknown>): string {
   }
   lines.push('---', '');
   return lines.join('\n');
-}
-
-function parseFrontmatter(source: string): { fm: Record<string, string>; bodyStart: number } {
-  if (!source.startsWith('---\n')) return { fm: {}, bodyStart: 0 };
-  const end = source.indexOf('\n---\n', 4);
-  if (end < 0) return { fm: {}, bodyStart: 0 };
-  const block = source.slice(4, end);
-  const fm: Record<string, string> = {};
-  for (const line of block.split('\n')) {
-    const idx = line.indexOf(':');
-    if (idx < 0) continue;
-    const k = line.slice(0, idx).trim();
-    const v = line.slice(idx + 1).trim();
-    if (k) fm[k] = v;
-  }
-  return { fm, bodyStart: end + 5 };
 }
 
 export function rewriteFrontmatterField(source: string, key: string, value: string): string {
@@ -478,7 +463,7 @@ export async function scribeSupersede(
 
   const oldRaw = await readFile(oldAbs, 'utf8');
   const { fm } = parseFrontmatter(oldRaw);
-  const existing = fm.superseded_by;
+  const existing = frontmatterString(fm, 'superseded_by');
   if (existing && !opts.force) {
     throw new Error(
       `already superseded by ${existing} - pass --force to re-point at the new successor`,
@@ -591,7 +576,7 @@ export async function scribeArchive(
 async function projectOf(abs: string): Promise<string | null> {
   try {
     const raw = await readFile(abs, 'utf8');
-    return parseFrontmatter(raw).fm.project ?? null;
+    return frontmatterString(parseFrontmatter(raw).fm, 'project');
   } catch {
     return null;
   }
@@ -627,14 +612,14 @@ export async function scribeList(
       if (!s?.isFile()) continue;
       const raw = await readFile(abs, 'utf8').catch(() => '');
       const { fm } = parseFrontmatter(raw);
-      if (filter.project && fm.project !== filter.project) continue;
+      if (filter.project && frontmatterString(fm, 'project') !== filter.project) continue;
       out.push({
         path: abs,
         relPath: relative(ctx.vaultRoot, abs),
         kind,
-        project: fm.project ?? null,
-        title: fm.title ?? null,
-        status: fm.status ?? null,
+        project: frontmatterString(fm, 'project'),
+        title: frontmatterString(fm, 'title'),
+        status: frontmatterString(fm, 'status'),
       });
     }
   }

@@ -135,18 +135,17 @@ async function annotateCodeRefs(
   vaultPath: string,
   groups: ForgeGroups,
 ): Promise<void> {
-  const { readFile } = await import('node:fs/promises');
   const { resolveNotePath } = await import('../scribe/scribe.js');
+  const { frontmatterList, readNoteFrontmatter } = await import('../scribe/frontmatter.js');
   const deadline = Date.now() + 10_000;
   for (const h of hits) {
     if (typeof h.file !== 'string') continue;
-    let head: string;
+    let refs: string[];
     try {
-      head = (await readFile(resolveNotePath(h.file, vaultPath), 'utf8')).slice(0, 2048);
+      refs = frontmatterList(await readNoteFrontmatter(resolveNotePath(h.file, vaultPath)), 'code');
     } catch {
       continue;
     }
-    const refs = parseCodeRefsFromHead(head);
     if (refs.length === 0) continue;
     h.code_refs = await verifyCodeRefs(refs, groups, { deadline });
   }

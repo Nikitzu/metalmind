@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { basename } from 'node:path';
+import { frontmatterList, parseFrontmatter, readNoteFrontmatter } from '../scribe/frontmatter.js';
 import { runCommand } from '../util/exec.js';
 
 export type CodeRefStatus = 'ok' | 'missing' | 'unresolvable-repo';
@@ -29,31 +30,7 @@ export function parseCodeRef(raw: string): CodeRef | null {
 }
 
 export function parseCodeRefsFromHead(head: string): string[] {
-  const fm = /^---\n([\s\S]*?)\n---/.exec(head);
-  if (!fm?.[1]) return [];
-  const block = /^code:[ \t]*\n((?:[ \t]+-[ \t]*\S.*\n?)+)/m.exec(fm[1]);
-  if (block?.[1]) {
-    return block[1]
-      .split('\n')
-      .map((l) =>
-        l
-          .replace(/^[ \t]*-[ \t]*/, '')
-          .trim()
-          .replace(/^['"]|['"]$/g, ''),
-      )
-      .filter(Boolean);
-  }
-  const line = /^code:[ \t]*\[(.*)\]$/m.exec(fm[1]);
-  if (!line?.[1]) return [];
-  try {
-    const parsed = JSON.parse(`[${line[1]}]`) as unknown[];
-    return parsed.filter((x): x is string => typeof x === 'string');
-  } catch {
-    return line[1]
-      .split(',')
-      .map((s) => s.trim().replace(/^['"]|['"]$/g, ''))
-      .filter(Boolean);
-  }
+  return frontmatterList(parseFrontmatter(head).fm, 'code');
 }
 
 export function resolveRepoPath(repo: string, groups: ForgeGroups): string | null {
@@ -142,7 +119,7 @@ export async function checkSymbol(
 }
 
 export async function collectVaultCodeRefs(vaultPath: string): Promise<Map<string, string[]>> {
-  const { readdir, readFile } = await import('node:fs/promises');
+  const { readdir } = await import('node:fs/promises');
   const { join } = await import('node:path');
   const out = new Map<string, string[]>();
   const skip = new Set(['.obsidian', '.metalmind-stack', '.trash', '.git']);
@@ -161,13 +138,7 @@ export async function collectVaultCodeRefs(vaultPath: string): Promise<Map<strin
       }
       if (item.isSymbolicLink()) continue;
       if (!item.name.endsWith('.md')) continue;
-      let head: string;
-      try {
-        head = (await readFile(full, 'utf8')).slice(0, 2048);
-      } catch {
-        continue;
-      }
-      const refs = parseCodeRefsFromHead(head);
+      const refs = frontmatterList(await readNoteFrontmatter(full), 'code');
       if (refs.length > 0) out.set(item.name.replace(/\.md$/, ''), refs);
     }
   };

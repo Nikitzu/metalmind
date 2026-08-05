@@ -17,6 +17,7 @@ import { METALMIND_CURSOR_HOOK_FILENAME } from '../install/cursor/hooks.js';
 import { DEFAULT_CURSOR_DIR } from '../install/cursor.js';
 import { detectPrereqs } from '../install/prereqs.js';
 import { OLLAMA_CONTAINER } from '../install/stack.js';
+import { frontmatterString, readNoteFrontmatter } from '../scribe/frontmatter.js';
 import { runCommand } from '../util/exec.js';
 import { detectObsidian } from '../util/obsidian.js';
 
@@ -597,20 +598,11 @@ async function collectSupersedeEntries(vaultPath: string): Promise<Map<string, S
       }
       if (item.isSymbolicLink()) continue;
       if (!item.name.endsWith('.md')) continue;
-      let head: string;
-      try {
-        head = (await readFile(full, 'utf8')).slice(0, 2048);
-      } catch {
-        continue;
-      }
-      const fm = /^---\n([\s\S]*?)\n---/.exec(head);
-      const block = fm?.[1] ?? '';
-      const by = /^superseded_by:[ \t]*(\S.*)$/m.exec(block);
-      const sup = /^supersedes:[ \t]*(\S.*)$/m.exec(block);
+      const fm = await readNoteFrontmatter(full);
       entries.set(item.name.replace(/\.md$/, ''), {
         stem: item.name.replace(/\.md$/, ''),
-        supersededBy: by?.[1]?.trim().replace(/^['"]|['"]$/g, '') ?? null,
-        supersedes: sup?.[1]?.trim().replace(/^['"]|['"]$/g, '') ?? null,
+        supersededBy: frontmatterString(fm, 'superseded_by'),
+        supersedes: frontmatterString(fm, 'supersedes'),
       });
     }
   };

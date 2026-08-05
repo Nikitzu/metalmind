@@ -183,6 +183,22 @@ class TestSupersedeIndex:
         assert s._supersede_index() is first
         assert opens == []
 
+    def test_frontmatter_larger_than_the_head_read_is_still_seen(self, tmp_path, monkeypatch):
+        import metalmind_vault_rag.core as core
+        import metalmind_vault_rag.search as s
+
+        (tmp_path / "Plans").mkdir()
+        filler = "\n".join(f'tag_{i}: "{"x" * 40}"' for i in range(300))
+        (tmp_path / "Plans" / "big.md").write_text(
+            f"---\n{filler}\nstatus: superseded\nsuperseded_by: successor\n---\n\nbody\n"
+        )
+        monkeypatch.setattr(core, "VAULT", tmp_path)
+        monkeypatch.setattr(s, "VAULT", tmp_path)
+        monkeypatch.setattr(s, "_SUPERSEDE_CACHE", None)
+        monkeypatch.setattr(s, "_SUPERSEDE_KEY", None)
+
+        assert s._supersede_index() == {"Plans/big.md": "successor"}
+
     def test_cache_invalidates_on_vault_change(self, tmp_path, monkeypatch):
         import metalmind_vault_rag.core as core
         import metalmind_vault_rag.search as s

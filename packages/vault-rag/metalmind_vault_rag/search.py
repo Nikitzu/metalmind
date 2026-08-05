@@ -97,8 +97,8 @@ def _supersede_index() -> dict[str, str]:
     silently un-supersedes it. Frontmatter is the source of truth - no index
     schema involvement, so a supersede takes effect on the next query
     without a reindex. Same process-lifetime, mtime-keyed cache discipline
-    as `_backlink_index`, but reads only the leading 2 KB per file since
-    frontmatter cannot start deeper."""
+    as `_backlink_index`, reading a bounded head per file and falling back to
+    the whole file only when the closing fence is not in it."""
     global _SUPERSEDE_CACHE, _SUPERSEDE_KEY
     files = list(files_to_index())
     max_mtime = 0.0
@@ -117,10 +117,13 @@ def _supersede_index() -> dict[str, str]:
     for p in files:
         try:
             with p.open("r", encoding="utf-8", errors="ignore") as fh:
-                text = fh.read(2048)
+                text = fh.read(8192)
+                fm = _FRONTMATTER_RE.match(text)
+                if text.startswith("---\n") and not fm:
+                    text += fh.read()
+                    fm = _FRONTMATTER_RE.match(text)
         except OSError:
             continue
-        fm = _FRONTMATTER_RE.match(text)
         if not fm:
             continue
         block = fm.group(1)
