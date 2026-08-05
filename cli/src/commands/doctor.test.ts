@@ -267,6 +267,26 @@ describe('doctor deep checks', () => {
     });
   });
 
+  describe('runDeepChecks wiring', () => {
+    it('includes both integrity checks in the returned list', async () => {
+      const vault = await mkdtemp(join(tmpdir(), 'mm-doctor-wiring-'));
+      runCommand.mockResolvedValue(ok(''));
+      globalThis.fetch = vi.fn(async () => new Response('{}', { status: 200 })) as typeof fetch;
+
+      const { runDeepChecks } = await import('./doctor.js');
+      const checks = await runDeepChecks({
+        vaultPath: vault,
+        hosts: [],
+        forge: { groups: {} },
+      } as unknown as Config);
+
+      const names = checks.map((c) => c.name);
+      expect(names).toContain('supersede-integrity');
+      expect(names).toContain('code-refs-integrity');
+      await rm(vault, { recursive: true, force: true });
+    });
+  });
+
   describe('checkCodeRefsIntegrity', () => {
     let vault: string;
     let repo: string;
@@ -309,6 +329,16 @@ describe('doctor deep checks', () => {
       expect(res.ok).toBe(false);
       expect(res.detail).toContain(`n: ${repoName}#goneSymbol missing`);
       expect(res.detail).toContain('n: ghost-repo#x unresolvable-repo');
+    });
+
+    it('caps the detail at five offenders with a +N more suffix and gives remediation', async () => {
+      const refs = Array.from({ length: 7 }, (_, i) => `"ghost-repo#sym${i}"`).join(', ');
+      await writeFile(join(vault, 'Work', 'many.md'), `---\ncode: [${refs}]\n---\n\nbody\n`);
+      const { checkCodeRefsIntegrity } = await import('./doctor.js');
+      const res = await checkCodeRefsIntegrity(vault, { g: { repos: [repo] } });
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain('+2 more');
+      expect(res.remediation).toBeTruthy();
     });
 
     it('ok on a vault with no code refs', async () => {

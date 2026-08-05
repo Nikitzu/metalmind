@@ -84,6 +84,72 @@ describe('recall transport selection', () => {
     await rm(vault, { recursive: true, force: true });
   });
 
+  it('--verify-code flags a missing ref and leaves a resolving ref unannotated', async () => {
+    const { mkdtemp: mk } = await import('node:fs/promises');
+    const vault = await mk(join(tmpdir(), 'mm-recall-vault-'));
+    const repo = await mk(join(tmpdir(), 'mm-recall-repo-'));
+    await writeFile(join(repo, 'lib.ts'), 'export function liveSymbol() {}\n');
+    const repoName = repo.split('/').pop() as string;
+    await mkdir(join(vault, 'Plans'), { recursive: true });
+    await writeFile(
+      join(vault, 'Plans', 'good.md'),
+      `---\ncode: ["${repoName}#liveSymbol"]\n---\n\nbody\n`,
+    );
+    await writeFile(
+      join(vault, 'Plans', 'bad.md'),
+      `---\ncode: ["${repoName}#renamedAway"]\n---\n\nbody\n`,
+    );
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hits: [
+              { file: 'Plans/good.md', heading: '(root)', score: 0.9, text: 'good' },
+              { file: 'Plans/bad.md', heading: '(root)', score: 0.8, text: 'bad' },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+    ) as typeof fetch;
+
+    const res = await recall({
+      vaultPath: vault,
+      query: 'q',
+      tier: 'fast',
+      compact: true,
+      verifyCode: true,
+      forgeGroups: { g: { repos: [repo] } },
+    });
+
+    expect(res.text).toContain(`⚠ code ref missing: ${repoName}#renamedAway`);
+    expect(res.text).not.toContain(`⚠ code ref missing: ${repoName}#liveSymbol`);
+    await rm(vault, { recursive: true, force: true });
+    await rm(repo, { recursive: true, force: true });
+  });
+
+  it('without --verify-code no code-ref work happens and output is unannotated', async () => {
+    const vault = await mkdtemp(join(tmpdir(), 'mm-recall-vault-'));
+    await mkdir(join(vault, 'Plans'), { recursive: true });
+    await writeFile(
+      join(vault, 'Plans', 'bad.md'),
+      '---\ncode: ["ghost-repo#gone"]\n---\n\nbody\n',
+    );
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hits: [{ file: 'Plans/bad.md', heading: '(root)', score: 0.9, text: 'bad' }],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+    ) as typeof fetch;
+
+    const res = await recall({ vaultPath: vault, query: 'q', tier: 'fast', compact: true });
+
+    expect(res.text).not.toContain('code ref');
+    await rm(vault, { recursive: true, force: true });
+  });
+
   it('compact output renders the superseded_by pointer on the hit line', async () => {
     globalThis.fetch = vi.fn(
       async () =>

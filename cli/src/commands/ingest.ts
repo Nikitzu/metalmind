@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { buildFrontmatter, slugify } from '../scribe/scribe.js';
+import { buildFrontmatter, rewriteFrontmatterField, slugify } from '../scribe/scribe.js';
 
 export interface IngestOptions {
   projectsDir?: string;
@@ -130,18 +130,11 @@ export async function ingestAutoMemory(opts: IngestOptions): Promise<IngestResul
       if (importedHash !== null && sha1(body) === importedHash) {
         result.updated.push(rel);
         if (opts.dryRun) continue;
-        const created = fmField(fm, 'created') ?? today;
-        const frontmatter = buildFrontmatter({
-          kind: 'memory',
-          title: fmField(fm, 'title') ?? topicSlug,
-          tags: ['auto-memory'],
-          source_path: sourcePath,
-          imported_hash: sourceHash,
-          created,
-          updated: today,
-          status: fmField(fm, 'status') ?? 'active',
-        });
-        await writeFile(abs, frontmatter + content, 'utf8');
+        let head = existing.slice(0, existing.length - body.length);
+        head = rewriteFrontmatterField(head, 'imported_hash', sourceHash);
+        head = rewriteFrontmatterField(head, 'source_path', sourcePath);
+        head = rewriteFrontmatterField(head, 'updated', today);
+        await writeFile(abs, head + content, 'utf8');
         continue;
       }
       result.conflicts.push(rel);

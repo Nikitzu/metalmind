@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -127,6 +127,42 @@ describe('scribe CRUD', () => {
     await expect(scribeCreate({ kind: 'learning', title: 't', body: 'y' }, ctx)).rejects.toThrow(
       /already exists/,
     );
+  });
+
+  it('refuses to write through a symlink that points outside the vault', async () => {
+    const { symlink } = await import('node:fs/promises');
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const outside = await mkdtemp(join(tmpdir(), 'mm-outside-'));
+    const target = join(outside, 'victim.md');
+    await writeFile(target, 'original outside content\n', 'utf8');
+    await mkdir(join(vault, 'Memory'), { recursive: true });
+    await symlink(target, join(vault, 'Memory', 'link.md'));
+
+    await expect(scribeUpdate('memory:link', 'injected', ctx)).rejects.toThrow(/symlink/);
+    expect(await readFile(target, 'utf8')).toBe('original outside content\n');
+    await rm(outside, { recursive: true, force: true });
+  });
+
+  it('update --code refuses a malformed ref and leaves the file untouched', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate({ kind: 'work', title: 'codeguard', body: 'b' }, ctx);
+    const before = await readFile(path, 'utf8');
+
+    await expect(scribeUpdate(path, 'more', ctx, { code: ['not a ref'] })).rejects.toThrow(
+      /malformed code ref/,
+    );
+    expect(await readFile(path, 'utf8')).toBe(before);
+  });
+
+  it('quotes a frontmatter value containing a newline so it cannot inject keys', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate(
+      { kind: 'work', title: 'inject\nsuperseded_by: victim', body: 'b' },
+      ctx,
+    );
+    const raw = await readFile(path, 'utf8');
+    const fmEnd = raw.indexOf('\n---\n', 4);
+    expect(raw.slice(0, fmEnd)).not.toMatch(/^superseded_by:/m);
   });
 
   it('create --code stamps the code list into frontmatter', async () => {

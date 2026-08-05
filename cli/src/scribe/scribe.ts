@@ -1,4 +1,15 @@
-import { access, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import {
+  access,
+  lstat,
+  mkdir,
+  readdir,
+  readFile,
+  realpath,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { parseCodeRef } from '../coderefs/coderefs.js';
 import { type DateArg, resolveDate } from './daily.js';
@@ -132,6 +143,20 @@ export function resolveNotePath(input: string, vaultRoot: string): string {
   return abs;
 }
 
+export async function assertRealPathContained(abs: string, vaultRoot: string): Promise<void> {
+  const link = await lstat(abs).catch(() => null);
+  if (link?.isSymbolicLink()) {
+    throw new Error(`refusing to follow symlink inside the vault: ${abs}`);
+  }
+  const root = await realpath(vaultRoot).catch(() => resolve(vaultRoot));
+  const parentReal = await realpath(dirname(abs)).catch(() => null);
+  if (parentReal === null) return;
+  const real = join(parentReal, basename(abs));
+  if (real !== root && !real.startsWith(root + sep)) {
+    throw new Error(`path escapes vault (via symlink): ${abs}`);
+  }
+}
+
 function filenameFor(kind: ScribeKind, slug: string, now: Date, dailyDate?: string): string {
   if (kind === 'daily') return `${dailyDate ?? isoDate(now)}.md`;
   if (kind === 'plan')
@@ -140,7 +165,9 @@ function filenameFor(kind: ScribeKind, slug: string, now: Date, dailyDate?: stri
 }
 
 function yamlScalar(v: string): string {
-  if (/[:#[\]{}&*!|>'"%@`]/.test(v) || /^\s|\s$/.test(v) || v === '') return JSON.stringify(v);
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: control chars must force quoting - an unquoted newline injects arbitrary frontmatter keys
+  if (/[:#[\]{}&*!|>'"%@`]/.test(v) || /[\u0000-\u001f]/.test(v) || /^\s|\s$/.test(v) || v === '')
+    return JSON.stringify(v);
   return v;
 }
 
@@ -175,7 +202,7 @@ function parseFrontmatter(source: string): { fm: Record<string, string>; bodySta
   return { fm, bodyStart: end + 5 };
 }
 
-function rewriteFrontmatterField(source: string, key: string, value: string): string {
+export function rewriteFrontmatterField(source: string, key: string, value: string): string {
   const { bodyStart } = parseFrontmatter(source);
   if (bodyStart === 0) {
     return buildFrontmatter({ [key]: value }) + source;
@@ -321,6 +348,7 @@ export async function scribeUpdate(
 ): Promise<{ path: string }> {
   assertCodeRefs(opts.code);
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
+  await assertRealPathContained(abs, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   const now = ctx.now ? ctx.now() : new Date();
   assertDailyDateAck(abs, opts.date, now, 'update');
@@ -349,6 +377,7 @@ export async function scribePatch(
     throw new Error('pass either --section (with body) or --find/--replace, not both');
   }
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
+  await assertRealPathContained(abs, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   const now = ctx.now ? ctx.now() : new Date();
   assertDailyDateAck(abs, opts.date, now, 'patch');
@@ -428,6 +457,8 @@ export async function scribeSupersede(
 ): Promise<{ oldPath: string; newPath: string; oldStem: string; newStem: string }> {
   const oldAbs = resolveNotePath(oldNote, ctx.vaultRoot);
   const newAbs = resolveNotePath(newNote, ctx.vaultRoot);
+  await assertRealPathContained(oldAbs, ctx.vaultRoot);
+  await assertRealPathContained(newAbs, ctx.vaultRoot);
   if (!(await exists(oldAbs))) throw new Error(`note not found: ${oldAbs}`);
   if (!(await exists(newAbs))) throw new Error(`note not found: ${newAbs}`);
   if (oldAbs === newAbs) throw new Error('a note cannot supersede itself');
@@ -481,6 +512,7 @@ export async function scribeDelete(
   opts: { hard?: boolean; dryRun?: boolean; date?: DateArg } = {},
 ): Promise<{ path: string; to?: string }> {
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
+  await assertRealPathContained(abs, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   const now = ctx.now ? ctx.now() : new Date();
   assertDailyDateAck(abs, opts.date, now, 'delete');
@@ -515,6 +547,7 @@ export async function scribeArchive(
   opts: { dryRun?: boolean; date?: DateArg } = {},
 ): Promise<ArchiveResult> {
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
+  await assertRealPathContained(abs, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   const now = ctx.now ? ctx.now() : new Date();
   assertDailyDateAck(abs, opts.date, now, 'archive');
@@ -610,6 +643,7 @@ export async function scribeList(
 
 export async function scribeShow(notePath: string, ctx: ScribeOpts): Promise<string> {
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
+  await assertRealPathContained(abs, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   return readFile(abs, 'utf8');
 }

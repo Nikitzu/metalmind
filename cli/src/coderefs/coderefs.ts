@@ -31,6 +31,18 @@ export function parseCodeRef(raw: string): CodeRef | null {
 export function parseCodeRefsFromHead(head: string): string[] {
   const fm = /^---\n([\s\S]*?)\n---/.exec(head);
   if (!fm?.[1]) return [];
+  const block = /^code:[ \t]*\n((?:[ \t]+-[ \t]*\S.*\n?)+)/m.exec(fm[1]);
+  if (block?.[1]) {
+    return block[1]
+      .split('\n')
+      .map((l) =>
+        l
+          .replace(/^[ \t]*-[ \t]*/, '')
+          .trim()
+          .replace(/^['"]|['"]$/g, ''),
+      )
+      .filter(Boolean);
+  }
   const line = /^code:[ \t]*\[(.*)\]$/m.exec(fm[1]);
   if (!line?.[1]) return [];
   try {
@@ -57,7 +69,8 @@ const SKIP_DIRS = ['node_modules', '.git', 'dist', 'build', 'target', '.venv'];
 const PER_REPO_TIMEOUT_MS = 2000;
 const TOTAL_TIMEOUT_MS = 10_000;
 
-function definitionPatterns(symbol: string): [string, string] {
+function definitionPatterns(rawSymbol: string): [string, string] {
+  const symbol = rawSymbol.replace(/[$^.*+?()[\]{}|\\]/g, '\\$&');
   const kw = '(function|class|const|let|var|def|fn|interface|type|struct|enum|trait|impl|val|fun)';
   return [`${kw}\\s+${symbol}\\b`, `\\b${symbol}\\s*[=(:]`];
 }
@@ -74,6 +87,7 @@ async function hasRg(): Promise<boolean> {
 export interface CheckSymbolOptions {
   tool?: 'rg' | 'grep' | 'auto';
   timeoutMs?: number;
+  deadline?: number;
 }
 
 export async function checkSymbol(
@@ -145,6 +159,7 @@ export async function collectVaultCodeRefs(vaultPath: string): Promise<Map<strin
         if (!skip.has(item.name)) await walk(full);
         continue;
       }
+      if (item.isSymbolicLink()) continue;
       if (!item.name.endsWith('.md')) continue;
       let head: string;
       try {
@@ -165,7 +180,7 @@ export async function verifyCodeRefs(
   groups: ForgeGroups,
   opts: CheckSymbolOptions = {},
 ): Promise<CodeRefResult[]> {
-  const deadline = Date.now() + TOTAL_TIMEOUT_MS;
+  const deadline = opts.deadline ?? Date.now() + TOTAL_TIMEOUT_MS;
   const results: CodeRefResult[] = [];
   for (const raw of refs) {
     const parsed = parseCodeRef(raw);

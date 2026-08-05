@@ -136,17 +136,19 @@ async function annotateCodeRefs(
   groups: ForgeGroups,
 ): Promise<void> {
   const { readFile } = await import('node:fs/promises');
+  const { resolveNotePath } = await import('../scribe/scribe.js');
+  const deadline = Date.now() + 10_000;
   for (const h of hits) {
     if (typeof h.file !== 'string') continue;
     let head: string;
     try {
-      head = (await readFile(join(vaultPath, h.file), 'utf8')).slice(0, 2048);
+      head = (await readFile(resolveNotePath(h.file, vaultPath), 'utf8')).slice(0, 2048);
     } catch {
       continue;
     }
     const refs = parseCodeRefsFromHead(head);
     if (refs.length === 0) continue;
-    h.code_refs = await verifyCodeRefs(refs, groups);
+    h.code_refs = await verifyCodeRefs(refs, groups, { deadline });
   }
 }
 
@@ -271,6 +273,11 @@ export async function recall(opts: RecallOptions): Promise<RecallResult> {
   // over stdio (the slower but always-available path).
   const http = await httpRecall(opts);
   if (http) return http;
+  if (opts.verifyCode) {
+    process.stderr.write(
+      'recall: --verify-code skipped - fell back to the stdio transport, where code refs are not validated\n',
+    );
+  }
   return stdioRecall(opts);
 }
 

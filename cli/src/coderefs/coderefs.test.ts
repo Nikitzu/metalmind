@@ -55,6 +55,18 @@ describe('resolveRepoPath', () => {
   });
 });
 
+describe('parseCodeRefsFromHead block form', () => {
+  it('reads the Obsidian block-sequence form', () => {
+    const head = '---\ntitle: x\ncode:\n  - metalmind#foo\n  - "driver-app#useBar"\n---\n\nbody';
+    expect(parseCodeRefsFromHead(head)).toEqual(['metalmind#foo', 'driver-app#useBar']);
+  });
+
+  it('reads a single-quoted inline list via the fallback parse', () => {
+    const head = "---\ncode: ['metalmind#foo']\n---\n\nbody";
+    expect(parseCodeRefsFromHead(head)).toEqual(['metalmind#foo']);
+  });
+});
+
 describe('checkSymbol + verifyCodeRefs', () => {
   let repo: string;
 
@@ -72,6 +84,50 @@ describe('checkSymbol + verifyCodeRefs', () => {
       const res = await checkSymbol(repo, 'realSymbol', { tool });
       expect(res.status).toBe('ok');
     }
+  });
+
+  it('finds a $-prefixed symbol (regex metachars escaped)', async () => {
+    await writeFile(join(repo, 'store.ts'), 'export const $store = 1;\n');
+    const res = await checkSymbol(repo, '$store', { tool: 'grep' });
+    expect(res.status).toBe('ok');
+  });
+
+  it('ignores symbols that live only in skipped directories', async () => {
+    await mkdir(join(repo, 'node_modules', 'pkg'), { recursive: true });
+    await writeFile(
+      join(repo, 'node_modules', 'pkg', 'index.js'),
+      'export function vendoredOnly() {}\n',
+    );
+    const res = await checkSymbol(repo, 'vendoredOnly', { tool: 'grep' });
+    expect(res.status).toBe('missing');
+  });
+
+  it('reports a timeout as unresolvable-repo rather than missing', async () => {
+    const res = await checkSymbol(repo, 'realSymbol', { tool: 'grep', timeoutMs: 1 });
+    if (res.status !== 'ok') {
+      expect(res.status).toBe('unresolvable-repo');
+      expect(res.detail).toMatch(/timed out|failed/);
+    }
+  });
+
+  it('respects an exhausted shared deadline', async () => {
+    const results = await verifyCodeRefs(
+      [`${basename(repo)}#realSymbol`],
+      { g: { repos: [repo] } },
+      {
+        deadline: Date.now() - 1,
+      },
+    );
+    expect(results[0]?.status).toBe('unresolvable-repo');
+    expect(results[0]?.detail).toContain('budget exhausted');
+  });
+
+  it('skips a registered repo path that no longer exists', async () => {
+    const results = await verifyCodeRefs([`${basename(repo)}#realSymbol`], {
+      a: { repos: [join(repo, 'gone-forever')] },
+      b: { repos: [repo] },
+    });
+    expect(results[0]?.status).toBe('ok');
   });
 
   it('reports missing when only prose mentions exist', async () => {

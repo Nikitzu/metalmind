@@ -549,8 +549,9 @@ export async function checkCodeRefsIntegrity(
   }
   const problems: string[] = [];
   let total = 0;
+  const deadline = Date.now() + 10_000;
   for (const [stem, refs] of perNote) {
-    const results = await verifyCodeRefs(refs, groups);
+    const results = await verifyCodeRefs(refs, groups, { deadline });
     total += results.length;
     for (const r of results) {
       if (r.status !== 'ok') problems.push(`${stem}: ${r.ref} ${r.status}`);
@@ -594,6 +595,7 @@ async function collectSupersedeEntries(vaultPath: string): Promise<Map<string, S
         if (!skip.has(item.name)) await walk(full);
         continue;
       }
+      if (item.isSymbolicLink()) continue;
       if (!item.name.endsWith('.md')) continue;
       let head: string;
       try {
@@ -666,7 +668,7 @@ export async function checkSupersedeIntegrity(vaultPath: string): Promise<DeepCh
   };
 }
 
-async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
+export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   // Only fire the docker/qdrant/ollama probes when the user is actually
   // on the legacy stack. Default v0.5.0 installs run sqlite-vec +
   // fastembed in-process; surfacing "metalmind-qdrant: not running" as a

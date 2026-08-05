@@ -62,6 +62,50 @@ describe('ingestAutoMemory', () => {
     expect(raw).not.toContain('never route around auth');
   });
 
+  it('update re-stamps imported_hash so a third run is a no-op, and preserves other keys', async () => {
+    await run();
+    const notePath = join(vault, 'Memory', 'auto-home-user-myproj-topic.md');
+    const withExtra = (await readFile(notePath, 'utf8')).replace(
+      '\nstatus: active',
+      '\nstatus: active\nproject: myproj\nsuperseded_by: some-newer-note',
+    );
+    await writeFile(notePath, withExtra, 'utf8');
+    await writeFile(join(memDir('-home-user-myproj'), 'topic.md'), 'updated wisdom\n');
+
+    const second = await run();
+    expect(second.updated).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+
+    const raw = await readFile(notePath, 'utf8');
+    expect(raw).toContain('project: myproj');
+    expect(raw).toContain('superseded_by: some-newer-note');
+    expect(raw).toContain('created: 2026-08-05');
+
+    const third = await run();
+    expect(third.updated).toEqual([]);
+    expect(third.skipped).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+  });
+
+  it('--dry-run on the update path writes nothing', async () => {
+    await run();
+    const notePath = join(vault, 'Memory', 'auto-home-user-myproj-topic.md');
+    const before = await readFile(notePath, 'utf8');
+    await writeFile(join(memDir('-home-user-myproj'), 'topic.md'), 'updated wisdom\n');
+
+    const res = await run(true);
+
+    expect(res.updated).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+    expect(await readFile(notePath, 'utf8')).toBe(before);
+  });
+
+  it('ignores nested memory subdirectories', async () => {
+    await mkdir(join(memDir('-home-user-myproj'), 'sub'), { recursive: true });
+    await writeFile(join(memDir('-home-user-myproj'), 'sub', 'deep.md'), 'nested\n');
+
+    const res = await run();
+
+    expect(res.created).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+  });
+
   it('source change with locally edited note conflicts and leaves the note alone', async () => {
     await run();
     const notePath = join(vault, 'Memory', 'auto-home-user-myproj-topic.md');
