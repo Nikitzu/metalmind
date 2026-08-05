@@ -75,11 +75,17 @@ _SUPERSEDE_KEY: tuple[int, float] | None = None
 
 
 def _supersede_index() -> dict[str, str]:
-    """Relative path → superseded_by stem for every note whose frontmatter
-    says `status: superseded` (empty string when no successor is named).
-    Frontmatter is the source of truth - no index schema involvement, so a
-    supersede takes effect on the next query without a reindex. Same
-    process-lifetime, mtime-keyed cache discipline as `_backlink_index`."""
+    """Relative path → superseded_by stem for every superseded note (empty
+    string when no successor is named). A note counts as superseded when it
+    carries a `superseded_by:` field OR `status: superseded` - keying on the
+    pointer field alone would be enough for scribe-written notes, but
+    archiving rewrites `status:` to `archived` while leaving `superseded_by`
+    intact, so either signal must qualify or `gold` on a superseded note
+    silently un-supersedes it. Frontmatter is the source of truth - no index
+    schema involvement, so a supersede takes effect on the next query
+    without a reindex. Same process-lifetime, mtime-keyed cache discipline
+    as `_backlink_index`, but reads only the leading 2 KB per file since
+    frontmatter cannot start deeper."""
     global _SUPERSEDE_CACHE, _SUPERSEDE_KEY
     files = list(files_to_index())
     max_mtime = 0.0
@@ -97,22 +103,39 @@ def _supersede_index() -> dict[str, str]:
     smap: dict[str, str] = {}
     for p in files:
         try:
-            text = p.read_text(encoding="utf-8", errors="ignore")
+            with p.open("r", encoding="utf-8", errors="ignore") as fh:
+                text = fh.read(2048)
         except OSError:
             continue
         fm = _FRONTMATTER_RE.match(text)
         if not fm:
             continue
         block = fm.group(1)
-        status = re.search(r"^status:\s*(.+)$", block, re.MULTILINE)
-        if not status or status.group(1).strip() != "superseded":
+        status = re.search(r"^status:[ \t]*(\S.*)$", block, re.MULTILINE)
+        by = re.search(r"^superseded_by:[ \t]*(\S.*)$", block, re.MULTILINE)
+        if not by and not (status and status.group(1).strip() == "superseded"):
             continue
-        by = re.search(r"^superseded_by:\s*(.+)$", block, re.MULTILINE)
-        smap[str(p.relative_to(VAULT))] = by.group(1).strip() if by else ""
+        smap[str(p.relative_to(VAULT))] = by.group(1).strip().strip("'\"") if by else ""
 
     _SUPERSEDE_CACHE = smap
     _SUPERSEDE_KEY = key
     return smap
+
+
+def _hit_penalties(hits: list[dict], smap: dict[str, str]) -> dict[str, float]:
+    """Per-file multiplier map (folder x supersede) for the rerank path.
+    The cross-encoder replaces the fused score, which would otherwise
+    discard the fusion-time penalties and let a superseded note outrank
+    its successor on pure text similarity - so `rerank_hits` re-applies
+    these to the rescored values. Files at 1.0 are omitted."""
+    out: dict[str, float] = {}
+    for h in hits:
+        mult = _folder_multiplier(h["file"])
+        if h["file"] in smap:
+            mult *= SUPERSEDE_PENALTY
+        if mult != 1.0:
+            out[h["file"]] = mult
+    return out
 
 
 def _annotate_superseded(hits: list[dict], smap: dict[str, str]) -> None:
@@ -353,7 +376,7 @@ def search_vault(
     _annotate_superseded(hits, smap)
 
     if rerank:
-        return rerank_hits(query, hits, k)
+        return rerank_hits(query, hits, k, penalties=_hit_penalties(hits, smap))
     return hits[:k]
 
 

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -361,6 +361,21 @@ describe('scribe CRUD', () => {
     await expect(scribeSupersede(join(vault, 'Daily/2026-04-22.md'), plan, ctx)).rejects.toThrow(
       /--date/,
     );
+    await expect(scribeSupersede(plan, join(vault, 'Daily/2026-04-22.md'), ctx)).rejects.toThrow(
+      /--date/,
+    );
+  });
+
+  it('supersede: quotes a hand-created stem containing YAML metacharacters', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: oldP } = await scribeCreate({ kind: 'plan', title: 'plain old', body: 'x' }, ctx);
+    const newP = join(vault, 'Plans', 'RED-4821: retry backoff.md');
+    await writeFile(newP, '---\ntitle: hand-made\n---\n\nbody\n', 'utf8');
+
+    await scribeSupersede(oldP, newP, ctx);
+
+    const raw = await readFile(oldP, 'utf8');
+    expect(raw).toContain('superseded_by: "RED-4821: retry backoff"');
   });
 
   it('delete soft: moves to .trash and strips MOC link', async () => {

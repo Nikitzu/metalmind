@@ -418,16 +418,19 @@ export async function scribeSupersede(
 
   const oldStem = basename(oldAbs, '.md');
   const newStem = basename(newAbs, '.md');
+  if (/[\r\n]/.test(oldStem) || /[\r\n]/.test(newStem)) {
+    throw new Error('note filename contains a newline - refusing to write it into frontmatter');
+  }
   if (opts.dryRun) return { oldPath: oldAbs, newPath: newAbs, oldStem, newStem };
 
   const stamp = isoDate(now);
   let oldNext = rewriteFrontmatterField(oldRaw, 'status', 'superseded');
-  oldNext = rewriteFrontmatterField(oldNext, 'superseded_by', newStem);
+  oldNext = rewriteFrontmatterField(oldNext, 'superseded_by', yamlScalar(newStem));
   oldNext = rewriteFrontmatterField(oldNext, 'updated', stamp);
   await writeFile(oldAbs, oldNext, 'utf8');
 
   const newRaw = await readFile(newAbs, 'utf8');
-  let newNext = rewriteFrontmatterField(newRaw, 'supersedes', oldStem);
+  let newNext = rewriteFrontmatterField(newRaw, 'supersedes', yamlScalar(oldStem));
   newNext = rewriteFrontmatterField(newNext, 'updated', stamp);
   await writeFile(newAbs, newNext, 'utf8');
 

@@ -156,13 +156,23 @@ def _score_batch(session: Any, tokenizer: Any, pairs: list[tuple[str, str]]) -> 
     return [_sigmoid(float(x)) for x in flat]
 
 
-def rerank_hits(query: str, hits: Sequence[dict], k: int) -> list[dict]:
+def rerank_hits(
+    query: str,
+    hits: Sequence[dict],
+    k: int,
+    penalties: dict[str, float] | None = None,
+) -> list[dict]:
     """Re-score hits against the query with a cross-encoder, then truncate to k.
 
     Returns hits with their `score` field replaced by the reranker score
     and `prev_score` preserving the original embedder score for debug.
     On any failure (no model, model load error, empty hits), returns the
     original hits truncated to k.
+
+    `penalties` maps file path → multiplier applied to the cross-encoder
+    score before sorting. Applied only on the success path: the fallback
+    returns the caller's original scores, which already carry any
+    fusion-time penalties - applying them again would double-penalise.
     """
     if not hits:
         return []
@@ -179,6 +189,8 @@ def rerank_hits(query: str, hits: Sequence[dict], k: int) -> list[dict]:
         return list(hits)[:k]
 
     scored = list(zip(hits, scores))
+    if penalties:
+        scored = [(h, s * penalties.get(h["file"], 1.0)) for h, s in scored]
     scored.sort(key=lambda pair: pair[1], reverse=True)
     out: list[dict] = []
     for h, s in scored[:k]:
