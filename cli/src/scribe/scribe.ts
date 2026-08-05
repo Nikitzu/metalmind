@@ -385,6 +385,55 @@ export async function scribePatch(
   return { path: abs };
 }
 
+export interface SupersedeOpts {
+  force?: boolean;
+  date?: DateArg;
+  dryRun?: boolean;
+}
+
+export async function scribeSupersede(
+  oldNote: string,
+  newNote: string,
+  ctx: ScribeOpts,
+  opts: SupersedeOpts = {},
+): Promise<{ oldPath: string; newPath: string; oldStem: string; newStem: string }> {
+  const oldAbs = resolveNotePath(oldNote, ctx.vaultRoot);
+  const newAbs = resolveNotePath(newNote, ctx.vaultRoot);
+  if (!(await exists(oldAbs))) throw new Error(`note not found: ${oldAbs}`);
+  if (!(await exists(newAbs))) throw new Error(`note not found: ${newAbs}`);
+  if (oldAbs === newAbs) throw new Error('a note cannot supersede itself');
+
+  const now = ctx.now ? ctx.now() : new Date();
+  assertDailyDateAck(oldAbs, opts.date, now, 'supersede');
+  assertDailyDateAck(newAbs, opts.date, now, 'supersede');
+
+  const oldRaw = await readFile(oldAbs, 'utf8');
+  const { fm } = parseFrontmatter(oldRaw);
+  const existing = fm.superseded_by;
+  if (existing && !opts.force) {
+    throw new Error(
+      `already superseded by ${existing} - pass --force to re-point at the new successor`,
+    );
+  }
+
+  const oldStem = basename(oldAbs, '.md');
+  const newStem = basename(newAbs, '.md');
+  if (opts.dryRun) return { oldPath: oldAbs, newPath: newAbs, oldStem, newStem };
+
+  const stamp = isoDate(now);
+  let oldNext = rewriteFrontmatterField(oldRaw, 'status', 'superseded');
+  oldNext = rewriteFrontmatterField(oldNext, 'superseded_by', newStem);
+  oldNext = rewriteFrontmatterField(oldNext, 'updated', stamp);
+  await writeFile(oldAbs, oldNext, 'utf8');
+
+  const newRaw = await readFile(newAbs, 'utf8');
+  let newNext = rewriteFrontmatterField(newRaw, 'supersedes', oldStem);
+  newNext = rewriteFrontmatterField(newNext, 'updated', stamp);
+  await writeFile(newAbs, newNext, 'utf8');
+
+  return { oldPath: oldAbs, newPath: newAbs, oldStem, newStem };
+}
+
 export async function scribeDelete(
   notePath: string,
   ctx: ScribeOpts,

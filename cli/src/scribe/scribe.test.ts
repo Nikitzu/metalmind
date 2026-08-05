@@ -10,6 +10,7 @@ import {
   scribeList,
   scribePatch,
   scribeShow,
+  scribeSupersede,
   scribeUpdate,
   slugify,
 } from './scribe.js';
@@ -286,6 +287,80 @@ describe('scribe CRUD', () => {
     ).rejects.toThrow(/either/);
     await expect(scribePatch(path, {}, ctx)).rejects.toThrow(/either/);
     await expect(scribePatch(path, { find: 'x' }, ctx)).rejects.toThrow(/--replace/);
+  });
+
+  it('supersede: stamps old with status+superseded_by, new with supersedes, bumps both', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: oldPath } = await scribeCreate(
+      { kind: 'plan', title: 'old way', body: 'a' },
+      ctx,
+    );
+    const { path: newPath } = await scribeCreate(
+      { kind: 'plan', title: 'new way', body: 'b' },
+      ctx,
+    );
+    const later = { vaultRoot: vault, now: () => new Date('2026-04-22T10:00:00.000Z') };
+
+    const res = await scribeSupersede(oldPath, newPath, later);
+
+    const oldRaw = await readFile(oldPath, 'utf8');
+    expect(oldRaw).toContain('status: superseded');
+    expect(oldRaw).toContain('superseded_by: 2026-04-21-new-way');
+    expect(oldRaw).toContain('updated: 2026-04-22');
+    const newRaw = await readFile(newPath, 'utf8');
+    expect(newRaw).toContain('supersedes: 2026-04-21-old-way');
+    expect(newRaw).toContain('updated: 2026-04-22');
+    expect(res.oldStem).toBe('2026-04-21-old-way');
+    expect(res.newStem).toBe('2026-04-21-new-way');
+  });
+
+  it('supersede: errors when old or new is missing', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate({ kind: 'plan', title: 'only', body: 'x' }, ctx);
+    await expect(scribeSupersede('plan:absent', path, ctx)).rejects.toThrow(/not found/);
+    await expect(scribeSupersede(path, 'plan:absent', ctx)).rejects.toThrow(/not found/);
+  });
+
+  it('supersede: refuses self-supersede', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate({ kind: 'plan', title: 'self', body: 'x' }, ctx);
+    await expect(scribeSupersede(path, path, ctx)).rejects.toThrow(/itself/);
+  });
+
+  it('supersede: refuses re-supersede without --force, naming the successor', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: a } = await scribeCreate({ kind: 'plan', title: 'a', body: 'x' }, ctx);
+    const { path: b } = await scribeCreate({ kind: 'plan', title: 'b', body: 'x' }, ctx);
+    const { path: c } = await scribeCreate({ kind: 'plan', title: 'c', body: 'x' }, ctx);
+    await scribeSupersede(a, b, ctx);
+
+    await expect(scribeSupersede(a, c, ctx)).rejects.toThrow(/2026-04-21-b/);
+
+    await scribeSupersede(a, c, ctx, { force: true });
+    const raw = await readFile(a, 'utf8');
+    expect(raw).toContain('superseded_by: 2026-04-21-c');
+    expect(await readFile(c, 'utf8')).toContain('supersedes: 2026-04-21-a');
+  });
+
+  it('supersede: --dry-run writes nothing', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: a } = await scribeCreate({ kind: 'plan', title: 'a2', body: 'x' }, ctx);
+    const { path: b } = await scribeCreate({ kind: 'plan', title: 'b2', body: 'x' }, ctx);
+
+    await scribeSupersede(a, b, ctx, { dryRun: true });
+
+    expect(await readFile(a, 'utf8')).not.toContain('superseded');
+    expect(await readFile(b, 'utf8')).not.toContain('supersedes:');
+  });
+
+  it('supersede: daily-date guard applies to daily notes', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    await scribeCreate({ kind: 'daily', title: 'x', body: 'b', date: 'tomorrow' }, ctx);
+    const { path: plan } = await scribeCreate({ kind: 'plan', title: 'p', body: 'x' }, ctx);
+
+    await expect(scribeSupersede(join(vault, 'Daily/2026-04-22.md'), plan, ctx)).rejects.toThrow(
+      /--date/,
+    );
   });
 
   it('delete soft: moves to .trash and strips MOC link', async () => {
