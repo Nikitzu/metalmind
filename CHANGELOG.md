@@ -6,6 +6,23 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.12.0 - 2026-08-05
+
+### Added
+
+- **Temporal supersedes.** `metalmind scribe supersede <old> <new>` (classic: `note supersede`) marks a decision as replaced by its successor: the old note gets `status: superseded` and `superseded_by: <stem>`, the new note gets `supersedes: <old-stem>`, and both bump `updated:`. Both notes must exist; re-superseding requires `--force` (the error names the current successor); self-supersede is refused; `--dry-run` and the daily-date guard apply. Stems are YAML-escaped, and stems containing newlines are rejected outright.
+
+  Recall (vault-rag 0.5.0) downweights superseded notes by 0.4x in fusion - stacking with folder penalties, tunable via `METALMIND_SUPERSEDE_PENALTY` - and every hit from a superseded note carries `superseded_by` in its payload on both the HTTP and stdio MCP paths, so agents land on current truth without history being hidden. A note counts as superseded when it carries `superseded_by` or `status: superseded`, so archiving a superseded note keeps its penalty and pointer. The `--rerank` path re-applies folder and supersede penalties to cross-encoder scores, closing a pre-existing gap where reranking silently discarded folder penalties too.
+
+  History is never deleted: superseded notes stay in the vault and in results, re-ranked below their successors with a signpost. Validity windows and `--as-of` time-travel queries are deferred until supersede chains exist in real use.
+
+### Fixed
+
+- `metalmind stamp` now restarts the watcher whenever it reinstalls the vault-rag package. Previously the service restarted only when its unit file changed, so recall-layer changes shipped in a new vault-rag never took effect until an unrelated restart.
+- The supersede frontmatter scan reads only the leading 2 KB per file and matches `status:`/`superseded_by:` on same-line values only, so a vault-wide rescan after a note write is cheap and multi-line YAML scalars cannot false-positive a supersede.
+
+---
+
 ## 0.11.0 - 2026-08-05
 
 ### Added

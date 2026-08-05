@@ -43,3 +43,4 @@ bench/compact-v0/results/*
 
 # Working spec for in-flight branch (lives in metalmind vault, not git)
 SPEC.md
+tasks/
