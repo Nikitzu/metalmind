@@ -1,12 +1,14 @@
 [project]
 name = "metalmind-vault-rag"
-version = "0.3.1"
+version = "0.4.0"
 description = "Obsidian vault RAG service for metalmind - MCP server, watcher, indexer, doctor."
 requires-python = ">=3.11"
 dependencies = [
     "httpx>=0.27",
     "qdrant-client>=1.9",
-    "mcp>=1.0",
+    # mcp 2.0 removed mcp.server.fastmcp (moved to the separate fastmcp
+    # package); server.py imports it, so stay on the 1.x line.
+    "mcp>=1.0,<2",
     "watchfiles>=0.22",
     # sqlite-vec ships a SQLite extension wheel; loaded at runtime via
     # connection.enable_load_extension. ~3 MB, no native build step. v0.5.0

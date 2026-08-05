@@ -196,6 +196,98 @@ describe('scribe CRUD', () => {
     expect(raw).not.toContain('two');
   });
 
+  it('patch --find: replaces a literal text block outside any heading', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate(
+      { kind: 'work', title: 't', body: 'intro line\n\n## A\n\nstale fact here\n\ntail' },
+      ctx,
+    );
+    await scribePatch(path, { find: 'stale fact here', replace: 'fresh fact' }, ctx);
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('fresh fact');
+    expect(raw).not.toContain('stale fact here');
+    expect(raw).toContain('intro line');
+    expect(raw).toContain('tail');
+  });
+
+  it('patch --find: bumps updated frontmatter', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate({ kind: 'work', title: 't', body: 'old text' }, ctx);
+    await scribePatch(
+      path,
+      { find: 'old text', replace: 'new text' },
+      { vaultRoot: vault, now: () => new Date('2026-04-22T10:00:00.000Z') },
+    );
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('updated: 2026-04-22');
+  });
+
+  it('patch --find: empty replace deletes the matched text', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate(
+      { kind: 'work', title: 't', body: 'keep DROPME keep' },
+      ctx,
+    );
+    await scribePatch(path, { find: ' DROPME', replace: '' }, ctx);
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('keep keep');
+    expect(raw).not.toContain('DROPME');
+  });
+
+  it('patch --find: errors when text not found', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate({ kind: 'work', title: 't', body: 'body' }, ctx);
+    await expect(scribePatch(path, { find: 'absent', replace: 'x' }, ctx)).rejects.toThrow(
+      /not found/,
+    );
+  });
+
+  it('patch --find: errors on ambiguous match without --occurrence, resolves with it', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate(
+      { kind: 'work', title: 't', body: 'dup here\n\nmiddle\n\ndup here' },
+      ctx,
+    );
+    await expect(scribePatch(path, { find: 'dup here', replace: 'x' }, ctx)).rejects.toThrow(
+      /2 occurrences/,
+    );
+    await scribePatch(path, { find: 'dup here', replace: 'second', occurrence: 2 }, ctx);
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('dup here\n\nmiddle\n\nsecond');
+  });
+
+  it('patch --find: never touches frontmatter even when the text matches there', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate(
+      { kind: 'work', title: 'active', body: 'status: active' },
+      ctx,
+    );
+    await scribePatch(path, { find: 'status: active', replace: 'status: done' }, ctx);
+    const raw = await readFile(path, 'utf8');
+    const fmEnd = raw.indexOf('---', 4);
+    expect(raw.slice(0, fmEnd)).toContain('status: active');
+    expect(raw.slice(fmEnd)).toContain('status: done');
+  });
+
+  it('patch --find: --dry-run writes nothing', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate({ kind: 'work', title: 't', body: 'old' }, ctx);
+    await scribePatch(path, { find: 'old', replace: 'new', dryRun: true }, ctx);
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('old');
+    expect(raw).not.toContain('new');
+  });
+
+  it('patch: rejects mixing --section with --find, and neither', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate({ kind: 'work', title: 't', body: '## A\n\nx' }, ctx);
+    await expect(
+      scribePatch(path, { section: 'A', body: 'b', find: 'x', replace: 'y' }, ctx),
+    ).rejects.toThrow(/either/);
+    await expect(scribePatch(path, {}, ctx)).rejects.toThrow(/either/);
+    await expect(scribePatch(path, { find: 'x' }, ctx)).rejects.toThrow(/--replace/);
+  });
+
   it('delete soft: moves to .trash and strips MOC link', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     const { path, relPath } = await scribeCreate(

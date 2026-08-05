@@ -40,6 +40,7 @@ Decide the right folder based on content:
    | Create a new note | `metalmind scribe create "<title>" --kind <kind>` | `metalmind note create "<title>" --kind <kind>` |
    | Append to existing | `metalmind scribe update <kind:slug>` | `metalmind note update <kind:slug>` |
    | Replace one section | `metalmind scribe patch <kind:slug> --section "<h>"` | `metalmind note patch <kind:slug> --section "<h>"` |
+   | Edit text in place | `metalmind scribe patch <kind:slug> --find "<old>" --replace "<new>"` | `metalmind note patch <kind:slug> --find "<old>" --replace "<new>"` |
    | Future daily note | `metalmind atium new --date <date>` | `metalmind daily new --date <date>` |
    | Push action item | `metalmind atium add "<item>" --date <date>` | `metalmind daily add "<item>" --date <date>` |
    | Archive | `metalmind gold <kind:slug>` | `metalmind scribe archive <kind:slug>` |

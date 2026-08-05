@@ -128,7 +128,7 @@ The Node ↔ Python boundary is **loopback HTTP only** - never imports. Protocol
 
 ### Memory
 
-- `tap copper` (recall) - RRF-fused semantic + BM25 hybrid retrieval, top-rank bonus, weighted lists, optional cross-encoder rerank. Returns hits as JSONL. `--compact` renders a lean per-hit form; `--semantic-only` / `--keyword-only` isolate one retriever leg for A/B (HTTP path only); `--list-recent N` browses without a query.
+- `tap copper` (recall) - RRF-fused semantic + BM25 hybrid retrieval, top-rank bonus, weighted lists, optional cross-encoder rerank. Fusion weights are adaptive: queries carrying exact-match tokens (UUIDs, numeric IDs, ticket IDs, hostnames, emails) raise the keyword-leg weight (disable with `METALMIND_RRF_ADAPTIVE=0`). Fused scores are folder-weighted: `Archive/` hits at 0.4x, `Inbox/` at 0.7x, so archived and unsorted notes re-rank below in-flight work without being excluded. Returns hits as JSONL. `--compact` renders a lean per-hit form; `--semantic-only` / `--keyword-only` isolate one retriever leg for A/B (HTTP path only); `--list-recent N` browses without a query.
 - `store copper` (save) - proposes path + frontmatter + wikilinks, agent confirms, writes through `scribe create` (or `scribe update` if recall surfaced an existing note).
 - `scribe <create|update|patch|delete|archive|list|show|rename>` - vault CRUD. Stamps frontmatter, picks intent folder, auto-links the project MOC, rewrites `[[wikilinks]]` on rename. Daily-targeted writes for non-today dates require `--date` to acknowledge.
 - `gold <kind:slug>` - one-shot archive (move to `Archive/`, set `status: archived`).

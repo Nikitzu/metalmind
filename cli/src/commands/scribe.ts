@@ -96,12 +96,37 @@ export async function scribeUpdateCmd(
 
 export async function scribePatchCmd(
   notePath: string,
-  opts: { section: string; body?: string; occurrence?: string; date?: string; dryRun?: boolean },
+  opts: {
+    section?: string;
+    body?: string;
+    find?: string;
+    replace?: string;
+    occurrence?: string;
+    date?: string;
+    dryRun?: boolean;
+  },
 ): Promise<void> {
   try {
+    const occurrence = opts.occurrence ? Number.parseInt(opts.occurrence, 10) : undefined;
+    const findMode = opts.find !== undefined || opts.replace !== undefined;
+    if (findMode) {
+      const res = await scribePatch(
+        notePath,
+        {
+          find: opts.find,
+          replace: opts.replace,
+          occurrence,
+          date: opts.date,
+          dryRun: opts.dryRun,
+        },
+        await ctx(),
+      );
+      log.success(`${opts.dryRun ? 'would replace' : 'replaced'} text in ${res.path}`);
+      return;
+    }
+    if (!opts.section) throw new Error('pass --section <heading> or --find/--replace');
     const body = opts.body ?? (await readStdin());
     if (!body.trim()) throw new Error('empty body - pipe content on stdin or pass --body');
-    const occurrence = opts.occurrence ? Number.parseInt(opts.occurrence, 10) : undefined;
     const res = await scribePatch(
       notePath,
       { section: opts.section, body, occurrence, date: opts.date, dryRun: opts.dryRun },

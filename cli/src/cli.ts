@@ -375,10 +375,15 @@ function attachScribeSubcommands(parent: Command): void {
     .action((note: string, cmdOpts) => scribeUpdateCmd(note, cmdOpts));
   parent
     .command('patch <note>')
-    .description('Replace one ## section in an existing note.')
-    .requiredOption('--section <heading>', 'Section heading without the ## prefix')
-    .option('--body <body>', 'Body inline (otherwise read from stdin)')
-    .option('--occurrence <n>', '1-indexed occurrence when section appears multiple times')
+    .description('Replace one ## section, or one literal text block via --find/--replace.')
+    .option('--section <heading>', 'Section heading without the ## prefix')
+    .option('--body <body>', 'Section body inline (otherwise read from stdin)')
+    .option('--find <text>', 'Literal text to replace in the note body (frontmatter untouched)')
+    .option('--replace <text>', 'Replacement for --find (empty string deletes)')
+    .option(
+      '--occurrence <n>',
+      '1-indexed occurrence when the section or --find text matches multiple times',
+    )
     .option('--date <date>', dateFlagDescription)
     .option('--dry-run', 'Preview only')
     .action((note: string, cmdOpts) => scribePatchCmd(note, cmdOpts));

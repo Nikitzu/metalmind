@@ -52,8 +52,10 @@ export interface DailyDateOpts {
 }
 
 export interface PatchOpts {
-  section: string;
-  body: string;
+  section?: string;
+  body?: string;
+  find?: string;
+  replace?: string;
   occurrence?: number;
   date?: DateArg;
   dryRun?: boolean;
@@ -313,13 +315,53 @@ export async function scribePatch(
   opts: PatchOpts,
   ctx: ScribeOpts,
 ): Promise<{ path: string }> {
+  const findMode = opts.find !== undefined || opts.replace !== undefined;
+  if (findMode && opts.section !== undefined) {
+    throw new Error('pass either --section (with body) or --find/--replace, not both');
+  }
   const abs = resolveNotePath(notePath, ctx.vaultRoot);
   if (!(await exists(abs))) throw new Error(`note not found: ${abs}`);
   const now = ctx.now ? ctx.now() : new Date();
   assertDailyDateAck(abs, opts.date, now, 'patch');
   const raw = await readFile(abs, 'utf8');
+
+  if (findMode) {
+    if (opts.find === undefined || opts.find === '') throw new Error('--find requires text');
+    if (opts.replace === undefined) throw new Error('--find requires --replace (may be empty)');
+    const { bodyStart } = parseFrontmatter(raw);
+    const body = raw.slice(bodyStart);
+    const indices: number[] = [];
+    for (let i = body.indexOf(opts.find); i !== -1; i = body.indexOf(opts.find, i + 1)) {
+      indices.push(i);
+    }
+    if (indices.length === 0) throw new Error(`text not found in note body: ${opts.find}`);
+    if (indices.length > 1 && opts.occurrence === undefined) {
+      throw new Error(
+        `--find matches ${indices.length} occurrences - pass --occurrence N (1-indexed)`,
+      );
+    }
+    const at = indices[(opts.occurrence ?? 1) - 1];
+    if (at === undefined)
+      throw new Error(`--occurrence ${opts.occurrence} out of range (1..${indices.length})`);
+    if (opts.dryRun) return { path: abs };
+    const newBody = body.slice(0, at) + opts.replace + body.slice(at + opts.find.length);
+    const bumped = rewriteFrontmatterField(
+      raw.slice(0, bodyStart) + newBody,
+      'updated',
+      isoDate(now),
+    );
+    await writeFile(abs, bumped, 'utf8');
+    return { path: abs };
+  }
+
+  const { section, body: sectionBody } = opts;
+  if (section === undefined) {
+    throw new Error('pass either --section (with body) or --find/--replace');
+  }
+  if (sectionBody === undefined || !sectionBody.trim())
+    throw new Error('--section requires a non-empty body');
   const headingRe = new RegExp(
-    `^##\\s+${opts.section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`,
+    `^##\\s+${section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`,
     'gm',
   );
   const matches = [...raw.matchAll(headingRe)];
@@ -336,7 +378,7 @@ export async function scribePatch(
   const afterHeading = start + target[0].length;
   const nextHeading = raw.slice(afterHeading).search(/\n##\s/);
   const end = nextHeading < 0 ? raw.length : afterHeading + nextHeading;
-  const replaced = `${raw.slice(0, afterHeading)}\n\n${opts.body.trim()}\n${raw.slice(end)}`;
+  const replaced = `${raw.slice(0, afterHeading)}\n\n${sectionBody.trim()}\n${raw.slice(end)}`;
   if (opts.dryRun) return { path: abs };
   const bumped = rewriteFrontmatterField(replaced, 'updated', isoDate(now));
   await writeFile(abs, bumped, 'utf8');

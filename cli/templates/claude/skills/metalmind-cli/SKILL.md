@@ -28,11 +28,14 @@ All mutating verbs support `--dry-run`. Body content is passed on **stdin**.
 # Create
 echo "note body" | metalmind scribe create "learning:my-discovery"
 
-# Update (full replace)
-echo "new body" | metalmind scribe update "learning:my-discovery"
+# Update (append to note, bump updated:)
+echo "new lines" | metalmind scribe update "learning:my-discovery"
 
-# Patch (append/modify sections)
-echo "additional content" | metalmind scribe patch "learning:my-discovery"
+# Patch a ## section (replace its body)
+echo "fresh content" | metalmind scribe patch "learning:my-discovery" --section "Heading"
+
+# Patch a literal text block in place (frontmatter untouched; empty --replace deletes)
+metalmind scribe patch "learning:my-discovery" --find "stale fact" --replace "fresh fact"
 
 # Delete
 metalmind scribe delete "learning:my-discovery"

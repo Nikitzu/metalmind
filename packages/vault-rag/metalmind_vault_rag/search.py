@@ -27,6 +27,57 @@ TOP_RANK_BONUS = {1: 0.05, 2: 0.02, 3: 0.02}
 KEYWORD_WEIGHT = float(os.environ.get("METALMIND_RRF_KEYWORD_WEIGHT", "1.5"))
 SEMANTIC_WEIGHT = float(os.environ.get("METALMIND_RRF_SEMANTIC_WEIGHT", "1.0"))
 
+KEYWORD_WEIGHT_EXACT = float(
+    os.environ.get("METALMIND_RRF_KEYWORD_WEIGHT_EXACT", "2.5")
+)
+ADAPTIVE_FUSION = os.environ.get("METALMIND_RRF_ADAPTIVE", "1") != "0"
+
+_EXACT_SIGNALS = re.compile(
+    "|".join(
+        [
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+            r"\b\d{4,}\b",
+            r"\b[A-Z]{2,}-\d+\b",
+            r"\b[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]*[a-zA-Z][a-zA-Z0-9-]*)+\b",
+            r"\S+@\S+\.\S+",
+        ]
+    ),
+    re.IGNORECASE,
+)
+
+
+def _exact_signal(query: str) -> bool:
+    """True when the query carries an exact-match token: UUID, numeric ID
+    (4+ digits), ticket ID (RED-991), hostname/filename, or email."""
+    return bool(_EXACT_SIGNALS.search(query))
+
+
+def _fusion_weights(query: str) -> list[float]:
+    """Per-list RRF weights as [semantic, keyword] for this query.
+
+    Adaptive fusion (Dynamic Alpha Tuning, Hsu et al. 2025): queries
+    carrying exact-match tokens are answered better by BM25 than by
+    embeddings, which blur literal identifiers into their semantic
+    neighbourhood - so the keyword leg gets KEYWORD_WEIGHT_EXACT instead
+    of KEYWORD_WEIGHT. Disable with METALMIND_RRF_ADAPTIVE=0 for A/B
+    benching against the fixed weights."""
+    if ADAPTIVE_FUSION and _exact_signal(query):
+        return [SEMANTIC_WEIGHT, KEYWORD_WEIGHT_EXACT]
+    return [SEMANTIC_WEIGHT, KEYWORD_WEIGHT]
+
+FOLDER_PENALTIES = {"Archive": 0.4, "Inbox": 0.7}
+
+
+def _folder_multiplier(file: str) -> float:
+    """Score multiplier for the fused RRF score, keyed on the top-level
+    vault folder. Archived shipped plans and unsorted inbox clippings
+    should not outrank in-flight notes of comparable relevance; a
+    multiplicative penalty re-ranks them down without excluding them,
+    so a decisively-matching archived note can still surface."""
+    top = file.split("/", 1)[0]
+    return FOLDER_PENALTIES.get(top, 1.0)
+
+
 # How many candidates each backend produces before fusion. Larger overfetch
 # means docs are more likely to appear in both lists, reducing single-list
 # ties at the top.
@@ -181,6 +232,7 @@ def _rrf_merge(
         bonus = TOP_RANK_BONUS.get(entry["top_rank"])
         if bonus:
             entry["rrf"] += bonus
+        entry["rrf"] *= _folder_multiplier(entry["file"])
     ordered = sorted(merged.values(), key=lambda r: r["rrf"], reverse=True)
     # Rewrite score to RRF so downstream code sees a consistent field; keep
     # the original embedder/BM25 score under `prev_score` for debugging.
@@ -230,7 +282,7 @@ def search_vault(
         leg_k = max(fetch, RRF_OVERFETCH)
         sem = _semantic_search(query, leg_k)
         kw = _keyword_search(query, leg_k)
-        hits = _rrf_merge([sem, kw], k=fetch, weights=[SEMANTIC_WEIGHT, KEYWORD_WEIGHT])
+        hits = _rrf_merge([sem, kw], k=fetch, weights=_fusion_weights(query))
 
     if rerank:
         return rerank_hits(query, hits, k)
