@@ -46,6 +46,9 @@ echo "decision body" | metalmind scribe create "penalty toggle decision" --kind 
 # Validate code refs on recall hits (needs forge-registered repos)
 metalmind tap copper "penalty toggle" --verify-code
 
+# Import Claude Code's native auto-memory into the vault (idempotent)
+metalmind ingest auto-memory
+
 # Delete
 metalmind scribe delete "learning:my-discovery"
 
