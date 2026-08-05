@@ -538,6 +538,101 @@ export async function checkCursorInstall(opts: { cursorDir?: string } = {}): Pro
   return out;
 }
 
+interface SupersedeEntry {
+  stem: string;
+  supersededBy: string | null;
+  supersedes: string | null;
+}
+
+async function collectSupersedeEntries(vaultPath: string): Promise<Map<string, SupersedeEntry>> {
+  const { readdir } = await import('node:fs/promises');
+  const entries = new Map<string, SupersedeEntry>();
+  const skip = new Set(['.obsidian', '.metalmind-stack', '.trash', '.git']);
+  const walk = async (dir: string): Promise<void> => {
+    let items: Awaited<ReturnType<typeof readdir>>;
+    try {
+      items = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const item of items) {
+      const full = join(dir, item.name);
+      if (item.isDirectory()) {
+        if (!skip.has(item.name)) await walk(full);
+        continue;
+      }
+      if (!item.name.endsWith('.md')) continue;
+      let head: string;
+      try {
+        head = (await readFile(full, 'utf8')).slice(0, 2048);
+      } catch {
+        continue;
+      }
+      const fm = /^---\n([\s\S]*?)\n---/.exec(head);
+      const block = fm?.[1] ?? '';
+      const by = /^superseded_by:[ \t]*(\S.*)$/m.exec(block);
+      const sup = /^supersedes:[ \t]*(\S.*)$/m.exec(block);
+      entries.set(item.name.replace(/\.md$/, ''), {
+        stem: item.name.replace(/\.md$/, ''),
+        supersededBy: by?.[1]?.trim().replace(/^['"]|['"]$/g, '') ?? null,
+        supersedes: sup?.[1]?.trim().replace(/^['"]|['"]$/g, '') ?? null,
+      });
+    }
+  };
+  await walk(vaultPath);
+  return entries;
+}
+
+export async function checkSupersedeIntegrity(vaultPath: string): Promise<DeepCheck> {
+  const entries = await collectSupersedeEntries(vaultPath);
+  const problems: string[] = [];
+
+  for (const e of entries.values()) {
+    if (e.supersededBy && !entries.has(e.supersededBy)) {
+      problems.push(`${e.stem}: superseded_by '${e.supersededBy}' does not resolve`);
+    }
+    if (e.supersedes) {
+      const target = entries.get(e.supersedes);
+      if (!target) {
+        problems.push(`${e.stem}: supersedes '${e.supersedes}' does not resolve`);
+      } else if (target.supersededBy !== e.stem) {
+        problems.push(
+          `${e.stem}: claims to supersede '${e.supersedes}', but that note points at '${target.supersededBy ?? 'nothing'}'`,
+        );
+      }
+    }
+  }
+
+  for (const start of entries.values()) {
+    if (!start.supersededBy) continue;
+    const seen = new Set<string>([start.stem]);
+    let cur = entries.get(start.supersededBy);
+    while (cur?.supersededBy) {
+      if (seen.has(cur.stem)) {
+        problems.push(`supersede cycle through '${cur.stem}'`);
+        break;
+      }
+      seen.add(cur.stem);
+      cur = entries.get(cur.supersededBy);
+    }
+  }
+
+  const unique = [...new Set(problems)];
+  return {
+    name: 'supersede-integrity',
+    ok: unique.length === 0,
+    detail:
+      unique.length === 0
+        ? 'all supersede pointers resolve, no stale reverse links, no cycles'
+        : unique.slice(0, 5).join('; ') +
+          (unique.length > 5 ? ` (+${unique.length - 5} more)` : ''),
+    remediation:
+      unique.length === 0
+        ? undefined
+        : 'fix the named frontmatter fields, or re-run `metalmind scribe supersede --force` to re-point',
+  };
+}
+
 async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   // Only fire the docker/qdrant/ollama probes when the user is actually
   // on the legacy stack. Default v0.5.0 installs run sqlite-vec +
@@ -554,15 +649,29 @@ async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   const codexChecks = installCodex ? await checkCodexInstall({ checkMcp: true }) : [];
   const cursorChecks = installCursor ? await checkCursorInstall() : [];
 
-  const [watcher, http] = await Promise.all([checkWatcherService(), checkRecallHttp()]);
+  const [watcher, http, supersede] = await Promise.all([
+    checkWatcherService(),
+    checkRecallHttp(),
+    checkSupersedeIntegrity(config.vaultPath),
+  ]);
 
   if (!onLegacy) {
-    return [watcher, http, ...stamps, ...codexChecks, ...cursorChecks];
+    return [watcher, http, supersede, ...stamps, ...codexChecks, ...cursorChecks];
   }
 
   const docker = await checkDockerContainers();
   const [qdrant, ollama] = await Promise.all([checkQdrantCollection(), checkOllamaModel()]);
-  return [...docker, qdrant, ollama, watcher, http, ...stamps, ...codexChecks, ...cursorChecks];
+  return [
+    ...docker,
+    qdrant,
+    ollama,
+    watcher,
+    http,
+    supersede,
+    ...stamps,
+    ...codexChecks,
+    ...cursorChecks,
+  ];
 }
 
 interface RecallLogEntry {

@@ -202,4 +202,68 @@ describe('doctor deep checks', () => {
       expect(res[1]?.detail).toBe('missing');
     });
   });
+
+  describe('checkSupersedeIntegrity', () => {
+    let vault: string;
+
+    beforeEach(async () => {
+      vault = await mkdtemp(join(tmpdir(), 'mm-doctor-supersede-'));
+      await mkdir(join(vault, 'Plans'), { recursive: true });
+    });
+    afterEach(async () => {
+      await rm(vault, { recursive: true, force: true });
+    });
+
+    const note = (fm: string) => `---\n${fm}\n---\n\nbody\n`;
+
+    it('ok on a healthy supersede pair', async () => {
+      await writeFile(
+        join(vault, 'Plans', 'old.md'),
+        note('status: superseded\nsuperseded_by: new'),
+      );
+      await writeFile(join(vault, 'Plans', 'new.md'), note('supersedes: old'));
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(true);
+    });
+
+    it('flags a dangling superseded_by stem', async () => {
+      await writeFile(join(vault, 'Plans', 'old.md'), note('superseded_by: gone'));
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain("superseded_by 'gone' does not resolve");
+    });
+
+    it('flags a stale reverse link after --force re-point', async () => {
+      await writeFile(join(vault, 'Plans', 'a.md'), note('superseded_by: c'));
+      await writeFile(join(vault, 'Plans', 'b.md'), note('supersedes: a'));
+      await writeFile(join(vault, 'Plans', 'c.md'), note('supersedes: a'));
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain("b: claims to supersede 'a', but that note points at 'c'");
+    });
+
+    it('flags a supersede cycle', async () => {
+      await writeFile(join(vault, 'Plans', 'a.md'), note('superseded_by: b'));
+      await writeFile(join(vault, 'Plans', 'b.md'), note('superseded_by: a'));
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain('supersede cycle');
+    });
+
+    it('ok on a vault with no supersede fields at all', async () => {
+      await writeFile(join(vault, 'Plans', 'plain.md'), note('status: active'));
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(true);
+    });
+  });
 });
