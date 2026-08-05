@@ -11,6 +11,7 @@ import {
   scribePatch,
   scribeRename,
   scribeShow,
+  scribeSupersede,
   scribeUpdate,
 } from '../scribe/scribe.js';
 
@@ -133,6 +134,25 @@ export async function scribePatchCmd(
       await ctx(),
     );
     log.success(`${opts.dryRun ? 'would patch' : 'patched'} ## ${opts.section} in ${res.path}`);
+  } catch (err) {
+    fail(err instanceof Error ? err.message : String(err));
+  }
+}
+
+export async function scribeSupersedeCmd(
+  oldNote: string,
+  newNote: string,
+  opts: { force?: boolean; date?: string; dryRun?: boolean },
+): Promise<void> {
+  try {
+    const res = await scribeSupersede(oldNote, newNote, await ctx(), {
+      force: opts.force,
+      date: opts.date,
+      dryRun: opts.dryRun,
+    });
+    log.success(
+      `${opts.dryRun ? 'would supersede' : 'superseded'} ${res.oldStem} → ${res.newStem}`,
+    );
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
   }

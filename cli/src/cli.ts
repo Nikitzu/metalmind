@@ -55,6 +55,7 @@ import {
   scribePatchCmd,
   scribeRenameCmd,
   scribeShowCmd,
+  scribeSupersedeCmd,
   scribeUpdateCmd,
 } from './commands/scribe.js';
 import { stamp } from './commands/stamp.js';
@@ -387,6 +388,17 @@ function attachScribeSubcommands(parent: Command): void {
     .option('--date <date>', dateFlagDescription)
     .option('--dry-run', 'Preview only')
     .action((note: string, cmdOpts) => scribePatchCmd(note, cmdOpts));
+  parent
+    .command('supersede <old> <new>')
+    .description(
+      'Mark <old> superseded by <new> (both must exist). Recall downweights <old> and points at <new>.',
+    )
+    .option('--force', 'Re-point when <old> is already superseded')
+    .option('--date <date>', dateFlagDescription)
+    .option('--dry-run', 'Preview only')
+    .action((oldNote: string, newNote: string, cmdOpts) =>
+      scribeSupersedeCmd(oldNote, newNote, cmdOpts),
+    );
   parent
     .command('delete <note>')
     .description('Soft-delete (move to .trash/). --hard to actually remove.')
