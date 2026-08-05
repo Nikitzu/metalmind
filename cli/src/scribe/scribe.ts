@@ -144,7 +144,7 @@ function yamlScalar(v: string): string {
   return v;
 }
 
-function buildFrontmatter(fields: Record<string, unknown>): string {
+export function buildFrontmatter(fields: Record<string, unknown>): string {
   const lines: string[] = ['---'];
   for (const [k, v] of Object.entries(fields)) {
     if (v === undefined || v === null) continue;
