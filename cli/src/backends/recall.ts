@@ -112,7 +112,11 @@ function formatHitsCompact(hits: Array<Record<string, unknown>>): string {
       const file = typeof h.file === 'string' ? h.file : '(unknown)';
       const head = lastHeadingSegment(h.heading);
       const headPart = head ? ` › ${head}` : '';
-      return `${i + 1}. [${score}] ${file}${headPart}\n   ${snippet(h.text)}`;
+      const superseded =
+        typeof h.superseded_by === 'string' && h.superseded_by
+          ? ` → superseded by [[${h.superseded_by}]]`
+          : '';
+      return `${i + 1}. [${score}] ${file}${headPart}${superseded}\n   ${snippet(h.text)}`;
     })
     .join('\n');
 }

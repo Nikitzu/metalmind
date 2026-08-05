@@ -51,6 +51,37 @@ describe('recall transport selection', () => {
     expect(res.text).toContain('decisions/auth.md');
   });
 
+  it('compact output renders the superseded_by pointer on the hit line', async () => {
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hits: [
+              {
+                file: 'Plans/old.md',
+                heading: '(root)',
+                score: 0.4,
+                text: 'stale plan',
+                superseded_by: '2026-08-05-new-plan',
+              },
+              { file: 'Plans/new.md', heading: '(root)', score: 0.9, text: 'current plan' },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+    ) as typeof fetch;
+
+    const res = await recall({
+      vaultPath: '/tmp/vault',
+      query: 'plan',
+      tier: 'fast',
+      compact: true,
+    });
+
+    expect(res.text).toContain('→ superseded by [[2026-08-05-new-plan]]');
+    expect(res.text).not.toContain('Plans/new.md › (root) →');
+  });
+
   it('sends the requested search mode in the /search body', async () => {
     const fetchMock = vi.fn(
       async (_url: string, _init?: RequestInit) =>
