@@ -143,7 +143,12 @@ async function checkStampedBlockPresent(repoRoot: string): Promise<CheckResult> 
         detail: 'no metalmind managed block - run `metalmind stamp`',
       };
     }
-    const firstLine = template.split('\n').find((l) => l.trim().length > 0) ?? '';
+    let resolved = template;
+    const include = /^\{\{>\s*([^}\s]+)\s*\}\}$/m.exec(template);
+    if (include?.[1]) {
+      resolved = await readFile(join(repoRoot, 'cli', 'templates', include[1]), 'utf8');
+    }
+    const firstLine = resolved.split('\n').find((l) => l.trim().length > 0) ?? '';
     const signature = firstLine
       .replace(/\{\{[^}]+\}\}/g, '')
       .trim()
