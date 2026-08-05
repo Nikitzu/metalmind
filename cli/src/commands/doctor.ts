@@ -582,7 +582,7 @@ async function collectSupersedeEntries(vaultPath: string): Promise<Map<string, S
   const entries = new Map<string, SupersedeEntry>();
   const skip = new Set(['.obsidian', '.metalmind-stack', '.trash', '.git']);
   const walk = async (dir: string): Promise<void> => {
-    let items: Awaited<ReturnType<typeof readdir>>;
+    let items: import('node:fs').Dirent[];
     try {
       items = await readdir(dir, { withFileTypes: true });
     } catch {
