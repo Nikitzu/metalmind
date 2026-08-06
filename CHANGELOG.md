@@ -6,6 +6,22 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.13.3 - 2026-08-06
+
+### Fixed
+
+- **`scribe update --code` no longer needs a body, and can clear refs.** Passing `--code` without `--body` blocked on stdin, so re-stamping refs meant piping a dummy body; a body-less update now re-stamps without appending. `--code ""` filtered to an empty list that the length guard skipped, so refs could never be cleared - an empty list now removes the field.
+
+- **Auto-memory filenames are unambiguous.** Project and topic were joined with a single hyphen, so project `a` + topic `b-c` produced the same filename as `a-b` + `c`. `slugify` never emits a double hyphen, so that is now the separator. Notes imported under the old name are renamed on the next ingest rather than imported a second time.
+
+- **Ingest conflicts name both paths.** The warning gave only the vault note; it now names the source file it diverged from, which is what the spec asked for.
+
+### Changed
+
+- The README tagline named Claude Code alone and its prose omitted vault sync, matching the website before it was corrected. Both now say what ships.
+
+---
+
 ## 0.13.2 - 2026-08-06
 
 ### Fixed

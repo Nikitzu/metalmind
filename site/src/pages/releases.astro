@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.13.3',
+    date: '2026-08-06',
+    headline: 'scribe --code and auto-memory naming get their rough edges filed off',
+    summary: 'scribe update --code blocked on stdin without a body, so re-stamping refs meant piping a dummy body, and --code \"\" could never clear refs. Auto-memory filenames joined project and topic with a single hyphen, so project a + topic b-c collided with a-b + c; the separator is now a double hyphen and notes imported under the old name are renamed rather than duplicated. Ingest conflicts now name the source file as well as the vault note.',
+    tag_kind: 'fixed',
+  },
+  {
     tag: '0.13.2',
     date: '2026-08-06',
     headline: 'Code refs tell a definition from a call site',
