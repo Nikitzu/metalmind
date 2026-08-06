@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.15.1',
+    date: '2026-08-06',
+    headline: 'Prose in a supersedes field is not a broken link',
+    summary: "The supersede integrity check treated every frontmatter value as a note pointer, so a note that said supersedes: v1 (Gateway+Relay), v2 (bookings share_sessions) reported an unresolvable pointer with no way to declare it prose - permanently red, on every machine the vault reached. Values are now classified by shape: anything with whitespace, commas or brackets was never a stem, so it is surfaced as a notice with the fix rather than a failure. Stem-shaped pointers that do not resolve still fail, and still outrank prose in the report. scribe supersede also stops demanding --force to overwrite a prose value, since that was never a link to protect.",
+    tag_kind: 'fixed',
+  },
+  {
     tag: '0.15.0',
     date: '2026-08-06',
     headline: 'codegraph owns the inside of a repo; forge owns what happens between them',

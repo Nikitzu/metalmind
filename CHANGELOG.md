@@ -6,6 +6,18 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.15.1 - 2026-08-06
+
+### Fixed
+
+- **A human-written `supersedes:` no longer fails `doctor` forever.** The integrity check treated every value as a note pointer, so a note whose frontmatter said `supersedes: v1 (Gateway+Relay), v2 (bookings share_sessions)` reported an unresolvable pointer with no way to say "this line is prose, not a link" - permanently red, on every machine the vault synced to.
+
+  Values are now classified by shape first: anything containing whitespace, commas, or brackets was never a stem, so it is surfaced as a notice with the fix rather than counted as a broken link. Genuinely stem-shaped pointers that do not resolve still fail, because that is the signal the check exists for, and a real broken pointer still takes precedence in the report over prose.
+
+- **`scribe supersede` no longer demands `--force` to overwrite prose.** Re-pointing an existing supersede link is a deliberate act that needs `--force`, but a prose value was never a link. It is now overwritten directly.
+
+---
+
 ## 0.15.0 - 2026-08-06
 
 ### Removed
