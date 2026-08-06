@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { intro, log, outro } from '@clack/prompts';
 import {
   type CodeRefStatus,
@@ -22,6 +22,7 @@ import { METALMIND_CURSOR_HOOK_FILENAME } from '../install/cursor/hooks.js';
 import { DEFAULT_CURSOR_DIR } from '../install/cursor.js';
 import { detectPrereqs } from '../install/prereqs.js';
 import { OLLAMA_CONTAINER } from '../install/stack.js';
+import { scanForgeIntentSkills } from '../intent/intent.js';
 import { frontmatterString, readNoteFrontmatter } from '../scribe/frontmatter.js';
 import { runCommand } from '../util/exec.js';
 import { detectObsidian } from '../util/obsidian.js';
@@ -545,6 +546,44 @@ export async function checkCursorInstall(opts: { cursorDir?: string } = {}): Pro
   return out;
 }
 
+export async function checkIntentSkills(groups: ForgeGroups): Promise<DeepCheck> {
+  const repoCount = new Set(Object.values(groups).flatMap((g) => g.repos ?? [])).size;
+  if (repoCount === 0) {
+    return { name: 'intent-skills', ok: true, detail: 'no forge repos registered' };
+  }
+
+  const { repos } = await scanForgeIntentSkills(groups);
+  const scanned = repos.filter((r) => r.status === 'ok');
+  if (scanned.length === 0) {
+    return {
+      name: 'intent-skills',
+      ok: true,
+      detail: `intent CLI not available in any of ${repoCount} forge repos - skipped`,
+    };
+  }
+
+  const withSkills = scanned.filter((r) => r.packages.length > 0);
+  const skillCount = withSkills.reduce((n, r) => n + r.skillCount, 0);
+  const packageCount = withSkills.reduce((n, r) => n + r.packages.length, 0);
+  if (skillCount === 0) {
+    return {
+      name: 'intent-skills',
+      ok: true,
+      detail: `no intent-enabled dependencies in ${scanned.length} scanned repos`,
+    };
+  }
+
+  const named = withSkills
+    .slice(0, 3)
+    .map((r) => `${basename(r.repo)}: ${r.packages.map((p) => p.name).join(', ')}`)
+    .join('; ');
+  return {
+    name: 'intent-skills',
+    ok: true,
+    detail: `${skillCount} skills from ${packageCount} packages across ${withSkills.length} repos (${named}${withSkills.length > 3 ? ', …' : ''}) - wire them in with \`intent install\` in the repo`,
+  };
+}
+
 export async function checkCodeRefsIntegrity(
   vaultPath: string,
   groups: ForgeGroups,
@@ -698,15 +737,25 @@ export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   const codexChecks = installCodex ? await checkCodexInstall({ checkMcp: true }) : [];
   const cursorChecks = installCursor ? await checkCursorInstall() : [];
 
-  const [watcher, http, supersede, codeRefs] = await Promise.all([
+  const [watcher, http, supersede, codeRefs, intentSkills] = await Promise.all([
     checkWatcherService(),
     checkRecallHttp(),
     checkSupersedeIntegrity(config.vaultPath),
     checkCodeRefsIntegrity(config.vaultPath, config.forge.groups),
+    checkIntentSkills(config.forge.groups),
   ]);
 
   if (!onLegacy) {
-    return [watcher, http, supersede, codeRefs, ...stamps, ...codexChecks, ...cursorChecks];
+    return [
+      watcher,
+      http,
+      supersede,
+      codeRefs,
+      intentSkills,
+      ...stamps,
+      ...codexChecks,
+      ...cursorChecks,
+    ];
   }
 
   const docker = await checkDockerContainers();
@@ -719,6 +768,7 @@ export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
     http,
     supersede,
     codeRefs,
+    intentSkills,
     ...stamps,
     ...codexChecks,
     ...cursorChecks,

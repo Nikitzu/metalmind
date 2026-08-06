@@ -294,7 +294,65 @@ describe('doctor deep checks', () => {
       const names = checks.map((c) => c.name);
       expect(names).toContain('supersede-integrity');
       expect(names).toContain('code-refs-integrity');
+      expect(names).toContain('intent-skills');
       await rm(vault, { recursive: true, force: true });
+    });
+  });
+
+  describe('checkIntentSkills', () => {
+    let repo: string;
+
+    beforeEach(async () => {
+      runCommand.mockReset();
+      repo = await mkdtemp(join(tmpdir(), 'mm-doctor-intent-'));
+      await mkdir(join(repo, 'node_modules', '.bin'), { recursive: true });
+      await writeFile(join(repo, 'node_modules', '.bin', 'intent'), '#!/bin/sh\n', { mode: 0o755 });
+    });
+    afterEach(async () => {
+      await rm(repo, { recursive: true, force: true });
+    });
+
+    it('says so when no forge repos are registered', async () => {
+      const { checkIntentSkills } = await import('./doctor.js');
+      const res = await checkIntentSkills({});
+      expect(res.ok).toBe(true);
+      expect(res.detail).toContain('no forge repos');
+    });
+
+    it('reports skill and package counts with repo names', async () => {
+      runCommand.mockResolvedValue(
+        ok(
+          JSON.stringify({
+            packages: [{ name: '@tanstack/db', version: '0.6.17', skillCount: 7 }],
+            skills: [{ use: 'a' }, { use: 'b' }],
+          }),
+        ),
+      );
+      const { checkIntentSkills } = await import('./doctor.js');
+      const res = await checkIntentSkills({ g: { repos: [repo] } });
+
+      expect(res.ok).toBe(true);
+      expect(res.detail).toContain('2 skills');
+      expect(res.detail).toContain('@tanstack/db');
+    });
+
+    it('stays ok and reports skipped when the CLI is unavailable everywhere', async () => {
+      const bare = await mkdtemp(join(tmpdir(), 'mm-doctor-bare-'));
+      const { checkIntentSkills } = await import('./doctor.js');
+      const res = await checkIntentSkills({ g: { repos: [bare] } });
+
+      expect(res.ok).toBe(true);
+      expect(res.detail).toMatch(/not available|skipped/i);
+      await rm(bare, { recursive: true, force: true });
+    });
+
+    it('reports repos that scanned cleanly but expose nothing', async () => {
+      runCommand.mockResolvedValue(ok(JSON.stringify({ packages: [], skills: [] })));
+      const { checkIntentSkills } = await import('./doctor.js');
+      const res = await checkIntentSkills({ g: { repos: [repo] } });
+
+      expect(res.ok).toBe(true);
+      expect(res.detail).toContain('no intent-enabled dependencies');
     });
   });
 
