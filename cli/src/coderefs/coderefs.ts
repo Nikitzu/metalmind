@@ -46,10 +46,38 @@ const SKIP_DIRS = ['node_modules', '.git', 'dist', 'build', 'target', '.venv'];
 const PER_REPO_TIMEOUT_MS = 2000;
 const TOTAL_TIMEOUT_MS = 10_000;
 
-function definitionPatterns(rawSymbol: string): [string, string] {
-  const symbol = rawSymbol.replace(/[$^.*+?()[\]{}|\\]/g, '\\$&');
-  const kw = '(function|class|const|let|var|def|fn|interface|type|struct|enum|trait|impl|val|fun)';
-  return [`${kw}\\s+${symbol}\\b`, `\\b${symbol}\\s*[=(:]`];
+const DEFINITION_KEYWORDS = [
+  'function',
+  'func',
+  'class',
+  'const',
+  'let',
+  'var',
+  'def',
+  'fn',
+  'fun',
+  'interface',
+  'type',
+  'struct',
+  'enum',
+  'trait',
+  'impl',
+  'record',
+  'object',
+  'module',
+  'val',
+].join('|');
+
+function escapeSymbol(rawSymbol: string): string {
+  return rawSymbol.replace(/[$^.*+?()[\]{}|\\]/g, '\\$&');
+}
+
+function definitionPattern(rawSymbol: string): string {
+  return `(${DEFINITION_KEYWORDS})\\s+${escapeSymbol(rawSymbol)}\\b`;
+}
+
+function referencePattern(rawSymbol: string): string {
+  return `\\b${escapeSymbol(rawSymbol)}\\s*[=(:]`;
 }
 
 let rgAvailable: boolean | null = null;
@@ -75,47 +103,46 @@ export async function checkSymbol(
   const timeoutMs = opts.timeoutMs ?? PER_REPO_TIMEOUT_MS;
   const tool =
     opts.tool === undefined || opts.tool === 'auto' ? ((await hasRg()) ? 'rg' : 'grep') : opts.tool;
-  const [defPattern, fallbackPattern] = definitionPatterns(symbol);
 
-  const res =
-    tool === 'rg'
-      ? await runCommand(
-          'rg',
-          [
-            '-l',
-            '--max-count',
-            '1',
-            ...SKIP_DIRS.flatMap((d) => ['-g', `!${d}`]),
-            '-e',
-            defPattern,
-            '-e',
-            fallbackPattern,
-            repoPath,
-          ],
-          { timeoutMs },
-        )
-      : await runCommand(
-          'grep',
-          [
-            '-r',
-            '-l',
-            '-E',
-            `${defPattern}|${fallbackPattern}`,
-            ...SKIP_DIRS.map((d) => `--exclude-dir=${d}`),
-            repoPath,
-          ],
-          { timeoutMs },
-        );
+  const search = async (pattern: string): Promise<{ found: boolean; fatal?: string }> => {
+    const res =
+      tool === 'rg'
+        ? await runCommand(
+            'rg',
+            [
+              '-l',
+              '--max-count',
+              '1',
+              ...SKIP_DIRS.flatMap((d) => ['-g', `!${d}`]),
+              '-e',
+              pattern,
+              repoPath,
+            ],
+            { timeoutMs },
+          )
+        : await runCommand(
+            'grep',
+            ['-r', '-l', '-E', pattern, ...SKIP_DIRS.map((d) => `--exclude-dir=${d}`), repoPath],
+            { timeoutMs },
+          );
+    if (res.ok && res.stdout.trim()) return { found: true };
+    if (res.exitCode === 1) return { found: false };
+    if (res.exitCode === null) {
+      return { found: false, fatal: `search failed or timed out (${timeoutMs}ms cap)` };
+    }
+    return { found: false, fatal: res.stderr.slice(0, 120) || 'search failed' };
+  };
 
-  if (res.ok && res.stdout.trim()) return { status: 'ok' };
-  if (res.exitCode === 1) return { status: 'missing' };
-  if (res.exitCode === null) {
-    return {
-      status: 'unresolvable-repo',
-      detail: `search failed or timed out (${timeoutMs}ms cap)`,
-    };
+  const def = await search(definitionPattern(symbol));
+  if (def.fatal) return { status: 'unresolvable-repo', detail: def.fatal };
+  if (def.found) return { status: 'ok' };
+
+  const ref = await search(referencePattern(symbol));
+  if (ref.fatal) return { status: 'unresolvable-repo', detail: ref.fatal };
+  if (ref.found) {
+    return { status: 'ok', detail: 'matched a reference, not a definition' };
   }
-  return { status: 'unresolvable-repo', detail: res.stderr.slice(0, 120) || 'search failed' };
+  return { status: 'missing' };
 }
 
 export async function collectVaultCodeRefs(vaultPath: string): Promise<Map<string, string[]>> {

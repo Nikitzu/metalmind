@@ -34,6 +34,7 @@ export interface RecallResult {
   tool: string;
   text: string;
   raw: McpToolResult;
+  hits?: Array<Record<string, unknown>>;
   /** Transport used - 'http' is the fast local path, 'stdio' is the MCP fallback. */
   transport: 'http' | 'stdio';
 }
@@ -179,7 +180,13 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
         ? `\n+${body.expansions.length} linked (use --json for full)`
         : `\n---expansions---\n${JSON.stringify(body.expansions, null, 2)}`;
       const text = `${fmt(body.hits)}${expandTail}`;
-      return { tool: 'http:expand', text, raw: rawFromText(text), transport: 'http' };
+      return {
+        tool: 'http:expand',
+        text,
+        raw: rawFromText(text),
+        hits: body.hits,
+        transport: 'http',
+      };
     }
 
     const hits = (await httpPost(
@@ -196,21 +203,39 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
     await annotate(hits.hits);
     if (opts.tier === 'fast') {
       const text = fmt(hits.hits);
-      return { tool: 'http:search', text, raw: rawFromText(text), transport: 'http' };
+      return {
+        tool: 'http:search',
+        text,
+        raw: rawFromText(text),
+        hits: hits.hits,
+        transport: 'http',
+      };
     }
 
     // deep tier: search then related_notes on the top hit
     const topFile = (hits.hits[0]?.file as string | undefined) ?? null;
     if (!topFile) {
       const text = fmt(hits.hits);
-      return { tool: 'http:search', text, raw: rawFromText(text), transport: 'http' };
+      return {
+        tool: 'http:search',
+        text,
+        raw: rawFromText(text),
+        hits: hits.hits,
+        transport: 'http',
+      };
     }
     const related = await httpPost(endpoint, '/related', { file: topFile });
     const relatedTail = opts.compact
       ? `\n+related to ${topFile} (use --deep --json for full)`
       : `\n---related to ${topFile}---\n${JSON.stringify(related, null, 2)}`;
     const text = `${fmt(hits.hits)}${relatedTail}`;
-    return { tool: 'http:search+related', text, raw: rawFromText(text), transport: 'http' };
+    return {
+      tool: 'http:search+related',
+      text,
+      raw: rawFromText(text),
+      hits: hits.hits,
+      transport: 'http',
+    };
   } catch (err) {
     if (opts.verbose) {
       const message = err instanceof Error ? err.message : String(err);

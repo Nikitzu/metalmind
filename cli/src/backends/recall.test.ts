@@ -150,6 +150,37 @@ describe('recall transport selection', () => {
     await rm(vault, { recursive: true, force: true });
   });
 
+  it('returns structured hits carrying code_refs for --json consumers', async () => {
+    const vault = await mkdtemp(join(tmpdir(), 'mm-recall-vault-'));
+    await mkdir(join(vault, 'Plans'), { recursive: true });
+    await writeFile(
+      join(vault, 'Plans', 'stale.md'),
+      '---\ncode: ["ghost-repo#gone"]\n---\n\nbody\n',
+    );
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hits: [{ file: 'Plans/stale.md', heading: '(root)', score: 0.9, text: 'stale' }],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+    ) as typeof fetch;
+
+    const res = await recall({
+      vaultPath: vault,
+      query: 'q',
+      tier: 'fast',
+      verifyCode: true,
+      forgeGroups: {},
+    });
+
+    expect(res.hits?.[0]?.code_refs).toEqual([
+      { ref: 'ghost-repo#gone', status: 'unresolvable-repo', detail: expect.any(String) },
+    ]);
+    await rm(vault, { recursive: true, force: true });
+  });
+
   it('compact output renders the superseded_by pointer on the hit line', async () => {
     globalThis.fetch = vi.fn(
       async () =>

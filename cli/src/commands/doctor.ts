@@ -549,6 +549,7 @@ export async function checkCodeRefsIntegrity(
     return { name: 'code-refs-integrity', ok: true, detail: 'no code refs in vault frontmatter' };
   }
   const problems: string[] = [];
+  const weak: string[] = [];
   let total = 0;
   const deadline = Date.now() + 10_000;
   for (const [stem, refs] of perNote) {
@@ -556,16 +557,22 @@ export async function checkCodeRefsIntegrity(
     total += results.length;
     for (const r of results) {
       if (r.status !== 'ok') problems.push(`${stem}: ${r.ref} ${r.status}`);
+      else if (r.detail) weak.push(`${stem}: ${r.ref}`);
     }
   }
+  const weakNote =
+    weak.length > 0
+      ? ` · ${weak.length} matched a reference but no definition (${weak.slice(0, 3).join(', ')}${weak.length > 3 ? ', …' : ''})`
+      : '';
   return {
     name: 'code-refs-integrity',
     ok: problems.length === 0,
     detail:
       problems.length === 0
-        ? `${total} code refs across ${perNote.size} notes all resolve`
+        ? `${total} code refs across ${perNote.size} notes all resolve${weakNote}`
         : problems.slice(0, 5).join('; ') +
-          (problems.length > 5 ? ` (+${problems.length - 5} more)` : ''),
+          (problems.length > 5 ? ` (+${problems.length - 5} more)` : '') +
+          weakNote,
     remediation:
       problems.length === 0
         ? undefined

@@ -130,6 +130,24 @@ describe('checkSymbol + verifyCodeRefs', () => {
     expect(results[0]?.status).toBe('ok');
   });
 
+  it('distinguishes a real definition from a call-site-only match', async () => {
+    await writeFile(join(repo, 'caller.ts'), 'deletedSymbol(1, 2);\nconst x = deletedSymbol;\n');
+    const res = await checkSymbol(repo, 'deletedSymbol', { tool: 'grep' });
+    expect(res.status).toBe('ok');
+    expect(res.detail).toMatch(/reference/i);
+
+    const real = await checkSymbol(repo, 'realSymbol', { tool: 'grep' });
+    expect(real.status).toBe('ok');
+    expect(real.detail).toBeUndefined();
+  });
+
+  it('treats a Go func declaration as a definition, not a bare reference', async () => {
+    await writeFile(join(repo, 'main.go'), 'func GoHandler(w http.ResponseWriter) {}\n');
+    const res = await checkSymbol(repo, 'GoHandler', { tool: 'grep' });
+    expect(res.status).toBe('ok');
+    expect(res.detail).toBeUndefined();
+  });
+
   it('reports missing when only prose mentions exist', async () => {
     const res = await checkSymbol(repo, 'ghostSymbol', { tool: 'grep' });
     expect(res.status).toBe('missing');

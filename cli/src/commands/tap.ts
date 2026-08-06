@@ -97,7 +97,7 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
     });
     if (opts.json) {
       process.stdout.write(
-        `${JSON.stringify({ tier, query, text: result.text, raw: result.raw }, null, 2)}\n`,
+        `${JSON.stringify({ tier, query, text: result.text, hits: result.hits, raw: result.raw }, null, 2)}\n`,
       );
       return;
     }
