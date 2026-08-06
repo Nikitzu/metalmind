@@ -39,6 +39,7 @@ import {
 } from './commands/forge.js';
 import { ingestAutoMemoryCmd } from './commands/ingest.js';
 import { init } from './commands/init.js';
+import { burnIron } from './commands/iron.js';
 import { releaseCheck } from './commands/release-check.js';
 import { aluminumWipe, burnZinc, renameSymbol, toggleVerbose } from './commands/remaining-burns.js';
 import { retired } from './commands/retired.js';
@@ -268,9 +269,14 @@ burnCmd
   .action(() => retired('burn bronze'));
 
 burnCmd
-  .command('iron [symbol]')
-  .description('Removed - use codegraph for within-repo symbol lookup')
-  .action(() => retired('burn iron'));
+  .command('iron <symbol>')
+  .description('Burn Iron - find where a symbol is declared, in this repo or a forge')
+  .option('--forge <name>', 'Search every repo in the named forge')
+  .option('--exact', 'Exact name match instead of substring')
+  .option('--json', 'Emit machine-readable JSON')
+  .action((symbol: string, cmdOpts: { forge?: string; exact?: boolean; json?: boolean }) =>
+    burnIron(symbol, cmdOpts),
+  );
 
 program
   .command('graph [query]')
@@ -278,9 +284,18 @@ program
   .action(() => retired('graph'));
 
 program
-  .command('symbol [symbol]')
-  .description('Removed - use codegraph for within-repo symbol lookup')
-  .action(() => retired('symbol'));
+  .command('symbol <symbol>')
+  .description('Classic alias: find where a symbol is declared')
+  .option('--group <name>', 'Search every repo in the named group')
+  .option('--exact', 'Exact name match instead of substring')
+  .option('--json', 'Emit machine-readable JSON')
+  .action((symbol: string, cmdOpts: { group?: string; exact?: boolean; json?: boolean }) =>
+    burnIron(symbol, {
+      forge: cmdOpts.group,
+      exact: cmdOpts.exact,
+      json: cmdOpts.json,
+    }),
+  );
 
 function attachForgeSubcommands(parent: Command): void {
   parent.command('create <name>').description('Create a new forge').action(forgeCreate);

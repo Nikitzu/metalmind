@@ -10,10 +10,6 @@ export const RETIRED_COMMANDS: Record<string, RetiredCommand> = {
     replacement: 'codegraph explore "<query>"',
     reason: 'within-repo code graph queries moved to codegraph',
   },
-  'burn iron': {
-    replacement: 'codegraph node <symbol>',
-    reason: 'within-repo symbol lookup moved to codegraph',
-  },
   'burn pewter': {
     replacement: 'codegraph index',
     reason: 'within-repo indexing moved to codegraph',
@@ -21,10 +17,6 @@ export const RETIRED_COMMANDS: Record<string, RetiredCommand> = {
   graph: {
     replacement: 'codegraph explore "<query>"',
     reason: 'within-repo code graph queries moved to codegraph',
-  },
-  symbol: {
-    replacement: 'codegraph node <symbol>',
-    reason: 'within-repo symbol lookup moved to codegraph',
   },
   reindex: {
     replacement: 'codegraph index',

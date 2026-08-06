@@ -10,7 +10,7 @@ For module-level user docs see the repo root [`README.md`](../README.md). For pe
 |---|---|---|
 | **Memory** | `tap copper` / `store copper` / `scribe` / `gold` | Recall, save, vault CRUD, archive |
 | **Vault sync** | `duralumin` / `sync` | Commit and push the vault with note-loss guards |
-| **Code intelligence** | `forge` / `burn steel\|zinc` | Cross-repo graph, rename, debug-team dispatch. Within-repo graph work belongs to [codegraph](https://github.com/colbymchenry/codegraph). |
+| **Code intelligence** | `forge` / `burn iron\|steel\|zinc` | Cross-repo graph, rename, debug-team dispatch. Within-repo graph work belongs to [codegraph](https://github.com/colbymchenry/codegraph). |
 | **Daily workflow** | `atium` / `routine` | Daily-note action items + EOD launchd routine |
 | **Deliberation** | `synod` | 7-persona deliberative council (CLI shells out to `claude -p`) |
 | **Desktop integration** | `flare` | macOS banner / dialog / sticky notifications |
@@ -144,10 +144,11 @@ The Node ↔ Python boundary is **loopback HTTP only** - never imports. Protocol
 
 - `forge` - manage forge groups (named sets of repo paths) and the OpenAPI spec shelf (`~/.metalmind/specs/`).
 - The cross-repo graph is built from your source on demand. HTTP-route edges connect caller in repo A to handler in repo B, in three tiers: (1) shelf OpenAPI specs, (2) Java framework callers (RestTemplate / WebClient / Feign), (3) URL string literals (opt-in). Symbol-name edges connect a type or function declared in two different repos. Every inferred edge carries provenance.
+- `burn iron` (symbol) - where a symbol is declared, in the current repo or across a forge. Runs on metalmind's own symbol extractor; no index, no external tool.
 - `burn steel` (rename) - coordinated symbol rename through Serena.
 - `burn zinc` (debug) - dispatch `/team-debug` skill.
 
-Within a single repo, metalmind defers to [codegraph](https://github.com/colbymchenry/codegraph), which is local, MIT-licensed, and ships its own MCP server. metalmind does not depend on it or subprocess it - the two are installed side by side. The retired `burn bronze` / `burn iron` / `burn pewter` commands print the codegraph equivalent and exit non-zero.
+Within a single repo, metalmind defers to [codegraph](https://github.com/colbymchenry/codegraph), which is local, MIT-licensed, and ships its own MCP server. metalmind does not depend on it or subprocess it - the two are installed side by side. The retired `burn bronze` / `burn pewter` commands print the codegraph equivalent and exit non-zero.
 
 ### Daily workflow
 

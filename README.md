@@ -16,7 +16,7 @@ Seven modules. Each closes a gap Claude Code itself doesn't fill. All share stat
 | Module | Surface | What it owns |
 |---|---|---|
 | **Memory** | `tap copper` / `store copper` / `scribe` | Recall + save + vault CRUD. The headline; the rest of the library compounds back into it. |
-| **Code intelligence** | `forge` / `burn steel` | Cross-repo graph (HTTP-route and symbol-name edges with provenance), coordinated rename through Serena's LSP. Within a single repo, use [codegraph](https://github.com/colbymchenry/codegraph). |
+| **Code intelligence** | `forge` / `burn iron\|steel` | Cross-repo graph (HTTP-route and symbol-name edges with provenance), coordinated rename through Serena's LSP. Within a single repo, use [codegraph](https://github.com/colbymchenry/codegraph). |
 | **Vault sync** | `duralumin` / `sync` | Commit and push the vault in one command, refusing change sets that look like note loss. |
 | **Daily workflow** | `atium` / `gold` / `routine install eod` | Daily-note action items with `--from` carry-forward, one-shot archive, launchd-backed Mon-Fri EOD carry-and-archive. |
 | **Deliberation** | `synod` | 7-persona deliberative council for the questions that affect the next 6 months - spawned as parallel subagents, synthesised into a structured verdict. |
@@ -76,7 +76,9 @@ Temporal supersedes keeps the semantic layer honest (old truths re-rank below th
 
 - **Sight across repos, not just one.** `metalmind forge` builds one graph over every repo in a group, reading your source directly - no indexing step and no external tool. HTTP-route-match edges connect caller → handler *across services* in three tiers: OpenAPI specs on the metalmind shelf (never inside your repos), Java RestTemplate/WebClient/Feign callers, and URL literals as an opt-in fallback. Symbol-name edges connect the same type or function where it surfaces in two different repos. Every inferred edge carries `INFERRED_NAME` / `INFERRED_ROUTE` / `INFERRED_URL_LITERAL` provenance so Claude can trust-grade what it reads.
 
-- **Within a single repo, use codegraph.** [codegraph](https://github.com/colbymchenry/codegraph) is a local, MIT-licensed code-graph tool with its own MCP server, and it does same-repo work - callers, callees, blast radius, affected tests - better than metalmind ever did. metalmind deliberately does not wrap it: install it alongside and let it own the inside of a repo while forge owns what happens between repos. Retired in v0.15.0: `burn bronze`, `burn iron`, `burn pewter` and their `graph` / `symbol` / `reindex` aliases.
+- **Find where a symbol is declared.** `metalmind burn iron <symbol>` (alias: `symbol`) searches the current repo, or every repo in a forge with `--forge`, and names the file and line for each declaration. It runs on metalmind's own extractor - no index to build, no external tool. Substring by default, `--exact` for the precise name, `--json` for machines.
+
+- **For callers and call paths, use codegraph.** [codegraph](https://github.com/colbymchenry/codegraph) is a local, MIT-licensed code-graph tool with its own MCP server, and it does the parser-backed half - callers, callees, blast radius, affected tests - better than metalmind ever did. metalmind deliberately does not wrap it: install it alongside. Retired in v0.15.0: `burn bronze`, `burn pewter` and their `graph` / `reindex` aliases.
 
 - **Coordinated rename.** `metalmind burn steel <old> <new>` (alias: `rename`) drives a rename through Serena's LSP backend.
 
@@ -228,6 +230,7 @@ Every themed (Scadrial) verb has a classic alias. Both always resolve - theming 
 | `metalmind pulse` | `metalmind doctor` | Verify install state |
 | `metalmind store copper <insight>` | `metalmind save <insight>` | Deposit a decision into the vault |
 | `metalmind tap copper "<query>"` | `metalmind recall "<query>"` | Recall - add `--deep` or `--expand` for more depth |
+| `metalmind burn iron <symbol>` | `metalmind symbol <symbol>` | Find where a symbol is declared |
 | `metalmind burn steel <old> <new>` | `metalmind rename <old> <new>` | Coordinated rename |
 | `metalmind burn zinc "<bug>"` | `metalmind debug "<bug>"` | Dispatch `/team-debug` |
 | `metalmind forge <…>` | `metalmind group <…>` | Cross-repo graph groups; `forge capture-spec` seeds OpenAPI shelf |

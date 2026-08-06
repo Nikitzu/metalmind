@@ -14,8 +14,13 @@ describe('retired commands', () => {
     }
   });
 
+  it('does not tombstone burn iron or symbol - those run natively again', () => {
+    expect(RETIRED_COMMANDS['burn iron']).toBeUndefined();
+    expect(RETIRED_COMMANDS.symbol).toBeUndefined();
+  });
+
   it('covers both the scadrial and classic spellings', () => {
-    for (const name of ['burn bronze', 'burn iron', 'burn pewter', 'graph', 'symbol', 'reindex']) {
+    for (const name of ['burn bronze', 'burn pewter', 'graph', 'reindex']) {
       expect(RETIRED_COMMANDS[name], name).toBeDefined();
     }
   });
