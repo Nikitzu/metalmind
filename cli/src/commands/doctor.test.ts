@@ -258,6 +258,17 @@ describe('doctor deep checks', () => {
       expect(res.detail).toContain('supersede cycle');
     });
 
+    it('flags two notes sharing a stem, since pointers resolve by stem', async () => {
+      await mkdir(join(vault, 'Work'), { recursive: true });
+      await writeFile(join(vault, 'Plans', 'twin.md'), note('status: active'));
+      await writeFile(join(vault, 'Work', 'twin.md'), note('status: active'));
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(false);
+      expect(res.detail).toMatch(/twin/);
+    });
+
     it('ok on a vault with no supersede fields at all', async () => {
       await writeFile(join(vault, 'Plans', 'plain.md'), note('status: active'));
 
@@ -327,8 +338,8 @@ describe('doctor deep checks', () => {
       const { checkCodeRefsIntegrity } = await import('./doctor.js');
       const res = await checkCodeRefsIntegrity(vault, { g: { repos: [repo] } });
       expect(res.ok).toBe(false);
-      expect(res.detail).toContain(`n: ${repoName}#goneSymbol missing`);
-      expect(res.detail).toContain('n: ghost-repo#x unresolvable-repo');
+      expect(res.detail).toContain(`Work/n.md: ${repoName}#goneSymbol missing`);
+      expect(res.detail).toContain('Work/n.md: ghost-repo#x unresolvable-repo');
     });
 
     it('caps the detail at five offenders with a +N more suffix and gives remediation', async () => {
@@ -339,6 +350,24 @@ describe('doctor deep checks', () => {
       expect(res.ok).toBe(false);
       expect(res.detail).toContain('+2 more');
       expect(res.remediation).toBeTruthy();
+    });
+
+    it('names colliding stems by path rather than dropping one', async () => {
+      const repoName = repo.split('/').pop() as string;
+      await mkdir(join(vault, 'Plans'), { recursive: true });
+      await writeFile(
+        join(vault, 'Work', 'dup.md'),
+        `---\ncode: ["${repoName}#goneOne"]\n---\n\nbody\n`,
+      );
+      await writeFile(
+        join(vault, 'Plans', 'dup.md'),
+        `---\ncode: ["${repoName}#goneTwo"]\n---\n\nbody\n`,
+      );
+      const { checkCodeRefsIntegrity } = await import('./doctor.js');
+      const res = await checkCodeRefsIntegrity(vault, { g: { repos: [repo] } });
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain('goneOne');
+      expect(res.detail).toContain('goneTwo');
     });
 
     it('ok on a vault with no code refs', async () => {

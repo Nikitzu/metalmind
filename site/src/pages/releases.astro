@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.13.2',
+    date: '2026-08-06',
+    headline: 'Code refs tell a definition from a call site',
+    summary: "The definition pattern and the loose fallback ran as one ripgrep call, so a leftover call site or a mock was indistinguishable from a real definition and the exact staleness the feature exists to catch reported a clean ok. They now run as separate stages, with reference-only matches surfaced by doctor as worth checking rather than as failures - and func, record, object, and module join the definition keywords, since Go definitions had been reaching ok through the fallback. Also: tap copper --json emits structured code_refs per hit, repeated lookups are memoised per run, notes sharing a filename stem no longer vanish from the checks, and imported auto-memory carries no username in source_path.",
+    tag_kind: 'fixed',
+  },
+  {
     tag: '0.13.1',
     date: '2026-08-05',
     headline: 'Frontmatter parsed with a real YAML parser',

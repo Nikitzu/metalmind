@@ -6,6 +6,22 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.13.2 - 2026-08-06
+
+### Fixed
+
+- **Code refs distinguish a definition from a reference.** The definition pattern and the loose fallback went to ripgrep as alternatives in one call, so a leftover call site, a mock, or a JSON key was indistinguishable from a real definition - the exact staleness shape the feature exists to catch reported a clean `ok`. The two now run as separate stages: a definition match is a plain `ok`, a reference-only match stays `ok` but carries a detail, and `doctor` names those separately so they read as worth checking rather than as failures. The distinction matters because the fallback is load-bearing - the keyword list had `fn` and `fun` but no `func`, so every Go definition was reaching `ok` through the loose pattern. `func`, `record`, `object`, and `module` join the definition keywords.
+
+- **`tap copper --json` emits structured `code_refs` per hit.** `RecallResult` now carries the hits array, which the text-only payload could never express - `raw` was derived from the rendered string.
+
+- **Repeated code-ref lookups are memoised per run.** The same `repo#symbol` cited by N notes spawned N ripgrep processes; `doctor` now shares one cache across the whole check.
+
+- **Notes sharing a filename stem no longer vanish from the checks.** The code-ref collector keys by vault-relative path, so both notes are reported. Supersede pointers genuinely resolve by stem, so that collector keeps stem keys and now reports the collision as a problem instead of silently dropping one note.
+
+- **`ingest auto-memory` writes `source_path` relative to home** (`~/.claude/projects/...`), so an imported note carries no username into a git-synced vault.
+
+---
+
 ## 0.13.1 - 2026-08-05
 
 ### Fixed

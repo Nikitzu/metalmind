@@ -2,9 +2,22 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ingestAutoMemory } from './ingest.js';
+import { ingestAutoMemory, tildeHome } from './ingest.js';
 
 const fixedNow = () => new Date('2026-08-05T10:00:00.000Z');
+
+describe('tildeHome', () => {
+  it('collapses the home prefix so a synced vault carries no username', async () => {
+    const { homedir } = await import('node:os');
+    expect(tildeHome(join(homedir(), '.claude', 'projects', 'p', 'memory', 't.md'))).toBe(
+      '~/.claude/projects/p/memory/t.md',
+    );
+  });
+
+  it('leaves a path outside home untouched', () => {
+    expect(tildeHome('/opt/elsewhere/t.md')).toBe('/opt/elsewhere/t.md');
+  });
+});
 
 describe('ingestAutoMemory', () => {
   let projects: string;

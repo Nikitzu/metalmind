@@ -3,7 +3,12 @@ import { readFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { join } from 'node:path';
 import { intro, log, outro } from '@clack/prompts';
-import { collectVaultCodeRefs, type ForgeGroups, verifyCodeRefs } from '../coderefs/coderefs.js';
+import {
+  type CodeRefStatus,
+  collectVaultCodeRefs,
+  type ForgeGroups,
+  verifyCodeRefs,
+} from '../coderefs/coderefs.js';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
 import {
   DEFAULT_CODEX_DIR,
@@ -552,8 +557,9 @@ export async function checkCodeRefsIntegrity(
   const weak: string[] = [];
   let total = 0;
   const deadline = Date.now() + 10_000;
+  const cache = new Map<string, { status: CodeRefStatus; detail?: string }>();
   for (const [stem, refs] of perNote) {
-    const results = await verifyCodeRefs(refs, groups, { deadline });
+    const results = await verifyCodeRefs(refs, groups, { deadline, cache });
     total += results.length;
     for (const r of results) {
       if (r.status !== 'ok') problems.push(`${stem}: ${r.ref} ${r.status}`);
@@ -586,7 +592,10 @@ interface SupersedeEntry {
   supersedes: string | null;
 }
 
-async function collectSupersedeEntries(vaultPath: string): Promise<Map<string, SupersedeEntry>> {
+async function collectSupersedeEntries(
+  vaultPath: string,
+  collisions: Set<string> = new Set(),
+): Promise<Map<string, SupersedeEntry>> {
   const { readdir } = await import('node:fs/promises');
   const entries = new Map<string, SupersedeEntry>();
   const skip = new Set(['.obsidian', '.metalmind-stack', '.trash', '.git']);
@@ -606,8 +615,10 @@ async function collectSupersedeEntries(vaultPath: string): Promise<Map<string, S
       if (item.isSymbolicLink()) continue;
       if (!item.name.endsWith('.md')) continue;
       const fm = await readNoteFrontmatter(full);
-      entries.set(item.name.replace(/\.md$/, ''), {
-        stem: item.name.replace(/\.md$/, ''),
+      const stem = item.name.replace(/\.md$/, '');
+      if (entries.has(stem)) collisions.add(stem);
+      entries.set(stem, {
+        stem,
         supersededBy: frontmatterString(fm, 'superseded_by'),
         supersedes: frontmatterString(fm, 'supersedes'),
       });
@@ -618,8 +629,12 @@ async function collectSupersedeEntries(vaultPath: string): Promise<Map<string, S
 }
 
 export async function checkSupersedeIntegrity(vaultPath: string): Promise<DeepCheck> {
-  const entries = await collectSupersedeEntries(vaultPath);
+  const collisions = new Set<string>();
+  const entries = await collectSupersedeEntries(vaultPath, collisions);
   const problems: string[] = [];
+  for (const stem of collisions) {
+    problems.push(`two notes share the stem '${stem}' - supersede pointers resolve by stem`);
+  }
 
   for (const e of entries.values()) {
     if (e.supersededBy && !entries.has(e.supersededBy)) {

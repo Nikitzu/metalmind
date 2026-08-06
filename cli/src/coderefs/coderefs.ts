@@ -93,6 +93,7 @@ export interface CheckSymbolOptions {
   tool?: 'rg' | 'grep' | 'auto';
   timeoutMs?: number;
   deadline?: number;
+  cache?: Map<string, { status: CodeRefStatus; detail?: string }>;
 }
 
 export async function checkSymbol(
@@ -147,7 +148,7 @@ export async function checkSymbol(
 
 export async function collectVaultCodeRefs(vaultPath: string): Promise<Map<string, string[]>> {
   const { readdir } = await import('node:fs/promises');
-  const { join } = await import('node:path');
+  const { join, relative } = await import('node:path');
   const out = new Map<string, string[]>();
   const skip = new Set(['.obsidian', '.metalmind-stack', '.trash', '.git']);
   const walk = async (dir: string): Promise<void> => {
@@ -166,7 +167,7 @@ export async function collectVaultCodeRefs(vaultPath: string): Promise<Map<strin
       if (item.isSymbolicLink()) continue;
       if (!item.name.endsWith('.md')) continue;
       const refs = frontmatterList(await readNoteFrontmatter(full), 'code');
-      if (refs.length > 0) out.set(item.name.replace(/\.md$/, ''), refs);
+      if (refs.length > 0) out.set(relative(vaultPath, full), refs);
     }
   };
   await walk(vaultPath);
@@ -203,7 +204,10 @@ export async function verifyCodeRefs(
       });
       continue;
     }
-    const check = await checkSymbol(repoPath, parsed.symbol, opts);
+    const cacheKey = `${repoPath}\u0000${parsed.symbol}`;
+    const cached = opts.cache?.get(cacheKey);
+    const check = cached ?? (await checkSymbol(repoPath, parsed.symbol, opts));
+    opts.cache?.set(cacheKey, check);
     results.push({ ref: raw, ...check });
   }
   return results;

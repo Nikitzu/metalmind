@@ -19,6 +19,12 @@ export interface IngestResult {
   conflicts: string[];
 }
 
+export function tildeHome(p: string): string {
+  const home = homedir();
+  if (p === home) return '~';
+  return p.startsWith(`${home}/`) ? `~${p.slice(home.length)}` : p;
+}
+
 function sha1(s: string): string {
   return createHash('sha1').update(s).digest('hex');
 }
@@ -99,7 +105,7 @@ export async function ingestAutoMemory(opts: IngestOptions): Promise<IngestResul
           kind: 'memory',
           title: file.replace(/\.md$/, ''),
           tags: ['auto-memory'],
-          source_path: sourcePath,
+          source_path: tildeHome(sourcePath),
           imported_hash: sourceHash,
           created: today,
           updated: today,
@@ -121,7 +127,7 @@ export async function ingestAutoMemory(opts: IngestOptions): Promise<IngestResul
         if (opts.dryRun) continue;
         let head = existing.slice(0, existing.length - body.length);
         head = rewriteFrontmatterField(head, 'imported_hash', sourceHash);
-        head = rewriteFrontmatterField(head, 'source_path', sourcePath);
+        head = rewriteFrontmatterField(head, 'source_path', tildeHome(sourcePath));
         head = rewriteFrontmatterField(head, 'updated', today);
         await writeFile(abs, head + content, 'utf8');
         continue;

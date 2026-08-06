@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  type CodeRefStatus,
   checkSymbol,
   parseCodeRef,
   parseCodeRefsFromHead,
@@ -146,6 +147,19 @@ describe('checkSymbol + verifyCodeRefs', () => {
     const res = await checkSymbol(repo, 'GoHandler', { tool: 'grep' });
     expect(res.status).toBe('ok');
     expect(res.detail).toBeUndefined();
+  });
+
+  it('memoises repeated (repo, symbol) lookups within a run', async () => {
+    const cache = new Map<string, { status: CodeRefStatus; detail?: string }>();
+    const groups = { g: { repos: [repo] } };
+    const ref = `${basename(repo)}#realSymbol`;
+
+    const first = await verifyCodeRefs([ref], groups, { cache });
+    const second = await verifyCodeRefs([ref], groups, { cache });
+
+    expect(first[0]?.status).toBe('ok');
+    expect(second[0]?.status).toBe('ok');
+    expect(cache.size).toBe(1);
   });
 
   it('reports missing when only prose mentions exist', async () => {
