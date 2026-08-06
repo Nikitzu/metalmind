@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.14.0',
+    date: '2026-08-06',
+    headline: 'doctor surfaces the Intent skills sitting unused in your dependencies',
+    summary: "Packages can ship SKILL.md guidance that travels with them through the registry. The new intent-skills check asks each forge-registered repo's own intent binary how many its dependencies expose, and names them. Informational by design: it never fails, never changes doctor's exit code, installs nothing, and deliberately does not copy skills into the vault - their value is that they stay versioned with the package, so a vault copy would manufacture the staleness Intent exists to prevent.",
+    tag_kind: 'added',
+  },
+  {
     tag: '0.13.3',
     date: '2026-08-06',
     headline: 'scribe --code and auto-memory naming get their rough edges filed off',

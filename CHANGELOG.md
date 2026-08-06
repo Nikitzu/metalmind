@@ -6,6 +6,18 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.14.0 - 2026-08-06
+
+### Added
+
+- **`doctor --deep` reports TanStack Intent skills available in your forge repos.** Packages can ship `SKILL.md` guidance that travels with them through the registry; the new `intent-skills` check resolves each forge-registered repo's own `node_modules/.bin/intent` and asks `list --json` how many its dependencies expose, naming the repos and packages involved.
+
+  The check is informational by design: it never fails, so it cannot change `doctor`'s exit code, and it copies nothing into the vault. That last part is deliberate - Intent's value is that skills are versioned with the package, so a vault copy would freeze them at import time and manufacture exactly the staleness Intent exists to prevent. metalmind points at that knowledge; `intent install` in the repo is what wires it in.
+
+  Nothing is ever installed as a side effect: a repo without Intent has no binary, so no subprocess runs at all. Scans are bounded at 2 seconds per repo under a shared 10-second budget, and every failure mode - absent CLI, unparseable output, deleted repo path, timeout - degrades to `unavailable` rather than an error.
+
+---
+
 ## 0.13.3 - 2026-08-06
 
 ### Fixed
