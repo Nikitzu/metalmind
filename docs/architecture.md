@@ -166,6 +166,7 @@ The Node ↔ Python boundary is **loopback HTTP only** - never imports. Protocol
 ### Health
 
 - `pulse` (doctor) - install verification: prereqs, config, MCP state, sentinel presence, watcher liveness. `--deep` adds live-service probes; `--recall-audit` replays the opt-in NDJSON recall log and surfaces zero-hit / weak-hit queries as `/save` candidates.
+- `doctor --deep` also runs `intent-skills`: for each forge-registered repo it resolves that repo's own `node_modules/.bin/intent` and asks `list --json` how many TanStack Intent skills its dependencies expose. Informational only - it never fails, copies nothing into the vault, and installs nothing (a repo without Intent has no binary, so nothing is spawned).
 
 ## The four-rule honesty bar
 

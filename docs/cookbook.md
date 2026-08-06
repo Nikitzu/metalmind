@@ -282,3 +282,14 @@ From an agent, `/sync` and `/save-sync` wrap the same command.
 - Repo root [`README.md`](../README.md) - module list + comparison matrix.
 - `metalmind --help` - full CLI reference.
 - `metalmind scribe --help` / `metalmind atium --help` - vault-write specifics.
+
+## Intent and metalmind: who owns which knowledge
+
+TanStack Intent lets a package ship `SKILL.md` guidance that travels with it through the registry. The division of labour is clean:
+
+- **Intent supplies the library's procedural knowledge** - how to use *this* package, versioned with it, refreshed whenever you upgrade the dependency.
+- **metalmind holds the decisions you authored** - why you chose it, what broke last time, what you decided not to do.
+
+metalmind deliberately does **not** import Intent skills into the vault. Their whole value is that they travel with the package; a vault copy would freeze them at import time and manufacture the exact staleness Intent exists to prevent.
+
+What metalmind does instead is point at them. `metalmind doctor --deep` reports how many Intent skills the dependency graphs of your forge-registered repos expose, so you know the guidance is there. To wire it into a repo's agent config, run `intent install` in that repo - that is Intent's job, not metalmind's.
