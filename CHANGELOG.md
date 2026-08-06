@@ -8,6 +8,12 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ## 0.15.1 - 2026-08-06
 
+### Added
+
+- **`burn iron` is back, rebuilt on metalmind's own symbol extractor.** 0.15.0 retired it along with the graphify dependency, but the two were not the same decision: the dependency had to go, the capability did not. It now answers "where is this symbol declared" from the extractor forge already uses - no index to build, no external tool, and it works across a whole forge with `--forge`. Substring by default, `--exact` for the precise name, `--json` for machines. The classic `symbol` alias comes back with it.
+
+  Callers and call paths still need a real parser, so the output says so and points at codegraph rather than pretending. `burn bronze` and `burn pewter` stay retired - those were genuinely graphify-shaped.
+
 ### Fixed
 
 - **0.15.0 left a dead graphify hook behind, and `doctor` said the machine was clean.** The upgrade delegated hook removal to `graphify claude uninstall`, but that command is project-scoped: it looks for a `CLAUDE.md` in the current directory and never touches `~/.claude/settings.json`. The user-scope `PreToolUse` hook on `Glob|Grep` therefore survived both `init` and the uninstaller, and kept firing against a `graphify-out/graph.json` whose generator no longer exists. `graphify-residue` reported `none` throughout, because it checked the binary, the `~/CLAUDE.md` stamp, and stale `graphify-out/` directories - but never the hooks.
