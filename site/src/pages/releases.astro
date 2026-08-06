@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.15.0',
+    date: '2026-08-06',
+    headline: 'codegraph owns the inside of a repo; forge owns what happens between them',
+    summary: "burn bronze, burn iron, burn pewter and the graphify dependency are gone. Within-repo code-graph work belongs to codegraph, which is local, MIT-licensed and does it better - metalmind installs alongside it rather than wrapping it. Forge, the one part that genuinely depended on graphify, now extracts symbols from your source during the walk that already produced route edges, so name-match and route-match edges both survive with no external tool and no indexing step. Querying moves to metalmind forge query. The retired commands print the codegraph equivalent instead of failing as unknown, config migrates itself, and doctor names any graphify left on your machine.",
+    tag_kind: 'changed',
+  },
+  {
     tag: '0.14.0',
     date: '2026-08-06',
     headline: 'doctor surfaces the Intent skills sitting unused in your dependencies',

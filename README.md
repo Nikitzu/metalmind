@@ -16,7 +16,7 @@ Seven modules. Each closes a gap Claude Code itself doesn't fill. All share stat
 | Module | Surface | What it owns |
 |---|---|---|
 | **Memory** | `tap copper` / `store copper` / `scribe` | Recall + save + vault CRUD. The headline; the rest of the library compounds back into it. |
-| **Code intelligence** | `forge` / `burn bronze\|iron\|steel` | Cross-repo graph (HTTP-route edges with provenance), symbol-aware navigation, coordinated rename through Serena's LSP. |
+| **Code intelligence** | `forge` / `burn steel` | Cross-repo graph (HTTP-route and symbol-name edges with provenance), coordinated rename through Serena's LSP. Within a single repo, use [codegraph](https://github.com/colbymchenry/codegraph). |
 | **Vault sync** | `duralumin` / `sync` | Commit and push the vault in one command, refusing change sets that look like note loss. |
 | **Daily workflow** | `atium` / `gold` / `routine install eod` | Daily-note action items with `--from` carry-forward, one-shot archive, launchd-backed Mon-Fri EOD carry-and-archive. |
 | **Deliberation** | `synod` | 7-persona deliberative council for the questions that affect the next 6 months - spawned as parallel subagents, synthesised into a structured verdict. |
@@ -39,7 +39,7 @@ This bar refuses, by construction, anything that would make metalmind a chat ass
 metalmind pays off when your knowledge lives across **more than one repo**. A single-repo user gets a lot from Claude Code's native `/memory` - text in `CLAUDE.md`, free, no moving parts. A multi-repo engineer - same vault across every project, decisions that outlive any single codebase, code graphs that cross service boundaries - is who metalmind is built for.
 
 - **One vault, every project.** `project:` frontmatter plus a MOC per project. A decision written in repo A surfaces when you `tap copper` in repo B if it's topically relevant. Native `CLAUDE.md` is scoped per-project; learnings don't cross-pollinate.
-- **Cross-repo code graph via forge.** `metalmind burn bronze "<q>" --forge <group>` queries every repo in a group. HTTP-route edges connect a caller in one service to a handler in another - Claude native has no concept of "the other service's code." More on the [forge page](https://metalmind.mzyx.dev/forge).
+- **Cross-repo code graph via forge.** `metalmind forge` builds one graph across every repo in a group. HTTP-route edges connect a caller in one service to a handler in another - Claude native has no concept of "the other service's code." More on the [forge page](https://metalmind.mzyx.dev/forge).
 - **Knowledge that compounds.** Each new project starts with every learning you've documented elsewhere. `Learnings/` is intentionally flat - "CLIs should never paste weird package-manager invocations" applies to every repo. With native memory you'd copy-paste the insight into every project's `CLAUDE.md` separately.
 - **Decisions that outlive the codebase.** Repos get archived, rewritten, replaced. The vault doesn't - plain markdown in your own directory, searchable forever.
 
@@ -74,11 +74,13 @@ Temporal supersedes keeps the semantic layer honest (old truths re-rank below th
 
 ### Code intelligence
 
-- **Sight across repos, not just one.** `metalmind burn bronze "<query>"` (alias: `graph`) queries a code graph of every repo in your *forge*. HTTP-route-match edges connect caller → handler *across services* in three tiers: OpenAPI specs on the metalmind shelf (never inside your repos), Java RestTemplate/WebClient/Feign callers, and URL literals as an opt-in fallback. Every inferred edge carries `INFERRED_NAME` / `INFERRED_ROUTE` / `INFERRED_URL_LITERAL` provenance so Claude can trust-grade what it reads.
+- **Sight across repos, not just one.** `metalmind forge` builds one graph over every repo in a group, reading your source directly - no indexing step and no external tool. HTTP-route-match edges connect caller → handler *across services* in three tiers: OpenAPI specs on the metalmind shelf (never inside your repos), Java RestTemplate/WebClient/Feign callers, and URL literals as an opt-in fallback. Symbol-name edges connect the same type or function where it surfaces in two different repos. Every inferred edge carries `INFERRED_NAME` / `INFERRED_ROUTE` / `INFERRED_URL_LITERAL` provenance so Claude can trust-grade what it reads.
 
-- **Symbol-aware navigation and rename.** `metalmind burn iron <symbol>` (alias: `symbol`) returns a symbol's neighbors - who calls it, what it calls, its module. `metalmind burn steel <old> <new>` (alias: `rename`) drives a coordinated rename through Serena's LSP backend.
+- **Within a single repo, use codegraph.** [codegraph](https://github.com/colbymchenry/codegraph) is a local, MIT-licensed code-graph tool with its own MCP server, and it does same-repo work - callers, callees, blast radius, affected tests - better than metalmind ever did. metalmind deliberately does not wrap it: install it alongside and let it own the inside of a repo while forge owns what happens between repos. Retired in v0.15.0: `burn bronze`, `burn iron`, `burn pewter` and their `graph` / `symbol` / `reindex` aliases.
 
-- **Team-debug, dispatched.** `metalmind burn zinc "<bug>"` (alias: `debug`) hands a bug to the `/team-debug` skill with the code graph already primed - the team agents start with context, not cold.
+- **Coordinated rename.** `metalmind burn steel <old> <new>` (alias: `rename`) drives a rename through Serena's LSP backend.
+
+- **Team-debug, dispatched.** `metalmind burn zinc "<bug>"` (alias: `debug`) hands a bug to the `/team-debug` skill.
 
 ### Daily workflow
 
@@ -180,7 +182,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.14.0`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.15.0`.
 
 **From source (for hacking on metalmind itself):**
 
@@ -226,11 +228,8 @@ Every themed (Scadrial) verb has a classic alias. Both always resolve - theming 
 | `metalmind pulse` | `metalmind doctor` | Verify install state |
 | `metalmind store copper <insight>` | `metalmind save <insight>` | Deposit a decision into the vault |
 | `metalmind tap copper "<query>"` | `metalmind recall "<query>"` | Recall - add `--deep` or `--expand` for more depth |
-| `metalmind burn bronze "<query>"` | `metalmind graph "<query>"` | Code-graph query |
-| `metalmind burn iron <symbol>` | `metalmind symbol <symbol>` | Pull a symbol + neighbors |
 | `metalmind burn steel <old> <new>` | `metalmind rename <old> <new>` | Coordinated rename |
 | `metalmind burn zinc "<bug>"` | `metalmind debug "<bug>"` | Dispatch `/team-debug` |
-| `metalmind burn pewter` | `metalmind reindex` | Rebuild code graph |
 | `metalmind forge <…>` | `metalmind group <…>` | Cross-repo graph groups; `forge capture-spec` seeds OpenAPI shelf |
 | `metalmind scribe <verb>` | `metalmind note <verb>` | Vault CRUD: `create \| update \| patch \| supersede \| delete \| archive \| rename \| list \| show` |
 | `metalmind atium new \| add` | `metalmind daily new \| add` | Future daily notes - `--date today\|tomorrow\|next-workday\|YYYY-MM-DD`, `--from` carries unchecked items |
@@ -254,7 +253,7 @@ One verb, one job. Each engine is swappable:
 | Semantic recall | [sqlite-vec](https://github.com/asg017/sqlite-vec) + [fastembed](https://github.com/qdrant/fastembed), `BAAI/bge-small-en-v1.5`, all in-process |
 | Vault | Plain markdown at `~/Knowledge/` ([Obsidian](https://obsidian.md)-compatible, not required) |
 | Symbol navigation + rename | [Serena](https://github.com/oraios/serena) (LSP-backed) |
-| Code graph + cross-repo edges | [graphify](https://pypi.org/project/graphifyy/) |
+| Within-repo code graph (optional companion) | [codegraph](https://github.com/colbymchenry/codegraph) |
 | Incremental indexing | [watchfiles](https://github.com/samuelcolvin/watchfiles) + launchd / systemd |
 | Forge (cross-repo merge) | metalmind itself - HTTP-route match + name-match edges with provenance |
 
@@ -266,7 +265,7 @@ Your notes, embeddings, and code graphs never leave your machine. The only netwo
 metalmind uninstall
 ```
 
-Unloads the watcher service, strips the metalmind managed blocks from `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md` (user content outside the sentinel markers is preserved), removes the SessionStart hook + its entry in `~/.claude/settings.json` (other hooks stay), strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, restores your prior output-style, and removes shell aliases. Four interactive prompts ask whether to also `uv tool uninstall` Serena, graphify, `metalmind-vault-rag`, and whether to remove the embedding index (keep it if you don't want to re-embed the vault). On a `--legacy` install it also stops and removes the Qdrant + Ollama Docker containers and offers to remove their volumes.
+Unloads the watcher service, strips the metalmind managed blocks from `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md` (user content outside the sentinel markers is preserved), removes the SessionStart hook + its entry in `~/.claude/settings.json` (other hooks stay), strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, restores your prior output-style, and removes shell aliases. Interactive prompts ask whether to also `uv tool uninstall` Serena and `metalmind-vault-rag`, and whether to remove the embedding index (keep it if you don't want to re-embed the vault). On a `--legacy` install it also stops and removes the Qdrant + Ollama Docker containers and offers to remove their volumes.
 
 **Never touches your notes.**
 

@@ -6,6 +6,30 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.15.0 - 2026-08-06
+
+### Removed
+
+- **`burn bronze`, `burn iron`, `burn pewter` and the graphify dependency.** Within-repo code-graph work now belongs to [codegraph](https://github.com/colbymchenry/codegraph), which is local, MIT-licensed, ships its own MCP server, and does the same job better - callers, callees, blast radius, affected tests. metalmind deliberately does not wrap or subprocess it: the two install side by side, so codegraph owns the inside of a repo and forge owns what happens between repos.
+
+  The retired commands, and their `graph` / `symbol` / `reindex` classic aliases, still exist as tombstones: each prints the codegraph equivalent and exits non-zero rather than failing as an unknown command.
+
+### Changed
+
+- **Forge builds its graph from your source instead of graphify's output.** Cross-repo intelligence was the one thing that genuinely depended on graphify, since name-match edges were derived from its `graphify-out/graph.json` nodes. Forge now extracts exported symbols itself while walking repos, the same walk that already produced route edges, so both `INFERRED_NAME` and `INFERRED_ROUTE` edges survive with no external tool and no indexing step. A full scan of a real repo takes tens of milliseconds and is cached per repo.
+
+  Cache staleness now keys on `.git/HEAD`, `.git/index`, and the package manifests rather than a generated artifact's mtime. Committing or staging invalidates the cache; previously a stale graph could serve stale edges until someone re-ran the indexer by hand.
+
+### Added
+
+- **`metalmind forge query <forge> "<query>"`.** Querying the cross-repo graph previously lived on `burn bronze --forge`, which the removal above retired. It is now a first-class forge subcommand with `--json` and `--include-literals`.
+
+- **`doctor --deep` reports leftover graphify.** Upgrading cannot uninstall a tool on your behalf, so the new `graphify-residue` check names what survived - the binary, the `## graphify` stamp in `~/CLAUDE.md`, and any `graphify-out/` directories in registered forge repos - and prints the exact commands to clear them. Re-running `metalmind init` clears all of it automatically.
+
+- **Config migrates itself from v1 to v2.** `graphifyCmd` is dropped, `graphify` is removed from the MCP registration list, and the migrated config is written back to disk on first read, so no stale keys survive the upgrade.
+
+---
+
 ## 0.14.0 - 2026-08-06
 
 ### Added
