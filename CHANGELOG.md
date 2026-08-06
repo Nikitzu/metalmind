@@ -10,6 +10,16 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ### Fixed
 
+- **0.15.0 left a dead graphify hook behind, and `doctor` said the machine was clean.** The upgrade delegated hook removal to `graphify claude uninstall`, but that command is project-scoped: it looks for a `CLAUDE.md` in the current directory and never touches `~/.claude/settings.json`. The user-scope `PreToolUse` hook on `Glob|Grep` therefore survived both `init` and the uninstaller, and kept firing against a `graphify-out/graph.json` whose generator no longer exists. `graphify-residue` reported `none` throughout, because it checked the binary, the `~/CLAUDE.md` stamp, and stale `graphify-out/` directories - but never the hooks.
+
+  metalmind now removes that hook itself rather than trusting another tool to do it, and the residue check inspects `~/.claude/settings.json`. Only the graphify entry is removed; unrelated hooks in the same event are preserved.
+
+- **The repair runs on upgrade, not on `init`.** Anyone who installed 0.15.0 gets a clean machine from the next ordinary metalmind command - no wizard, no manual steps. Repairs are marked done once and never re-run, and a repair that throws is left unmarked so it retries rather than silently skipping.
+
+- **`init` no longer discards config it does not own.** It rebuilt the config from scratch on every run, so re-running it - which the 0.15.0 upgrade notes told people to do - silently dropped every registered forge group and reset `verbose`, `embeddings`, and `recall`. Those values are now carried over, and the kept forge groups are reported.
+
+- **`init` no longer replaces your edits to `~/.claude/rules/` without a trace.** Template files were copied over whatever was there. Files whose content diverges from what metalmind is about to write are now copied to a timestamped directory under `~/.claude/metalmind-backups/` first, and the wizard names each one.
+
 - **A human-written `supersedes:` no longer fails `doctor` forever.** The integrity check treated every value as a note pointer, so a note whose frontmatter said `supersedes: v1 (Gateway+Relay), v2 (bookings share_sessions)` reported an unresolvable pointer with no way to say "this line is prose, not a link" - permanently red, on every machine the vault synced to.
 
   Values are now classified by shape first: anything containing whitespace, commas, or brackets was never a stem, so it is surfaced as a notice with the fix rather than counted as a broken link. Genuinely stem-shaped pointers that do not resolve still fail, because that is the signal the check exists for, and a real broken pointer still takes precedence in the report over prose.
