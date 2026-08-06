@@ -6,10 +6,9 @@ import type { Config } from '../config.js';
 
 function baseConfig(): Config {
   return {
-    version: 1,
+    version: 2,
     flavor: 'scadrial',
     vaultPath: '/v',
-    graphifyCmd: 'graphify',
     outputStyle: { installed: 'marsh', priorValue: null },
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast', httpEndpoint: null },

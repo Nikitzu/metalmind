@@ -20,6 +20,7 @@ import {
 } from '../install/codex.js';
 import { METALMIND_CURSOR_HOOK_FILENAME } from '../install/cursor/hooks.js';
 import { DEFAULT_CURSOR_DIR } from '../install/cursor.js';
+import { isGraphifyInstalled } from '../install/graphify-legacy.js';
 import { detectPrereqs } from '../install/prereqs.js';
 import { OLLAMA_CONTAINER } from '../install/stack.js';
 import { scanForgeIntentSkills } from '../intent/intent.js';
@@ -546,6 +547,45 @@ export async function checkCursorInstall(opts: { cursorDir?: string } = {}): Pro
   return out;
 }
 
+export async function checkGraphifyResidue(groups: ForgeGroups): Promise<DeepCheck> {
+  const leftovers: string[] = [];
+
+  if (await isGraphifyInstalled()) leftovers.push('graphify still installed');
+
+  const homeStamp = join(homedir(), 'CLAUDE.md');
+  const homeText = await readFile(homeStamp, 'utf8').catch(() => '');
+  if (homeText.includes('## graphify')) leftovers.push('graphify stamp in ~/CLAUDE.md');
+
+  const repos = new Set(Object.values(groups).flatMap((g) => g.repos ?? []));
+  const staleGraphs = [...repos].filter((repo) =>
+    existsSync(join(repo, 'graphify-out', 'graph.json')),
+  );
+  if (staleGraphs.length > 0) {
+    leftovers.push(
+      `${staleGraphs.length} repo${staleGraphs.length === 1 ? '' : 's'} with a stale graphify-out/`,
+    );
+  }
+
+  if (leftovers.length === 0) {
+    return { name: 'graphify-residue', ok: true, detail: 'none' };
+  }
+
+  const steps = ['run `metalmind init` to clear it automatically, or by hand:'];
+  if (leftovers[0]?.startsWith('graphify still')) {
+    steps.push('`graphify claude uninstall && uv tool uninstall graphifyy`');
+  }
+  if (staleGraphs.length > 0) {
+    steps.push(`\`rm -rf ${staleGraphs.map((r) => join(r, 'graphify-out')).join(' ')}\``);
+  }
+
+  return {
+    name: 'graphify-residue',
+    ok: false,
+    detail: leftovers.join('; '),
+    remediation: steps.join(' '),
+  };
+}
+
 export async function checkIntentSkills(groups: ForgeGroups): Promise<DeepCheck> {
   const repoCount = new Set(Object.values(groups).flatMap((g) => g.repos ?? [])).size;
   if (repoCount === 0) {
@@ -737,12 +777,13 @@ export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   const codexChecks = installCodex ? await checkCodexInstall({ checkMcp: true }) : [];
   const cursorChecks = installCursor ? await checkCursorInstall() : [];
 
-  const [watcher, http, supersede, codeRefs, intentSkills] = await Promise.all([
+  const [watcher, http, supersede, codeRefs, intentSkills, graphifyResidue] = await Promise.all([
     checkWatcherService(),
     checkRecallHttp(),
     checkSupersedeIntegrity(config.vaultPath),
     checkCodeRefsIntegrity(config.vaultPath, config.forge.groups),
     checkIntentSkills(config.forge.groups),
+    checkGraphifyResidue(config.forge.groups),
   ]);
 
   if (!onLegacy) {
@@ -752,6 +793,7 @@ export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
       supersede,
       codeRefs,
       intentSkills,
+      graphifyResidue,
       ...stamps,
       ...codexChecks,
       ...cursorChecks,

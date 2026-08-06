@@ -1,10 +1,10 @@
 import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/prompts';
-import { type Config, type MetalmindHost, writeConfig } from '../config.js';
+import { type Config, CURRENT_CONFIG_VERSION, type MetalmindHost, writeConfig } from '../config.js';
 import { describeAliasSourcing, installAliases } from './aliases.js';
 import { installCodex } from './codex.js';
 import { installCursor } from './cursor.js';
 import { setupVaultGit } from './git.js';
-import { installGraphify } from './graphify.js';
+import { removeGraphifyResidue } from './graphify-legacy.js';
 import { promptHosts } from './host-prompt.js';
 import { registerMcpServers } from './mcp.js';
 import { type FlavorChoice, installOutputStyle } from './output-style.js';
@@ -32,7 +32,6 @@ import { installWatcher } from './watcher.js';
 export interface RunWizardOptions {
   vaultPath?: string;
   serena?: boolean;
-  graphify?: boolean;
   enableTeams?: boolean;
   flavor?: 'scadrial' | 'classic';
   skipDocker?: boolean;
@@ -132,18 +131,6 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     serena = answer;
   }
 
-  let graphify: boolean;
-  if (opts.graphify !== undefined) {
-    graphify = opts.graphify;
-  } else {
-    const answer = await confirm({
-      message: 'Install graphify (code graph + cross-repo intelligence)?',
-      initialValue: true,
-    });
-    checkCancelled(answer, 'graphify prompt');
-    graphify = answer;
-  }
-
   let flavor: 'scadrial' | 'classic';
   if (opts.flavor !== undefined) {
     flavor = opts.flavor;
@@ -152,8 +139,8 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       message: 'Theme - affects command spelling and help text',
       initialValue: 'scadrial',
       options: [
-        { value: 'scadrial', label: 'Scadrial - Mistborn Era 1 verbs (burn bronze, tap copper)' },
-        { value: 'classic', label: 'Classic - neutral verbs (graph, recall)' },
+        { value: 'scadrial', label: 'Scadrial - Mistborn Era 1 verbs (tap copper, burn steel)' },
+        { value: 'classic', label: 'Classic - neutral verbs (recall, rename)' },
       ],
     });
     checkCancelled(answer, 'theme prompt');
@@ -271,16 +258,12 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     if (result.wroteConfig) log.info(`  wrote ${result.configPath}`);
   }
 
-  let graphifyHookWired = false;
-  if (graphify) {
-    log.step('Installing graphify');
-    const result = await installGraphify();
-    if (result.alreadyInstalled) log.info('  graphify already on PATH - skipped install');
-    if (result.installed) log.success('  uv tool install graphifyy complete');
-    if (result.claudeWired)
-      log.info('  graphify claude install wired PreToolUse hook (no $HOME stamp)');
-    if (result.legacyHomeStampRemoved) log.info('  cleaned legacy graphify stamp from ~/CLAUDE.md');
-    graphifyHookWired = result.claudeWired;
+  const graphifyResidue = await removeGraphifyResidue();
+  if (graphifyResidue.removedAnything) {
+    log.step('Clearing retired graphify integration');
+    if (graphifyResidue.claudeUnwired) log.info('  removed the graphify PreToolUse hook');
+    if (graphifyResidue.homeStampRemoved) log.info('  cleaned the graphify stamp from ~/CLAUDE.md');
+    if (graphifyResidue.uninstalled) log.info('  uv tool uninstall graphifyy complete');
   }
 
   log.step('Installing vault-rag (MCP server + watcher + indexer + doctor)');
@@ -483,19 +466,18 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   else log.success(`  ${aliases.aliasesPath}; ${describeAliasSourcing(aliases)}`);
 
   const config: Config = {
-    version: 1,
+    version: CURRENT_CONFIG_VERSION,
     flavor,
     vaultPath: vault.vaultPath,
-    graphifyCmd: 'graphify',
     outputStyle: { installed: stampedOutputStyle, priorValue: stylePriorValue },
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast', httpEndpoint: null },
     verbose: false,
     mcp: {
-      registered: [...(serena ? ['serena'] : []), ...(graphify ? ['graphify'] : [])],
+      registered: [...(serena ? ['serena'] : [])],
     },
     memoryRouting,
-    hooks: { claudeCode: graphifyHookWired },
+    hooks: { claudeCode: false },
     forge: { groups: {} },
     skills: { eodHook, notifications },
     hosts:

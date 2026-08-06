@@ -155,10 +155,9 @@ describe('doctor deep checks', () => {
       await mkdir(join(tmp, '.claude'), { recursive: true });
       await mkdir(join(tmp, 'vault'), { recursive: true });
       config = {
-        version: 1,
+        version: 2,
         flavor: 'scadrial',
         vaultPath: join(tmp, 'vault'),
-        graphifyCmd: 'graphify',
         outputStyle: { installed: null, priorValue: null },
         embeddings: { provider: 'local', baseURL: null },
         recall: { defaultTier: 'fast', httpEndpoint: null },
@@ -295,7 +294,45 @@ describe('doctor deep checks', () => {
       expect(names).toContain('supersede-integrity');
       expect(names).toContain('code-refs-integrity');
       expect(names).toContain('intent-skills');
+      expect(names).toContain('graphify-residue');
       await rm(vault, { recursive: true, force: true });
+    });
+  });
+
+  describe('checkGraphifyResidue', () => {
+    beforeEach(() => {
+      runCommand.mockReset();
+    });
+
+    it('passes when graphify is gone and no repo holds a stale graph', async () => {
+      runCommand.mockResolvedValue({ ok: false, stdout: '', stderr: 'not found', exitCode: 127 });
+      const { checkGraphifyResidue } = await import('./doctor.js');
+      const res = await checkGraphifyResidue({});
+      expect(res.ok).toBe(true);
+      expect(res.detail).toBe('none');
+    });
+
+    it('flags a graphify install that survived the upgrade', async () => {
+      runCommand.mockResolvedValue(ok('graphify 0.9.2'));
+      const { checkGraphifyResidue } = await import('./doctor.js');
+      const res = await checkGraphifyResidue({});
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain('graphify still installed');
+      expect(res.remediation).toContain('uv tool uninstall graphifyy');
+    });
+
+    it('flags a stale graphify-out directory in a registered forge repo', async () => {
+      runCommand.mockResolvedValue({ ok: false, stdout: '', stderr: '', exitCode: 127 });
+      const repo = await mkdtemp(join(tmpdir(), 'mm-graphify-residue-'));
+      await mkdir(join(repo, 'graphify-out'), { recursive: true });
+      await writeFile(join(repo, 'graphify-out', 'graph.json'), '{}', 'utf8');
+
+      const { checkGraphifyResidue } = await import('./doctor.js');
+      const res = await checkGraphifyResidue({ g: { repos: [repo] } });
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain('stale graphify-out');
+      expect(res.remediation).toContain(join(repo, 'graphify-out'));
+      await rm(repo, { recursive: true, force: true });
     });
   });
 

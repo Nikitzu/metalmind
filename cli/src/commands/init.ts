@@ -8,7 +8,6 @@ export interface InitCliOptions {
   flavor?: string;
   serena?: boolean;
   noSerena?: boolean;
-  graphify?: boolean;
   noGraphify?: boolean;
   teams?: boolean;
   noTeams?: boolean;
@@ -90,8 +89,6 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
 
     const serena = resolveBool(cliOpts.serena, cliOpts.noSerena);
     if (serena !== undefined) wizardOpts.serena = serena;
-    const graphify = resolveBool(cliOpts.graphify, cliOpts.noGraphify);
-    if (graphify !== undefined) wizardOpts.graphify = graphify;
     const teams = resolveBool(cliOpts.teams, cliOpts.noTeams);
     if (teams !== undefined) wizardOpts.enableTeams = teams;
     const eodHook = resolveBool(cliOpts.eodHook, cliOpts.noEodHook);
@@ -123,7 +120,6 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
         wizardOpts.vaultPath = `${process.env.HOME}/Knowledge`;
       }
       wizardOpts.serena ??= true;
-      wizardOpts.graphify ??= true;
       wizardOpts.flavor ??= 'scadrial';
       wizardOpts.memoryRouting ??= 'vault-only';
       wizardOpts.enableTeams ??= true;

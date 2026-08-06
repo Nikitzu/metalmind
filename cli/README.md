@@ -18,7 +18,6 @@ cli/
 │   │   ├── prereqs.ts         Platform + tool detection
 │   │   ├── vault.ts           Vault scaffold
 │   │   ├── serena.ts          Serena install via uv tool
-│   │   ├── graphify.ts        graphify install via uv tool
 │   │   ├── vault-rag.ts       metalmind-vault-rag install via uv tool
 │   │   ├── stack.ts           Docker compose up + model pull
 │   │   ├── watcher.ts         Platform dispatcher (launchd | systemd)
@@ -82,7 +81,7 @@ Each installer has a mirror `*.test.ts` next to it - add tests alongside the cod
 | Python | `pnpm test:python` | packages/vault-rag: imports, search helpers, HTTP endpoint | ~4s |
 | Smoke | `pnpm test:smoke` | Scripted end-to-end: init --yes → stamp → save → uninstall | ~10s |
 
-Smoke test uses a temp `$HOME`, skips Docker/Serena/graphify, and asserts every managed file ends up in the right place. It's the "would a fresh-machine install work?" question answered in 20 assertions.
+Smoke test uses a temp `$HOME`, skips Docker and Serena, and asserts every managed file ends up in the right place. It's the "would a fresh-machine install work?" question answered in 20 assertions.
 
 ## Adding a new install step
 

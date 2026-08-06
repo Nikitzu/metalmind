@@ -24,7 +24,6 @@ function parseHostFlag(value: string | undefined): MetalmindHost[] | undefined {
   }
 }
 
-import { burn } from './commands/burn.js';
 import { doctor } from './commands/doctor.js';
 import { flareBanner, flareDialog, flareSticky } from './commands/flare.js';
 import {
@@ -33,6 +32,7 @@ import {
   forgeCreate,
   forgeDelete,
   forgeList,
+  forgeQuery,
   forgeRemove,
   forgeSpecList,
   forgeSpecRemove,
@@ -40,13 +40,8 @@ import {
 import { ingestAutoMemoryCmd } from './commands/ingest.js';
 import { init } from './commands/init.js';
 import { releaseCheck } from './commands/release-check.js';
-import {
-  aluminumWipe,
-  burnZinc,
-  pewterReindex,
-  renameSymbol,
-  toggleVerbose,
-} from './commands/remaining-burns.js';
+import { aluminumWipe, burnZinc, renameSymbol, toggleVerbose } from './commands/remaining-burns.js';
+import { retired } from './commands/retired.js';
 import { routineInstallEodCmd, routineRemoveEodCmd } from './commands/routine.js';
 import {
   scribeArchiveCmd,
@@ -83,8 +78,6 @@ program
   .option('--flavor <flavor>', '"scadrial" or "classic"')
   .option('--serena', 'Install Serena')
   .option('--no-serena', 'Skip Serena install')
-  .option('--graphify', 'Install graphify')
-  .option('--no-graphify', 'Skip graphify install')
   .option('--teams', 'Enable agent teams')
   .option('--no-teams', 'Disable agent teams')
   .option('--memory-routing <mode>', '"vault-only" or "both"')
@@ -148,7 +141,7 @@ program
   .description('Reversible teardown')
   .option(
     '-y, --yes',
-    'Non-interactive: accept defaults (keeps volumes, uninstalls vault-rag, leaves Serena/graphify)',
+    'Non-interactive: accept defaults (keeps volumes, uninstalls vault-rag, leaves Serena)',
   )
   .option(
     '--purge',
@@ -266,63 +259,27 @@ attachTapFlags(
 
 const burnCmd = program
   .command('burn')
-  .description('Allomancy - burn a metal, take an action. bronze/iron live here.');
+  .description('Allomancy - burn a metal, take an action. steel/zinc/tin/brass live here.');
 
 burnCmd
-  .command('bronze <query>')
-  .description('Burn Bronze (Seeker) - query the code graph for structure / concepts')
-  .option('--yes', 'Skip the index prompt; assume yes if no graph exists')
-  .option('--forge <name>', 'Query across all repos in the named forge')
-  .option(
-    '--include-literals',
-    'Also match cross-repo URL string literals (Tier 3, lower confidence)',
-  )
-  .action((query: string, cmdOpts: { yes?: boolean; forge?: string; includeLiterals?: boolean }) =>
-    burn({
-      metal: 'bronze',
-      input: query,
-      assumeYes: cmdOpts.yes,
-      forge: cmdOpts.forge,
-      includeLiterals: cmdOpts.includeLiterals,
-    }),
-  );
+  .command('bronze [query]')
+  .description('Removed - use codegraph for within-repo graph queries')
+  .action(() => retired('burn bronze'));
 
 burnCmd
-  .command('iron <symbol>')
-  .description('Burn Iron - pull a symbol and its neighbors out of the graph')
-  .option('--yes', 'Skip the index prompt; assume yes if no graph exists')
-  .option('--forge <name>', 'Query across all repos in the named forge')
-  .action((symbol: string, cmdOpts: { yes?: boolean; forge?: string }) =>
-    burn({ metal: 'iron', input: symbol, assumeYes: cmdOpts.yes, forge: cmdOpts.forge }),
-  );
+  .command('iron [symbol]')
+  .description('Removed - use codegraph for within-repo symbol lookup')
+  .action(() => retired('burn iron'));
 
 program
-  .command('graph <query>')
-  .description('Classic alias: query the code graph')
-  .option('--yes', 'Skip the index prompt')
-  .option('--group <name>', 'Query across all repos in the named group')
-  .option(
-    '--include-literals',
-    'Also match cross-repo URL string literals (Tier 3, lower confidence)',
-  )
-  .action((query: string, cmdOpts: { yes?: boolean; group?: string; includeLiterals?: boolean }) =>
-    burn({
-      metal: 'bronze',
-      input: query,
-      assumeYes: cmdOpts.yes,
-      forge: cmdOpts.group,
-      includeLiterals: cmdOpts.includeLiterals,
-    }),
-  );
+  .command('graph [query]')
+  .description('Removed - use codegraph for within-repo graph queries')
+  .action(() => retired('graph'));
 
 program
-  .command('symbol <symbol>')
-  .description('Classic alias: pull a symbol and its neighbors')
-  .option('--yes', 'Skip the index prompt')
-  .option('--group <name>', 'Query across all repos in the named group')
-  .action((symbol: string, cmdOpts: { yes?: boolean; group?: string }) =>
-    burn({ metal: 'iron', input: symbol, assumeYes: cmdOpts.yes, forge: cmdOpts.group }),
-  );
+  .command('symbol [symbol]')
+  .description('Removed - use codegraph for within-repo symbol lookup')
+  .action(() => retired('symbol'));
 
 function attachForgeSubcommands(parent: Command): void {
   parent.command('create <name>').description('Create a new forge').action(forgeCreate);
@@ -333,6 +290,20 @@ function attachForgeSubcommands(parent: Command): void {
     .description('Remove a repo path from the forge')
     .action(forgeRemove);
   parent.command('list').description('List all forges').action(forgeList);
+  parent
+    .command('query <name> <query>')
+    .description('Query the cross-repo graph for a concept, symbol, or route')
+    .option(
+      '--include-literals',
+      'Also match cross-repo URL string literals (Tier 3, lower confidence)',
+    )
+    .option('--json', 'Emit machine-readable JSON')
+    .action((name: string, query: string, cmdOpts: { includeLiterals?: boolean; json?: boolean }) =>
+      forgeQuery(name, query, {
+        includeLiterals: cmdOpts.includeLiterals,
+        json: cmdOpts.json,
+      }),
+    );
   parent
     .command('capture-spec <repo> <source>')
     .description(
@@ -601,8 +572,8 @@ burnCmd
 
 burnCmd
   .command('pewter')
-  .description('Burn Pewter - force rebuild the code graph for the current repo')
-  .action(pewterReindex);
+  .description('Removed - use codegraph to index the current repo')
+  .action(() => retired('burn pewter'));
 
 burnCmd
   .command('aluminum')
@@ -662,8 +633,8 @@ program
 
 program
   .command('reindex')
-  .description('Classic alias: rebuild code graph for current repo')
-  .action(pewterReindex);
+  .description('Removed - use codegraph to index the current repo')
+  .action(() => retired('reindex'));
 
 program
   .command('stamp')

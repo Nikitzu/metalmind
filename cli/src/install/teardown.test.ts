@@ -21,10 +21,9 @@ function fail(stderr = 'fail'): CommandResult {
 
 function baseConfig(vaultPath: string): Config {
   return {
-    version: 1,
+    version: 2,
     flavor: 'scadrial',
     vaultPath,
-    graphifyCmd: 'graphify',
     outputStyle: { installed: null, priorValue: null },
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast', httpEndpoint: null },

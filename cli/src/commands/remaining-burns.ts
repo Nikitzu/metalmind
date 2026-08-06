@@ -1,5 +1,4 @@
 import { log } from '@clack/prompts';
-import { analyzeRepo, findRepoRoot } from '../backends/graphify.js';
 import { extractText, StdioMcpClient } from '../backends/mcp-client.js';
 import { type Config, readConfig, writeConfig } from '../config.js';
 import { uninstall } from './uninstall.js';
@@ -74,25 +73,6 @@ export async function toggleVerbose(state?: boolean): Promise<void> {
   cfg.verbose = next;
   await writeConfig(cfg);
   log.success(`verbose = ${next}`);
-}
-
-// Pewter - force rebuild graphify index for current repo
-export async function pewterReindex(): Promise<void> {
-  const repoRoot = findRepoRoot();
-  if (!repoRoot) {
-    log.error('Not inside a git repository.');
-    process.exitCode = 1;
-    return;
-  }
-  log.step(`Re-indexing ${repoRoot} with graphify`);
-  try {
-    await analyzeRepo(repoRoot);
-    log.success('done');
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    log.error(`burn pewter failed: ${message}`);
-    process.exitCode = 1;
-  }
 }
 
 // Aluminum - alias to uninstall

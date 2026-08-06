@@ -1,11 +1,17 @@
 import { mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { log } from '@clack/prompts';
+import {
+  crossRepoHighlights,
+  formatCrossRepoHighlight,
+  loadOrBuildMerged,
+} from '../forge/loader.js';
 import { shelfDir } from '../forge/openapi.js';
 import {
   addRepoToForge,
   createForge,
   deleteForge,
+  getForge,
   listForges,
   removeRepoFromForge,
 } from '../forge/store.js';
@@ -140,6 +146,57 @@ export async function forgeSpecRemove(slug: string): Promise<void> {
       return;
     }
     log.success(`removed ${removed} shelf file(s) for '${s}'`);
+  } catch (err) {
+    fail(err instanceof Error ? err.message : String(err));
+  }
+}
+
+export interface ForgeQueryOptions {
+  includeLiterals?: boolean;
+  json?: boolean;
+}
+
+export async function forgeQuery(
+  name: string,
+  query: string,
+  opts: ForgeQueryOptions = {},
+): Promise<void> {
+  if (!query?.trim()) {
+    fail(`Usage: metalmind forge query <forge> "<query>"`);
+    return;
+  }
+  try {
+    const group = await getForge(name);
+    if (group.repos.length === 0) {
+      fail(`forge '${name}' has no repos. Add some with \`metalmind forge add\`.`);
+      return;
+    }
+
+    const merged = await loadOrBuildMerged(name, group, {
+      includeLiterals: opts.includeLiterals,
+    });
+    const highlights = crossRepoHighlights(merged, query);
+
+    if (opts.json) {
+      process.stdout.write(
+        `${JSON.stringify({ forge: name, query, repos: merged.repos, highlights }, null, 2)}\n`,
+      );
+      return;
+    }
+
+    log.info(
+      `${merged.repos.length} repos · ${merged.nodeCount} symbols · ${merged.edgeCount} edges ` +
+        `(${merged.nameMatchEdgeCount} name-match, ${merged.routeMatchEdgeCount} route-match)`,
+    );
+
+    if (highlights.length === 0) {
+      log.info(`no cross-repo matches for "${query}"`);
+      return;
+    }
+    process.stdout.write(
+      `\n=== cross-repo matches (${highlights.length} inferred edge${highlights.length === 1 ? '' : 's'}) ===\n`,
+    );
+    for (const h of highlights) process.stdout.write(`${formatCrossRepoHighlight(h)}\n`);
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
   }

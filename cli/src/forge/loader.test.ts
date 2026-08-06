@@ -11,14 +11,13 @@ import {
 } from './loader.js';
 import type { ForgeGroup } from './store.js';
 
-async function writeGraph(
-  repo: string,
-  nodes: Array<{ id: string; label?: string }>,
-  edges: Array<{ source: string; target: string; type?: string }> = [],
-): Promise<void> {
-  const dir = join(repo, 'graphify-out');
-  await mkdir(dir, { recursive: true });
-  await writeFile(join(dir, 'graph.json'), JSON.stringify({ nodes, edges }), 'utf8');
+async function writeSymbols(repo: string, names: string[]): Promise<void> {
+  const body = names.map((n) => `export class ${n} {}`).join('\n');
+  await writeFile(join(repo, 'symbols.ts'), `${body}\n`, 'utf8');
+}
+
+async function touchManifest(repo: string, version: string): Promise<void> {
+  await writeFile(join(repo, 'package.json'), JSON.stringify({ version }), 'utf8');
 }
 
 describe('forge loader', () => {
@@ -65,62 +64,86 @@ describe('forge loader', () => {
     expect(buildNameMatchEdges(nodes)).toHaveLength(0);
   });
 
-  it('buildMergedGraph qualifies ids and unions repos', async () => {
-    await writeGraph(repoA, [{ id: 'fn', label: 'auth' }]);
-    await writeGraph(repoB, [{ id: 'fn', label: 'auth' }]);
+  it('drops a label shared by too many nodes - a naming convention, not a shared concept, and quadratic to pair', () => {
+    const nodes = Array.from({ length: 60 }, (_, i) => ({
+      id: `r${i % 3}::n${i}`,
+      label: 'Repository',
+      repo: `/r${i % 3}`,
+    }));
+    expect(buildNameMatchEdges(nodes)).toHaveLength(0);
+  });
+
+  it('buildMergedGraph extracts symbols from source and unions repos', async () => {
+    await writeSymbols(repoA, ['AuthService']);
+    await writeSymbols(repoB, ['AuthService']);
 
     const group: ForgeGroup = { repos: [repoA, repoB] };
     const merged = await buildMergedGraph(group);
 
     expect(merged.nodeCount).toBe(2);
-    expect(merged.nodes.map((n) => n.id).sort()).toEqual([`${repoA}::fn`, `${repoB}::fn`].sort());
+    expect(merged.nodes.map((n) => n.label)).toEqual(['AuthService', 'AuthService']);
+    expect(merged.nodes.map((n) => n.repo).sort()).toEqual([repoA, repoB].sort());
     expect(merged.nameMatchEdgeCount).toBe(1);
     expect(merged.edges[0]?.confidence).toBe('INFERRED_NAME');
   });
 
-  it('skips repos whose graph.json is missing', async () => {
-    await writeGraph(repoA, [{ id: 'fn', label: 'auth' }]);
+  it('skips repos with no extractable symbols', async () => {
+    await writeSymbols(repoA, ['AuthService']);
     const group: ForgeGroup = { repos: [repoA, repoB] };
     const merged = await buildMergedGraph(group);
     expect(merged.nodeCount).toBe(1);
   });
 
-  it('caches per-repo routes by graph.json mtime; skips rewalk when unchanged', async () => {
-    await writeGraph(repoA, [{ id: 'fn', label: 'x' }]);
-    // Seed some source files so extractRoutes has something to find.
-    await writeFile(
-      join(repoA, 'handlers.ts'),
-      "const r = router; r.get('/api/users', h);\n",
-      'utf8',
-    );
+  it('caches per-repo extraction by repo fingerprint; skips rewalk when unchanged', async () => {
+    await touchManifest(repoA, '1.0.0');
+    await writeSymbols(repoA, ['AuthService']);
     const group: ForgeGroup = { repos: [repoA] };
 
     const first = await buildMergedGraph(group, { cacheDir });
-    expect(first.routeMatchEdgeCount).toBe(0); // only one repo, no cross-repo routes
+    expect(first.nodeCount).toBe(1);
 
-    // Simulate a source-only change (no graph.json update). Extract-cache keys
-    // on graph.json mtime, so this write should NOT bust the route cache.
-    await writeFile(
-      join(repoA, 'handlers.ts'),
-      "const r = router; r.get('/api/diff', h);\n",
-      'utf8',
-    );
+    await writeSymbols(repoA, ['AuthService', 'BillingService']);
     const second = await buildMergedGraph(group, { cacheDir });
-    // Second call still reflects the cached routes (graph.json unchanged).
-    expect(second.routeMatchEdgeCount).toBe(first.routeMatchEdgeCount);
+    expect(second.nodeCount).toBe(1);
 
-    // Now bump graph.json - cache invalidates, fresh walk picks up new source.
     await new Promise((r) => setTimeout(r, 10));
-    await writeGraph(repoA, [
-      { id: 'fn', label: 'x' },
-      { id: 'fn2', label: 'y' },
-    ]);
+    await touchManifest(repoA, '1.0.1');
     const third = await buildMergedGraph(group, { cacheDir });
     expect(third.nodeCount).toBe(2);
   });
 
+  it('a staged git change busts the cache without touching a manifest', async () => {
+    const gitDir = join(repoA, '.git');
+    await mkdir(gitDir, { recursive: true });
+    await writeFile(join(gitDir, 'HEAD'), 'ref: refs/heads/main\n', 'utf8');
+    await writeSymbols(repoA, ['AuthService']);
+    const group: ForgeGroup = { repos: [repoA] };
+
+    const first = await loadOrBuildMerged('g', group, { cacheDir });
+    expect(first.nodeCount).toBe(1);
+    await new Promise((r) => setTimeout(r, 20));
+    await writeSymbols(repoA, ['AuthService', 'LogoutService']);
+    await writeFile(join(gitDir, 'index'), 'staged', 'utf8');
+
+    const second = await loadOrBuildMerged('g', group, { cacheDir });
+    expect(second.nodeCount).toBe(2);
+  });
+
+  it('pruneOrphanRouteCaches also sweeps the symbol cache', async () => {
+    const symbolsDir = join(cacheDir, 'symbols');
+    await mkdir(symbolsDir, { recursive: true });
+    const orphanEntry = join(symbolsDir, 'orphan.json');
+    await writeFile(
+      orphanEntry,
+      JSON.stringify({ repo: join(tmp, 'gone'), mtime: 0, symbols: [] }),
+      'utf8',
+    );
+    expect(await pruneOrphanRouteCaches(cacheDir)).toBe(1);
+    expect(existsSync(orphanEntry)).toBe(false);
+  });
+
   it('loadOrBuildMerged writes cache and reads it back', async () => {
-    await writeGraph(repoA, [{ id: 'fn', label: 'auth' }]);
+    await writeSymbols(repoA, ['AuthService']);
     const group: ForgeGroup = { repos: [repoA] };
 
     const first = await loadOrBuildMerged('g', group, { cacheDir });
@@ -133,16 +156,15 @@ describe('forge loader', () => {
     expect(second.generatedAt).toBe(first.generatedAt);
   });
 
-  it('loadOrBuildMerged rebuilds when repo graph is newer than cache', async () => {
-    await writeGraph(repoA, [{ id: 'fn', label: 'auth' }]);
+  it('loadOrBuildMerged rebuilds when the repo fingerprint is newer than the cache', async () => {
+    await touchManifest(repoA, '1.0.0');
+    await writeSymbols(repoA, ['AuthService']);
     const group: ForgeGroup = { repos: [repoA] };
 
     const first = await loadOrBuildMerged('g', group, { cacheDir });
     await new Promise((r) => setTimeout(r, 20));
-    await writeGraph(repoA, [
-      { id: 'fn', label: 'auth' },
-      { id: 'fn2', label: 'logout' },
-    ]);
+    await writeSymbols(repoA, ['AuthService', 'LogoutService']);
+    await touchManifest(repoA, '1.0.1');
     const second = await loadOrBuildMerged('g', group, { cacheDir });
 
     expect(second.nodeCount).toBe(2);
@@ -182,7 +204,7 @@ describe('forge loader', () => {
       JSON.stringify({ repo: '/no/such/repo', mtime: 0, routes: [] }),
       'utf8',
     );
-    await writeGraph(repoA, [{ id: 'fn1', label: 'handle' }]);
+    await writeSymbols(repoA, ['HandlerService']);
     const group: ForgeGroup = { repos: [repoA] };
     await buildMergedGraph(group, { cacheDir });
     expect(existsSync(join(routesDir, 'orphan.json'))).toBe(false);
@@ -199,7 +221,7 @@ describe('forge loader', () => {
     try {
       const repoBasename = repoA.split('/').pop();
       const specPath = join(shelfDir, `${repoBasename}.yaml`);
-      await writeGraph(repoA, [{ id: 'fn', label: 'handle' }]);
+      await writeSymbols(repoA, ['HandlerService']);
 
       const specV1 = `openapi: 3.0.0\npaths:\n  /users:\n    get:\n      operationId: getUsers\n`;
       await writeFile(specPath, specV1, 'utf8');
@@ -226,7 +248,7 @@ describe('forge loader', () => {
   it('loadOrBuildMerged prunes orphans even on the warm cache hit path', async () => {
     const routesDir = join(cacheDir, 'routes');
     await mkdir(routesDir, { recursive: true });
-    await writeGraph(repoA, [{ id: 'fn1', label: 'handle' }]);
+    await writeSymbols(repoA, ['HandlerService']);
     const group: ForgeGroup = { repos: [repoA] };
     // Build once to populate the merged cache.
     await loadOrBuildMerged('warm', group, { cacheDir });

@@ -5,13 +5,13 @@ import PageCTA from '../components/PageCTA.astro';
 import TermSwap from '../components/TermSwap.astro';
 
 const title = 'Forge - code intelligence · metalmind';
-const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware navigation, and coordinated rename through Serena\'s LSP backend.';
+const description = 'Cross-repo code graph with HTTP-route and symbol-name edges, built straight from your source. No indexing step, no external tool.';
 ---
 <BaseLayout title={title} description={description}>
   <PageHero
     metal="bronze"
-    eyebrow="graph"
-    eyebrowScadrial="burn bronze"
+    eyebrow="forge query"
+    eyebrowScadrial="forge query"
     title="Sight across repos, not just one."
     sub="Forge is metalmind's cross-repo code graph. HTTP-route edges connect a caller in service A to its handler in service B - across language, framework, and repo boundaries - with provenance Claude can trust-grade."
   />
@@ -26,10 +26,9 @@ const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware n
         </div>
         <div class="feat-card">
           <div class="feat-num mono accent-text">02</div>
-          <h3 class="display feat-h">Symbol-aware navigation</h3>
+          <h3 class="display feat-h">Reads your source directly</h3>
           <p>
-            <TermSwap classic="symbol" scadrial="burn iron" mono />
-            returns a symbol's neighbors - who calls it, what it calls, its module.
+            No indexing step and no external tool: forge walks each repo on demand and caches per repo, keyed on git state. Symbol-name edges connect a type or function declared in two different repos.
             <TermSwap classic="rename" scadrial="burn steel" mono />
             drives a coordinated rename through Serena's LSP backend, across every repo in the forge.
           </p>
@@ -39,7 +38,7 @@ const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware n
           <h3 class="display feat-h">Team-debug, primed</h3>
           <p>
             <TermSwap classic="debug" scadrial="burn zinc" mono />
-            hands a bug to the <span class="kbd">/team-debug</span> skill with the code graph already loaded. The team agents start with context, not cold.
+            hands a bug to the <span class="kbd">/team-debug</span> skill. For inside a single repo, install <a href="https://github.com/colbymchenry/codegraph">codegraph</a> alongside - it owns same-repo callers, callees, and blast radius.
           </p>
         </div>
       </div>
@@ -63,11 +62,11 @@ const description = 'Cross-repo code graph with HTTP-route edges, symbol-aware n
           <div><span class="meta"># add each repo to the forge group, one per call</span></div>
           <div><span class="prompt">$</span> <span class="cmd">metalmind forge add</span> <span class="arg">payments ~/repos/billing-svc</span></div>
           <div><span class="prompt">$</span> <span class="cmd">metalmind forge add</span> <span class="arg">payments ~/repos/notif-svc</span></div>
-          <div><span class="ok">✓</span> <span class="meta">2 repos · indexed in 6.2s</span></div>
+          <div><span class="ok">✓</span> <span class="meta">2 repos registered</span></div>
           <div>&nbsp;</div>
           <div><span class="meta"># query across both</span></div>
           <div>
-            <span class="prompt">$</span> <span class="cmd">metalmind <TermSwap classic="graph" scadrial="burn bronze" /></span> <span class="arg">"how does payment-failed reach the user?"</span> <span class="meta"><TermSwap classic="--group" scadrial="--forge" /> payments</span>
+            <span class="prompt">$</span> <span class="cmd">metalmind forge query</span> <span class="arg">payments "payment-failed"</span>
           </div>
           <div>&nbsp;</div>
           <div><span class="hl">→ billing-svc/src/handlers/charge.ts:142</span></div>

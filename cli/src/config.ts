@@ -18,13 +18,12 @@ const ForgeGroupSchema = z.object({
   repos: z.array(z.string()),
 });
 
-export const CURRENT_CONFIG_VERSION = 1 as const;
+export const CURRENT_CONFIG_VERSION = 2 as const;
 
 export const ConfigSchema = z.object({
   version: z.literal(CURRENT_CONFIG_VERSION),
   flavor: FlavorSchema,
   vaultPath: z.string(),
-  graphifyCmd: z.string().default('graphify'),
   outputStyle: z.object({
     installed: z.string().nullable(),
     priorValue: z.string().nullable(),
@@ -72,6 +71,20 @@ type Migration = (raw: RawConfig) => RawConfig;
 
 const MIGRATIONS: Record<number, Migration> = {
   // 0 → 1: not needed (v1 is the first versioned schema)
+  1: (raw) => {
+    const { graphifyCmd: _dropped, ...rest } = raw;
+    const mcp = rest.mcp as { registered?: unknown } | undefined;
+    const registered = Array.isArray(mcp?.registered)
+      ? mcp.registered.filter((name) => name !== 'graphify')
+      : [];
+    const hooks = rest.hooks as Record<string, unknown> | undefined;
+    return {
+      ...rest,
+      version: 2,
+      mcp: { ...(mcp ?? {}), registered },
+      hooks: { ...(hooks ?? {}), claudeCode: false },
+    };
+  },
 };
 
 function migrate(raw: RawConfig): RawConfig {
@@ -93,11 +106,27 @@ export async function readConfig(path: string = CONFIG_PATH): Promise<Config | n
   try {
     const raw = await readFile(path, 'utf8');
     const parsed = JSON.parse(raw) as RawConfig;
+    const startVersion = typeof parsed.version === 'number' ? parsed.version : 0;
     const migrated = migrate(parsed);
-    return ConfigSchema.parse(migrated);
+    const config = ConfigSchema.parse(migrated);
+    if (startVersion < CURRENT_CONFIG_VERSION) {
+      await persistConfig(config, path);
+    }
+    return config;
   } catch (err: unknown) {
     if (isNodeError(err) && err.code === 'ENOENT') return null;
     throw err;
+  }
+}
+
+async function persistConfig(config: Config, path: string): Promise<void> {
+  try {
+    await mkdir(dirname(path), { recursive: true });
+    const tmpPath = `${path}.tmp`;
+    await writeFile(tmpPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+    await rename(tmpPath, path);
+  } catch {
+    return;
   }
 }
 

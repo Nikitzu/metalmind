@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
 import { removeSentinelBlock, type SentinelRemoveAction } from '../util/sentinel.js';
 import { uninstallAliases } from './aliases.js';
-import { uninstallGraphify } from './graphify.js';
+import { removeGraphifyResidue } from './graphify-legacy.js';
 import { unregisterMcpServers } from './mcp.js';
 import { uninstallOutputStyle } from './output-style.js';
 import { uninstallSerena } from './serena.js';
@@ -124,7 +124,7 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
   }
 
   if (opts.removeGraphify) {
-    const { uninstalled } = await uninstallGraphify();
+    const { uninstalled } = await removeGraphifyResidue();
     result.graphifyUninstalled = uninstalled;
   }
 

@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, unlink, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { shelfSpecMtime } from './openapi.js';
 import { buildRouteMatchEdges, extractRoutes, type RouteEntry } from './routes.js';
 import { FORGE_CACHE_DIR, type ForgeGroup } from './store.js';
+import { extractSymbols, type SymbolEntry } from './symbols.js';
 
 export interface GraphNode {
   id: string;
@@ -24,13 +25,6 @@ export interface GraphEdge {
   [key: string]: unknown;
 }
 
-export interface GraphDocument {
-  nodes: GraphNode[];
-  edges?: GraphEdge[];
-  links?: GraphEdge[];
-  [key: string]: unknown;
-}
-
 export interface MergedForgeGraph {
   generatedAt: string;
   repos: string[];
@@ -42,29 +36,31 @@ export interface MergedForgeGraph {
   edges: GraphEdge[];
 }
 
-function repoGraphPath(repo: string): string {
-  return join(repo, 'graphify-out', 'graph.json');
-}
+const FINGERPRINT_SOURCES = [
+  ['.git', 'HEAD'],
+  ['.git', 'index'],
+  ['package.json'],
+  ['pyproject.toml'],
+  ['pom.xml'],
+];
 
-async function loadGraph(repo: string): Promise<GraphDocument | null> {
-  const path = repoGraphPath(repo);
-  if (!existsSync(path)) return null;
-  const raw = await readFile(path, 'utf8');
-  return JSON.parse(raw) as GraphDocument;
-}
-
-/** Per-repo staleness fingerprint for the forge caches. Combines the repo's
- *  `graphify-out/graph.json` mtime with the mtime of the OpenAPI spec on the
- *  shelf (if any). Editing either must invalidate downstream caches; before
- *  spec mtime was included, users who ran `forge capture-spec` to refresh a
- *  stale spec would silently get stale route edges until they bumped the
- *  graph. */
 async function repoFingerprint(repo: string): Promise<number> {
   let max = 0;
-  const graphPath = repoGraphPath(repo);
-  if (existsSync(graphPath)) {
-    const info = await stat(graphPath);
-    if (info.mtimeMs > max) max = info.mtimeMs;
+  for (const parts of FINGERPRINT_SOURCES) {
+    const path = join(repo, ...parts);
+    if (!existsSync(path)) continue;
+    try {
+      const info = await stat(path);
+      if (info.mtimeMs > max) max = info.mtimeMs;
+    } catch {}
+  }
+  if (max === 0 && existsSync(repo)) {
+    try {
+      const info = await stat(repo);
+      if (info.mtimeMs > max) max = info.mtimeMs;
+    } catch {
+      max = 0;
+    }
   }
   const specMtime = await shelfSpecMtime(repo);
   if (specMtime > max) max = specMtime;
@@ -80,18 +76,18 @@ async function latestRepoMtime(repos: string[]): Promise<number> {
   return max;
 }
 
-function qualifyNode(node: GraphNode, repo: string): GraphNode {
-  return { ...node, id: `${repo}::${node.id}`, repo };
-}
-
-function qualifyEdge(edge: GraphEdge, repo: string): GraphEdge {
+export function symbolNode(sym: SymbolEntry): GraphNode {
   return {
-    ...edge,
-    source: `${repo}::${edge.source}`,
-    target: `${repo}::${edge.target}`,
-    repo,
+    id: `${sym.repo}::${sym.file}::${sym.name}`,
+    label: sym.name,
+    type: sym.kind,
+    repo: sym.repo,
+    file: sym.file,
+    line: sym.line,
   };
 }
+
+const MAX_NAME_GROUP = 40;
 
 export function buildNameMatchEdges(nodes: GraphNode[]): GraphEdge[] {
   const byLabel = new Map<string, GraphNode[]>();
@@ -108,6 +104,7 @@ export function buildNameMatchEdges(nodes: GraphNode[]): GraphEdge[] {
     if (group.length < 2) continue;
     const distinctRepos = new Set(group.map((n) => n.repo));
     if (distinctRepos.size < 2) continue;
+    if (group.length > MAX_NAME_GROUP) continue;
     for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
         const a = group[i];
@@ -132,10 +129,45 @@ function routeCachePath(cacheDir: string, repo: string, includeLiterals: boolean
   return join(cacheDir, 'routes', `${hash}.json`);
 }
 
+function symbolCachePath(cacheDir: string, repo: string): string {
+  const hash = createHash('sha1').update(repo).digest('hex').slice(0, 16);
+  return join(cacheDir, 'symbols', `${hash}.json`);
+}
+
 interface CachedRoutes {
   repo: string;
   mtime: number;
   routes: RouteEntry[];
+}
+
+interface CachedSymbols {
+  repo: string;
+  mtime: number;
+  symbols: SymbolEntry[];
+}
+
+async function extractSymbolsCached(repo: string, cacheDir: string): Promise<SymbolEntry[]> {
+  const cachePath = symbolCachePath(cacheDir, repo);
+  const fingerprint = await repoFingerprint(repo);
+
+  if (existsSync(cachePath)) {
+    try {
+      const cached = JSON.parse(await readFile(cachePath, 'utf8')) as CachedSymbols;
+      if (cached.repo === repo && fingerprint > 0 && cached.mtime >= fingerprint) {
+        return cached.symbols;
+      }
+    } catch {
+      await rm(cachePath, { force: true });
+    }
+  }
+
+  const fresh = await extractSymbols(repo);
+  if (fingerprint > 0) {
+    await mkdir(join(cacheDir, 'symbols'), { recursive: true });
+    const payload: CachedSymbols = { repo, mtime: fingerprint, symbols: fresh };
+    await writeFile(cachePath, JSON.stringify(payload), 'utf8');
+  }
+  return fresh;
 }
 
 async function extractRoutesCached(
@@ -169,18 +201,17 @@ async function extractRoutesCached(
 /** Delete cached route files whose recorded repo path no longer exists on
  *  disk. Keeps the cache from accumulating orphans (typical cause: tmp dirs
  *  from tests that macOS sweeps). Best-effort - never throws. */
-export async function pruneOrphanRouteCaches(cacheDir: string): Promise<number> {
-  const routesDir = join(cacheDir, 'routes');
+async function pruneOrphanDir(dir: string): Promise<number> {
   let files: string[];
   try {
-    files = await readdir(routesDir);
+    files = await readdir(dir);
   } catch {
     return 0;
   }
   let pruned = 0;
   for (const name of files) {
     if (!name.endsWith('.json')) continue;
-    const abs = join(routesDir, name);
+    const abs = join(dir, name);
     try {
       const raw = await readFile(abs, 'utf8');
       const { repo } = JSON.parse(raw) as { repo?: string };
@@ -201,6 +232,12 @@ export async function pruneOrphanRouteCaches(cacheDir: string): Promise<number> 
   return pruned;
 }
 
+export async function pruneOrphanRouteCaches(cacheDir: string): Promise<number> {
+  const routes = await pruneOrphanDir(join(cacheDir, 'routes'));
+  const symbols = await pruneOrphanDir(join(cacheDir, 'symbols'));
+  return routes + symbols;
+}
+
 export async function buildMergedGraph(
   group: ForgeGroup,
   opts: { cacheDir?: string; includeLiterals?: boolean } = {},
@@ -212,14 +249,8 @@ export async function buildMergedGraph(
   const edges: GraphEdge[] = [];
 
   for (const repo of group.repos) {
-    const graph = await loadGraph(repo);
-    if (!graph) continue;
-    for (const node of graph.nodes ?? []) {
-      nodes.push(qualifyNode(node, repo));
-    }
-    const repoEdges = graph.edges ?? graph.links ?? [];
-    for (const edge of repoEdges) {
-      edges.push(qualifyEdge(edge, repo));
+    for (const sym of await extractSymbolsCached(repo, cacheDir)) {
+      nodes.push(symbolNode(sym));
     }
   }
 
