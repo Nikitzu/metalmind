@@ -88,15 +88,21 @@ export async function scribeUpdateCmd(
   opts: { body?: string; date?: string; dryRun?: boolean; code?: string },
 ): Promise<void> {
   try {
-    const body = opts.body ?? (await readStdin());
-    if (!body.trim()) throw new Error('empty body - pipe content on stdin or pass --body');
+    const code =
+      opts.code === undefined
+        ? undefined
+        : opts.code
+            .split(',')
+            .map((c) => c.trim())
+            .filter(Boolean);
+    const body = opts.body ?? (code === undefined ? await readStdin() : '');
+    if (!body.trim() && code === undefined) {
+      throw new Error('empty body - pipe content on stdin or pass --body');
+    }
     const res = await scribeUpdate(notePath, body, await ctx(), {
       date: opts.date,
       dryRun: opts.dryRun,
-      code: opts.code
-        ?.split(',')
-        .map((c) => c.trim())
-        .filter(Boolean),
+      code,
     });
     log.success(`${opts.dryRun ? 'would update' : 'updated'} ${res.path}`);
   } catch (err) {

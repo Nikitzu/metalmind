@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { frontmatterString, parseFrontmatter, splitFrontmatter } from '../scribe/frontmatter.js';
@@ -12,11 +12,16 @@ export interface IngestOptions {
   now?: () => Date;
 }
 
+export interface IngestConflict {
+  note: string;
+  source: string;
+}
+
 export interface IngestResult {
   created: string[];
   updated: string[];
   skipped: string[];
-  conflicts: string[];
+  conflicts: IngestConflict[];
 }
 
 export function tildeHome(p: string): string {
@@ -29,7 +34,10 @@ function sha1(s: string): string {
   return createHash('sha1').update(s).digest('hex');
 }
 
-export async function ingestAutoMemoryCmd(opts: { dryRun?: boolean }): Promise<void> {
+export async function ingestAutoMemoryCmd(opts: {
+  dryRun?: boolean;
+  projectsDir?: string;
+}): Promise<void> {
   const { log } = await import('@clack/prompts');
   const { readConfig } = await import('../config.js');
   const config = await readConfig();
@@ -38,7 +46,11 @@ export async function ingestAutoMemoryCmd(opts: { dryRun?: boolean }): Promise<v
     process.exitCode = 1;
     return;
   }
-  const res = await ingestAutoMemory({ vaultRoot: config.vaultPath, dryRun: opts.dryRun });
+  const res = await ingestAutoMemory({
+    vaultRoot: config.vaultPath,
+    dryRun: opts.dryRun,
+    projectsDir: opts.projectsDir,
+  });
   const verb = opts.dryRun ? 'would import' : 'imported';
   log.info(
     `${verb}: ${res.created.length} created, ${res.updated.length} updated, ` +
@@ -47,7 +59,9 @@ export async function ingestAutoMemoryCmd(opts: { dryRun?: boolean }): Promise<v
   for (const c of res.created) log.success(`  + ${c}`);
   for (const u of res.updated) log.success(`  ~ ${u}`);
   for (const x of res.conflicts)
-    log.warn(`  ! ${x} - locally edited and source changed; resolve by hand`);
+    log.warn(
+      `  ! ${x.note} - locally edited and its source changed (${x.source}); resolve by hand`,
+    );
   if (res.created.length + res.updated.length + res.skipped.length + res.conflicts.length === 0) {
     log.info('  no auto-memory files found under ~/.claude/projects/*/memory/');
   }
@@ -88,14 +102,26 @@ export async function ingestAutoMemory(opts: IngestOptions): Promise<IngestResul
 
       const projectSlug = slugify(project.replace(/^-/, ''));
       const topicSlug = slugify(file.replace(/\.md$/, ''));
-      const rel = join('Memory', `auto-${projectSlug}-${topicSlug}.md`);
+      const rel = join('Memory', `auto-${projectSlug}--${topicSlug}.md`);
       const abs = join(opts.vaultRoot, rel);
+      const legacyAbs = join(opts.vaultRoot, 'Memory', `auto-${projectSlug}-${topicSlug}.md`);
 
       let existing: string | null = null;
       try {
         existing = await readFile(abs, 'utf8');
       } catch {
         existing = null;
+      }
+      if (existing === null && legacyAbs !== abs) {
+        try {
+          const legacy = await readFile(legacyAbs, 'utf8');
+          if (!opts.dryRun) {
+            await rename(legacyAbs, abs);
+          }
+          existing = legacy;
+        } catch {
+          existing = null;
+        }
       }
 
       if (existing === null) {
@@ -132,7 +158,7 @@ export async function ingestAutoMemory(opts: IngestOptions): Promise<IngestResul
         await writeFile(abs, head + content, 'utf8');
         continue;
       }
-      result.conflicts.push(rel);
+      result.conflicts.push({ note: rel, source: sourcePath });
     }
   }
 

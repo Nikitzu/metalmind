@@ -3,9 +3,9 @@
 [![npm version](https://img.shields.io/npm/v/metalmind.svg?color=%23d4a14a&label=npm&cacheSeconds=300)](https://www.npmjs.com/package/metalmind)
 [![license](https://img.shields.io/npm/l/metalmind.svg?color=%23d4a14a&cacheSeconds=300)](LICENSE)
 
-**The missing standard library for Claude Code - memory, code intelligence, daily workflow, deliberation. Local, integrated, zero standing MCP-schema tax. Claude never meets you cold again.**
+**The missing standard library for your coding agent - memory, vault sync, code intelligence, daily workflow, deliberation. Local, integrated, zero standing MCP-schema tax. Works with Claude Code, Codex CLI, and Cursor. Your agent never meets you cold again.**
 
-Every `claude` invocation is a first meeting. Yesterday's architectural call, the reason you rejected that library, the 40-minute debug you just finished - gone by tomorrow. **Memory** is metalmind's headline. **Code intelligence** (cross-repo graphs, symbol nav, coordinated rename), **daily workflow** (action-item carry-forward, EOD routines), and **deliberation** (a 7-persona synod for hard calls) ship with it - every module integrated through one vault, one CLI, one stamped `CLAUDE.md` rule.
+Every `claude` invocation is a first meeting. Yesterday's architectural call, the reason you rejected that library, the 40-minute debug you just finished - gone by tomorrow. **Memory** is metalmind's headline. **Vault sync** (guarded git push), **code intelligence** (cross-repo graphs, symbol nav, coordinated rename), **daily workflow** (action-item carry-forward, EOD routines), and **deliberation** (a 7-persona synod for hard calls) ship with it - every module integrated through one vault, one CLI, one stamped `CLAUDE.md` rule.
 
 Website: **[metalmind.mzyx.dev](https://metalmind.mzyx.dev)**
 

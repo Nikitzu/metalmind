@@ -143,6 +143,32 @@ describe('scribe CRUD', () => {
     await rm(outside, { recursive: true, force: true });
   });
 
+  it('update --code with an empty list clears the refs', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate(
+      { kind: 'work', title: 'clearable', body: 'b', code: ['metalmind#resolveNotePath'] },
+      ctx,
+    );
+    expect(await readFile(path, 'utf8')).toContain('code: [');
+
+    await scribeUpdate(path, '', ctx, { code: [] });
+
+    const raw = await readFile(path, 'utf8');
+    const fmEnd = raw.indexOf('\n---\n', 4);
+    expect(raw.slice(0, fmEnd)).not.toContain('code:');
+  });
+
+  it('update with no body and only --code re-stamps without appending', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path } = await scribeCreate({ kind: 'work', title: 'nobody', body: 'original' }, ctx);
+
+    await scribeUpdate(path, '', ctx, { code: ['metalmind#stamp'] });
+
+    const raw = await readFile(path, 'utf8');
+    expect(raw).toContain('code: ["metalmind#stamp"]');
+    expect(raw.match(/original/g)).toHaveLength(1);
+  });
+
   it('update --code refuses a malformed ref and leaves the file untouched', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     const { path } = await scribeCreate({ kind: 'work', title: 'codeguard', body: 'b' }, ctx);

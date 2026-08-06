@@ -199,6 +199,14 @@ export function rewriteFrontmatterField(source: string, key: string, value: stri
   return `${head}\n${key}: ${value}${tail}`;
 }
 
+function removeFrontmatterField(source: string, key: string): string {
+  const { bodyStart } = parseFrontmatter(source);
+  if (bodyStart === 0) return source;
+  const head = source.slice(0, bodyStart - 5);
+  const tail = source.slice(bodyStart - 5);
+  return head.replace(new RegExp(`(^|\\n)${key}:[^\\n]*`), '') + tail;
+}
+
 function mocPathFor(vaultRoot: string, project: string): string {
   return join(vaultRoot, KIND_DIRS.moc, `${project}.md`);
 }
@@ -340,15 +348,18 @@ export async function scribeUpdate(
   if (opts.dryRun) return { path: abs };
   const raw = await readFile(abs, 'utf8');
   let bumped = rewriteFrontmatterField(raw, 'updated', isoDate(now));
-  if (opts.code && opts.code.length > 0) {
-    bumped = rewriteFrontmatterField(
-      bumped,
-      'code',
-      `[${opts.code.map((c) => JSON.stringify(c)).join(', ')}]`,
-    );
+  if (opts.code) {
+    bumped =
+      opts.code.length > 0
+        ? rewriteFrontmatterField(
+            bumped,
+            'code',
+            `[${opts.code.map((c) => JSON.stringify(c)).join(', ')}]`,
+          )
+        : removeFrontmatterField(bumped, 'code');
   }
-  const appended = `${bumped.trimEnd()}\n\n${body.trim()}\n`;
-  await writeFile(abs, appended, 'utf8');
+  const next = body.trim() ? `${bumped.trimEnd()}\n\n${body.trim()}\n` : bumped;
+  await writeFile(abs, next, 'utf8');
   return { path: abs };
 }
 

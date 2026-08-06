@@ -44,14 +44,43 @@ describe('ingestAutoMemory', () => {
   it('fresh import creates a Memory note with provenance, skipping MEMORY.md and empty files', async () => {
     const res = await run();
 
-    expect(res.created).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+    expect(res.created).toEqual(['Memory/auto-home-user-myproj--topic.md']);
     expect(res.skipped).toEqual([]);
-    const raw = await readFile(join(vault, 'Memory', 'auto-home-user-myproj-topic.md'), 'utf8');
+    const raw = await readFile(join(vault, 'Memory', 'auto-home-user-myproj--topic.md'), 'utf8');
     expect(raw).toContain('kind: memory');
     expect(raw).toContain('tags: ["auto-memory"]');
     expect(raw).toContain('source_path:');
     expect(raw).toMatch(/imported_hash: [0-9a-f]{40}/);
     expect(raw.endsWith('never route around auth\n')).toBe(true);
+  });
+
+  it('does not collide when project and topic slugs are ambiguous', async () => {
+    await mkdir(memDir('-a'), { recursive: true });
+    await writeFile(join(memDir('-a'), 'b-c.md'), 'first\n');
+    await mkdir(memDir('-a-b'), { recursive: true });
+    await writeFile(join(memDir('-a-b'), 'c.md'), 'second\n');
+
+    const res = await run();
+
+    expect(new Set(res.created).size).toBe(res.created.length);
+    expect(res.created).toContain('Memory/auto-a--b-c.md');
+    expect(res.created).toContain('Memory/auto-a-b--c.md');
+  });
+
+  it('migrates a note imported under the old single-hyphen name', async () => {
+    await run();
+    const current = join(vault, 'Memory', 'auto-home-user-myproj--topic.md');
+    const legacy = join(vault, 'Memory', 'auto-home-user-myproj-topic.md');
+    const { rename } = await import('node:fs/promises');
+    await rename(current, legacy);
+
+    const res = await run();
+
+    expect(res.created).toEqual([]);
+    expect(res.skipped).toEqual(['Memory/auto-home-user-myproj--topic.md']);
+    const { existsSync } = await import('node:fs');
+    expect(existsSync(legacy)).toBe(false);
+    expect(existsSync(current)).toBe(true);
   });
 
   it('second run skips everything unchanged', async () => {
@@ -60,7 +89,7 @@ describe('ingestAutoMemory', () => {
 
     expect(res.created).toEqual([]);
     expect(res.updated).toEqual([]);
-    expect(res.skipped).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+    expect(res.skipped).toEqual(['Memory/auto-home-user-myproj--topic.md']);
   });
 
   it('source change with unedited note overwrites body and re-hashes', async () => {
@@ -69,15 +98,15 @@ describe('ingestAutoMemory', () => {
 
     const res = await run();
 
-    expect(res.updated).toEqual(['Memory/auto-home-user-myproj-topic.md']);
-    const raw = await readFile(join(vault, 'Memory', 'auto-home-user-myproj-topic.md'), 'utf8');
+    expect(res.updated).toEqual(['Memory/auto-home-user-myproj--topic.md']);
+    const raw = await readFile(join(vault, 'Memory', 'auto-home-user-myproj--topic.md'), 'utf8');
     expect(raw).toContain('updated wisdom');
     expect(raw).not.toContain('never route around auth');
   });
 
   it('update re-stamps imported_hash so a third run is a no-op, and preserves other keys', async () => {
     await run();
-    const notePath = join(vault, 'Memory', 'auto-home-user-myproj-topic.md');
+    const notePath = join(vault, 'Memory', 'auto-home-user-myproj--topic.md');
     const withExtra = (await readFile(notePath, 'utf8')).replace(
       '\nstatus: active',
       '\nstatus: active\nproject: myproj\nsuperseded_by: some-newer-note',
@@ -86,7 +115,7 @@ describe('ingestAutoMemory', () => {
     await writeFile(join(memDir('-home-user-myproj'), 'topic.md'), 'updated wisdom\n');
 
     const second = await run();
-    expect(second.updated).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+    expect(second.updated).toEqual(['Memory/auto-home-user-myproj--topic.md']);
 
     const raw = await readFile(notePath, 'utf8');
     expect(raw).toContain('project: myproj');
@@ -95,18 +124,18 @@ describe('ingestAutoMemory', () => {
 
     const third = await run();
     expect(third.updated).toEqual([]);
-    expect(third.skipped).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+    expect(third.skipped).toEqual(['Memory/auto-home-user-myproj--topic.md']);
   });
 
   it('--dry-run on the update path writes nothing', async () => {
     await run();
-    const notePath = join(vault, 'Memory', 'auto-home-user-myproj-topic.md');
+    const notePath = join(vault, 'Memory', 'auto-home-user-myproj--topic.md');
     const before = await readFile(notePath, 'utf8');
     await writeFile(join(memDir('-home-user-myproj'), 'topic.md'), 'updated wisdom\n');
 
     const res = await run(true);
 
-    expect(res.updated).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+    expect(res.updated).toEqual(['Memory/auto-home-user-myproj--topic.md']);
     expect(await readFile(notePath, 'utf8')).toBe(before);
   });
 
@@ -116,12 +145,12 @@ describe('ingestAutoMemory', () => {
 
     const res = await run();
 
-    expect(res.created).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+    expect(res.created).toEqual(['Memory/auto-home-user-myproj--topic.md']);
   });
 
   it('source change with locally edited note conflicts and leaves the note alone', async () => {
     await run();
-    const notePath = join(vault, 'Memory', 'auto-home-user-myproj-topic.md');
+    const notePath = join(vault, 'Memory', 'auto-home-user-myproj--topic.md');
     const edited = (await readFile(notePath, 'utf8')).replace(
       'never route around auth',
       'my local edit',
@@ -131,16 +160,21 @@ describe('ingestAutoMemory', () => {
 
     const res = await run();
 
-    expect(res.conflicts).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+    expect(res.conflicts).toEqual([
+      {
+        note: 'Memory/auto-home-user-myproj--topic.md',
+        source: join(memDir('-home-user-myproj'), 'topic.md'),
+      },
+    ]);
     expect(await readFile(notePath, 'utf8')).toContain('my local edit');
   });
 
   it('--dry-run reports actions without writing', async () => {
     const res = await run(true);
 
-    expect(res.created).toEqual(['Memory/auto-home-user-myproj-topic.md']);
+    expect(res.created).toEqual(['Memory/auto-home-user-myproj--topic.md']);
     await expect(
-      readFile(join(vault, 'Memory', 'auto-home-user-myproj-topic.md'), 'utf8'),
+      readFile(join(vault, 'Memory', 'auto-home-user-myproj--topic.md'), 'utf8'),
     ).rejects.toThrow();
   });
 
