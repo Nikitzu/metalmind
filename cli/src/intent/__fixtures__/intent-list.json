@@ -1,0 +1,64 @@
+{
+  "skills": [
+    {
+      "use": "@tanstack/db#db-core",
+      "packageName": "@tanstack/db",
+      "packageRoot": "/repo/node_modules/@tanstack/db",
+      "packageVersion": "0.6.17",
+      "packageSource": "local",
+      "skillName": "db-core",
+      "description": "TanStack DB core concepts: createCollection with queryCollectionOptions, electricCollectionOptions, powerSyncCollectionOptions, rxdbCollectionOptions, trailbaseCollectionOptions, localOnlyCollectionOptions. Live queries via query builder (from, where, join, select, groupBy, orderBy, limit). Optimistic mutations with draft proxy (collection.insert, collection.update, collection.delete). createOptimisticAction, createTransaction, createPacedMutations. Entry point for all TanStack DB skills.",
+      "type": "core"
+    },
+    {
+      "use": "@tanstack/db#db-core/collection-setup",
+      "packageName": "@tanstack/db",
+      "packageRoot": "/repo/node_modules/@tanstack/db",
+      "packageVersion": "0.6.17",
+      "packageSource": "local",
+      "skillName": "db-core/collection-setup",
+      "description": "Creating typed collections with createCollection. Adapter selection: queryCollectionOptions (REST/TanStack Query), electricCollectionOptions (ElectricSQL real-time sync), powerSyncCollectionOptions (PowerSync SQLite), rxdbCollectionOptions (RxDB), trailbaseCollectionOptions (TrailBase), localOnlyCollectionOptions, localStorageCollectionOptions. CollectionConfig options: getKey, schema, sync, gcTime, autoIndex (default off), defaultIndexType, syncMode (eager/on-demand, plus progressive for Electric). StandardSchema validation with Zod/Valibot/ArkType. Collection lifecycle (idle/loading/ready/error). Adapter-specific sync patterns including Electric txid tracking, Query direct writes, and PowerSync query-driven sync with onLoad/onLoadSubset hooks.",
+      "type": "sub-skill"
+    },
+    {
+      "use": "@tanstack/db#db-core/custom-adapter",
+      "packageName": "@tanstack/db",
+      "packageRoot": "/repo/node_modules/@tanstack/db",
+      "packageVersion": "0.6.17",
+      "packageSource": "local",
+      "skillName": "db-core/custom-adapter",
+      "description": "Building custom collection adapters for new backends. SyncConfig interface: sync function receiving begin, write, commit, markReady, truncate, metadata primitives. ChangeMessage format (insert, update, delete). loadSubset for on-demand sync. LoadSubsetOptions (where, orderBy, limit, cursor). Expression parsing: parseWhereExpression, parseOrderByExpression, extractSimpleComparisons, parseLoadSubsetOptions. Collection options creator pattern. rowUpdateMode (partial vs full). Subscription lifecycle and cleanup functions. Persisted sync metadata API (metadata.row and metadata.collection) for storing per-row and per-collection adapter state.",
+      "type": "sub-skill"
+    }
+  ],
+  "packages": [
+    {
+      "name": "@tanstack/db",
+      "version": "0.6.17",
+      "source": "local",
+      "packageRoot": "/repo/node_modules/@tanstack/db",
+      "skillCount": 7
+    },
+    {
+      "name": "@tanstack/devtools-event-client",
+      "version": "0.4.4",
+      "source": "local",
+      "packageRoot": "/repo/node_modules/.pnpm/@tanstack+devtools-event-client@0.4.4/node_modules/@tanstack/devtools-event-client",
+      "skillCount": 3
+    },
+    {
+      "name": "@tanstack/router-core",
+      "version": "1.171.16",
+      "source": "local",
+      "packageRoot": "/repo/node_modules/.pnpm/@tanstack+router-core@1.171.16/node_modules/@tanstack/router-core",
+      "skillCount": 10
+    }
+  ],
+  "hiddenSourceCount": 0,
+  "hiddenSources": [],
+  "warnings": [],
+  "notices": [
+    "intent.skills is not set \u2014 all discovered skill sources are surfaced. A future version will require an explicit intent.skills allowlist; add one to opt in to specific sources."
+  ],
+  "conflicts": []
+}
