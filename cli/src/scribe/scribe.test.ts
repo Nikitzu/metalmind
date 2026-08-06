@@ -421,6 +421,23 @@ describe('scribe CRUD', () => {
     await expect(scribeSupersede(path, path, ctx)).rejects.toThrow(/itself/);
   });
 
+  it('supersede: overwrites prose in superseded_by without demanding --force', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: oldPath } = await scribeCreate({ kind: 'plan', title: 'v1', body: 'a' }, ctx);
+    const { path: newPath } = await scribeCreate({ kind: 'plan', title: 'v3', body: 'b' }, ctx);
+
+    const withProse = (await readFile(oldPath, 'utf8')).replace(
+      /^---\n/,
+      '---\nsuperseded_by: the v3 spec, see decision log\n',
+    );
+    await writeFile(oldPath, withProse, 'utf8');
+
+    await scribeSupersede(oldPath, newPath, ctx);
+    const oldRaw = await readFile(oldPath, 'utf8');
+    expect(oldRaw).toContain('superseded_by: 2026-04-21-v3');
+    expect(oldRaw).not.toContain('see decision log');
+  });
+
   it('supersede: refuses re-supersede without --force, naming the successor', async () => {
     const ctx = { vaultRoot: vault, now: fixedNow };
     const { path: a } = await scribeCreate({ kind: 'plan', title: 'a', body: 'x' }, ctx);

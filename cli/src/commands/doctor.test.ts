@@ -227,6 +227,50 @@ describe('doctor deep checks', () => {
       expect(res.ok).toBe(true);
     });
 
+    it('reports prose in supersedes without failing - a human-written value was never a pointer', async () => {
+      await writeFile(
+        join(vault, 'Plans', 'spec-v3.md'),
+        note('supersedes: v1 (Gateway+Relay), v2 (bookings share_sessions)'),
+      );
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(true);
+      expect(res.detail).toContain('prose');
+      expect(res.remediation).toContain('scribe supersede');
+    });
+
+    it('still fails a stem-shaped supersedes that does not resolve', async () => {
+      await writeFile(join(vault, 'Plans', 'spec-v3.md'), note('supersedes: spec-v2'));
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain("supersedes 'spec-v2' does not resolve");
+    });
+
+    it('reports prose in superseded_by without failing', async () => {
+      await writeFile(
+        join(vault, 'Plans', 'old.md'),
+        note('superseded_by: the newer spec, see decision log'),
+      );
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(true);
+      expect(res.detail).toContain('prose');
+    });
+
+    it('a real broken pointer still outranks prose in the report', async () => {
+      await writeFile(join(vault, 'Plans', 'prose.md'), note('supersedes: v1 (old thing)'));
+      await writeFile(join(vault, 'Plans', 'broken.md'), note('superseded_by: gone'));
+
+      const { checkSupersedeIntegrity } = await import('./doctor.js');
+      const res = await checkSupersedeIntegrity(vault);
+      expect(res.ok).toBe(false);
+      expect(res.detail).toContain("superseded_by 'gone' does not resolve");
+    });
+
     it('flags a dangling superseded_by stem', async () => {
       await writeFile(join(vault, 'Plans', 'old.md'), note('superseded_by: gone'));
 

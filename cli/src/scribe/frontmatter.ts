@@ -82,3 +82,9 @@ export async function readNoteFrontmatter(path: string): Promise<Record<string, 
   }
   return parseFrontmatter(head).fm;
 }
+
+export function looksLikeNoteStem(value: string): boolean {
+  const v = value.trim();
+  if (!v) return false;
+  return !/[\s,()[\]]/.test(v);
+}

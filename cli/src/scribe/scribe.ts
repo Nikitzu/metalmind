@@ -13,7 +13,7 @@ import {
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { parseCodeRef } from '../coderefs/coderefs.js';
 import { type DateArg, resolveDate } from './daily.js';
-import { frontmatterString, parseFrontmatter } from './frontmatter.js';
+import { frontmatterString, looksLikeNoteStem, parseFrontmatter } from './frontmatter.js';
 
 export type ScribeKind =
   | 'plan'
@@ -475,7 +475,7 @@ export async function scribeSupersede(
   const oldRaw = await readFile(oldAbs, 'utf8');
   const { fm } = parseFrontmatter(oldRaw);
   const existing = frontmatterString(fm, 'superseded_by');
-  if (existing && !opts.force) {
+  if (existing && !opts.force && looksLikeNoteStem(existing)) {
     throw new Error(
       `already superseded by ${existing} - pass --force to re-point at the new successor`,
     );

@@ -24,7 +24,11 @@ import { isGraphifyInstalled } from '../install/graphify-legacy.js';
 import { detectPrereqs } from '../install/prereqs.js';
 import { OLLAMA_CONTAINER } from '../install/stack.js';
 import { scanForgeIntentSkills } from '../intent/intent.js';
-import { frontmatterString, readNoteFrontmatter } from '../scribe/frontmatter.js';
+import {
+  frontmatterString,
+  looksLikeNoteStem,
+  readNoteFrontmatter,
+} from '../scribe/frontmatter.js';
 import { runCommand } from '../util/exec.js';
 import { detectObsidian } from '../util/obsidian.js';
 
@@ -711,15 +715,24 @@ export async function checkSupersedeIntegrity(vaultPath: string): Promise<DeepCh
   const collisions = new Set<string>();
   const entries = await collectSupersedeEntries(vaultPath, collisions);
   const problems: string[] = [];
+  const prose: string[] = [];
   for (const stem of collisions) {
     problems.push(`two notes share the stem '${stem}' - supersede pointers resolve by stem`);
   }
 
   for (const e of entries.values()) {
-    if (e.supersededBy && !entries.has(e.supersededBy)) {
-      problems.push(`${e.stem}: superseded_by '${e.supersededBy}' does not resolve`);
+    if (e.supersededBy) {
+      if (!looksLikeNoteStem(e.supersededBy)) {
+        prose.push(`${e.stem}: superseded_by is prose, not a note stem`);
+      } else if (!entries.has(e.supersededBy)) {
+        problems.push(`${e.stem}: superseded_by '${e.supersededBy}' does not resolve`);
+      }
     }
     if (e.supersedes) {
+      if (!looksLikeNoteStem(e.supersedes)) {
+        prose.push(`${e.stem}: supersedes is prose, not a note stem`);
+        continue;
+      }
       const target = entries.get(e.supersedes);
       if (!target) {
         problems.push(`${e.stem}: supersedes '${e.supersedes}' does not resolve`);
@@ -746,18 +759,33 @@ export async function checkSupersedeIntegrity(vaultPath: string): Promise<DeepCh
   }
 
   const unique = [...new Set(problems)];
+  const uniqueProse = [...new Set(prose)];
+
+  if (unique.length > 0) {
+    return {
+      name: 'supersede-integrity',
+      ok: false,
+      detail:
+        unique.slice(0, 5).join('; ') + (unique.length > 5 ? ` (+${unique.length - 5} more)` : ''),
+      remediation:
+        'fix the named frontmatter fields, or re-run `metalmind scribe supersede --force` to re-point',
+    };
+  }
+
+  if (uniqueProse.length > 0) {
+    return {
+      name: 'supersede-integrity',
+      ok: true,
+      detail: `pointers resolve; ${uniqueProse.length} note(s) carry prose instead of a pointer - ${uniqueProse.slice(0, 3).join('; ')}${uniqueProse.length > 3 ? ` (+${uniqueProse.length - 3} more)` : ''}`,
+      remediation:
+        'not a failure - a human-written value was never a pointer. Move it into the body and run `metalmind scribe supersede <old> <new>` to record the real link.',
+    };
+  }
+
   return {
     name: 'supersede-integrity',
-    ok: unique.length === 0,
-    detail:
-      unique.length === 0
-        ? 'all supersede pointers resolve, no stale reverse links, no cycles'
-        : unique.slice(0, 5).join('; ') +
-          (unique.length > 5 ? ` (+${unique.length - 5} more)` : ''),
-    remediation:
-      unique.length === 0
-        ? undefined
-        : 'fix the named frontmatter fields, or re-run `metalmind scribe supersede --force` to re-point',
+    ok: true,
+    detail: 'all supersede pointers resolve, no stale reverse links, no cycles',
   };
 }
 
