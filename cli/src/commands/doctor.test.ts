@@ -350,16 +350,25 @@ describe('doctor deep checks', () => {
 
     it('passes when graphify is gone and no repo holds a stale graph', async () => {
       runCommand.mockResolvedValue({ ok: false, stdout: '', stderr: 'not found', exitCode: 127 });
+      const isolated = await mkdtemp(join(tmpdir(), 'mm-residue-'));
       const { checkGraphifyResidue } = await import('./doctor.js');
-      const res = await checkGraphifyResidue({});
+      const res = await checkGraphifyResidue(
+        {},
+        { settingsPath: join(isolated, 'settings.json'), homeDir: isolated },
+      );
       expect(res.ok).toBe(true);
       expect(res.detail).toBe('none');
+      await rm(isolated, { recursive: true, force: true });
     });
 
     it('flags a graphify install that survived the upgrade', async () => {
       runCommand.mockResolvedValue(ok('graphify 0.9.2'));
+      const isolated = await mkdtemp(join(tmpdir(), 'mm-residue-'));
       const { checkGraphifyResidue } = await import('./doctor.js');
-      const res = await checkGraphifyResidue({});
+      const res = await checkGraphifyResidue(
+        {},
+        { settingsPath: join(isolated, 'settings.json'), homeDir: isolated },
+      );
       expect(res.ok).toBe(false);
       expect(res.detail).toContain('graphify still installed');
       expect(res.remediation).toContain('uv tool uninstall graphifyy');
@@ -371,8 +380,12 @@ describe('doctor deep checks', () => {
       await mkdir(join(repo, 'graphify-out'), { recursive: true });
       await writeFile(join(repo, 'graphify-out', 'graph.json'), '{}', 'utf8');
 
+      const isolated = await mkdtemp(join(tmpdir(), 'mm-residue-'));
       const { checkGraphifyResidue } = await import('./doctor.js');
-      const res = await checkGraphifyResidue({ g: { repos: [repo] } });
+      const res = await checkGraphifyResidue(
+        { g: { repos: [repo] } },
+        { settingsPath: join(isolated, 'settings.json'), homeDir: isolated },
+      );
       expect(res.ok).toBe(false);
       expect(res.detail).toContain('stale graphify-out');
       expect(res.remediation).toContain(join(repo, 'graphify-out'));

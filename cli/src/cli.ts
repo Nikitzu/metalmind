@@ -60,6 +60,7 @@ import { type SyncCmdOptions, syncCmd } from './commands/sync.js';
 import { synod } from './commands/synod.js';
 import { type TapOptions, tap } from './commands/tap.js';
 import { uninstall } from './commands/uninstall.js';
+import { runPendingRepairs } from './install/repair.js';
 
 const program = new Command();
 
@@ -657,6 +658,13 @@ program
       });
     },
   );
+
+program.hook('preAction', async () => {
+  const applied = (await runPendingRepairs()).filter((r) => r.applied);
+  for (const r of applied) {
+    process.stderr.write(`metalmind: repaired ${r.name} - ${r.detail}\n`);
+  }
+});
 
 program.parseAsync(process.argv).catch((err: unknown) => {
   const message = err instanceof Error ? err.message : String(err);

@@ -10,7 +10,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { runCommand } from '../util/exec.js';
 import { getTemplatesDir } from '../util/paths.js';
 import { type SentinelUpsertAction, upsertSentinelBlock } from '../util/sentinel.js';
@@ -63,6 +63,8 @@ export function renderFlavorSentinels(source: string, flavor: 'scadrial' | 'clas
 export interface CopyClaudeTemplatesResult {
   copied: string[];
   removed: string[];
+  backedUp: string[];
+  backupDir: string | null;
 }
 
 /**
@@ -170,11 +172,35 @@ export async function resolvePartials(source: string, templatesDir: string): Pro
   return out;
 }
 
+async function backupIfDiverged(
+  destPath: string,
+  nextContent: string,
+  backupDir: string | undefined,
+  backedUp: string[],
+): Promise<void> {
+  if (!backupDir || !existsSync(destPath)) return;
+  let current: string;
+  try {
+    current = await readFile(destPath, 'utf8');
+  } catch {
+    return;
+  }
+  if (current === nextContent) return;
+  const rel = basename(destPath);
+  const parent = basename(dirname(destPath));
+  const target = join(backupDir, parent, rel);
+  await mkdir(dirname(target), { recursive: true });
+  await writeFile(target, current, 'utf8');
+  backedUp.push(join(parent, rel));
+}
+
 async function copyDir(
   srcDir: string,
   destDir: string,
   filter: (name: string) => boolean,
   render?: (name: string) => Renderer | null,
+  backupDir?: string,
+  backedUp: string[] = [],
 ): Promise<{ copied: string[] }> {
   await mkdir(destDir, { recursive: true });
   const copied: string[] = [];
@@ -184,10 +210,11 @@ async function copyDir(
     const srcPath = join(srcDir, entry.name);
     const destPath = join(destDir, entry.name);
     const renderer = render?.(entry.name);
+    const raw = await readFile(srcPath, 'utf8');
+    const next = renderer ? await renderer(raw) : raw;
+    await backupIfDiverged(destPath, next, backupDir, backedUp);
     if (renderer) {
-      const raw = await readFile(srcPath, 'utf8');
-      const rendered = await renderer(raw);
-      await writeFile(destPath, rendered, 'utf8');
+      await writeFile(destPath, next, 'utf8');
     } else {
       await copyFile(srcPath, destPath);
     }
@@ -265,11 +292,20 @@ export async function copyClaudeTemplates(
   const renderSkill: SyncRenderer = (raw) => renderFlavorSentinels(renderRecall(raw), flavor);
   const PARTIAL_COMMANDS = new Set(['save.md', 'sync.md', 'save-sync.md']);
 
+  const backedUp: string[] = [];
+  const backupDir = join(
+    claudeDir,
+    'metalmind-backups',
+    new Date().toISOString().slice(0, 19).replace(/:/g, ''),
+  );
+
   const rules = await copyDir(
     join(srcRoot, 'rules'),
     join(claudeDir, 'rules'),
     (name) => name.endsWith('.md'),
     () => renderRecall,
+    backupDir,
+    backedUp,
   );
   const removedLegacy = await removeLegacyRules(claudeDir);
   const agents = await copyDir(
@@ -277,6 +313,8 @@ export async function copyClaudeTemplates(
     join(claudeDir, 'agents'),
     (name) => name.endsWith('.md'),
     () => renderRecall,
+    backupDir,
+    backedUp,
   );
   const commands = await copyDir(
     join(srcRoot, 'commands'),
@@ -309,6 +347,8 @@ export async function copyClaudeTemplates(
       ...sharedSkills.copied.map((n) => `skills/${n}`),
     ],
     removed: removedLegacy,
+    backedUp,
+    backupDir: backedUp.length > 0 ? backupDir : null,
   };
 }
 

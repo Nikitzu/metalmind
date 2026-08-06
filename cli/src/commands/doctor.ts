@@ -22,6 +22,7 @@ import { METALMIND_CURSOR_HOOK_FILENAME } from '../install/cursor/hooks.js';
 import { DEFAULT_CURSOR_DIR } from '../install/cursor.js';
 import { isGraphifyInstalled } from '../install/graphify-legacy.js';
 import { detectPrereqs } from '../install/prereqs.js';
+import { findGraphifyHooks } from '../install/settings.js';
 import { OLLAMA_CONTAINER } from '../install/stack.js';
 import { scanForgeIntentSkills } from '../intent/intent.js';
 import {
@@ -551,12 +552,20 @@ export async function checkCursorInstall(opts: { cursorDir?: string } = {}): Pro
   return out;
 }
 
-export async function checkGraphifyResidue(groups: ForgeGroups): Promise<DeepCheck> {
+export async function checkGraphifyResidue(
+  groups: ForgeGroups,
+  opts: { settingsPath?: string; homeDir?: string } = {},
+): Promise<DeepCheck> {
   const leftovers: string[] = [];
 
   if (await isGraphifyInstalled()) leftovers.push('graphify still installed');
 
-  const homeStamp = join(homedir(), 'CLAUDE.md');
+  const hooks = await findGraphifyHooks(opts.settingsPath);
+  if (hooks.length > 0) {
+    leftovers.push(`graphify hook in ~/.claude/settings.json (${hooks.join(', ')})`);
+  }
+
+  const homeStamp = join(opts.homeDir ?? homedir(), 'CLAUDE.md');
   const homeText = await readFile(homeStamp, 'utf8').catch(() => '');
   if (homeText.includes('## graphify')) leftovers.push('graphify stamp in ~/CLAUDE.md');
 
@@ -574,9 +583,9 @@ export async function checkGraphifyResidue(groups: ForgeGroups): Promise<DeepChe
     return { name: 'graphify-residue', ok: true, detail: 'none' };
   }
 
-  const steps = ['run `metalmind init` to clear it automatically, or by hand:'];
-  if (leftovers[0]?.startsWith('graphify still')) {
-    steps.push('`graphify claude uninstall && uv tool uninstall graphifyy`');
+  const steps = ['any metalmind command clears the hook and stamp automatically.'];
+  if (leftovers.some((l) => l.startsWith('graphify still'))) {
+    steps.push('Remove the binary with `uv tool uninstall graphifyy`.');
   }
   if (staleGraphs.length > 0) {
     steps.push(`\`rm -rf ${staleGraphs.map((r) => join(r, 'graphify-out')).join(' ')}\``);

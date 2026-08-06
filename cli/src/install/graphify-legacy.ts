@@ -1,8 +1,9 @@
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { homedir, tmpdir } from 'node:os';
+import { readFile, rm, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { runCommand } from '../util/exec.js';
+import { clearGraphifyHooks } from './settings.js';
 
 export const GRAPHIFY_PACKAGE = 'graphifyy';
 export const GRAPHIFY_BIN = 'graphify';
@@ -47,20 +48,11 @@ export interface GraphifyResidueResult {
 
 export async function removeGraphifyResidue(): Promise<GraphifyResidueResult> {
   const wasInstalled = await isGraphifyInstalled();
-  let claudeUnwired = false;
   let uninstalled = false;
 
+  const claudeUnwired = await clearGraphifyHooks();
+
   if (wasInstalled) {
-    const sandbox = await mkdtemp(join(tmpdir(), 'metalmind-graphify-'));
-    try {
-      const unwire = await runCommand(GRAPHIFY_BIN, ['claude', 'uninstall'], {
-        timeoutMs: 30_000,
-        cwd: sandbox,
-      });
-      claudeUnwired = unwire.ok;
-    } finally {
-      await rm(sandbox, { recursive: true, force: true });
-    }
     const res = await runCommand('uv', ['tool', 'uninstall', GRAPHIFY_PACKAGE], {
       timeoutMs: 60_000,
     });

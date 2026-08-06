@@ -1,5 +1,11 @@
 import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/prompts';
-import { type Config, CURRENT_CONFIG_VERSION, type MetalmindHost, writeConfig } from '../config.js';
+import {
+  type Config,
+  CURRENT_CONFIG_VERSION,
+  type MetalmindHost,
+  readConfig,
+  writeConfig,
+} from '../config.js';
 import { describeAliasSourcing, installAliases } from './aliases.js';
 import { installCodex } from './codex.js';
 import { installCursor } from './cursor.js';
@@ -9,6 +15,7 @@ import { promptHosts } from './host-prompt.js';
 import { registerMcpServers } from './mcp.js';
 import { type FlavorChoice, installOutputStyle } from './output-style.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
+import { runPendingRepairs } from './repair.js';
 import { installSerena } from './serena.js';
 import {
   applyAgentTeams,
@@ -61,6 +68,8 @@ function summarisePrereqs(results: PrereqResult[]): { failing: PrereqResult[]; p
 
 export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   intro('metalmind init');
+
+  const priorConfig = await readConfig().catch(() => null);
 
   log.step('Checking prerequisites');
   // Docker is only needed if the user explicitly wants the legacy
@@ -400,6 +409,12 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       notifications,
     });
     log.success(`  wrote ${tpl.copied.length} files`);
+    if (tpl.backupDir) {
+      log.warn(
+        `  ${tpl.backedUp.length} file(s) you had edited were replaced: ${tpl.backedUp.join(', ')}`,
+      );
+      log.info(`  previous versions saved to ${tpl.backupDir}`);
+    }
     const claudeMd = await stampClaudeMd({ vaultPath: vault.vaultPath, flavor });
     if (claudeMd.starterWritten) log.info(`  wrote starter ${claudeMd.path}`);
     if (claudeMd.blockAction === 'created') log.info(`  wrote metalmind block → ${claudeMd.path}`);
@@ -470,19 +485,30 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     flavor,
     vaultPath: vault.vaultPath,
     outputStyle: { installed: stampedOutputStyle, priorValue: stylePriorValue },
-    embeddings: { provider: 'local', baseURL: null },
-    recall: { defaultTier: 'fast', httpEndpoint: null },
-    verbose: false,
+    embeddings: priorConfig?.embeddings ?? { provider: 'local', baseURL: null },
+    recall: priorConfig?.recall ?? { defaultTier: 'fast', httpEndpoint: null },
+    verbose: priorConfig?.verbose ?? false,
     mcp: {
       registered: [...(serena ? ['serena'] : [])],
     },
     memoryRouting,
-    hooks: { claudeCode: false },
-    forge: { groups: {} },
+    hooks: { claudeCode: priorConfig?.hooks.claudeCode ?? false },
+    forge: priorConfig?.forge ?? { groups: {} },
     skills: { eodHook, notifications },
     hosts:
       chosenHosts.length > 0 ? (chosenHosts as [MetalmindHost, ...MetalmindHost[]]) : ['claude'],
   };
+  if (priorConfig) {
+    const keptRepos = Object.values(config.forge.groups).reduce(
+      (n, g) => n + (g.repos?.length ?? 0),
+      0,
+    );
+    if (keptRepos > 0) {
+      log.info(
+        `  kept ${Object.keys(config.forge.groups).length} forge group(s), ${keptRepos} repo(s)`,
+      );
+    }
+  }
   await writeConfig(config);
   log.success('Wrote ~/.metalmind/config.json');
 

@@ -335,3 +335,61 @@ export async function clearMetalmindSessionStartHook(settingsPath?: string): Pro
   await writeSettings(path, data);
   return true;
 }
+
+export const GRAPHIFY_HOOK_MARKER = 'graphify-out/graph.json';
+
+function isGraphifyHookEntry(entry: ClaudeHookEntry): boolean {
+  return (
+    typeof entry?.command === 'string' &&
+    (entry.command.includes(GRAPHIFY_HOOK_MARKER) || entry.command.includes('graphify:'))
+  );
+}
+
+export async function findGraphifyHooks(settingsPath?: string): Promise<string[]> {
+  const path = settingsPath ?? DEFAULT_SETTINGS_PATH;
+  if (!existsSync(path)) return [];
+  const data = await readSettings(path);
+  const hooks = data.hooks;
+  if (!hooks) return [];
+  const found: string[] = [];
+  for (const [event, groups] of Object.entries(hooks)) {
+    if (!Array.isArray(groups)) continue;
+    for (const group of groups) {
+      if (group?.hooks?.some(isGraphifyHookEntry)) {
+        found.push(group.matcher ? `${event}:${group.matcher}` : event);
+      }
+    }
+  }
+  return found;
+}
+
+export async function clearGraphifyHooks(settingsPath?: string): Promise<boolean> {
+  const path = settingsPath ?? DEFAULT_SETTINGS_PATH;
+  if (!existsSync(path)) return false;
+  const data = await readSettings(path);
+  const hooks = data.hooks;
+  if (!hooks) return false;
+
+  let changed = false;
+  for (const [event, groups] of Object.entries(hooks)) {
+    if (!Array.isArray(groups)) continue;
+    const kept: ClaudeHookGroup[] = [];
+    for (const group of groups) {
+      const entries = (group?.hooks ?? []).filter((h) => !isGraphifyHookEntry(h));
+      if (entries.length === (group?.hooks ?? []).length) {
+        kept.push(group);
+        continue;
+      }
+      changed = true;
+      if (entries.length > 0) kept.push({ ...group, hooks: entries });
+    }
+    if (kept.length === 0) delete hooks[event];
+    else hooks[event] = kept;
+  }
+
+  if (!changed) return false;
+  if (Object.keys(hooks).length === 0) delete data.hooks;
+  else data.hooks = hooks;
+  await writeSettings(path, data);
+  return true;
+}
