@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { rm, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
+import { runCommand } from '../util/exec.js';
 import { removeSentinelBlock, type SentinelRemoveAction } from '../util/sentinel.js';
 import { uninstallAliases } from './aliases.js';
 import { removeGraphifyResidue } from './graphify-legacy.js';
@@ -15,7 +16,6 @@ import {
   clearOutputStyleSessionStartHook,
   clearOutputStyleUserPromptSubmitHook,
 } from './settings.js';
-import { STACK_SUBDIR, stopStack } from './stack.js';
 import {
   METALMIND_HOOK_FILENAME,
   OUTPUT_STYLE_HOOK_FILENAME,
@@ -53,6 +53,11 @@ export interface TeardownOptions {
    *  on macOS + Linux CI. Production callers leave this undefined. */
   platformOverride?: WatcherPlatform;
 }
+
+/** The Qdrant + Ollama stack was removed in v0.16.0. Machines that ran it
+ *  still carry the directory and possibly live containers, so teardown
+ *  keeps clearing both. */
+export const LEGACY_STACK_SUBDIR = '.metalmind-stack';
 
 export interface TeardownResult {
   watcher: { removedPlist: boolean; unloaded: boolean };
@@ -103,14 +108,12 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
   result.watcher = { removedPlist: watcher.removedUnit, unloaded: watcher.stopped };
 
   if (config?.vaultPath) {
-    const stackDir = join(config.vaultPath, STACK_SUBDIR);
+    const stackDir = join(config.vaultPath, LEGACY_STACK_SUBDIR);
     if (existsSync(join(stackDir, 'compose.yml'))) {
-      try {
-        await stopStack(stackDir, { removeVolumes: opts.removeVolumes });
-        result.stackStopped = true;
-      } catch {
-        // docker may not be running; continue teardown
-      }
+      const args = ['compose', '-f', join(stackDir, 'compose.yml'), 'down'];
+      if (opts.removeVolumes) args.push('-v');
+      const res = await runCommand('docker', args, { timeoutMs: 120_000 });
+      result.stackStopped = res.ok;
     }
     if (existsSync(stackDir)) {
       await rm(stackDir, { recursive: true, force: true });

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-21T09:51:15.230Z",
+  "generated_at": "2026-08-07T12:21:31.617Z",
   "mode": "offline-approximation",
   "model": null,
   "approx_chars_per_token": 4,
@@ -29,8 +29,8 @@
       "tools_json_chars": 2,
       "mode": "offline-approximation",
       "tools_tokens_approx": 1,
-      "instruction_block_tokens_approx": 518,
-      "first_turn_tokens_approx": 519
+      "instruction_block_tokens_approx": 344,
+      "first_turn_tokens_approx": 345
     },
     {
       "name": "metalmind-stdio",

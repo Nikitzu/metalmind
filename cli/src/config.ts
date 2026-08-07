@@ -8,7 +8,7 @@ export const CONFIG_PATH = join(CONFIG_DIR, 'config.json');
 
 const FlavorSchema = z.enum(['scadrial', 'classic']);
 const RecallTierSchema = z.enum(['fast', 'deep', 'expand']);
-const EmbeddingsProviderSchema = z.enum(['local', 'ollama', 'custom', 'skip']);
+const EmbeddingsProviderSchema = z.enum(['local', 'skip']);
 const MemoryRoutingSchema = z.enum(['vault-only', 'both']);
 const HostSchema = z.enum(['claude', 'codex', 'cursor']);
 
@@ -18,7 +18,7 @@ const ForgeGroupSchema = z.object({
   repos: z.array(z.string()),
 });
 
-export const CURRENT_CONFIG_VERSION = 2 as const;
+export const CURRENT_CONFIG_VERSION = 3 as const;
 
 export const ConfigSchema = z.object({
   version: z.literal(CURRENT_CONFIG_VERSION),
@@ -83,6 +83,19 @@ const MIGRATIONS: Record<number, Migration> = {
       version: 2,
       mcp: { ...(mcp ?? {}), registered },
       hooks: { ...(hooks ?? {}), claudeCode: false },
+    };
+  },
+  2: (raw) => {
+    const embeddings = raw.embeddings as { provider?: unknown; baseURL?: unknown } | undefined;
+    const provider = embeddings?.provider;
+    const stillValid = provider === 'local' || provider === 'skip';
+    return {
+      ...raw,
+      version: 3,
+      embeddings: {
+        provider: stillValid ? provider : 'local',
+        baseURL: stillValid ? (embeddings?.baseURL ?? null) : null,
+      },
     };
   },
 };

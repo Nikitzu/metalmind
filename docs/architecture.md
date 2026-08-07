@@ -69,7 +69,7 @@ A single Python process (`metalmind-vault-rag-watcher`) under launchd (macOS) or
 - Watches the vault for file changes via `watchfiles`
 - Indexes into sqlite-vec (vectors) + SQLite FTS5 (keyword) - both files at `~/.metalmind/`
 - Co-hosts a loopback HTTP server at `127.0.0.1:17317` for sub-100ms recall calls
-- Stays in-process - no Docker, no Ollama daemon (since v0.5.0)
+- Stays in-process - no Docker, no daemon (default since v0.5.0, the only path since v0.16.0)
 
 `tap copper` hits the HTTP endpoint first; falls back to stdio MCP if the watcher is down. Both transports return the same JSON shape - pinned by `recall.test.ts`.
 

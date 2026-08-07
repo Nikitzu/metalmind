@@ -206,7 +206,7 @@ metalmind init --host all             # every detected host
 metalmind init --host codex --with-mcp   # Codex + opt-in MCP server
 ```
 
-The wizard walks five steps: prereq check (Python + uv + git + at least one supported host), vault scaffold, Python engines via `uv tool install` (sqlite-vec + fastembed bundled), watcher service (launchd on macOS, systemd on Linux), then per-host stamping. See the [install-flow diagram](https://metalmind.mzyx.dev/#demo) for what each step does. Pass `--legacy` to opt into the old Qdrant + Ollama Docker stack instead.
+The wizard walks five steps: prereq check (Python + uv + git + at least one supported host), vault scaffold, Python engines via `uv tool install` (sqlite-vec + fastembed bundled), watcher service (launchd on macOS, systemd on Linux), then per-host stamping. See the [install-flow diagram](https://metalmind.mzyx.dev/#demo) for what each step does.
 
 ## Requirements
 
@@ -215,8 +215,6 @@ The wizard walks five steps: prereq check (Python + uv + git + at least one supp
 - macOS or Linux (WSL2 works; native Windows not supported)
 - At least one supported host: [Claude Code CLI](https://claude.ai/code) v2.1+, Codex CLI, or Cursor
 - Python 3.11+, [uv](https://docs.astral.sh/uv/), git, Node 20+
-
-(`--legacy` mode also requires Docker for the Qdrant + Ollama containers. Default install runs the entire retrieval stack in-process.)
 
 Run `metalmind pulse` (alias: `doctor`) any time to check environment + install state.
 
@@ -268,7 +266,7 @@ Your notes, embeddings, and code graphs never leave your machine. The only netwo
 metalmind uninstall
 ```
 
-Unloads the watcher service, strips the metalmind managed blocks from `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md` (user content outside the sentinel markers is preserved), removes the SessionStart hook + its entry in `~/.claude/settings.json` (other hooks stay), strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, restores your prior output-style, and removes shell aliases. Interactive prompts ask whether to also `uv tool uninstall` Serena and `metalmind-vault-rag`, and whether to remove the embedding index (keep it if you don't want to re-embed the vault). On a `--legacy` install it also stops and removes the Qdrant + Ollama Docker containers and offers to remove their volumes.
+Unloads the watcher service, strips the metalmind managed blocks from `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md` (user content outside the sentinel markers is preserved), removes the SessionStart hook + its entry in `~/.claude/settings.json` (other hooks stay), strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, restores your prior output-style, and removes shell aliases. Interactive prompts ask whether to also `uv tool uninstall` Serena and `metalmind-vault-rag`, and whether to remove the embedding index (keep it if you don't want to re-embed the vault). On a machine that ran the pre-v0.16.0 Qdrant + Ollama stack it also stops those containers, removes `<vault>/.metalmind-stack/`, and offers to drop their volumes.
 
 **Never touches your notes.**
 

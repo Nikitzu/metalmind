@@ -3,10 +3,11 @@
 Single source of truth for the VectorStore contract. Each impl is a
 parametrize value; pytest IDs make failures point at the offender. When
 adding a new store, add a fixture entry and the suite runs against it
-unchanged.
+unchanged - the parametrize survives the removal of the Qdrant store in
+v0.16.0 precisely so the next store costs one line.
 
-Tests are hermetic - Qdrant uses :memory:, sqlite-vec uses a temp file.
-No external services, no Docker.
+Tests are hermetic - sqlite-vec uses a temp file. No external services,
+no Docker.
 """
 
 from __future__ import annotations
@@ -14,32 +15,18 @@ from __future__ import annotations
 import pathlib
 
 import pytest
-from qdrant_client import QdrantClient
 
 from metalmind_vault_rag.stores import VectorHit, VectorPoint
-from metalmind_vault_rag.stores.qdrant_store import QdrantStore
 from metalmind_vault_rag.stores.sqlite_vec_store import SqliteVecStore
-
-
-def _qdrant_factory() -> QdrantStore:
-    s = QdrantStore.__new__(QdrantStore)
-    s._url = ":memory:"
-    s._collection = "test"
-    s._dim = 4
-    s._client = QdrantClient(":memory:")
-    return s
 
 
 def _sqlite_vec_factory(tmp_path: pathlib.Path) -> SqliteVecStore:
     return SqliteVecStore(db_path=tmp_path / "vec.db", collection="test", dim=4)
 
 
-@pytest.fixture(params=["qdrant", "sqlite-vec"])
+@pytest.fixture(params=["sqlite-vec"])
 def store(request: pytest.FixtureRequest, tmp_path: pathlib.Path):
-    if request.param == "qdrant":
-        impl = _qdrant_factory()
-    else:
-        impl = _sqlite_vec_factory(tmp_path)
+    impl = _sqlite_vec_factory(tmp_path)
     yield impl
     if hasattr(impl, "close"):
         impl.close()  # type: ignore[attr-defined]
@@ -57,7 +44,7 @@ def _point(
     )
 
 
-# Stable UUIDs so Qdrant accepts them; sqlite-vec doesn't care.
+# Stable UUIDs - harmless for sqlite-vec, required by stricter stores.
 _ID1 = "00000000-0000-0000-0000-000000000001"
 _ID2 = "00000000-0000-0000-0000-000000000002"
 _ID3 = "00000000-0000-0000-0000-000000000003"

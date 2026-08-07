@@ -40,25 +40,25 @@ class EmbeddingBackend(Protocol):
 
 
 def make_backend() -> EmbeddingBackend:
-    """Pick the active backend from METALMIND_BACKEND.
+    """Build the fastembed backend.
 
-    Default is `embedded` (fastembed, in-process). Set
-    `METALMIND_BACKEND=legacy` to fall back to a local Ollama daemon -
-    kept as an escape hatch for users who want a different model and
-    don't mind running the daemon.
+    `METALMIND_BACKEND=legacy` selected a local Ollama daemon until
+    v0.16.0. The variable is still read so a stale export explains
+    itself instead of silently changing which model embeds the vault -
+    a mismatch that would poison the index rather than fail loudly.
     """
     backend = os.environ.get("METALMIND_BACKEND", "embedded").lower()
     if backend == "legacy":
-        from .ollama_backend import OllamaBackend
-
-        return OllamaBackend()
+        raise ValueError(
+            "METALMIND_BACKEND=legacy selected the Ollama embedding backend, "
+            "removed in v0.16.0. Unset the variable to use in-process "
+            "fastembed."
+        )
     if backend == "embedded":
         from .fastembed_backend import FastEmbedBackend  # type: ignore[attr-defined]
 
         return FastEmbedBackend()
-    raise ValueError(
-        f"unknown METALMIND_BACKEND={backend!r}; valid: 'embedded', 'legacy'"
-    )
+    raise ValueError(f"unknown METALMIND_BACKEND={backend!r}; valid: 'embedded'")
 
 
 __all__ = ["EmbeddingBackend", "make_backend"]

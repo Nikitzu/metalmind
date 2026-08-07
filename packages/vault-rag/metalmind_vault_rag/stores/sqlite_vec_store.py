@@ -1,6 +1,6 @@
 """sqlite-vec backed VectorStore. Single-process, no daemon, ~3 MB
-extension wheel. Becomes the default in v0.5.0; QdrantStore stays
-available behind METALMIND_BACKEND=legacy.
+extension wheel. The default since v0.5.0 and the only store since
+v0.16.0, when the Qdrant backend was removed.
 
 Schema (one DB per collection at `~/.metalmind/vec-<col>.db`):
 

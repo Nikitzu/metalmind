@@ -38,13 +38,5 @@ Usually present on macOS and modern Linux. `metalmind init` probes `python3`, `p
 git --version && uv --version && python3 --version && claude --version
 ```
 
-If all four print versions, you're ready. The default install runs the entire retrieval stack in-process - no Docker, no Ollama daemon.
+If all four print versions, you're ready. metalmind runs the entire retrieval stack in-process - no Docker, no daemon, no server.
 
-## Legacy backend (`--legacy`)
-
-If you specifically want the older Qdrant + Ollama Docker stack - useful when you already run Qdrant for other projects, or want to swap in your own Ollama-hosted embedding model - pass `--legacy` to `metalmind init`. That path additionally requires:
-
-- [Docker](https://www.docker.com) running (Docker Desktop on macOS, Docker Engine on Linux)
-- ~1.5 GB free disk for the `qdrant/qdrant` and `ollama/ollama` images plus the `nomic-embed-text` weights
-
-The wizard will set up two containers (`metalmind-qdrant`, `metalmind-ollama`) at `<vault>/.metalmind-stack/` via `docker compose`.

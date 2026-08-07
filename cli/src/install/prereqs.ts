@@ -22,27 +22,6 @@ export async function checkClaudeCode(): Promise<PrereqResult> {
       };
 }
 
-export async function checkDocker(): Promise<PrereqResult> {
-  const version = await runCommand('docker', ['--version']);
-  if (!version.ok) {
-    return {
-      name: 'Docker',
-      ok: false,
-      detail: 'docker CLI not found',
-      remediation: 'Install Docker Desktop: https://www.docker.com/products/docker-desktop',
-    };
-  }
-  const info = await runCommand('docker', ['info'], { timeoutMs: 8000 });
-  return info.ok
-    ? { name: 'Docker', ok: true, detail: `daemon reachable (${version.stdout})` }
-    : {
-        name: 'Docker',
-        ok: false,
-        detail: 'daemon unreachable',
-        remediation: 'Open Docker Desktop and wait for it to finish starting',
-      };
-}
-
 const PYTHON_CANDIDATES = ['python3', 'python3.13', 'python3.12', 'python3.11'];
 
 function parsePythonVersion(stdout: string): { major: number; minor: number } | null {
@@ -128,18 +107,6 @@ export async function checkGit(): Promise<PrereqResult> {
       };
 }
 
-export interface DetectPrereqsOptions {
-  /**
-   * Include Docker in the check set. Required by the legacy backend
-   * (Qdrant + Ollama containers); not needed by the embedded backend
-   * (sqlite-vec + fastembed run in-process). Default: false - embedded
-   * is the v0.5.0 install path.
-   */
-  includeDocker?: boolean;
-}
-
-export async function detectPrereqs(opts: DetectPrereqsOptions = {}): Promise<PrereqResult[]> {
-  const checks = [checkClaudeCode(), checkPython(), checkUv(), checkGit()];
-  if (opts.includeDocker) checks.push(checkDocker());
-  return Promise.all(checks);
+export async function detectPrereqs(): Promise<PrereqResult[]> {
+  return Promise.all([checkClaudeCode(), checkPython(), checkUv(), checkGit()]);
 }

@@ -19,7 +19,6 @@ cli/
 │   │   ├── vault.ts           Vault scaffold
 │   │   ├── serena.ts          Serena install via uv tool
 │   │   ├── vault-rag.ts       metalmind-vault-rag install via uv tool
-│   │   ├── stack.ts           Docker compose up + model pull
 │   │   ├── watcher.ts         Platform dispatcher (launchd | systemd)
 │   │   ├── launchd.ts         macOS watcher install
 │   │   ├── systemd.ts         Linux watcher install
@@ -33,7 +32,6 @@ cli/
 │   ├── forge/                 Cross-repo graph groups
 │   └── config.ts              Zod schema for ~/.metalmind/config.json
 ├── templates/                 Bundled at publish time via `files`
-│   ├── metalmind-stack/       compose.yml for Qdrant + Ollama
 │   ├── vault-rag-pkg/         Populated by scripts/sync-vault-rag-pkg.mjs
 │   │                          from ../../packages/vault-rag/ (gitignored)
 │   ├── vault/                 CLAUDE.md.template for the markdown vault
@@ -66,7 +64,7 @@ After a build, the installed shim picks up new code immediately (pnpm / npm glob
 
 ## Testing conventions
 
-- **Vitest** with `vi.hoisted()` for `runCommand` mocks - lets tests simulate uv / docker / launchctl / systemctl without touching the real system.
+- **Vitest** with `vi.hoisted()` for `runCommand` mocks - lets tests simulate uv / launchctl / systemctl without touching the real system.
 - **Temp dirs** for all filesystem side-effects (`mkdtemp` in `beforeEach`, `rm -rf` in `afterEach`).
 - **Path overrides** on every installer - every function that writes to `~/.claude.json` / `~/Library/LaunchAgents` / `~/.config/systemd` accepts an override so tests can redirect to a temp path.
 - **No real network**: `setupStack` takes a `fetchFn` for polling; tests pass a fake that returns 200 immediately.
@@ -81,7 +79,7 @@ Each installer has a mirror `*.test.ts` next to it - add tests alongside the cod
 | Python | `pnpm test:python` | packages/vault-rag: imports, search helpers, HTTP endpoint | ~4s |
 | Smoke | `pnpm test:smoke` | Scripted end-to-end: init --yes → stamp → save → uninstall | ~10s |
 
-Smoke test uses a temp `$HOME`, skips Docker and Serena, and asserts every managed file ends up in the right place. It's the "would a fresh-machine install work?" question answered in 20 assertions.
+Smoke test uses a temp `$HOME`, skips Serena, and asserts every managed file ends up in the right place. It's the "would a fresh-machine install work?" question answered in 20 assertions.
 
 ## Adding a new install step
 

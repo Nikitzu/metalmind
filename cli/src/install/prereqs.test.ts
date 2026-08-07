@@ -32,25 +32,6 @@ describe('prereqs', () => {
     expect(r.remediation).toContain('claude.ai/code');
   });
 
-  it('checkDocker passes when daemon reachable', async () => {
-    runCommand
-      .mockResolvedValueOnce(mockResult({ stdout: 'Docker version 27.1.0' }))
-      .mockResolvedValueOnce(mockResult({ stdout: 'Containers: 0' }));
-    const { checkDocker } = await import('./prereqs.js');
-    const r = await checkDocker();
-    expect(r.ok).toBe(true);
-  });
-
-  it('checkDocker fails when daemon unreachable', async () => {
-    runCommand
-      .mockResolvedValueOnce(mockResult({ stdout: 'Docker version 27.1.0' }))
-      .mockResolvedValueOnce(mockResult({ ok: false, stderr: 'Cannot connect to daemon' }));
-    const { checkDocker } = await import('./prereqs.js');
-    const r = await checkDocker();
-    expect(r.ok).toBe(false);
-    expect(r.remediation).toContain('Docker Desktop');
-  });
-
   it('checkPython passes on 3.12 via python3', async () => {
     runCommand.mockResolvedValueOnce(mockResult({ stdout: 'Python 3.12.1' }));
     const { checkPython } = await import('./prereqs.js');
@@ -95,19 +76,5 @@ describe('prereqs', () => {
     const results = await detectPrereqs();
     expect(results).toHaveLength(4);
     expect(results.map((r) => r.name)).toEqual(['Claude Code', 'Python 3.11+', 'uv', 'git']);
-  });
-
-  it('detectPrereqs adds Docker when includeDocker=true (legacy backend)', async () => {
-    runCommand.mockResolvedValue(mockResult({ stdout: 'ok', ok: true }));
-    const { detectPrereqs } = await import('./prereqs.js');
-    const results = await detectPrereqs({ includeDocker: true });
-    expect(results).toHaveLength(5);
-    expect(results.map((r) => r.name)).toEqual([
-      'Claude Code',
-      'Python 3.11+',
-      'uv',
-      'git',
-      'Docker',
-    ]);
   });
 });

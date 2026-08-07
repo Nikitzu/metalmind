@@ -1,14 +1,13 @@
 """Vector storage abstraction.
 
 The watcher, indexer, and search layer all talk to a `VectorStore` -
-never to a concrete vector backend. Two implementations:
+never to a concrete vector backend. One implementation remains:
 
-- `QdrantStore` (legacy, v0.4.x default): HTTP to a Qdrant server.
 - `SqliteVecStore` (v0.5.0 default): in-process sqlite-vec virtual table.
 
-Selection happens once via `make_store()` based on `METALMIND_BACKEND`.
-Callers should never import an implementation directly - that defeats
-the abstraction and makes A/B benching impossible. Use the factory.
+The `QdrantStore` it replaced was removed in v0.16.0. Callers should
+never import an implementation directly - that defeats the abstraction
+and makes A/B benching impossible. Use the factory.
 """
 
 from __future__ import annotations
@@ -78,24 +77,26 @@ class VectorStore(Protocol):
 
 
 def make_store() -> VectorStore:
-    """Pick the active store from `METALMIND_BACKEND`.
+    """Build the sqlite-vec store.
 
-    Default is `embedded` (sqlite-vec, in-process). Set
-    `METALMIND_BACKEND=legacy` to fall back to a Qdrant server - kept as
-    an escape hatch in case sqlite-vec hits a ceiling at scale.
+    `METALMIND_BACKEND=legacy` selected a Qdrant server until v0.16.0.
+    The variable is still read so anyone carrying it in a shell profile
+    gets an explanation rather than silently running on a store they did
+    not choose.
     """
     backend = os.environ.get("METALMIND_BACKEND", "embedded").lower()
     if backend == "legacy":
-        from .qdrant_store import QdrantStore
-
-        return QdrantStore()
+        raise ValueError(
+            "METALMIND_BACKEND=legacy selected the Qdrant backend, removed in "
+            "v0.16.0. Unset the variable to use the embedded sqlite-vec store, "
+            "then run `metalmind uninstall` to drop the Docker containers and "
+            "volumes it left behind."
+        )
     if backend == "embedded":
         from .sqlite_vec_store import SqliteVecStore  # type: ignore[attr-defined]
 
         return SqliteVecStore()
-    raise ValueError(
-        f"unknown METALMIND_BACKEND={backend!r}; valid: 'embedded', 'legacy'"
-    )
+    raise ValueError(f"unknown METALMIND_BACKEND={backend!r}; valid: 'embedded'")
 
 
 __all__ = ["VectorPoint", "VectorHit", "VectorStore", "make_store"]

@@ -21,7 +21,7 @@ function fail(stderr = 'fail'): CommandResult {
 
 function baseConfig(vaultPath: string): Config {
   return {
-    version: 2,
+    version: 3,
     flavor: 'scadrial',
     vaultPath,
     outputStyle: { installed: null, priorValue: null },

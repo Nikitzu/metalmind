@@ -1,5 +1,5 @@
 """fastembed-backed EmbeddingBackend. Runs an ONNX embedding model
-in-process - no Ollama daemon, no HTTP. Becomes the default in v0.5.0.
+in-process - no daemon, no HTTP. The default since v0.5.0.
 
 Default model is BAAI/bge-small-en-v1.5 (384-dim, ~30 MB). First call
 auto-downloads the ONNX weights to ~/.metalmind/cache/fastembed/ and

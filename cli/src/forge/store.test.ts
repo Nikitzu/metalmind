@@ -6,7 +6,7 @@ import type { Config } from '../config.js';
 
 function baseConfig(): Config {
   return {
-    version: 2,
+    version: 3,
     flavor: 'scadrial',
     vaultPath: '/v',
     outputStyle: { installed: 'marsh', priorValue: null },

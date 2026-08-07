@@ -24,7 +24,6 @@ import {
   applyOutputStyleSessionStartHook,
   applyOutputStyleUserPromptSubmitHook,
 } from './settings.js';
-import { setupStack } from './stack.js';
 import {
   appendGlobalGitignore,
   copyClaudeHooks,
@@ -41,7 +40,6 @@ export interface RunWizardOptions {
   serena?: boolean;
   enableTeams?: boolean;
   flavor?: 'scadrial' | 'classic';
-  skipDocker?: boolean;
   skipWatcher?: boolean;
   memoryRouting?: 'vault-only' | 'both';
   eodHook?: boolean;
@@ -72,10 +70,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   const priorConfig = await readConfig().catch(() => null);
 
   log.step('Checking prerequisites');
-  // Docker is only needed if the user explicitly wants the legacy
-  // Qdrant + Ollama stack. The default v0.5.0 path is sqlite-vec +
-  // fastembed in-process - Python + uv carry the whole load.
-  let prereqs = await detectPrereqs({ includeDocker: !opts.skipDocker });
+  let prereqs = await detectPrereqs();
   let summary = summarisePrereqs(prereqs);
 
   // uv has the only sanctioned one-line installer of any prereq. Offer to
@@ -99,7 +94,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       if (result.installed) {
         log.success(`  uv installed at ${result.binPath}`);
         if (result.pathPrepended) log.info('  prepended ~/.local/bin to PATH for this session');
-        prereqs = await detectPrereqs({ includeDocker: !opts.skipDocker });
+        prereqs = await detectPrereqs();
         summary = summarisePrereqs(prereqs);
       } else {
         log.error(`  uv installer failed: ${result.stderr ?? 'unknown error'}`);
@@ -279,15 +274,6 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   const vaultRag = await installVaultRag();
   if (vaultRag.alreadyInstalled) log.info('  metalmind-vault-rag already on PATH - skipped');
   if (vaultRag.installed) log.success('  uv tool install metalmind-vault-rag complete');
-
-  if (!opts.skipDocker) {
-    log.step('Starting Docker stack (Qdrant + Ollama, --legacy mode)');
-    const stack = await setupStack({ vaultPath: vault.vaultPath });
-    log.success(`  stack at ${stack.stackDir}`);
-    if (stack.modelPulled) log.info('  nomic-embed-text pulled');
-  } else {
-    log.info('Embedded backend (sqlite-vec + fastembed) - no Docker stack needed');
-  }
 
   if (opts.skipWatcher) {
     log.warn('Skipping watcher install (opts.skipWatcher)');

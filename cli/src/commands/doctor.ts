@@ -23,7 +23,6 @@ import { DEFAULT_CURSOR_DIR } from '../install/cursor.js';
 import { isGraphifyInstalled } from '../install/graphify-legacy.js';
 import { detectPrereqs } from '../install/prereqs.js';
 import { findGraphifyHooks } from '../install/settings.js';
-import { OLLAMA_CONTAINER } from '../install/stack.js';
 import { scanForgeIntentSkills } from '../intent/intent.js';
 import {
   frontmatterString,
@@ -47,118 +46,6 @@ export interface DeepCheck {
   ok: boolean;
   detail: string;
   remediation?: string;
-}
-
-/**
- * Probe whether the legacy Qdrant + Ollama Docker stack is active. The
- * default v0.5.0 install runs sqlite-vec + fastembed in-process, so the
- * docker/qdrant/ollama checks are noise for those users. Returns the
- * Set of running metalmind container names - empty Set means no stack.
- */
-async function detectLegacyStack(): Promise<Set<string>> {
-  const res = await runCommand('docker', ['ps', '--format', '{{.Names}}']);
-  if (!res.ok) return new Set();
-  return new Set(
-    res.stdout
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((n) => n === 'metalmind-qdrant' || n === 'metalmind-ollama'),
-  );
-}
-
-export async function checkDockerContainers(): Promise<DeepCheck[]> {
-  const res = await runCommand('docker', ['ps', '--format', '{{.Names}}']);
-  if (!res.ok) {
-    return [
-      {
-        name: 'docker-ps',
-        ok: false,
-        detail: 'docker ps failed',
-        remediation: 'Ensure Docker Desktop is running.',
-      },
-    ];
-  }
-  const names = new Set(
-    res.stdout
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean),
-  );
-  return [
-    {
-      name: 'metalmind-ollama',
-      ok: names.has('metalmind-ollama'),
-      detail: names.has('metalmind-ollama') ? 'running' : 'not running',
-      remediation: names.has('metalmind-ollama') ? undefined : 'Run `vault-up` to start the stack.',
-    },
-    {
-      name: 'metalmind-qdrant',
-      ok: names.has('metalmind-qdrant'),
-      detail: names.has('metalmind-qdrant') ? 'running' : 'not running',
-      remediation: names.has('metalmind-qdrant') ? undefined : 'Run `vault-up` to start the stack.',
-    },
-  ];
-}
-
-export async function checkQdrantCollection(): Promise<DeepCheck> {
-  try {
-    const res = await fetch('http://localhost:6333/collections/vault');
-    if (!res.ok) {
-      return {
-        name: 'qdrant-collection',
-        ok: false,
-        detail: `vault collection missing (HTTP ${res.status})`,
-        remediation: 'Run `metalmind-vault-rag-indexer` to build the collection.',
-      };
-    }
-    const json = (await res.json()) as { result?: { points_count?: number } };
-    const points = json.result?.points_count ?? 0;
-    return {
-      name: 'qdrant-collection',
-      ok: points > 0,
-      detail: `${points} points`,
-      remediation:
-        points === 0 ? 'Collection is empty - run `metalmind-vault-rag-indexer`.' : undefined,
-    };
-  } catch (err) {
-    return {
-      name: 'qdrant-collection',
-      ok: false,
-      detail: `unreachable: ${err instanceof Error ? err.message : String(err)}`,
-      remediation: 'Start the stack: `vault-up`.',
-    };
-  }
-}
-
-export async function checkOllamaModel(): Promise<DeepCheck> {
-  try {
-    const res = await fetch('http://localhost:11434/api/tags');
-    if (!res.ok) {
-      return {
-        name: 'ollama-model',
-        ok: false,
-        detail: `ollama not ready (HTTP ${res.status})`,
-        remediation: 'Wait for ollama to finish booting, or `vault-up`.',
-      };
-    }
-    const json = (await res.json()) as { models?: Array<{ name?: string }> };
-    const hasEmbed = (json.models ?? []).some((m) => m.name?.includes('nomic-embed-text'));
-    return {
-      name: 'ollama-model',
-      ok: hasEmbed,
-      detail: hasEmbed ? 'nomic-embed-text present' : 'nomic-embed-text missing',
-      remediation: hasEmbed
-        ? undefined
-        : `Run \`docker exec ${OLLAMA_CONTAINER} ollama pull nomic-embed-text\`.`,
-    };
-  } catch (err) {
-    return {
-      name: 'ollama-model',
-      ok: false,
-      detail: `unreachable: ${err instanceof Error ? err.message : String(err)}`,
-      remediation: 'Start the stack: `vault-up`.',
-    };
-  }
 }
 
 export async function checkRecallHttp(): Promise<DeepCheck> {
@@ -799,13 +686,6 @@ export async function checkSupersedeIntegrity(vaultPath: string): Promise<DeepCh
 }
 
 export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
-  // Only fire the docker/qdrant/ollama probes when the user is actually
-  // on the legacy stack. Default v0.5.0 installs run sqlite-vec +
-  // fastembed in-process; surfacing "metalmind-qdrant: not running" as a
-  // doctor failure for those users would be confusing noise.
-  const legacyContainers = await detectLegacyStack();
-  const onLegacy = legacyContainers.size > 0;
-
   const installClaude = config.hosts.includes('claude');
   const installCodex = config.hosts.includes('codex');
   const installCursor = config.hosts.includes('cursor');
@@ -823,31 +703,13 @@ export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
     checkGraphifyResidue(config.forge.groups),
   ]);
 
-  if (!onLegacy) {
-    return [
-      watcher,
-      http,
-      supersede,
-      codeRefs,
-      intentSkills,
-      graphifyResidue,
-      ...stamps,
-      ...codexChecks,
-      ...cursorChecks,
-    ];
-  }
-
-  const docker = await checkDockerContainers();
-  const [qdrant, ollama] = await Promise.all([checkQdrantCollection(), checkOllamaModel()]);
   return [
-    ...docker,
-    qdrant,
-    ollama,
     watcher,
     http,
     supersede,
     codeRefs,
     intentSkills,
+    graphifyResidue,
     ...stamps,
     ...codexChecks,
     ...cursorChecks,

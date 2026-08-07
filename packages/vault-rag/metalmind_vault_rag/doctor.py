@@ -6,11 +6,10 @@ from collections import defaultdict
 from pathlib import Path
 
 from . import rerank as rerank_mod
-from .core import COLLECTION, VAULT, files_to_index, fts_row_count, vector_store
+from .core import VAULT, files_to_index, fts_row_count, vector_store
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 STALE_DAYS = 14
-DUPE_THRESHOLD = 0.92
 
 
 def parse_links(text: str) -> set[str]:
@@ -19,43 +18,6 @@ def parse_links(text: str) -> set[str]:
 
 def file_index() -> dict[str, Path]:
     return {p.stem: p for p in files_to_index()}
-
-
-def check_duplicates() -> None:
-    print("\n== Near-duplicates (cosine > 0.92, cross-file) ==")
-    # Iterating every stored vector is not part of the VectorStore Protocol -
-    # only the Qdrant backend's `scroll` API supports it cheaply. Skip
-    # gracefully on other backends; this is an opt-in doctor command, not
-    # a smoke check.
-    from .stores.qdrant_store import QdrantStore
-
-    store = vector_store()
-    if not isinstance(store, QdrantStore):
-        print("  skip - duplicate scan is Qdrant-only today (sqlite-vec backend has no scroll API)")
-        return
-    c = store._client  # noqa: SLF001
-    points, _ = c.scroll(COLLECTION, limit=10000, with_vectors=True, with_payload=True)
-    seen: set[tuple[str, str]] = set()
-    hits = 0
-    for p in points:
-        results = c.query_points(
-            collection_name=COLLECTION, query=p.vector, limit=3
-        ).points
-        for r in results:
-            if r.id == p.id or r.score < DUPE_THRESHOLD:
-                continue
-            if p.payload["file"] == r.payload["file"]:
-                continue
-            pair = tuple(sorted([str(p.id), str(r.id)]))
-            if pair in seen:
-                continue
-            seen.add(pair)
-            hits += 1
-            print(
-                f"  [{r.score:.3f}] {p.payload['file']} :: {p.payload['heading']}"
-                f"  ↔  {r.payload['file']} :: {r.payload['heading']}"
-            )
-    print(f"  ({hits} pairs)")
 
 
 def check_orphans() -> None:
@@ -180,29 +142,25 @@ def check_stale_inbox() -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--duplicates", action="store_true")
     ap.add_argument("--orphans", action="store_true")
     ap.add_argument("--dead-links", action="store_true")
     ap.add_argument("--stale-inbox", action="store_true")
-    ap.add_argument("--fts", action="store_true", help="FTS5 index health vs Qdrant")
+    ap.add_argument("--fts", action="store_true", help="FTS5 index health vs the vector store")
     ap.add_argument("--rerank", action="store_true", help="cross-encoder reranker smoke-test")
     ap.add_argument("--all", action="store_true")
     args = ap.parse_args()
 
     run_any = (
-        args.duplicates
-        or args.orphans
+        args.orphans
         or args.dead_links
         or args.stale_inbox
         or args.fts
         or args.rerank
     )
     if args.all or not run_any:
-        args.duplicates = args.orphans = args.dead_links = args.stale_inbox = True
+        args.orphans = args.dead_links = args.stale_inbox = True
         args.fts = args.rerank = True
 
-    if args.duplicates:
-        check_duplicates()
     if args.orphans:
         check_orphans()
     if args.dead_links:

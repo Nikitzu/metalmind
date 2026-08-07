@@ -32,98 +32,6 @@ describe('doctor deep checks', () => {
     vi.restoreAllMocks();
   });
 
-  describe('checkDockerContainers', () => {
-    it('reports both containers running when docker ps lists them', async () => {
-      runCommand.mockResolvedValueOnce(ok('metalmind-ollama\nmetalmind-qdrant\nunrelated'));
-      const { checkDockerContainers } = await import('./doctor.js');
-      const res = await checkDockerContainers();
-      expect(res.map((c) => c.ok)).toEqual([true, true]);
-      expect(res.map((c) => c.name)).toEqual(['metalmind-ollama', 'metalmind-qdrant']);
-    });
-
-    it('flags missing containers with a vault-up remediation', async () => {
-      runCommand.mockResolvedValueOnce(ok('something-else'));
-      const { checkDockerContainers } = await import('./doctor.js');
-      const res = await checkDockerContainers();
-      expect(res.every((c) => !c.ok)).toBe(true);
-      expect(res[0]?.remediation).toContain('vault-up');
-    });
-
-    it('fails gracefully when docker ps itself fails', async () => {
-      runCommand.mockResolvedValueOnce(fail('docker daemon down'));
-      const { checkDockerContainers } = await import('./doctor.js');
-      const res = await checkDockerContainers();
-      expect(res).toHaveLength(1);
-      expect(res[0]?.ok).toBe(false);
-      expect(res[0]?.name).toBe('docker-ps');
-    });
-  });
-
-  describe('checkQdrantCollection', () => {
-    it('ok when collection has points', async () => {
-      globalThis.fetch = vi.fn(
-        async () => new Response(JSON.stringify({ result: { points_count: 42 } }), { status: 200 }),
-      ) as typeof fetch;
-      const { checkQdrantCollection } = await import('./doctor.js');
-      const res = await checkQdrantCollection();
-      expect(res.ok).toBe(true);
-      expect(res.detail).toContain('42');
-    });
-
-    it('flags empty collection with a reindex remediation', async () => {
-      globalThis.fetch = vi.fn(
-        async () => new Response(JSON.stringify({ result: { points_count: 0 } }), { status: 200 }),
-      ) as typeof fetch;
-      const { checkQdrantCollection } = await import('./doctor.js');
-      const res = await checkQdrantCollection();
-      expect(res.ok).toBe(false);
-      expect(res.remediation).toContain('metalmind-vault-rag-indexer');
-    });
-
-    it('flags missing collection on 404', async () => {
-      globalThis.fetch = vi.fn(async () => new Response('', { status: 404 })) as typeof fetch;
-      const { checkQdrantCollection } = await import('./doctor.js');
-      const res = await checkQdrantCollection();
-      expect(res.ok).toBe(false);
-      expect(res.detail).toContain('404');
-    });
-
-    it('reports unreachable when fetch throws', async () => {
-      globalThis.fetch = vi.fn(async () => {
-        throw new Error('ECONNREFUSED');
-      }) as typeof fetch;
-      const { checkQdrantCollection } = await import('./doctor.js');
-      const res = await checkQdrantCollection();
-      expect(res.ok).toBe(false);
-      expect(res.detail).toContain('unreachable');
-      expect(res.remediation).toContain('vault-up');
-    });
-  });
-
-  describe('checkOllamaModel', () => {
-    it('ok when nomic-embed-text is present', async () => {
-      globalThis.fetch = vi.fn(
-        async () =>
-          new Response(JSON.stringify({ models: [{ name: 'nomic-embed-text:latest' }] }), {
-            status: 200,
-          }),
-      ) as typeof fetch;
-      const { checkOllamaModel } = await import('./doctor.js');
-      expect((await checkOllamaModel()).ok).toBe(true);
-    });
-
-    it('flags missing embed model with a docker exec hint', async () => {
-      globalThis.fetch = vi.fn(
-        async () =>
-          new Response(JSON.stringify({ models: [{ name: 'llama3:8b' }] }), { status: 200 }),
-      ) as typeof fetch;
-      const { checkOllamaModel } = await import('./doctor.js');
-      const res = await checkOllamaModel();
-      expect(res.ok).toBe(false);
-      expect(res.remediation).toContain('ollama pull nomic-embed-text');
-    });
-  });
-
   describe('checkRecallHttp', () => {
     it('ok when /health returns 200', async () => {
       globalThis.fetch = vi.fn(
@@ -155,7 +63,7 @@ describe('doctor deep checks', () => {
       await mkdir(join(tmp, '.claude'), { recursive: true });
       await mkdir(join(tmp, 'vault'), { recursive: true });
       config = {
-        version: 2,
+        version: 3,
         flavor: 'scadrial',
         vaultPath: join(tmp, 'vault'),
         outputStyle: { installed: null, priorValue: null },

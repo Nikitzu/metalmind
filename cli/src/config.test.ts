@@ -33,7 +33,7 @@ describe('config', () => {
     const { readConfig, writeConfig } = await import('./config.js');
 
     const cfg: Config = {
-      version: 2,
+      version: 3,
       flavor: 'scadrial',
       vaultPath: '/tmp/vault',
       outputStyle: { installed: 'marsh', priorValue: null },
@@ -64,7 +64,7 @@ describe('config', () => {
     await mkdir(join(tmp, '.metalmind'), { recursive: true });
     // Construct a v0.7.x-shaped config: every required field except hosts.
     const legacy = {
-      version: 2,
+      version: 3,
       flavor: 'classic',
       vaultPath: '/tmp/vault',
       outputStyle: { installed: null, priorValue: null },
@@ -110,18 +110,18 @@ describe('config', () => {
 
     const { readConfig } = await import('./config.js');
     const loaded = await readConfig();
-    expect(loaded?.version).toBe(2);
+    expect(loaded?.version).toBe(3);
     expect(loaded?.mcp.registered).toEqual(['serena']);
     expect(loaded?.hooks.claudeCode).toBe(false);
     expect(loaded).not.toHaveProperty('graphifyCmd');
 
     const onDisk = JSON.parse(await readFile(path, 'utf8'));
-    expect(onDisk.version).toBe(2);
+    expect(onDisk.version).toBe(3);
     expect(onDisk).not.toHaveProperty('graphifyCmd');
     expect(onDisk.mcp.registered).toEqual(['serena']);
   });
 
-  it('preserves unrelated settings across the v1 migration', async () => {
+  it('preserves unrelated settings across the v1 migration, but retires the ollama provider', async () => {
     vi.doMock('node:os', async (orig) => ({
       ...(await orig<typeof import('node:os')>()),
       homedir: () => tmp,
@@ -150,7 +150,10 @@ describe('config', () => {
     expect(loaded?.vaultPath).toBe('/custom/vault');
     expect(loaded?.forge.groups).toEqual({ shop: { repos: ['/a', '/b'] } });
     expect(loaded?.recall.defaultTier).toBe('deep');
-    expect(loaded?.embeddings.baseURL).toBe('http://localhost:11434');
+    // v2 to v3 retires the Ollama embedding provider; a stale baseURL must go
+    // with it, or the config would name a daemon nothing talks to.
+    expect(loaded?.embeddings.provider).toBe('local');
+    expect(loaded?.embeddings.baseURL).toBeNull();
     expect(loaded?.hosts).toEqual(['claude', 'codex']);
     expect(loaded?.verbose).toBe(true);
   });
@@ -162,7 +165,7 @@ describe('config', () => {
     }));
     const { readConfig, writeConfig } = await import('./config.js');
     const cfg: Config = {
-      version: 2,
+      version: 3,
       flavor: 'classic',
       vaultPath: '/tmp/vault',
       outputStyle: { installed: null, priorValue: null },
@@ -188,7 +191,7 @@ describe('config', () => {
     }));
     await mkdir(join(tmp, '.metalmind'), { recursive: true });
     const bad = {
-      version: 2,
+      version: 3,
       flavor: 'classic',
       vaultPath: '/tmp/vault',
       outputStyle: { installed: null, priorValue: null },

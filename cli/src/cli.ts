@@ -91,11 +91,6 @@ program
   .option('--no-git', 'Skip vault git tracking')
   .option('--auto-install-uv', 'Auto-install uv via the official Astral installer if missing')
   .option('--no-auto-install-uv', 'Never run the uv installer; bail if uv missing')
-  .option('--skip-docker', 'Skip Docker stack setup (useful when stack is already running)')
-  .option(
-    '--legacy',
-    'Opt into the Qdrant + Ollama backend instead of the embedded sqlite-vec + fastembed default',
-  )
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
   .option(
     '--host <host>',
@@ -109,7 +104,7 @@ program
 program
   .command('doctor')
   .description('Diagnose installation state (classic alias for `pulse`)')
-  .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
+  .option('--deep', 'Also probe live services (watcher, recall endpoint, stamps, vault integrity)')
   .option(
     '--recall-audit',
     'Replay the recall log; surface zero-hit and weak queries as /save candidates',
@@ -125,7 +120,7 @@ program
 program
   .command('pulse')
   .description('Pulse-check the install - prereqs, config, MCP state (Seeker)')
-  .option('--deep', 'Also probe live services (Docker, Qdrant, Ollama, watcher, stamps)')
+  .option('--deep', 'Also probe live services (watcher, recall endpoint, stamps, vault integrity)')
   .option(
     '--recall-audit',
     'Replay the recall log; surface zero-hit and weak queries as /save candidates',
@@ -147,7 +142,7 @@ program
   )
   .option(
     '--purge',
-    'Also remove Docker volumes (Qdrant data, Ollama models). Only takes effect with --yes or after prompt.',
+    'Also remove Docker volumes left by the pre-v0.16.0 Qdrant + Ollama stack. Only takes effect with --yes or after prompt.',
   )
   .action((cmdOpts: { yes?: boolean; purge?: boolean }) => uninstall(cmdOpts));
 

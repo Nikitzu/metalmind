@@ -18,7 +18,6 @@ metalmind pulse --deep    # or: metalmind doctor --deep - end-to-end runtime che
 - Watcher service is loaded (launchd on macOS, systemd --user on Linux)
 - Recall HTTP fast-path reachable at `127.0.0.1:17317`
 - The metalmind-managed blocks are present in `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md`
-- (`--legacy` only) Docker containers `metalmind-ollama` + `metalmind-qdrant`, Qdrant collection populated, Ollama has `nomic-embed-text` pulled
 
 For deeper Python-side smoke checks (FTS5 row count, rerank cross-encoder loadable):
 
@@ -54,7 +53,6 @@ Sourced from `~/.metalmind/aliases.sh` via `~/.zshrc` and `~/.bashrc`.
 | `vault-index` | Rebuild full index (`metalmind-vault-rag-indexer`) |
 | `vault-doctor` | Vault hygiene (`metalmind-vault-rag-doctor`) |
 | `vault-watcher-start` / `vault-watcher-stop` / `vault-watcher-status` | Control the watcher service (launchd on macOS, systemd on Linux) |
-| `vault-up` / `vault-down` / `vault-status` / `vault-logs` | (`--legacy` only) Start/stop/inspect the Docker stack |
 
 ## Upgrading metalmind
 
@@ -99,9 +97,6 @@ If the log shows a missing-binary error, run `metalmind burn brass` to re-render
 **"Connection refused" on port 17317**
 The watcher isn't running or the recall HTTP server failed to bind. `vault-watcher-start` to restart. Tail the log for details.
 
-**(`--legacy` only) "Connection refused" on port 11434 or 6333**
-Docker isn't running, or containers crashed. `vault-up` to restart. `vault-logs` for details.
-
 **Vault path elsewhere**
 Re-run `metalmind init` and provide the new path at the prompt. Teardown + re-init is the supported path - there's no in-place mover.
 
@@ -113,8 +108,3 @@ Edit `~/.claude/settings.json` `permissions.allow` to auto-approve additional Se
 - Serena: `uv tool install --upgrade serena-agent`
 - vault-rag: `uv tool install --reinstall --force --from <metalmind-repo>/packages/vault-rag metalmind-vault-rag` (or `metalmind init` again)
 
-For the Docker stack:
-
-```bash
-vault-down && docker compose -f ~/Knowledge/.metalmind-stack/compose.yml pull && vault-up
-```
