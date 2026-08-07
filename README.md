@@ -125,7 +125,7 @@ metalmind takes the opposite bet: the recall surface is a CLI, Claude learns the
 
 ## Recall quality at scale
 
-Token cost is only half the story - recall has to actually find your note. `v0.5.0` runs the entire retrieval stack in-process (sqlite-vec for vectors, fastembed for embeddings, FTS5 for keyword) - no Docker, no Ollama daemon. Hybrid retrieval fuses semantic + keyword via RRF with a top-rank bonus and per-list weights. Measured in [`bench/recall-v0/`](bench/recall-v0/) on 12 hand-authored gold notes plus up to 988 seeded same-domain distractors, 20 paraphrase-ish queries:
+Token cost is only half the story - recall has to actually find your note. `v0.5.0` runs the entire retrieval stack in-process (sqlite-vec for vectors, fastembed for embeddings, FTS5 for keyword) - no Docker, no daemon. Hybrid retrieval fuses semantic + keyword via RRF with a top-rank bonus and per-list weights. Measured in [`bench/recall-v0/`](bench/recall-v0/) on 12 hand-authored gold notes plus up to 988 seeded same-domain distractors, 20 paraphrase-ish queries:
 
 | Vault size | sem-only hit@5 | **hybrid hit@1** | **hybrid hit@5** | **+rerank hit@1** | **+rerank hit@5** |
 |---:|---:|---:|---:|---:|---:|
@@ -133,6 +133,16 @@ Token cost is only half the story - recall has to actually find your note. `v0.5
 | 100 notes | 95% | **85%** | **95%** | **90%** | 95% |
 | 500 notes | 90% | **85%** | **90%** | **90%** | 95% |
 | 1,000 notes | 90% | **85%** | **85%** | **90%** | 95% |
+
+**At 50,000 notes** ([`bench/recall-at-scale/`](bench/recall-at-scale/), HN comments, 12-core Linux):
+
+| Vault size | hit@1 | hit@3 | hit@5 | misses | index | p50 | p95 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1,000 | 100% | 100% | 100% | 0/20 | 35 s | 26 ms | 37 ms |
+| 10,000 | 100% | 100% | 100% | 0/20 | 449 s | 112 ms | 160 ms |
+| 50,000 | **95%** | **100%** | **100%** | 0/20 | 68 min | 390 ms | 617 ms |
+
+Every question finds its answer inside the top 3 at every scale, and nothing misses at k=5. 50× the corpus costs ~15× the query latency - still sub-620 ms p95, with no server and no daemon. This was the gate on deleting the Qdrant + Ollama backend; it held, and that backend is gone as of v0.16.0.
 
 Hybrid is the default. Fusion weights adapt per query: exact-match tokens (UUIDs, numeric IDs, ticket IDs like `RED-991`, hostnames, emails) raise the keyword-leg weight, since BM25 beats embeddings on literal identifiers (`METALMIND_RRF_ADAPTIVE=0` restores fixed weights). Fused scores are folder-weighted - `Archive/` 0.4x, `Inbox/` 0.7x - so stale notes re-rank below in-flight work. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query. `--semantic-only` and `--keyword-only` flags let you A/B any query. The `BAAI/bge-small-en-v1.5` embedding model is a 30 MB ONNX wheel cached at `~/.metalmind/cache/fastembed/`.
 

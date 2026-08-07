@@ -155,6 +155,37 @@ function runOnce(cmd, env, cwd, timeoutMs) {
   });
 }
 
+/**
+ * Expand each question's gold set to every cached note sharing its story.
+ *
+ * questions.json freezes `expected` at seed time, but the vault contains
+ * every cached comment. Any comment on the gold story answers "discussion
+ * of <title>" just as well as the one that got listed, so at large scales
+ * an unlisted sibling outranks a listed one and the run scores a near-miss
+ * for a correct answer. Deriving the set from story_id at run time keeps
+ * hit@1 meaning the same thing at 1k and 50k.
+ */
+async function expandExpectedByStory(questions, cache) {
+  const files = (await readdir(cache)).filter((f) => f.endsWith('.md'));
+  const byStory = new Map();
+  for (const f of files) {
+    const head = (await readFile(join(cache, f), 'utf8')).slice(0, 500);
+    const m = head.match(/story_id:\s*"?(\d+)"?/);
+    if (!m) continue;
+    const list = byStory.get(m[1]) ?? [];
+    list.push(f);
+    byStory.set(m[1], list);
+  }
+
+  return questions.map((q) => {
+    const tag = (q.tags ?? []).find((t) => String(t).startsWith('story:'));
+    const story = tag ? String(tag).slice('story:'.length) : null;
+    const siblings = story ? (byStory.get(story) ?? []) : [];
+    const expected = [...new Set([...(q.expected ?? []), ...siblings])];
+    return { ...q, expected, expectedLabelled: (q.expected ?? []).length };
+  });
+}
+
 async function assembleVault(vault, scale, cache, expectedFiles) {
   await mkdir(vault, { recursive: true });
   const cacheFiles = (await readdir(cache)).filter((f) => f.endsWith('.md'));
@@ -342,8 +373,14 @@ function renderMd({ meta, perScale }) {
 
 async function main() {
   const args = parseArgs(process.argv);
-  const questions = JSON.parse(await readFile(QUESTIONS_PATH, 'utf8'));
-  process.stdout.write(`loaded ${questions.length} questions; scales=${args.scales.join(',')}; rerank=${RERANK}\n`);
+  const seeded = JSON.parse(await readFile(QUESTIONS_PATH, 'utf8'));
+  const questions = await expandExpectedByStory(seeded, args.cache);
+  const labelled = questions.reduce((n, q) => n + q.expectedLabelled, 0);
+  const expanded = questions.reduce((n, q) => n + q.expected.length, 0);
+  process.stdout.write(
+    `loaded ${questions.length} questions; gold ${labelled} seeded -> ${expanded} after story expansion; ` +
+      `scales=${args.scales.join(',')}; rerank=${RERANK}\n`,
+  );
 
   const perScale = [];
   for (let i = 0; i < args.scales.length; i += 1) {

@@ -7,24 +7,51 @@ Sister bench to [`bench/recall-v0/`](../recall-v0/). Where `recall-v0` answers
 answers **"does the embedded sqlite-vec + fastembed stack hold up when the
 vault has 50k notes of plausible noise?"**
 
-If the small-vault numbers in `recall-v0` are right but this one collapses,
-the embedded-default thesis breaks and `--legacy` shouldn't be removed.
+This was the gate on removing the legacy Qdrant + Ollama backend: if the
+small-vault numbers in `recall-v0` held but this one collapsed, the
+embedded default was not safe to make the only path. It held, and the
+legacy backend was removed in v0.16.0.
 
 ## Results to date
 
 Embedded backend (sqlite-vec + fastembed `BAAI/bge-small-en-v1.5`, 384-dim),
-hybrid mode, no rerank, on a 16-thread M-series Mac:
+hybrid mode, no rerank, on a 12-core Linux box (2026-08-07):
 
 | scale | hit@1 | hit@3 | hit@5 | misses | index (s) | p50 (ms) | p95 (ms) |
 |---|---|---|---|---|---|---|---|
-| 1,000 | 100% | 100% | 100% | 0/20 | 33 | 12 | 24 |
-| 10,000 | 100% | 100% | 100% | 0/20 | 1226 | 40 | 67 |
-| 50,000 | _pending - indexer takes ~100 min, run with `--scales 50000` separately_ |
+| 1,000 | 100% | 100% | 100% | 0/20 | 35 | 26 | 37 |
+| 10,000 | 100% | 100% | 100% | 0/20 | 449 | 112 | 160 |
+| 50,000 | 95% | 100% | 100% | 0/20 | 4061 | 390 | 617 |
 
-Both small scales hit the same 100% top-1 - the embedded retrieval pipeline
-holds up cleanly at 10× the recall-v0 corpus size with sub-100 ms p95
-latency. 50k results land in a follow-up; the framework is here, the
-indexer just needs an unattended hour.
+**The embedded-default thesis holds at 50k.** Every question finds a gold
+answer inside the top 3 at every scale, and nothing misses at k=5. One
+question out of twenty loses top-1 at 50k. Latency grows sub-linearly:
+50× the corpus costs ~15× p50, still under 620 ms p95 with no server and
+no daemon.
+
+Indexing is near-linear on this hardware (39s → 449s → 4061s), not the
+superlinear curve an earlier M-series run suggested. Budget roughly an
+hour of unattended CPU for the 50k row.
+
+> [!note]
+> Earlier revisions of this table reported 1k/10k from an M-series Mac and
+> left 50k pending. Those rows are gone rather than mixed with these: the
+> index and latency columns are hardware-bound, so one table must mean one
+> machine. Recall columns are hardware-independent and reproduce anywhere.
+
+### The gold set is derived, not frozen
+
+`questions.json` seeds `expected` with specific comment files, but the
+vault contains every cached comment. Any comment on the gold story
+answers "discussion of \<title\>" as well as the seeded one, so at large
+scale an unseeded sibling outranks a seeded one and a correct answer
+scores as a near-miss. Before this was fixed, 50k reported 25% hit@1 while
+19 of 20 top hits were in fact on the right story.
+
+`expandExpectedByStory()` now rebuilds the gold set from `story_id` at run
+time (477 seeded → 666 actual), so hit@1 means the same thing at 1k and
+50k. If you re-seed the corpus, the expansion re-derives itself; no
+regeneration step needed.
 
 ## Methodology
 

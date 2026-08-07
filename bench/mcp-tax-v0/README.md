@@ -11,14 +11,16 @@ Per-session standing cost of the first-turn token tax:
 
 | System | Transport | Tools | Tools JSON (chars) | First-turn tokens (approx) |
 |---|---|---:|---:|---:|
-| **metalmind** (loopback HTTP, default) | HTTP 127.0.0.1:17317 | **0** | 0 | ~519 *(one-time text block in CLAUDE.md)* |
+| **metalmind** (loopback HTTP, default) | HTTP 127.0.0.1:17317 | **0** | 0 | ~345 *(one-time text block in CLAUDE.md)* |
 | **metalmind** (stdio MCP fallback) | MCP stdio | 3 | 627 | ~157 |
 | **mem0** (`pinkpixel-dev/mem0-mcp`) | MCP stdio | 3 | 5,276 | ~1,319 |
 | **Claude Code native `/memory`** | text (CLAUDE.md hierarchy) | 0 | 0 | ~1 |
 
 Numbers are char/4 approximations - order-of-magnitude, not exact. Anyone with an `ANTHROPIC_API_KEY` can re-run with real token counts (see *Reproducing*). The **relative shape** is what matters: two zero-schema transports, one modest-schema transport, one bloat-schema transport.
 
-Why metalmind-loopback is ~519 tokens even though it has zero tool schemas: the `~/.claude/CLAUDE.md` block that teaches Claude *when* to call `metalmind tap copper` is ~20 lines of prose. We count it. It is a one-time text block, not a per-tool JSON schema.
+Why metalmind-loopback is ~345 tokens even though it has zero tool schemas: the `~/.claude/CLAUDE.md` block that teaches Claude *when* to call `metalmind tap copper` is ~20 lines of prose. We count it. It is a one-time text block, not a per-tool JSON schema.
+
+The instruction-block fixture is generated from `cli/templates/.shared/managed-block-body.md`, the same source `metalmind init` stamps. Regenerate it whenever that template changes - a stale copy silently misreports metalmind's own cost, which is how this number sat at 519 while the real block had shrunk to 345.
 
 ## Why "tools × bloat" matters
 
