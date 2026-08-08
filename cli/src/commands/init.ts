@@ -8,7 +8,7 @@ export interface InitCliOptions {
   flavor?: string;
   serena?: boolean;
   noSerena?: boolean;
-  noGraphify?: boolean;
+  core?: boolean;
   teams?: boolean;
   noTeams?: boolean;
   memoryRouting?: string;
@@ -97,6 +97,7 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     const hostsFlag = parseHostFlag(cliOpts.host);
     if (hostsFlag !== undefined) wizardOpts.hosts = hostsFlag;
     if (cliOpts.withMcp) wizardOpts.withMcp = true;
+    if (cliOpts.core) wizardOpts.core = true;
 
     if (cliOpts.skipWatcher) wizardOpts.skipWatcher = true;
 

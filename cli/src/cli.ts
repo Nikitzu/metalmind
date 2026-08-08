@@ -91,6 +91,10 @@ program
   .option('--no-git', 'Skip vault git tracking')
   .option('--auto-install-uv', 'Auto-install uv via the official Astral installer if missing')
   .option('--no-auto-install-uv', 'Never run the uv installer; bail if uv missing')
+  .option(
+    '--core',
+    'Memory surface only: recall, scribe, the stamped block, and uninstall. Skips Serena, subagents, team commands, and synod.',
+  )
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
   .option(
     '--host <host>',

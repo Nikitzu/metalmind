@@ -26,7 +26,16 @@ export interface CopyClaudeTemplatesOptions {
   flavor?: 'scadrial' | 'classic';
   eodHook?: boolean;
   notifications?: boolean;
+  /** Install only the memory surface: recall, scribe, the stamped block,
+   *  and the rules. Skips subagents, team commands, and the deliberation
+   *  skill so the thesis can be evaluated without the workflow layer. */
+  core?: boolean;
 }
+
+/** Skill bundles the core install keeps. The output-style bundles are here
+ *  because the stamped block's voice depends on the chosen flavour, and
+ *  metalmind-cli because recall is unusable without the command reference. */
+const CORE_SKILLS = new Set(['metalmind-cli', 'writing-vault-notes', 'marsh', 'telegraph']);
 
 const SENTINEL_BLOCK_RE = (key: string) =>
   new RegExp(
@@ -254,6 +263,7 @@ async function copySkillBundles(
   srcDir: string,
   destDir: string,
   render?: Renderer,
+  keep?: (name: string) => boolean,
 ): Promise<{ copied: string[] }> {
   if (!existsSync(srcDir)) return { copied: [] };
   await mkdir(destDir, { recursive: true });
@@ -261,6 +271,7 @@ async function copySkillBundles(
   const entries = await readdir(srcDir, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
+    if (keep && !keep(entry.name)) continue;
     const skillSrc = join(srcDir, entry.name);
     const skillDest = join(destDir, entry.name);
     await copyTreeRecursive(skillSrc, skillDest, render);
@@ -308,18 +319,22 @@ export async function copyClaudeTemplates(
     backedUp,
   );
   const removedLegacy = await removeLegacyRules(claudeDir);
-  const agents = await copyDir(
-    join(srcRoot, 'agents'),
-    join(claudeDir, 'agents'),
-    (name) => name.endsWith('.md'),
-    () => renderRecall,
-    backupDir,
-    backedUp,
-  );
+  const core = opts.core === true;
+  const agents = core
+    ? { copied: [] }
+    : await copyDir(
+        join(srcRoot, 'agents'),
+        join(claudeDir, 'agents'),
+        (name) => name.endsWith('.md'),
+        () => renderRecall,
+        backupDir,
+        backedUp,
+      );
   const commands = await copyDir(
     join(srcRoot, 'commands'),
     join(claudeDir, 'commands'),
-    (name) => PARTIAL_COMMANDS.has(name) || (opts.withTeams === true && name.startsWith('team-')),
+    (name) =>
+      PARTIAL_COMMANDS.has(name) || (!core && opts.withTeams === true && name.startsWith('team-')),
     (name) => (PARTIAL_COMMANDS.has(name) ? renderPartials : null),
   );
   // Skills come from two source trees:
@@ -327,15 +342,18 @@ export async function copyClaudeTemplates(
   //   obsidian-markdown).
   // - cli/templates/.shared/skills/ - host-agnostic bundles shared with
   //   Codex (writing-vault-notes, synod). Single source of truth post-v0.8.1.
+  const keepSkill = core ? (name: string) => CORE_SKILLS.has(name) : undefined;
   const ccSkills = await copySkillBundles(
     join(srcRoot, 'skills'),
     join(claudeDir, 'skills'),
     renderSkill,
+    keepSkill,
   );
   const sharedSkills = await copySkillBundles(
     join(templatesDir, '.shared', 'skills'),
     join(claudeDir, 'skills'),
     renderSkill,
+    keepSkill,
   );
 
   return {

@@ -40,3 +40,5 @@ git --version && uv --version && python3 --version && claude --version
 
 If all four print versions, you're ready. metalmind runs the entire retrieval stack in-process - no Docker, no daemon, no server.
 
+To evaluate recall without installing the workflow layer, use `metalmind init --core`: memory surface only (recall, scribe, the stamped block, uninstall), skipping Serena, subagents, team commands, and synod. Re-run `init` without the flag to add the rest later.
+

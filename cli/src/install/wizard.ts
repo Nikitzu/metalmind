@@ -50,6 +50,10 @@ export interface RunWizardOptions {
   hosts?: MetalmindHost[];
   /** Opt-in MCP registration for Codex. Off by default. */
   withMcp?: boolean;
+  /** Memory surface only - skips Serena, subagents, team commands, and the
+   *  deliberation skill. Lets the recall thesis be evaluated without
+   *  installing the workflow layer. */
+  core?: boolean;
 }
 
 function checkCancelled<T>(value: T | symbol, label: string): asserts value is T {
@@ -123,8 +127,15 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       throw err;
     }));
 
+  const core = opts.core === true;
+  if (core) {
+    log.info('Core install: memory surface only (no Serena, subagents, or team commands).');
+  }
+
   let serena: boolean;
-  if (opts.serena !== undefined) {
+  if (core && opts.serena === undefined) {
+    serena = false;
+  } else if (opts.serena !== undefined) {
     serena = opts.serena;
   } else {
     const answer = await confirm({
@@ -175,7 +186,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   }
 
   let enableTeams: boolean;
-  if (opts.enableTeams !== undefined) {
+  if (core && opts.enableTeams === undefined) {
+    enableTeams = false;
+  } else if (opts.enableTeams !== undefined) {
     enableTeams = opts.enableTeams;
   } else {
     const answer = await confirm({
@@ -187,7 +200,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   }
 
   let eodHook: boolean;
-  if (opts.eodHook !== undefined) {
+  if (core && opts.eodHook === undefined) {
+    eodHook = false;
+  } else if (opts.eodHook !== undefined) {
     eodHook = opts.eodHook;
   } else {
     const answer = await confirm({
@@ -201,7 +216,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
 
   const isMac = process.platform === 'darwin';
   let notifications: boolean;
-  if (opts.notifications !== undefined) {
+  if (core && opts.notifications === undefined) {
+    notifications = false;
+  } else if (opts.notifications !== undefined) {
     notifications = opts.notifications;
   } else if (!isMac) {
     notifications = false;
@@ -393,6 +410,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       flavor,
       eodHook,
       notifications,
+      core,
     });
     log.success(`  wrote ${tpl.copied.length} files`);
     if (tpl.backupDir) {
@@ -499,6 +517,9 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   log.success('Wrote ~/.metalmind/config.json');
 
   const verifyCmd = flavor === 'scadrial' ? 'pulse' : 'doctor';
+  if (core) {
+    log.info('Core install complete. Re-run `metalmind init` without --core to add the rest.');
+  }
   outro(`Installed. Run \`metalmind ${verifyCmd}\` to verify.`);
   return config;
 }
