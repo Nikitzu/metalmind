@@ -34,7 +34,8 @@ export interface CopyClaudeTemplatesOptions {
 
 /** Skill bundles the core install keeps. The output-style bundles are here
  *  because the stamped block's voice depends on the chosen flavour, and
- *  metalmind-cli because recall is unusable without the command reference. */
+ *  metalmind-cli because recall is unusable without the command reference.
+ *  `using-teams` joins them when --teams is explicitly requested. */
 const CORE_SKILLS = new Set(['metalmind-cli', 'writing-vault-notes', 'marsh', 'telegraph']);
 
 const SENTINEL_BLOCK_RE = (key: string) =>
@@ -319,7 +320,11 @@ export async function copyClaudeTemplates(
     backedUp,
   );
   const removedLegacy = await removeLegacyRules(claudeDir);
-  const core = opts.core === true;
+  // --core narrows defaults; it does not veto an explicit --teams. The team
+  // commands dispatch subagents, so asking for teams has to bring the agents
+  // with it or the commands land looking installed and fail on use.
+  const withTeams = opts.withTeams === true;
+  const core = opts.core === true && !withTeams;
   const agents = core
     ? { copied: [] }
     : await copyDir(
@@ -333,8 +338,7 @@ export async function copyClaudeTemplates(
   const commands = await copyDir(
     join(srcRoot, 'commands'),
     join(claudeDir, 'commands'),
-    (name) =>
-      PARTIAL_COMMANDS.has(name) || (!core && opts.withTeams === true && name.startsWith('team-')),
+    (name) => PARTIAL_COMMANDS.has(name) || (withTeams && name.startsWith('team-')),
     (name) => (PARTIAL_COMMANDS.has(name) ? renderPartials : null),
   );
   // Skills come from two source trees:

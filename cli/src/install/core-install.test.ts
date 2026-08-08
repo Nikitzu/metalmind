@@ -35,7 +35,7 @@ describe('core install', () => {
   });
 
   it('skips the workflow layer: subagents, team commands, and synod', async () => {
-    await copyClaudeTemplates({ claudeDir, core: true, withTeams: true });
+    await copyClaudeTemplates({ claudeDir, core: true });
 
     expect(await ls(join(claudeDir, 'agents'))).toEqual([]);
     expect((await ls(join(claudeDir, 'commands'))).filter((c) => c.startsWith('team-'))).toEqual(
@@ -46,10 +46,14 @@ describe('core install', () => {
     expect(skills).not.toContain('using-teams');
   });
 
-  it('--core ignores --teams rather than half-installing the team surface', async () => {
+  it('an explicit --teams wins over --core, and brings the agents it dispatches', async () => {
     await copyClaudeTemplates({ claudeDir, core: true, withTeams: true });
+
     const commands = await ls(join(claudeDir, 'commands'));
-    expect(commands.some((c) => c.startsWith('team-'))).toBe(false);
+    expect(commands.some((c) => c.startsWith('team-'))).toBe(true);
+    // The team commands dispatch subagents. Installing one without the other
+    // leaves a surface that looks present and fails on first use.
+    expect((await ls(join(claudeDir, 'agents'))).length).toBeGreaterThan(0);
   });
 
   it('a full install still ships everything core drops', async () => {
@@ -62,7 +66,7 @@ describe('core install', () => {
 
   it('core installs strictly fewer files than full', async () => {
     const fullDir = await mkdtemp(join(tmpdir(), 'mm-full-'));
-    const core = await copyClaudeTemplates({ claudeDir, core: true, withTeams: true });
+    const core = await copyClaudeTemplates({ claudeDir, core: true });
     const full = await copyClaudeTemplates({ claudeDir: fullDir, withTeams: true });
 
     expect(core.copied.length).toBeLessThan(full.copied.length);

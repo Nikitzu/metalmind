@@ -129,7 +129,10 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
 
   const core = opts.core === true;
   if (core) {
-    log.info('Core install: memory surface only (no Serena, subagents, or team commands).');
+    log.info(
+      'Core install: memory surface only (no Serena, subagents, or team commands). ' +
+        'Explicit flags still win - pass --teams or --serena to keep either.',
+    );
   }
 
   let serena: boolean;

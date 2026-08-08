@@ -218,7 +218,7 @@ metalmind init --host codex --with-mcp   # Codex + opt-in MCP server
 
 The wizard walks five steps: prereq check (Python + uv + git + at least one supported host), vault scaffold, Python engines via `uv tool install` (sqlite-vec + fastembed bundled), watcher service (launchd on macOS, systemd on Linux), then per-host stamping. See the [install-flow diagram](https://metalmind.mzyx.dev/#demo) for what each step does.
 
-**Just want to try the memory thesis?** `metalmind init --core` installs the memory surface only - recall, `scribe`, the stamped `CLAUDE.md` block, the rules, and `uninstall`. It skips Serena, the 15 subagents, the team commands, and `synod`: 10 files instead of 40, and it stops asking about the workflow layer. Re-run `metalmind init` without `--core` whenever you want the rest; nothing is lost by starting small.
+**Just want to try the memory thesis?** `metalmind init --core` installs the memory surface only - recall, `scribe`, the stamped `CLAUDE.md` block, the rules, and `uninstall`. It skips Serena, the 15 subagents, the team commands, and `synod`: 10 files instead of 40, and it stops asking about the workflow layer. `--core` narrows the defaults, it does not override you - pass `--teams` or `--serena` alongside it and you get those. Re-run `metalmind init` without `--core` whenever you want the rest; nothing is lost by starting small.
 
 ## Requirements
 
