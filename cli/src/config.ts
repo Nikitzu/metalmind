@@ -103,6 +103,13 @@ const MIGRATIONS: Record<number, Migration> = {
 function migrate(raw: RawConfig): RawConfig {
   let current = raw;
   const startVersion = typeof current.version === 'number' ? current.version : 0;
+  if (startVersion > CURRENT_CONFIG_VERSION) {
+    throw new Error(
+      `~/.metalmind/config.json is version ${startVersion}, but this metalmind only understands ${CURRENT_CONFIG_VERSION}. ` +
+        'A newer metalmind wrote it. Migrations only run forward, so upgrade rather than downgrade: ' +
+        'pnpm add -g metalmind@latest (or npm i -g metalmind@latest).',
+    );
+  }
   for (let v = startVersion; v < CURRENT_CONFIG_VERSION; v++) {
     const migration = MIGRATIONS[v];
     if (!migration) {

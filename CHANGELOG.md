@@ -6,6 +6,42 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.16.0 - 2026-08-08
+
+### Removed
+
+- **The legacy Qdrant + Ollama backend is gone.** sqlite-vec + fastembed became the default in v0.5.0 and the escape hatch went unused for ten minors while charging rent: a `qdrant-client` dependency, two backend implementations, 142 lines of Docker compose setup, a Docker prerequisite, three `doctor` probes, and the `--legacy` and `--skip-docker` flags.
+
+  `check_duplicates` went with it. The scan was Qdrant-only and had printed "skip" on every default install since v0.5.0, so it had been dead for exactly as long as the default existed.
+
+  `METALMIND_BACKEND=legacy` is still read, and now raises instead of falling through. Silently switching a stale export to fastembed would re-embed the vault with a different model than the index was built with - a corruption that fails no test and surfaces only as bad recall.
+
+  Config migrates v2 to v3, retiring the `ollama` and `custom` embedding providers and dropping any `baseURL` that pointed at a daemon nothing talks to. Teardown still stops the old containers and clears `<vault>/.metalmind-stack`, so machines that ran the stack are cleaned up on uninstall.
+
+### Fixed
+
+- **The recall bench was scoring correct answers as misses.** `questions.json` froze `expected` as a list of specific comment files, but the vault holds every cached comment. Any comment on the gold story answers the query as well as the seeded one, so once the corpus was large enough to include unseeded siblings, a correct hit outranked a labelled one and scored as a near-miss.
+
+  Invisible at 1k and 10k, severe at 50k: 25% reported hit@1 while 19 of 20 top hits were in fact on the right story. Eleven questions landing at exactly rank 2 was the tell - real degradation does not cluster. The gold set is now derived from `story_id` at run time (477 seeded → 666 actual).
+
+- **A config written by a newer metalmind now explains itself.** Migrations only run forward, so an older CLI reading a v3 config used to die with a raw schema dump. It now names the version gap and says to upgrade.
+
+- **The mcp-tax instruction-block fixture had drifted** to 2091 chars against a live block of 1376, and still described "auto-indexed into local Qdrant". metalmind was reporting a third more standing token cost than it actually charges: 519 → 345.
+
+### Added
+
+- **The 50,000-note benchmark row**, pending since May and the stated gate on removing the legacy backend. It held.
+
+  | scale | hit@1 | hit@3 | hit@5 | misses | index | p95 |
+  |---|---|---|---|---|---|---|
+  | 1,000 | 100% | 100% | 100% | 0/20 | 35 s | 37 ms |
+  | 10,000 | 100% | 100% | 100% | 0/20 | 7.5 min | 160 ms |
+  | 50,000 | 95% | 100% | 100% | 0/20 | 68 min | 617 ms |
+
+  Every question finds its answer inside the top 3 at every scale. 50× the corpus costs ~15× the query latency, with no server and no daemon.
+
+---
+
 ## 0.15.1 - 2026-08-06
 
 ### Added

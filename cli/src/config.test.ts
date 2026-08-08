@@ -184,6 +184,21 @@ describe('config', () => {
     expect(loaded?.hosts).toEqual(['claude', 'codex']);
   });
 
+  it('a config from a newer metalmind says upgrade, not a zod dump', async () => {
+    vi.doMock('node:os', async (orig) => ({
+      ...(await orig<typeof import('node:os')>()),
+      homedir: () => tmp,
+    }));
+    await mkdir(join(tmp, '.metalmind'), { recursive: true });
+    await writeFile(
+      join(tmp, '.metalmind', 'config.json'),
+      JSON.stringify({ version: 99, flavor: 'scadrial', vaultPath: '/tmp/vault' }),
+      'utf8',
+    );
+    const { readConfig } = await import('./config.js');
+    await expect(readConfig()).rejects.toThrow(/only understands|upgrade/i);
+  });
+
   it('rejects empty hosts array', async () => {
     vi.doMock('node:os', async (orig) => ({
       ...(await orig<typeof import('node:os')>()),
