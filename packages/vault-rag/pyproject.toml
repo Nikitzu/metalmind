@@ -1,6 +1,6 @@
 [project]
 name = "metalmind-vault-rag"
-version = "0.5.0"
+version = "0.6.0"
 description = "Obsidian vault RAG service for metalmind - MCP server, watcher, indexer, doctor."
 requires-python = ">=3.11"
 dependencies = [

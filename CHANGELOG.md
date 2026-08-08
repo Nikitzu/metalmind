@@ -6,6 +6,18 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.17.1 - 2026-08-08
+
+### Fixed
+
+- **The v0.16.0 Python changes never reached existing installs.** `metalmind-vault-rag` had the Qdrant store and Ollama backend removed in v0.16.0, but its own version stayed at `0.5.0`. The installer only force-reinstalls when the bundled version differs from the installed one, so upgrading the CLI left the old Python engine in place with the legacy code still on disk.
+
+  Harmless in effect (the dead backends simply went unused) but it meant the removal was cosmetic for anyone who had already installed. The package is now `0.6.0`, so `metalmind stamp` and `metalmind init` detect the mismatch and reinstall.
+
+  A package whose contents change needs its version to change, or the mechanism that ships it cannot tell.
+
+---
+
 ## 0.17.0 - 2026-08-08
 
 ### Added
