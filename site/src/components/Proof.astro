@@ -1,23 +1,28 @@
 ---
 const taxBars = [
-  { label: 'metalmind (loopback)',          val: 519,   hi: true,  w: 519 / 1319 * 100 },
-  { label: 'metalmind (stdio fallback)',    val: 157,   hi: false, w: 157 / 1319 * 100 },
-  { label: 'Claude native /memory',         val: 1,     hi: false, w: 1   / 1319 * 100 },
+  { label: 'metalmind loopback',            val: 345,   hi: true,  w: 345 / 1319 * 100 },
+  { label: 'metalmind stdio',               val: 157,   hi: false, w: 157 / 1319 * 100 },
+  { label: 'Claude /memory',                val: 1,     hi: false, w: 1   / 1319 * 100 },
   { label: 'mem0 (mcp)',                    val: 1319,  hi: false, w: 100 },
 ];
 const recallRows = [
-  { vault: '12 notes',     mm: '90%', qmd: '85%' },
-  { vault: '100 notes',    mm: '90%', qmd: '70%' },
-  { vault: '500 notes',    mm: '90%', qmd: '85%' },
-  { vault: '1,000 notes',  mm: '90%', qmd: '80%' },
+  { vault: '1,000',   hit1: '100%', hit3: '100%', p95: '37 ms' },
+  { vault: '10,000',  hit1: '100%', hit3: '100%', p95: '160 ms' },
+  { vault: '50,000',  hit1: '95%',  hit3: '100%', p95: '617 ms' },
+];
+const qmdRows = [
+  { vault: '12',    mm: '90%', qmd: '85%' },
+  { vault: '100',   mm: '90%', qmd: '70%' },
+  { vault: '500',   mm: '90%', qmd: '85%' },
+  { vault: '1,000', mm: '90%', qmd: '80%' },
 ];
 ---
 <section id="proof">
   <div class="container">
     <div class="section-head">
       <div class="eyebrow">§ Proof, not promises</div>
-      <h2>Two benches we keep honest.</h2>
-      <p>Reproducible numbers from <span class="kbd">bench/recall-v0/</span> and <span class="kbd">bench/mcp-tax-v0/</span> in the repo. Run them yourself.</p>
+      <h2>Three benches we keep honest.</h2>
+      <p>Reproducible numbers from <span class="kbd">bench/</span> in the repo. Run them yourself.</p>
     </div>
 
     <div class="proof-grid">
@@ -36,24 +41,41 @@ const recallRows = [
             </div>
           ))}
         </div>
-        <div class="proof-foot mono">~8.4× lower than mem0 on apples-to-apples MCP</div>
+        <div class="proof-foot mono">~3.8× lower than mem0 · approx (char/4)</div>
+      </div>
+
+      <div class="proof-card">
+        <div class="proof-eyebrow mono">- recall-at-scale</div>
+        <h3 class="proof-h display">Recall quality at 50k notes</h3>
+        <p class="proof-sub">Hybrid retrieval, no rerank, on a corpus of 50,000 Hacker News comments. Zero misses at k=5, every scale.</p>
+        <table class="proof-table mono">
+          <thead>
+            <tr><th>vault</th><th>hit@1</th><th>hit@3</th><th>p95</th></tr>
+          </thead>
+          <tbody>
+            {recallRows.map((r) => (
+              <tr><td>{r.vault}</td><td class="accent-text">{r.hit1}</td><td>{r.hit3}</td><td>{r.p95}</td></tr>
+            ))}
+          </tbody>
+        </table>
+        <div class="proof-foot mono">no server, no daemon · 12-core Linux</div>
       </div>
 
       <div class="proof-card">
         <div class="proof-eyebrow mono">- recall-v0</div>
-        <h3 class="proof-h display">Recall quality at scale</h3>
-        <p class="proof-sub">hit@1 with rerank, on hand-authored gold notes plus same-domain distractors.</p>
+        <h3 class="proof-h display">Head to head with qmd</h3>
+        <p class="proof-sub">hit@1 with rerank on the same fixture: hand-authored gold notes plus same-domain distractors.</p>
         <table class="proof-table mono">
           <thead>
-            <tr><th>vault</th><th>metalmind</th><th>qmd 2.1.0</th></tr>
+            <tr><th>notes</th><th>metalmind</th><th>qmd 2.1.0</th></tr>
           </thead>
           <tbody>
-            {recallRows.map((r) => (
+            {qmdRows.map((r) => (
               <tr><td>{r.vault}</td><td class="accent-text">{r.mm}</td><td>{r.qmd}</td></tr>
             ))}
           </tbody>
         </table>
-        <div class="proof-foot mono">hybrid RRF · sqlite-vec · fastembed bge-small</div>
+        <div class="proof-foot mono">top-of-list precision at every scale</div>
       </div>
     </div>
   </div>

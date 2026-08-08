@@ -209,8 +209,11 @@
 /* PROOF */
 .proof-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1.25fr 1fr 1fr;
   gap: var(--space-5);
+}
+@media (max-width: 1100px) {
+  .proof-grid { grid-template-columns: repeat(2, 1fr); }
 }
 .proof-card {
   background: var(--bg-elev);
@@ -240,11 +243,17 @@
 .bars { display: flex; flex-direction: column; gap: var(--space-3); }
 .bar-row {
   display: grid;
-  grid-template-columns: 200px 1fr 70px;
-  gap: var(--space-3);
+  grid-template-columns: minmax(0, 128px) 1fr 52px;
+  gap: var(--space-2);
   align-items: center;
 }
-.bar-label { font-size: 12.5px; color: var(--ink); }
+.bar-label {
+  font-size: 11.5px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .bar-track {
   height: 8px;
   background: var(--bg-elev-2);
@@ -573,7 +582,7 @@
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .nav-links { gap: var(--space-3); }
   .nav-link:not(.nav-cta) { display: none; }
-  .bar-row { grid-template-columns: 140px 1fr 60px; }
+  .bar-row { grid-template-columns: minmax(0, 120px) 1fr 48px; }
   .bar-label { font-size: 11px; }
 }
 @media (max-width: 600px) {

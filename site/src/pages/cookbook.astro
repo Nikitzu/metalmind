@@ -58,7 +58,7 @@ const description = 'Opinionated patterns for using metalmind well - writing not
           <tr><th>flag</th><th>use when</th><th>cost</th></tr>
         </thead>
         <tbody>
-          <tr><td>(none)</td><td>Default. Right answer 90% of the time.</td><td>~45 ms median</td></tr>
+          <tr><td>(none)</td><td>Default. Top hit is right 100% of the time to 10k notes, 95% at 50k.</td><td>26-390 ms median by vault size</td></tr>
           <tr><td>--deep</td><td>One hit looks right but you want adjacent context. Walks backlinks one hop.</td><td>One round-trip; +1 hop tokens.</td></tr>
           <tr><td>--expand</td><td>Researching a topic broadly - hits + linked-context graph.</td><td>Heavier; every linked note loaded.</td></tr>
           <tr><td>--rerank</td><td>Top-of-list precision matters more than latency. Cross-encoder rescore.</td><td>~2 s per query; first call downloads ~500 MB.</td></tr>

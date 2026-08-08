@@ -5,7 +5,7 @@ import PageCTA from '../components/PageCTA.astro';
 import TermSwap from '../components/TermSwap.astro';
 
 const title = 'Memory · metalmind';
-const description = 'Save once, recall in 45ms median, zero standing tool-schema tax. Plain markdown in your own folder - Obsidian-compatible, not required.';
+const description = 'Save once, recall across 50,000 notes in under 620ms p95, zero standing tool-schema tax. Plain markdown in your own folder - Obsidian-compatible, not required.';
 ---
 <BaseLayout title={title} description={description}>
   <PageHero
@@ -13,7 +13,7 @@ const description = 'Save once, recall in 45ms median, zero standing tool-schema
     eyebrow="recall · save"
     eyebrowScadrial="tap copper · store copper"
     title="The headline. The thing the rest of the library compounds back into."
-    sub="Save once. Recall in 45 ms median. Zero standing tool-schema tax. Your notes stay plain markdown in your own folder (Obsidian-compatible - open them in any editor, in any tool, on any device) - Claude reads them verbatim, not as LLM-extracted summaries."
+    sub="Save once. Recall stays sub-620 ms p95 at 50,000 notes. Zero standing tool-schema tax. Your notes stay plain markdown in your own folder (Obsidian-compatible - open them in any editor, in any tool, on any device) - Claude reads them verbatim, not as LLM-extracted summaries."
   />
 
   <section>
@@ -86,7 +86,7 @@ const description = 'Save once, recall in 45ms median, zero standing tool-schema
       <div class="section-head">
         <div class="eyebrow">§ Recall benchmarks</div>
         <h2>Quality holds at scale.</h2>
-        <p>Hybrid retrieval (semantic + BM25 fused via RRF, with optional cross-encoder rerank). Measured on hand-authored gold notes plus same-domain distractors.</p>
+        <p>Hybrid retrieval (semantic + BM25 fused via RRF, with optional cross-encoder rerank). Two benches: a hand-authored fixture for precision, and a 50,000-note corpus for scale.</p>
       </div>
       <table class="proof-table mono memory-table">
         <thead>
@@ -99,6 +99,19 @@ const description = 'Save once, recall in 45ms median, zero standing tool-schema
           <tr><td>1,000 notes</td><td>85%</td><td>85%</td><td class="accent-text">90%</td><td>95%</td></tr>
         </tbody>
       </table>
+
+      <p style="margin-top: var(--space-6)">And on a corpus of 50,000 Hacker News comments, hybrid, no rerank - the run that decided whether the in-process backend could stand alone:</p>
+      <table class="proof-table mono memory-table">
+        <thead>
+          <tr><th>vault size</th><th>hit@1</th><th>hit@3</th><th>hit@5</th><th>index</th><th>p95</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1,000 notes</td><td class="accent-text">100%</td><td>100%</td><td>100%</td><td>35 s</td><td>37 ms</td></tr>
+          <tr><td>10,000 notes</td><td class="accent-text">100%</td><td>100%</td><td>100%</td><td>7.5 min</td><td>160 ms</td></tr>
+          <tr><td>50,000 notes</td><td class="accent-text">95%</td><td>100%</td><td>100%</td><td>68 min</td><td>617 ms</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top: var(--space-4)"><small>Zero misses at k=5 at every scale. 50× the corpus costs ~15× the query latency, with no server and no daemon. Reproduce with <span class="kbd">node bench/recall-at-scale/run.mjs</span>.</small></p>
     </div>
   </section>
 
