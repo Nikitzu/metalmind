@@ -6,6 +6,20 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.17.0 - 2026-08-08
+
+### Added
+
+- **`metalmind init --core` installs the memory surface without the workflow layer.** Evaluating whether recall is any good previously meant accepting the whole library first: Serena, 15 subagents, four team commands, and the deliberation skill, behind eight prompts.
+
+  `--core` installs recall, `scribe`, the stamped `CLAUDE.md` block, the rules, and `uninstall` - **10 files against 40, zero subagents against 15** - and stops prompting about the parts it is not installing. The output names what was skipped and how to get it, because a quiet minimal install is indistinguishable from a broken one.
+
+  Nothing is one-way: re-running `init` without the flag adds the rest. The copy is idempotent and the flag only narrows what gets copied.
+
+  `--core` narrows defaults; it does not override you. Pass `--teams` or `--serena` alongside it and you get those. An explicit `--teams` brings the subagents the team commands dispatch, since shipping the commands alone would leave a surface that looks installed and fails on first use.
+
+---
+
 ## 0.16.0 - 2026-08-08
 
 ### Removed

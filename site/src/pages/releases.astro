@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.17.0',
+    date: '2026-08-08',
+    headline: 'Try the memory thesis without installing the workflow layer',
+    summary: "Evaluating whether recall is any good used to mean accepting the whole library first: Serena, 15 subagents, four team commands, and the deliberation skill, behind eight prompts. metalmind init --core installs recall, scribe, the stamped CLAUDE.md block, the rules and uninstall - 10 files against 40, zero subagents against 15 - and stops asking about what it is not installing. Re-run init without the flag to add the rest; the copy is idempotent, so nothing is lost by starting small. --core narrows defaults rather than overriding you: pass --teams or --serena alongside it and you get those, and an explicit --teams brings the subagents its commands dispatch instead of leaving a surface that looks installed and fails on first use.",
+    tag_kind: 'added',
+  },
+  {
     tag: '0.16.0',
     date: '2026-08-08',
     headline: 'The Qdrant + Ollama backend is gone, and 50k proved it could be',
