@@ -184,6 +184,7 @@ Fair question for any solo-maintainer tool. The sustainability story:
 - **No cloud, no accounts, no phone-home.** Embeddings, indexing, recall, code graphs - all local. There is no metalmind backend to shut down, no API quota to throttle, no subscription to lapse. The only network call is the one you were already making to Claude.
 - **Reversible in one command.** `metalmind uninstall` stops the watcher, strips the sentinel-bounded blocks from your `CLAUDE.md` files (user content outside markers is preserved), and clears shell aliases. Your vault is never touched. Try it - then reinstall if you like it.
 - **MIT licensed.** Fork it, vendor it, swap the embedding backend. The architecture decisions are documented (`docs/`, `bench/`, `CHANGELOG.md`) specifically so a contributor - or a future-you - can keep it running.
+- **The plan is public.** [`docs/roadmap.md`](docs/roadmap.md) lists what's being worked on for the next 90 days, what's queued behind it, and what has been ruled out. 68 releases since 2026-04-20, each with its reasoning in the changelog. Not a promise - a history you can check, and a plan you can hold it to.
 
 ## Install
 
