@@ -13,11 +13,14 @@ const COLLECTION = 'metalmind_bench_longmemeval';
 const K = Number(process.env.METALMIND_BENCH_K ?? 5);
 
 function parseArgs(argv) {
-  const args = { port: 17600, oracle: false, limit: 0 };
+  const args = { port: 17600, oracle: false, limit: 0, scale: 0, indexHours: 12, rerank: false };
   for (let i = 2; i < argv.length; i += 1) {
     if (argv[i] === '--oracle') args.oracle = true;
     else if (argv[i] === '--port') args.port = Number(argv[++i]);
     else if (argv[i] === '--limit') args.limit = Number(argv[++i]);
+    else if (argv[i] === '--scale') args.scale = Number(argv[++i]);
+    else if (argv[i] === '--index-hours') args.indexHours = Number(argv[++i]);
+    else if (argv[i] === '--rerank') args.rerank = true;
   }
   return args;
 }
@@ -66,12 +69,12 @@ async function waitForHttp(endpoint, timeoutMs) {
   return false;
 }
 
-async function searchOnce(endpoint, query) {
+async function searchOnce(endpoint, query, rerank = false) {
   const t0 = performance.now();
   const res = await fetch(`${endpoint}/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, k: K }),
+    body: JSON.stringify({ query, k: K, rerank }),
   });
   const json = await res.json();
   return { hits: json.hits ?? [], elapsedMs: performance.now() - t0 };
@@ -160,14 +163,11 @@ function pct(x) {
   return `${(x * 100).toFixed(0)}%`;
 }
 
-function renderMd({ meta, byType, overall, abstention }) {
-  const lines = [];
-  lines.push('# LongMemEval results');
-  lines.push('');
-  lines.push(`- date: ${meta.timestamp}`);
-  lines.push(`- fixture: ${meta.fixture} (${meta.sessions} sessions, ${meta.questions} questions)`);
-  lines.push(`- index time: ${meta.indexElapsedSec.toFixed(1)}s`);
-  lines.push('');
+function renderTable(lines, byType, overall, heading) {
+  if (heading) {
+    lines.push(`## ${heading}`);
+    lines.push('');
+  }
   lines.push('| question type | n | hit@1 | hit@3 | hit@5 | MRR | NDCG@5 | misses |');
   lines.push('|---|---|---|---|---|---|---|---|');
   for (const [type, s] of Object.entries(byType)) {
@@ -179,6 +179,27 @@ function renderMd({ meta, byType, overall, abstention }) {
     `| **all answerable** | ${overall.n} | ${pct(overall.hitAt1)} | ${pct(overall.hitAt3)} | ${pct(overall.hitAt5)} | ${overall.mrr.toFixed(2)} | ${overall.ndcgAt5.toFixed(2)} | ${overall.misses} |`,
   );
   lines.push('');
+}
+
+function renderMd({ meta, byType, overall, abstention, rerankResults }) {
+  const lines = [];
+  lines.push('# LongMemEval results');
+  lines.push('');
+  lines.push(`- date: ${meta.timestamp}`);
+  lines.push(`- fixture: ${meta.fixture} (${meta.sessions} sessions, ${meta.questions} questions)`);
+  lines.push(`- haystack: ${meta.scale}`);
+  lines.push(`- index time: ${meta.indexElapsedSec.toFixed(1)}s`);
+  lines.push('');
+  renderTable(lines, byType, overall, rerankResults ? 'Hybrid (no rerank)' : null);
+  if (rerankResults) {
+    renderTable(lines, rerankResults.summaryByType, rerankResults.overall, 'Hybrid + cross-encoder rerank');
+    lines.push(
+      `Rerank correct-abstain rate: ${pct(rerankResults.abstention.correctAbstainRate)} ` +
+        `(answerable top p50 ${rerankResults.abstention.answerableTopP50.toFixed(4)} vs ` +
+        `abstention ${rerankResults.abstention.abstentionTopP50.toFixed(4)}).`,
+    );
+    lines.push('');
+  }
   lines.push('## Abstention (negative control)');
   lines.push('');
   lines.push(
@@ -206,8 +227,17 @@ async function main() {
   let questions = JSON.parse(await readFile(questionsPath, 'utf8'));
   if (args.limit > 0) questions = questions.slice(0, args.limit);
 
-  const noteFiles = (await readdir(notesDir)).filter((f) => f.endsWith('.md'));
-  process.stdout.write(`${noteFiles.length} sessions, ${questions.length} questions\n`);
+  const allNotes = (await readdir(notesDir)).filter((f) => f.endsWith('.md'));
+  const evidence = new Set(questions.flatMap((q) => q.expected));
+  let noteFiles = allNotes;
+  if (args.scale > 0 && args.scale < allNotes.length) {
+    const fillers = allNotes.filter((f) => !evidence.has(f)).sort();
+    const keep = Math.max(0, args.scale - evidence.size);
+    noteFiles = [...evidence, ...fillers.slice(0, keep)];
+  }
+  process.stdout.write(
+    `${noteFiles.length} sessions (${evidence.size} evidence, ${noteFiles.length - evidence.size} distractors) of ${allNotes.length} total, ${questions.length} questions\n`,
+  );
 
   const tmpRoot = await mkdtemp(join(tmpdir(), 'metalmind-bench-longmemeval-'));
   const vault = join(tmpRoot, 'vault');
@@ -232,7 +262,7 @@ async function main() {
 
   process.stdout.write('indexing…\n');
   const indexStart = performance.now();
-  await runOnce('metalmind-vault-rag-indexer', env, tmpRoot, 4 * 60 * 60_000);
+  await runOnce('metalmind-vault-rag-indexer', env, tmpRoot, args.indexHours * 60 * 60_000);
   const indexElapsedSec = (performance.now() - indexStart) / 1000;
   process.stdout.write(`indexed in ${indexElapsedSec.toFixed(1)}s\n`);
 
@@ -248,52 +278,84 @@ async function main() {
     throw new Error(`watcher HTTP did not come up on ${endpoint}`);
   }
 
+  if (args.rerank) {
+    const res = await fetch(`${endpoint}/rerank/status`).catch(() => null);
+    const available = res?.ok ? (await res.json()).available === true : false;
+    if (!available) {
+      throw new Error(
+        'the [rerank] extra is not installed in the watcher venv. Without it the rerank pass ' +
+          'silently returns embedder ordering and the column would mirror hybrid. Install with ' +
+          "`uv tool install --force --reinstall 'metalmind-vault-rag[rerank]'` and rerun.",
+      );
+    }
+    process.stdout.write('rerank=engaged (cross-encoder loadable)\n');
+  }
+
   const answerable = [];
   const abstentionQ = [];
+  const answerableRr = [];
+  const abstentionRr = [];
   let done = 0;
   for (const q of questions) {
-    const { hits, elapsedMs } = await searchOnce(endpoint, q.query);
-    const topScore = typeof hits[0]?.score === 'number' ? hits[0].score : null;
-    const record = {
-      id: q.id,
-      type: q.type,
-      rank: q.abstention ? null : hitRank(hits, q.expected),
-      ndcg: q.abstention ? 0 : ndcgAt(hits, q.expected, K),
-      topScore,
-      latencyMs: elapsedMs,
-    };
-    (q.abstention ? abstentionQ : answerable).push(record);
+    for (const rerank of args.rerank ? [false, true] : [false]) {
+      const { hits, elapsedMs } = await searchOnce(endpoint, q.query, rerank);
+      const record = {
+        id: q.id,
+        type: q.type,
+        rank: q.abstention ? null : hitRank(hits, q.expected),
+        ndcg: q.abstention ? 0 : ndcgAt(hits, q.expected, K),
+        topScore: typeof hits[0]?.score === 'number' ? hits[0].score : null,
+        latencyMs: elapsedMs,
+      };
+      const bucket = rerank
+        ? q.abstention
+          ? abstentionRr
+          : answerableRr
+        : q.abstention
+          ? abstentionQ
+          : answerable;
+      bucket.push(record);
+    }
     done += 1;
     if (done % 25 === 0) process.stdout.write(`${done}/${questions.length}\n`);
   }
 
   await runTeardowns();
 
-  const byType = {};
-  for (const r of answerable) {
-    (byType[r.type] ??= []).push(r);
+  function byTypeSummary(records) {
+    const groups = {};
+    for (const r of records) (groups[r.type] ??= []).push(r);
+    return Object.fromEntries(
+      Object.entries(groups)
+        .sort()
+        .map(([t, rs]) => [t, summarizeAnswerable(rs)]),
+    );
   }
-  const summaryByType = Object.fromEntries(
-    Object.entries(byType)
-      .sort()
-      .map(([t, rs]) => [t, summarizeAnswerable(rs)]),
-  );
+  const summaryByType = byTypeSummary(answerable);
   const overall = summarizeAnswerable(answerable);
   const abstention = scoreAbstention(answerable, abstentionQ);
+  const rerankResults = args.rerank
+    ? {
+        summaryByType: byTypeSummary(answerableRr),
+        overall: summarizeAnswerable(answerableRr),
+        abstention: scoreAbstention(answerableRr, abstentionRr),
+      }
+    : null;
 
   const meta = {
     timestamp: new Date().toISOString(),
     fixture: args.oracle ? 'oracle (no distractors - smoke only)' : 'longmemeval_s_cleaned',
+    scale: args.scale > 0 ? `${noteFiles.length} of ${allNotes.length} sessions` : 'full haystack',
     sessions: noteFiles.length,
     questions: questions.length,
     indexElapsedSec,
   };
   await mkdir(RESULTS_DIR, { recursive: true });
   const stamp = meta.timestamp.replace(/[:.]/g, '-');
-  const md = renderMd({ meta, byType: summaryByType, overall, abstention });
+  const md = renderMd({ meta, byType: summaryByType, overall, abstention, rerankResults });
   await writeFile(
     join(RESULTS_DIR, `longmemeval-${stamp}.json`),
-    `${JSON.stringify({ meta, summaryByType, overall, abstention, answerable, abstentionQ }, null, 2)}\n`,
+    `${JSON.stringify({ meta, summaryByType, overall, abstention, rerankResults, answerable, abstentionQ, answerableRr, abstentionRr }, null, 2)}\n`,
   );
   await writeFile(join(RESULTS_DIR, `longmemeval-${stamp}.md`), md);
   process.stdout.write(`\n${md}`);

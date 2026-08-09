@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "timestamp": "2026-08-09T19:50:41.308Z",
+    "fixture": "oracle (no distractors - smoke only)",
+    "scale": "full haystack",
+    "sessions": 940,
+    "questions": 4,
+    "indexElapsedSec": 1196.135829382
+  },
+  "summaryByType": {
+    "temporal-reasoning": {
+      "n": 4,
+      "hitAt1": 0.75,
+      "hitAt3": 0.75,
+      "hitAt5": 0.75,
+      "mrr": 0.75,
+      "ndcgAt5": 0.4979137556298846,
+      "misses": 1,
+      "p50ms": 124.79696900001727,
+      "p95ms": 363.96692100004293
+    }
+  },
+  "overall": {
+    "n": 4,
+    "hitAt1": 0.75,
+    "hitAt3": 0.75,
+    "hitAt5": 0.75,
+    "mrr": 0.75,
+    "ndcgAt5": 0.4979137556298846,
+    "misses": 1,
+    "p50ms": 124.79696900001727,
+    "p95ms": 363.96692100004293
+  },
+  "abstention": {
+    "n": 0,
+    "floor": 0.0988,
+    "correctAbstainRate": 0,
+    "answerableTopP50": 0.1375,
+    "abstentionTopP50": 0
+  },
+  "rerankResults": {
+    "summaryByType": {
+      "temporal-reasoning": {
+        "n": 4,
+        "hitAt1": 0.5,
+        "hitAt3": 1,
+        "hitAt5": 1,
+        "mrr": 0.7083333333333334,
+        "ndcgAt5": 0.5026229213542159,
+        "misses": 0,
+        "p50ms": 7693.462285000132,
+        "p95ms": 30303.291164000053
+      }
+    },
+    "overall": {
+      "n": 4,
+      "hitAt1": 0.5,
+      "hitAt3": 1,
+      "hitAt5": 1,
+      "mrr": 0.7083333333333334,
+      "ndcgAt5": 0.5026229213542159,
+      "misses": 0,
+      "p50ms": 7693.462285000132,
+      "p95ms": 30303.291164000053
+    },
+    "abstention": {
+      "n": 0,
+      "floor": 0.0098,
+      "correctAbstainRate": 0,
+      "answerableTopP50": 0.0993,
+      "abstentionTopP50": 0
+    }
+  },
+  "answerable": [
+    {
+      "id": "gpt4_2655b836",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.7653606369886217,
+      "topScore": 0.0988,
+      "latencyMs": 363.96692100004293
+    },
+    {
+      "id": "gpt4_2487a7cb",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.1326,
+      "latencyMs": 107.99436899996363
+    },
+    {
+      "id": "gpt4_76048e76",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.1388,
+      "latencyMs": 124.79696900001727
+    },
+    {
+      "id": "gpt4_2312f94c",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1375,
+      "latencyMs": 106.29889299999923
+    }
+  ],
+  "abstentionQ": [],
+  "answerableRr": [
+    {
+      "id": "gpt4_2655b836",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.7039180890341347,
+      "topScore": 0.0365,
+      "latencyMs": 30303.291164000053
+    },
+    {
+      "id": "gpt4_2487a7cb",
+      "type": "temporal-reasoning",
+      "rank": 2,
+      "ndcg": 0.38685280723454163,
+      "topScore": 0.0098,
+      "latencyMs": 7693.462285000132
+    },
+    {
+      "id": "gpt4_76048e76",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.0993,
+      "latencyMs": 7606.935851000017
+    },
+    {
+      "id": "gpt4_2312f94c",
+      "type": "temporal-reasoning",
+      "rank": 3,
+      "ndcg": 0.3065735963827292,
+      "topScore": 0.951,
+      "latencyMs": 7636.979438000126
+    }
+  ],
+  "abstentionRr": []
+}
