@@ -120,8 +120,12 @@ recoverable, usually better, since you wrote it for retrieval.
 | `scale` | total notes in the tmp vault for that run |
 | `hit@1` | fraction of 20 questions where the top-1 hit is from the gold thread |
 | `hit@3` / `hit@5` | same for top-3 / top-5 |
+| `MRR` | mean reciprocal rank: average of 1/rank of the first gold hit, 0 on a miss. Separates "everything at rank 1" (1.0) from "everything at rank 2" (0.5), which hit@5 alone cannot - exactly the failure shape of the 2026-08 rank-2 clustering incident |
+| `NDCG@5` | normalized discounted cumulative gain over the top 5, binary relevance, each gold file counted once at its first appearance. 1.0 means every gold file leads the list |
 | `misses` | questions with 0 gold-thread hits in top-K |
 | `index (s)` | wall-clock indexer time (one-shot) |
+| `index (MB)` | on-disk size of the FTS5 + sqlite-vec databases after indexing |
+| `1-file reindex (ms)` | time for a single-file `/reindex` after appending one line to a gold note. Runs after the query loop, so the mutation cannot influence recall numbers. This is the cost a user pays per note edit; `index (s)` is a one-off |
 | `p50 (ms)` / `p95 (ms)` | per-query latency, median and 95th percentile |
 
 ## Honest comparison vs recall-v0

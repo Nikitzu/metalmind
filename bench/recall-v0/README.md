@@ -15,6 +15,18 @@ fictional drone-company vault. Two modes:
 Zero PII, zero real internal content. Distractors are synthetic Quillfly
 (fictional) ops notes that do not match any question.
 
+## Metrics
+
+- `hit@K` - fraction of questions whose first expected file appears in the top K.
+- `MRR` - mean reciprocal rank: average of 1/rank of the first expected hit,
+  0 on a miss. Separates "everything at rank 1" (1.0) from "everything at
+  rank 2" (0.5), which hit@5 alone cannot.
+- `NDCG@5` - normalized discounted cumulative gain over the top 5, binary
+  relevance, each expected file counted once at its first appearance. 1.0
+  means every expected file leads the list.
+- latency - per-query wall clock of the `/search` round trip: min / median /
+  p95 / max.
+
 ## Why
 
 Three questions:

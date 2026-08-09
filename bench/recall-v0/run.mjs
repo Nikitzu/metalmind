@@ -315,6 +315,7 @@ async function runScale(scale, port, questions) {
       const rank = hitRank(r.hits, q.expected);
       record[m.key] = {
         rank,
+        ndcg: ndcgAt(r.hits, q.expected, K),
         latencyMs: r.latencyMs,
         ok: r.ok,
         topHits: r.hits.slice(0, K).map((h) => ({ file: h.file ?? null, score: h.score ?? null })),
@@ -328,6 +329,7 @@ async function runScale(scale, port, questions) {
     const bmNodeHits = bm25Node(q.query, K);
     record.bm25Node = {
       rank: hitRank(bmNodeHits, q.expected),
+      ndcg: ndcgAt(bmNodeHits, q.expected, K),
       topHits: bmNodeHits,
     };
     marks.push(`bmN=${record.bm25Node.rank ? `h@${record.bm25Node.rank}` : 'MISS'}`);
@@ -336,6 +338,7 @@ async function runScale(scale, port, questions) {
       const qmdHits = await qmdScorer.query(q.query, K);
       record.qmd = {
         rank: hitRank(qmdHits, q.expected),
+        ndcg: ndcgAt(qmdHits, q.expected, K),
         topHits: qmdHits,
         available: true,
       };
@@ -390,6 +393,36 @@ function hitRank(hits, expectedBasenames) {
   return null;
 }
 
+function meanReciprocalRank(ranks) {
+  if (ranks.length === 0) return 0;
+  return ranks.reduce((acc, r) => acc + (r ? 1 / r : 0), 0) / ranks.length;
+}
+
+function ndcgAt(hits, expectedBasenames, k) {
+  const seen = new Set();
+  let dcg = 0;
+  for (let i = 0; i < Math.min(hits.length, k); i += 1) {
+    const file = hits[i]?.file;
+    if (typeof file !== 'string') continue;
+    const base = basename(file);
+    if (expectedBasenames.includes(base) && !seen.has(base)) {
+      seen.add(base);
+      dcg += 1 / Math.log2(i + 2);
+    }
+  }
+  let idcg = 0;
+  for (let i = 0; i < Math.min(expectedBasenames.length, k); i += 1) {
+    idcg += 1 / Math.log2(i + 2);
+  }
+  return idcg === 0 ? 0 : dcg / idcg;
+}
+
+function meanNdcg(perQ, key) {
+  if (perQ.length === 0) return 0;
+  const values = key ? perQ.map((r) => r[key]?.ndcg ?? 0) : perQ.map((r) => r.ndcg ?? 0);
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
 function percentile(sortedAsc, p) {
   if (sortedAsc.length === 0) return 0;
   const idx = Math.min(sortedAsc.length - 1, Math.floor((p / 100) * sortedAsc.length));
@@ -426,6 +459,8 @@ function summarize(perQ) {
     hitAt1: rateAt(perQ, 'rank', 1),
     hitAt3: rateAt(perQ, 'rank', 3),
     hitAt5: rateAt(perQ, 'rank', 5),
+    mrr: meanReciprocalRank(perQ.map((r) => r.rank)),
+    ndcgAt5: meanNdcg(perQ, null),
     latencyMs: {
       min: latencies[0] ?? 0,
       median: percentile(latencies, 50),
@@ -474,9 +509,15 @@ function summarizeModes(perQ) {
       hitAt1: rateAtNested(perQ, k, 1),
       hitAt3: rateAtNested(perQ, k, 3),
       hitAt5: rateAtNested(perQ, k, 5),
+      mrr: meanReciprocalRank(perQ.map((r) => r[k]?.rank ?? null)),
+      ndcgAt5: meanNdcg(perQ, k),
       latencyMs: latencyStats(perQ, k),
     };
   }
+  summary.bm25Node.mrr = meanReciprocalRank(perQ.map((r) => r.bm25Node?.rank ?? null));
+  summary.bm25Node.ndcgAt5 = meanNdcg(perQ, 'bm25Node');
+  summary.qmd.mrr = meanReciprocalRank(perQ.map((r) => r.qmd?.rank ?? null));
+  summary.qmd.ndcgAt5 = meanNdcg(perQ, 'qmd');
   return summary;
 }
 
@@ -501,6 +542,8 @@ function renderSingleScaleMd({ meta, summary, perQ }) {
   lines.push(`| hit@1 | ${summary.hitAt1.count}/${summary.total} (${pct(summary.hitAt1.rate)}) |`);
   lines.push(`| hit@3 | ${summary.hitAt3.count}/${summary.total} (${pct(summary.hitAt3.rate)}) |`);
   lines.push(`| hit@5 | ${summary.hitAt5.count}/${summary.total} (${pct(summary.hitAt5.rate)}) |`);
+  lines.push(`| MRR | ${summary.mrr.toFixed(2)} |`);
+  lines.push(`| NDCG@5 | ${summary.ndcgAt5.toFixed(2)} |`);
   lines.push(`| latency min | ${summary.latencyMs.min.toFixed(1)} ms |`);
   lines.push(`| latency median | ${summary.latencyMs.median.toFixed(1)} ms |`);
   lines.push(`| latency p95 | ${summary.latencyMs.p95.toFixed(1)} ms |`);
@@ -547,6 +590,28 @@ function renderMultiScaleMd({ meta, perScale }) {
     const m = s.summary.modes;
     lines.push(
       `| ${s.scale} | ${pct(m.semanticOnly.hitAt1.rate)} | ${pct(m.keywordOnly.hitAt1.rate)} | ${pct(m.hybrid.hitAt1.rate)} | ${meta.rerank ? (s.rerankAvailable ? pct(m.hybridRerank.hitAt1.rate) : 'n/a') : '-'} | ${s.qmdAvailable ? pct(s.summary.qmd.hitAt1.rate) : 'n/a'} | ${pct(s.summary.bm25Node.hitAt1.rate)} |`,
+    );
+  }
+  lines.push('');
+  lines.push('## MRR by mode and scale');
+  lines.push('');
+  lines.push('| scale | sem-only | keyword-only | hybrid | hybrid + rerank | qmd | BM25 node |');
+  lines.push('| ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
+  for (const s of perScale) {
+    const m = s.summary.modes;
+    lines.push(
+      `| ${s.scale} | ${m.semanticOnly.mrr.toFixed(2)} | ${m.keywordOnly.mrr.toFixed(2)} | ${m.hybrid.mrr.toFixed(2)} | ${meta.rerank ? (s.rerankAvailable ? m.hybridRerank.mrr.toFixed(2) : 'n/a') : '-'} | ${s.qmdAvailable ? s.summary.qmd.mrr.toFixed(2) : 'n/a'} | ${s.summary.bm25Node.mrr.toFixed(2)} |`,
+    );
+  }
+  lines.push('');
+  lines.push('## NDCG@5 by mode and scale');
+  lines.push('');
+  lines.push('| scale | sem-only | keyword-only | hybrid | hybrid + rerank | qmd | BM25 node |');
+  lines.push('| ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
+  for (const s of perScale) {
+    const m = s.summary.modes;
+    lines.push(
+      `| ${s.scale} | ${m.semanticOnly.ndcgAt5.toFixed(2)} | ${m.keywordOnly.ndcgAt5.toFixed(2)} | ${m.hybrid.ndcgAt5.toFixed(2)} | ${meta.rerank ? (s.rerankAvailable ? m.hybridRerank.ndcgAt5.toFixed(2) : 'n/a') : '-'} | ${s.qmdAvailable ? s.summary.qmd.ndcgAt5.toFixed(2) : 'n/a'} | ${s.summary.bm25Node.ndcgAt5.toFixed(2)} |`,
     );
   }
   lines.push('');
@@ -621,7 +686,7 @@ async function main() {
         : '';
       const qmdCol = `  qmd@5=${s.qmdAvailable ? pct(s.summary.qmd.hitAt5.rate) : 'n/a'}`;
       process.stdout.write(
-        `scale=${String(s.scale).padStart(4)}  sem@5=${pct(m.semanticOnly.hitAt5.rate)}  key@5=${pct(m.keywordOnly.hitAt5.rate)}  hyb@5=${pct(m.hybrid.hitAt5.rate)}${rrCol}${qmdCol}  bmN@5=${pct(s.summary.bm25Node.hitAt5.rate)}\n`,
+        `scale=${String(s.scale).padStart(4)}  sem@5=${pct(m.semanticOnly.hitAt5.rate)}  key@5=${pct(m.keywordOnly.hitAt5.rate)}  hyb@5=${pct(m.hybrid.hitAt5.rate)}  hybMRR=${m.hybrid.mrr.toFixed(2)}${rrCol}${qmdCol}  bmN@5=${pct(s.summary.bm25Node.hitAt5.rate)}\n`,
       );
     }
 
@@ -649,6 +714,7 @@ async function main() {
       ok: result.ok,
       latencyMs: result.latencyMs,
       rank,
+      ndcg: ndcgAt(result.hits, q.expected, K),
       topHits: result.hits.slice(0, K).map((h) => ({
         file: typeof h.file === 'string' ? h.file : null,
         score: typeof h.score === 'number' ? h.score : null,
@@ -678,7 +744,7 @@ async function main() {
 
   process.stdout.write(`\nResults:\n  ${jsonPath}\n  ${mdPath}\n\n`);
   process.stdout.write(
-    `hit@1=${pct(summary.hitAt1.rate)}  hit@3=${pct(summary.hitAt3.rate)}  hit@5=${pct(summary.hitAt5.rate)}  median=${summary.latencyMs.median.toFixed(0)}ms  p95=${summary.latencyMs.p95.toFixed(0)}ms\n`,
+    `hit@1=${pct(summary.hitAt1.rate)}  hit@3=${pct(summary.hitAt3.rate)}  hit@5=${pct(summary.hitAt5.rate)}  mrr=${summary.mrr.toFixed(2)}  ndcg@5=${summary.ndcgAt5.toFixed(2)}  median=${summary.latencyMs.median.toFixed(0)}ms  p95=${summary.latencyMs.p95.toFixed(0)}ms\n`,
   );
 
   if (summary.hitAt5.rate < 0.6) process.exitCode = 1;

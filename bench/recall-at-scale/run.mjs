@@ -15,7 +15,7 @@
 //   VAULT_HTTP_PORT     METALMIND_BENCH_PORT (default 17500)
 
 import { spawn } from 'node:child_process';
-import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { appendFile, copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -240,6 +240,9 @@ async function runScale(scale, port, questions, cache) {
   const indexElapsedSec = (performance.now() - indexStart) / 1000;
   process.stdout.write(`[scale=${scale}] indexed in ${indexElapsedSec.toFixed(1)}s\n`);
 
+  const indexBytes = await measureIndexBytes(collection);
+  process.stdout.write(`[scale=${scale}] index size ${(indexBytes.total / 1e6).toFixed(1)} MB (fts ${(indexBytes.fts / 1e6).toFixed(1)} + vec ${(indexBytes.vec / 1e6).toFixed(1)})\n`);
+
   process.stdout.write(`[scale=${scale}] starting watcher on port ${port}…\n`);
   const watcher = spawn('metalmind-vault-rag-watcher', [], { env, stdio: ['ignore', 'pipe', 'pipe'] });
   const logs = [];
@@ -290,6 +293,7 @@ async function runScale(scale, port, questions, cache) {
       query: q.query,
       expected: q.expected,
       rank: hitRank(hits, q.expected),
+      ndcg: ndcgAt(hits, q.expected, K),
       latencyMs: elapsedMs,
       topBasename: hits[0] ? basenameOfHit(hits[0]) : null,
     });
@@ -298,14 +302,42 @@ async function runScale(scale, port, questions, cache) {
     );
   }
 
+  const probeName = questions[0].expected[0];
+  const probePath = join(vault, probeName);
+  await appendFile(probePath, `\nbench incremental-reindex probe ${Date.now()}\n`, 'utf8');
+  const reindexStart = performance.now();
+  const reindexRes = await fetch(`${endpoint}/reindex`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paths: [probePath] }),
+  });
+  const incrementalReindexMs = performance.now() - reindexStart;
+  if (!reindexRes.ok) {
+    throw new Error(`[scale=${scale}] /reindex probe failed: HTTP ${reindexRes.status}`);
+  }
+  process.stdout.write(`[scale=${scale}] 1-file reindex ${incrementalReindexMs.toFixed(0)}ms\n`);
+
   await runTeardowns();
 
   return {
     scale,
     indexElapsedSec,
+    indexBytes,
+    incrementalReindexMs,
     perQ,
     summary: summarize(perQ),
   };
+}
+
+async function measureIndexBytes(collection) {
+  const ftsDb =
+    process.env.VAULT_FTS_DB_PATH ?? join(homedir(), '.metalmind', `fts-${collection}.db`);
+  const vecDb =
+    process.env.VAULT_VEC_DB_PATH ?? join(homedir(), '.metalmind', `vec-${collection}.db`);
+  const size = async (p) => (await stat(p).catch(() => null))?.size ?? 0;
+  const fts = await size(ftsDb);
+  const vec = await size(vecDb);
+  return { fts, vec, total: fts + vec };
 }
 
 function basenameOfHit(hit) {
@@ -329,6 +361,28 @@ function rateAt(perQ, k) {
   return n === 0 ? 0 : within / n;
 }
 
+function meanReciprocalRank(ranks) {
+  if (ranks.length === 0) return 0;
+  return ranks.reduce((acc, r) => acc + (r ? 1 / r : 0), 0) / ranks.length;
+}
+
+function ndcgAt(hits, expectedBasenames, k) {
+  const seen = new Set();
+  let dcg = 0;
+  for (let i = 0; i < Math.min(hits.length, k); i += 1) {
+    const b = basenameOfHit(hits[i]);
+    if (b && expectedBasenames.includes(b) && !seen.has(b)) {
+      seen.add(b);
+      dcg += 1 / Math.log2(i + 2);
+    }
+  }
+  let idcg = 0;
+  for (let i = 0; i < Math.min(expectedBasenames.length, k); i += 1) {
+    idcg += 1 / Math.log2(i + 2);
+  }
+  return idcg === 0 ? 0 : dcg / idcg;
+}
+
 function percentile(sortedAsc, p) {
   if (sortedAsc.length === 0) return 0;
   const idx = Math.min(sortedAsc.length - 1, Math.floor((p / 100) * sortedAsc.length));
@@ -342,6 +396,8 @@ function summarize(perQ) {
     hitAt1: rateAt(perQ, 1),
     hitAt3: rateAt(perQ, 3),
     hitAt5: rateAt(perQ, 5),
+    mrr: meanReciprocalRank(perQ.map((r) => r.rank)),
+    ndcgAt5: perQ.length === 0 ? 0 : perQ.reduce((acc, r) => acc + (r.ndcg ?? 0), 0) / perQ.length,
     misses: perQ.filter((r) => r.rank === null).length,
     p50ms: percentile(lat, 50),
     p95ms: percentile(lat, 95),
@@ -361,11 +417,13 @@ function renderMd({ meta, perScale }) {
   lines.push(`- backend: ${meta.backend}`);
   lines.push(`- corpus: HN comments via Algolia (cache=${meta.cache})`);
   lines.push('');
-  lines.push('| scale | hit@1 | hit@3 | hit@5 | misses | index (s) | p50 (ms) | p95 (ms) |');
-  lines.push('|---|---|---|---|---|---|---|---|');
+  lines.push(
+    '| scale | hit@1 | hit@3 | hit@5 | MRR | NDCG@5 | misses | index (s) | index (MB) | 1-file reindex (ms) | p50 (ms) | p95 (ms) |',
+  );
+  lines.push('|---|---|---|---|---|---|---|---|---|---|---|---|');
   for (const r of perScale) {
     lines.push(
-      `| ${r.scale} | ${pct(r.summary.hitAt1)} | ${pct(r.summary.hitAt3)} | ${pct(r.summary.hitAt5)} | ${r.summary.misses}/${r.summary.n} | ${r.indexElapsedSec.toFixed(1)} | ${r.summary.p50ms.toFixed(0)} | ${r.summary.p95ms.toFixed(0)} |`,
+      `| ${r.scale} | ${pct(r.summary.hitAt1)} | ${pct(r.summary.hitAt3)} | ${pct(r.summary.hitAt5)} | ${r.summary.mrr.toFixed(2)} | ${r.summary.ndcgAt5.toFixed(2)} | ${r.summary.misses}/${r.summary.n} | ${r.indexElapsedSec.toFixed(1)} | ${(r.indexBytes.total / 1e6).toFixed(1)} | ${r.incrementalReindexMs.toFixed(0)} | ${r.summary.p50ms.toFixed(0)} | ${r.summary.p95ms.toFixed(0)} |`,
     );
   }
   return lines.join('\n') + '\n';
