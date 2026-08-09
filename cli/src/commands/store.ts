@@ -1,4 +1,5 @@
 import { log } from '@clack/prompts';
+import { recallAuthHeaders } from '../backends/recall-token.js';
 import { saveToVault } from '../backends/vault.js';
 import { readConfig } from '../config.js';
 import { runCommand } from '../util/exec.js';
@@ -19,7 +20,7 @@ async function reindexViaHttp(endpoint: string, paths: string[]): Promise<boolea
   try {
     const res = await fetch(`${endpoint}/reindex`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await recallAuthHeaders()) },
       body: JSON.stringify({ paths }),
       signal: controller.signal,
     });

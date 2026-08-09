@@ -9,6 +9,7 @@ import {
   type ForgeGroups,
   verifyCodeRefs,
 } from '../coderefs/coderefs.js';
+import { recallTokenPath } from '../backends/recall-token.js';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
 import {
   DEFAULT_CODEX_DIR,
@@ -73,6 +74,48 @@ export async function checkRecallHttp(): Promise<DeepCheck> {
       ok: false,
       detail: 'fast-path endpoint unreachable - tap copper will fall back to stdio MCP',
       remediation: 'Watcher not running or port 17317 in use. Check `vault-watcher-status`.',
+    };
+  }
+}
+
+export async function checkRecallAuth(): Promise<DeepCheck> {
+  const tokenPath = recallTokenPath();
+  const tokenOnDisk = existsSync(tokenPath);
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1500);
+    const res = await fetch('http://127.0.0.1:17317/auth/status', { signal: controller.signal });
+    clearTimeout(timer);
+    if (res.status === 404) {
+      return {
+        name: 'recall-auth',
+        ok: true,
+        detail: 'watcher predates the auth token (served in grace mode by newer CLIs)',
+        remediation: 'Update: `metalmind stamp` reinstalls the watcher package.',
+      };
+    }
+    if (!res.ok) {
+      return { name: 'recall-auth', ok: false, detail: `auth status returned HTTP ${res.status}` };
+    }
+    const body = (await res.json()) as { token_present?: boolean; mode?: string };
+    if (!body.token_present || !tokenOnDisk) {
+      return {
+        name: 'recall-auth',
+        ok: false,
+        detail: `token file missing at ${tokenPath}`,
+        remediation: 'Restart the watcher - it regenerates the token on boot.',
+      };
+    }
+    return {
+      name: 'recall-auth',
+      ok: true,
+      detail: `token present (${tokenPath}), mode: ${body.mode ?? 'grace'}`,
+    };
+  } catch {
+    return {
+      name: 'recall-auth',
+      ok: true,
+      detail: 'watcher unreachable - auth not evaluated (see recall-http)',
     };
   }
 }
@@ -694,18 +737,21 @@ export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   const codexChecks = installCodex ? await checkCodexInstall({ checkMcp: true }) : [];
   const cursorChecks = installCursor ? await checkCursorInstall() : [];
 
-  const [watcher, http, supersede, codeRefs, intentSkills, graphifyResidue] = await Promise.all([
-    checkWatcherService(),
-    checkRecallHttp(),
-    checkSupersedeIntegrity(config.vaultPath),
-    checkCodeRefsIntegrity(config.vaultPath, config.forge.groups),
-    checkIntentSkills(config.forge.groups),
-    checkGraphifyResidue(config.forge.groups),
-  ]);
+  const [watcher, http, recallAuth, supersede, codeRefs, intentSkills, graphifyResidue] =
+    await Promise.all([
+      checkWatcherService(),
+      checkRecallHttp(),
+      checkRecallAuth(),
+      checkSupersedeIntegrity(config.vaultPath),
+      checkCodeRefsIntegrity(config.vaultPath, config.forge.groups),
+      checkIntentSkills(config.forge.groups),
+      checkGraphifyResidue(config.forge.groups),
+    ]);
 
   return [
     watcher,
     http,
+    recallAuth,
     supersede,
     codeRefs,
     intentSkills,

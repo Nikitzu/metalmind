@@ -6,6 +6,7 @@ import {
   verifyCodeRefs,
 } from '../coderefs/coderefs.js';
 import { extractText, type McpToolResult, StdioMcpClient } from './mcp-client.js';
+import { recallAuthHeaders } from './recall-token.js';
 
 export type RecallTier = 'fast' | 'deep' | 'expand';
 
@@ -81,7 +82,7 @@ async function httpPost(
   try {
     const res = await fetch(`${endpoint}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await recallAuthHeaders()) },
       body: JSON.stringify(body),
       signal: controller.signal,
     });

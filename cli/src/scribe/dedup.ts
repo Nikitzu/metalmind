@@ -1,3 +1,5 @@
+import { recallAuthHeaders } from '../backends/recall-token.js';
+
 export interface DedupHit {
   file: string;
   score: number;
@@ -24,7 +26,7 @@ export async function findOverlappingNotes(opts: {
   try {
     const res = await fetch(`${endpoint}/search`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await recallAuthHeaders()) },
       body: JSON.stringify({ query, k: 3, mode: 'semantic-only' }),
       signal: controller.signal,
     });

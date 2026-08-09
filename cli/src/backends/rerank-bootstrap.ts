@@ -1,5 +1,6 @@
 import { installVaultRag } from '../install/vault-rag.js';
 import { restartWatcher } from '../install/watcher-restart.js';
+import { recallAuthHeaders } from './recall-token.js';
 
 const DEFAULT_HTTP_ENDPOINT = 'http://127.0.0.1:17317';
 const STATUS_TIMEOUT_MS = 2_000;
@@ -23,7 +24,7 @@ async function warmupRerank(ep: string): Promise<boolean> {
   try {
     const res = await fetch(`${ep}/search`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await recallAuthHeaders()) },
       body: JSON.stringify({ query: '__metalmind_rerank_warmup__', k: 1, rerank: true }),
       signal: controller.signal,
     });

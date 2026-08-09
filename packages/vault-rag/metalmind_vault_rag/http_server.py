@@ -7,11 +7,39 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from . import recall_log, search
+from . import auth, recall_log, search
 from .indexer import reindex_paths
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = int(os.environ.get("VAULT_HTTP_PORT", "17317"))
+
+_warned_tokenless = False
+
+
+def _auth_gate(handler: "_Handler") -> bool:
+    """True when the request may proceed. Browser-origin requests are always
+    rejected (a web page can fire POSTs at localhost; no CLI sends Origin).
+    Token mismatches reject only under enforcement; during the grace window
+    they are served with one warning per process so an updated watcher never
+    breaks an older CLI."""
+    global _warned_tokenless
+    if handler.headers.get("Origin"):
+        handler._send_json(403, {"error": "browser-origin requests are not allowed"})
+        return False
+    supplied = handler.headers.get(auth.HEADER, "")
+    if auth.is_valid(supplied):
+        return True
+    if auth.enforcement_enabled():
+        handler._send_json(403, {"error": f"missing or invalid {auth.HEADER}"})
+        return False
+    if not _warned_tokenless:
+        _warned_tokenless = True
+        print(
+            f"http recall: request without valid {auth.HEADER} served (grace mode); "
+            "update the metalmind CLI to silence this",
+            flush=True,
+        )
+    return True
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -36,6 +64,15 @@ class _Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         if self.path == "/health":
             self._send_json(200, {"ok": True, "service": "metalmind-vault-rag"})
+        elif self.path == "/auth/status":
+            self._send_json(
+                200,
+                {
+                    "token_file": str(auth.token_path()),
+                    "token_present": auth.token_path().exists(),
+                    "mode": "enforced" if auth.enforcement_enabled() else "grace",
+                },
+            )
         elif self.path == "/rerank/status":
             # CLI probes this before issuing a `--rerank` call. If `available`
             # is false, the CLI auto-installs the [rerank] extra and restarts
@@ -47,6 +84,8 @@ class _Handler(BaseHTTPRequestHandler):
             self._send_json(404, {"error": "not found"})
 
     def do_POST(self) -> None:  # noqa: N802
+        if not _auth_gate(self):
+            return
         body = self._read_json()
         try:
             if self.path == "/search":
@@ -98,6 +137,10 @@ def serve_forever(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> Threadi
     """Start the HTTP recall server. Returns the server instance, or None if
     the port was already in use (watcher continues without HTTP)."""
     try:
+        auth.ensure_token()
+    except OSError as e:
+        print(f"http recall: could not write auth token ({e}); grace mode only", flush=True)
+    try:
         server = ThreadingHTTPServer((host, port), _Handler)
     except OSError as e:
         print(f"http recall: port {port} unavailable ({e}); continuing without HTTP", flush=True)
@@ -110,6 +153,7 @@ def serve_forever(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> Threadi
 
 def main() -> None:
     """Entry point for running the HTTP server standalone (diagnostics)."""
+    auth.ensure_token()
     server = ThreadingHTTPServer((DEFAULT_HOST, DEFAULT_PORT), _Handler)
     print(f"http recall: listening on http://{DEFAULT_HOST}:{DEFAULT_PORT}", flush=True)
     server.serve_forever()
