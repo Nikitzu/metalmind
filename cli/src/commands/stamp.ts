@@ -71,6 +71,8 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
       flavor: config.flavor,
       eodHook: config.skills.eodHook,
       notifications: config.skills.notifications,
+      core: config.install.profile === 'core',
+      withTeams: config.install.teams,
     });
     log.info(`  ${tpl.copied.length} files refreshed`);
     const claudeMd = await stampClaudeMd({

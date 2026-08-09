@@ -95,6 +95,10 @@ program
     '--core',
     'Memory surface only: recall, scribe, the stamped block, and uninstall. Skips Serena, subagents, team commands, and synod.',
   )
+  .option(
+    '--full',
+    'Full library non-interactively. On an existing install the recorded profile is kept unless --core or --full says otherwise.',
+  )
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
   .option(
     '--host <host>',

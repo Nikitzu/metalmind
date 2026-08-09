@@ -9,6 +9,7 @@ export interface InitCliOptions {
   serena?: boolean;
   noSerena?: boolean;
   core?: boolean;
+  full?: boolean;
   teams?: boolean;
   noTeams?: boolean;
   memoryRouting?: string;
@@ -97,7 +98,11 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     const hostsFlag = parseHostFlag(cliOpts.host);
     if (hostsFlag !== undefined) wizardOpts.hosts = hostsFlag;
     if (cliOpts.withMcp) wizardOpts.withMcp = true;
+    if (cliOpts.core && cliOpts.full) {
+      throw new Error('--core and --full are mutually exclusive');
+    }
     if (cliOpts.core) wizardOpts.core = true;
+    if (cliOpts.full) wizardOpts.full = true;
 
     if (cliOpts.skipWatcher) wizardOpts.skipWatcher = true;
 
@@ -106,6 +111,7 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
       if (wizardOpts.vaultPath === undefined) {
         wizardOpts.vaultPath = `${process.env.HOME}/Knowledge`;
       }
+      if (wizardOpts.core === undefined) wizardOpts.full ??= true;
       wizardOpts.serena ??= true;
       wizardOpts.flavor ??= 'scadrial';
       wizardOpts.memoryRouting ??= 'vault-only';

@@ -33,7 +33,7 @@ describe('config', () => {
     const { readConfig, writeConfig } = await import('./config.js');
 
     const cfg: Config = {
-      version: 3,
+      version: 4,
       flavor: 'scadrial',
       vaultPath: '/tmp/vault',
       outputStyle: { installed: 'marsh', priorValue: null },
@@ -46,6 +46,7 @@ describe('config', () => {
       memoryRouting: 'vault-only',
       skills: { eodHook: true, notifications: true },
       hosts: ['claude'],
+      install: { profile: 'full', teams: true },
     };
 
     await writeConfig(cfg);
@@ -110,13 +111,13 @@ describe('config', () => {
 
     const { readConfig } = await import('./config.js');
     const loaded = await readConfig();
-    expect(loaded?.version).toBe(3);
+    expect(loaded?.version).toBe(4);
     expect(loaded?.mcp.registered).toEqual(['serena']);
     expect(loaded?.hooks.claudeCode).toBe(false);
     expect(loaded).not.toHaveProperty('graphifyCmd');
 
     const onDisk = JSON.parse(await readFile(path, 'utf8'));
-    expect(onDisk.version).toBe(3);
+    expect(onDisk.version).toBe(4);
     expect(onDisk).not.toHaveProperty('graphifyCmd');
     expect(onDisk.mcp.registered).toEqual(['serena']);
   });
@@ -165,7 +166,7 @@ describe('config', () => {
     }));
     const { readConfig, writeConfig } = await import('./config.js');
     const cfg: Config = {
-      version: 3,
+      version: 4,
       flavor: 'classic',
       vaultPath: '/tmp/vault',
       outputStyle: { installed: null, priorValue: null },
@@ -178,6 +179,7 @@ describe('config', () => {
       memoryRouting: 'vault-only',
       skills: { eodHook: true, notifications: true },
       hosts: ['claude', 'codex'],
+      install: { profile: 'core', teams: false },
     };
     await writeConfig(cfg);
     const loaded = await readConfig();
@@ -249,5 +251,80 @@ describe('config', () => {
     );
     const { readConfig } = await import('./config.js');
     await expect(readConfig()).rejects.toThrow();
+  });
+});
+
+describe('config v3 → v4 install manifest migration', () => {
+  let tmp: string;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    tmp = await mkdtemp(join(tmpdir(), 'metalmind-config-v4-'));
+  });
+
+  afterEach(async () => {
+    await rm(tmp, { recursive: true, force: true });
+    vi.doUnmock('node:os');
+  });
+
+  const v3 = {
+    version: 3,
+    flavor: 'scadrial',
+    vaultPath: '/tmp/vault',
+    outputStyle: { installed: null, priorValue: null },
+    embeddings: { provider: 'local', baseURL: null },
+    recall: { defaultTier: 'fast', httpEndpoint: null },
+    verbose: false,
+    mcp: { registered: [] },
+    hooks: { claudeCode: false },
+    forge: { groups: {} },
+    memoryRouting: 'vault-only',
+    skills: { eodHook: true, notifications: true },
+    hosts: ['claude'],
+  };
+
+  async function loadWithHome(): Promise<typeof import('./config.js')> {
+    vi.doMock('node:os', async (orig) => ({
+      ...(await orig<typeof import('node:os')>()),
+      homedir: () => tmp,
+    }));
+    return import('./config.js');
+  }
+
+  it('a full+teams machine is inferred from synod and team commands on disk', async () => {
+    await mkdir(join(tmp, '.claude', 'skills', 'synod'), { recursive: true });
+    await mkdir(join(tmp, '.claude', 'commands'), { recursive: true });
+    await writeFile(join(tmp, '.claude', 'commands', 'team-debug.md'), 'x', 'utf8');
+    await mkdir(join(tmp, '.metalmind'), { recursive: true });
+    await writeFile(join(tmp, '.metalmind', 'config.json'), JSON.stringify(v3), 'utf8');
+
+    const { readConfig } = await loadWithHome();
+    const cfg = await readConfig();
+
+    expect(cfg?.version).toBe(4);
+    expect(cfg?.install).toEqual({ profile: 'full', teams: true });
+  });
+
+  it('a core-shaped machine is inferred as core without teams', async () => {
+    await mkdir(join(tmp, '.claude', 'skills', 'metalmind-cli'), { recursive: true });
+    await mkdir(join(tmp, '.metalmind'), { recursive: true });
+    await writeFile(join(tmp, '.metalmind', 'config.json'), JSON.stringify(v3), 'utf8');
+
+    const { readConfig } = await loadWithHome();
+    const cfg = await readConfig();
+
+    expect(cfg?.install).toEqual({ profile: 'core', teams: false });
+  });
+
+  it('the migration is written back to disk', async () => {
+    await mkdir(join(tmp, '.metalmind'), { recursive: true });
+    await writeFile(join(tmp, '.metalmind', 'config.json'), JSON.stringify(v3), 'utf8');
+
+    const { readConfig } = await loadWithHome();
+    await readConfig();
+
+    const onDisk = JSON.parse(await readFile(join(tmp, '.metalmind', 'config.json'), 'utf8'));
+    expect(onDisk.version).toBe(4);
+    expect(onDisk.install).toBeDefined();
   });
 });

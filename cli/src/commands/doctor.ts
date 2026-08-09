@@ -11,6 +11,8 @@ import {
 } from '../coderefs/coderefs.js';
 import { recallTokenPath } from '../backends/recall-token.js';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
+import { inferInstallShape } from '../install/profile.js';
+import { DEFAULT_CLAUDE_DIR } from '../install/templates.js';
 import {
   DEFAULT_CODEX_DIR,
   DEFAULT_CODEX_MCP_NAME,
@@ -118,6 +120,35 @@ export async function checkRecallAuth(): Promise<DeepCheck> {
       detail: 'watcher unreachable - auth not evaluated (see recall-http)',
     };
   }
+}
+
+export function checkInstallManifest(
+  config: Config,
+  claudeDir: string = DEFAULT_CLAUDE_DIR,
+): DeepCheck {
+  const onDisk = inferInstallShape(claudeDir);
+  const recorded = config.install;
+  if (recorded.profile === 'full' && onDisk.profile === 'core') {
+    return {
+      name: 'install-manifest',
+      ok: false,
+      detail: 'config records a full install but the synod skill is missing on disk',
+      remediation: 'Re-run `metalmind init` to restore the full surface, or `metalmind init --core` to record core.',
+    };
+  }
+  if (recorded.teams && !onDisk.teams) {
+    return {
+      name: 'install-manifest',
+      ok: false,
+      detail: 'config records teams but no team-* commands exist on disk',
+      remediation: 'Re-run `metalmind init` to restore them, or `metalmind init --no-teams` to record the change.',
+    };
+  }
+  return {
+    name: 'install-manifest',
+    ok: true,
+    detail: `recorded ${recorded.profile}${recorded.teams ? '+teams' : ''}, disk agrees`,
+  };
 }
 
 export async function checkWatcherService(): Promise<DeepCheck> {
@@ -752,6 +783,7 @@ export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
     watcher,
     http,
     recallAuth,
+    checkInstallManifest(config),
     supersede,
     codeRefs,
     intentSkills,

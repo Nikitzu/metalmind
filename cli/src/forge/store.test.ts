@@ -6,7 +6,7 @@ import type { Config } from '../config.js';
 
 function baseConfig(): Config {
   return {
-    version: 3,
+    version: 4,
     flavor: 'scadrial',
     vaultPath: '/v',
     outputStyle: { installed: 'marsh', priorValue: null },
@@ -19,6 +19,7 @@ function baseConfig(): Config {
     memoryRouting: 'vault-only',
     skills: { eodHook: true, notifications: true },
     hosts: ['claude'],
+    install: { profile: 'full', teams: false },
   };
 }
 

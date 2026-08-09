@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { z } from 'zod';
+import { inferInstallShape } from './install/profile.js';
 
 export const CONFIG_DIR = join(homedir(), '.metalmind');
 export const CONFIG_PATH = join(CONFIG_DIR, 'config.json');
@@ -18,7 +19,12 @@ const ForgeGroupSchema = z.object({
   repos: z.array(z.string()),
 });
 
-export const CURRENT_CONFIG_VERSION = 3 as const;
+export const CURRENT_CONFIG_VERSION = 4 as const;
+
+const InstallShapeSchema = z.object({
+  profile: z.enum(['core', 'full']),
+  teams: z.boolean(),
+});
 
 export const ConfigSchema = z.object({
   version: z.literal(CURRENT_CONFIG_VERSION),
@@ -58,6 +64,7 @@ export const ConfigSchema = z.object({
   // .default(['claude']) means an existing config gets ['claude'] on read,
   // preserving v0.7.x behavior; only re-stamping after init/stamp can add 'codex'.
   hosts: z.array(HostSchema).nonempty().default(['claude']),
+  install: InstallShapeSchema,
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -98,6 +105,11 @@ const MIGRATIONS: Record<number, Migration> = {
       },
     };
   },
+  3: (raw) => ({
+    ...raw,
+    version: 4,
+    install: inferInstallShape(),
+  }),
 };
 
 function migrate(raw: RawConfig): RawConfig {

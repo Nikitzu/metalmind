@@ -21,7 +21,7 @@ function fail(stderr = 'fail'): CommandResult {
 
 function baseConfig(vaultPath: string): Config {
   return {
-    version: 3,
+    version: 4,
     flavor: 'scadrial',
     vaultPath,
     outputStyle: { installed: null, priorValue: null },
@@ -34,6 +34,7 @@ function baseConfig(vaultPath: string): Config {
     memoryRouting: 'vault-only',
     skills: { eodHook: true, notifications: true },
     hosts: ['claude'],
+    install: { profile: 'full', teams: false },
   };
 }
 

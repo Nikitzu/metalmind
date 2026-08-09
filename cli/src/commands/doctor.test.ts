@@ -63,7 +63,7 @@ describe('doctor deep checks', () => {
       await mkdir(join(tmp, '.claude'), { recursive: true });
       await mkdir(join(tmp, 'vault'), { recursive: true });
       config = {
-        version: 3,
+        version: 4,
         flavor: 'scadrial',
         vaultPath: join(tmp, 'vault'),
         outputStyle: { installed: null, priorValue: null },
@@ -76,6 +76,7 @@ describe('doctor deep checks', () => {
         skills: { eodHook: true, notifications: true },
         forge: { groups: {} },
         hosts: ['claude'],
+        install: { profile: 'full', teams: false },
       };
     });
 
@@ -240,6 +241,7 @@ describe('doctor deep checks', () => {
         vaultPath: vault,
         hosts: [],
         forge: { groups: {} },
+        install: { profile: 'core', teams: false },
       } as unknown as Config);
 
       const names = checks.map((c) => c.name);
@@ -437,5 +439,61 @@ describe('doctor deep checks', () => {
       expect(res.ok).toBe(true);
       expect(res.detail).toContain('no code refs');
     });
+  });
+});
+
+describe('checkInstallManifest', () => {
+  let claudeDir: string;
+
+  beforeEach(async () => {
+    claudeDir = await mkdtemp(join(tmpdir(), 'mm-manifest-'));
+  });
+  afterEach(async () => {
+    await rm(claudeDir, { recursive: true, force: true });
+  });
+
+  function cfgWith(install: Config['install']): Config {
+    return {
+      version: 4,
+      flavor: 'scadrial',
+      vaultPath: '/v',
+      outputStyle: { installed: null, priorValue: null },
+      embeddings: { provider: 'local', baseURL: null },
+      recall: { defaultTier: 'fast', httpEndpoint: null },
+      verbose: false,
+      mcp: { registered: [] },
+      hooks: { claudeCode: false },
+      forge: { groups: {} },
+      memoryRouting: 'vault-only',
+      skills: { eodHook: true, notifications: true },
+      hosts: ['claude'],
+      install,
+    };
+  }
+
+  it('flags a recorded full install whose synod skill is gone from disk', async () => {
+    const { checkInstallManifest } = await import('./doctor.js');
+    const res = checkInstallManifest(cfgWith({ profile: 'full', teams: false }), claudeDir);
+    expect(res.ok).toBe(false);
+    expect(res.detail).toContain('synod');
+  });
+
+  it('flags recorded teams with no team commands on disk', async () => {
+    await mkdir(join(claudeDir, 'skills', 'synod'), { recursive: true });
+    const { checkInstallManifest } = await import('./doctor.js');
+    const res = checkInstallManifest(cfgWith({ profile: 'full', teams: true }), claudeDir);
+    expect(res.ok).toBe(false);
+    expect(res.detail).toContain('team-');
+  });
+
+  it('passes when record and disk agree, including core on a fuller disk', async () => {
+    await mkdir(join(claudeDir, 'skills', 'synod'), { recursive: true });
+    const { checkInstallManifest } = await import('./doctor.js');
+    expect(checkInstallManifest(cfgWith({ profile: 'full', teams: false }), claudeDir).ok).toBe(
+      true,
+    );
+    expect(checkInstallManifest(cfgWith({ profile: 'core', teams: false }), claudeDir).ok).toBe(
+      true,
+    );
   });
 });

@@ -30,6 +30,7 @@ import {
   copyClaudeTemplates,
   stampClaudeMd,
 } from './templates.js';
+import { resolveProfile, resolveTeams } from './profile.js';
 import { installUv, UV_INSTALL_COMMAND } from './uv.js';
 import { promptVaultPath, setupVault } from './vault.js';
 import { installVaultRag, resolveWatcherBinPath } from './vault-rag.js';
@@ -54,6 +55,7 @@ export interface RunWizardOptions {
    *  deliberation skill. Lets the recall thesis be evaluated without
    *  installing the workflow layer. */
   core?: boolean;
+  full?: boolean;
 }
 
 function checkCancelled<T>(value: T | symbol, label: string): asserts value is T {
@@ -127,7 +129,37 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       throw err;
     }));
 
-  const core = opts.core === true;
+  const recordedInstall = priorConfig?.install ?? null;
+  const profileFlags = { core: opts.core, full: opts.full, teams: opts.enableTeams };
+  const profileResolution = resolveProfile(profileFlags, recordedInstall);
+  let core: boolean;
+  if (profileResolution === 'prompt') {
+    const answer = await select({
+      message: 'Install profile',
+      options: [
+        {
+          value: 'core',
+          label: 'core (recommended)',
+          hint: 'memory surface only - recall, scribe, sync; add the rest any time',
+        },
+        {
+          value: 'full',
+          label: 'full',
+          hint: 'plus Serena, subagents, team commands, and the deliberation skill',
+        },
+      ],
+      initialValue: 'core',
+    });
+    checkCancelled(answer, 'profile prompt');
+    core = answer === 'core';
+  } else {
+    core = profileResolution === 'core';
+    if (opts.core === undefined && opts.full === undefined && recordedInstall) {
+      log.info(
+        `Keeping recorded install profile: ${recordedInstall.profile}. Pass --core or --full to change.`,
+      );
+    }
+  }
   if (core) {
     log.info(
       'Core install: memory surface only (no Serena, subagents, or team commands). ' +
@@ -189,10 +221,16 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   }
 
   let enableTeams: boolean;
-  if (core && opts.enableTeams === undefined) {
+  const teamsResolution = resolveTeams(profileFlags, recordedInstall);
+  if (teamsResolution !== 'prompt') {
+    enableTeams = teamsResolution;
+    if (opts.enableTeams === undefined && opts.core === undefined && recordedInstall) {
+      log.info(
+        `Keeping recorded teams choice: ${enableTeams ? 'on' : 'off'}. Pass --teams or --no-teams to change.`,
+      );
+    }
+  } else if (core) {
     enableTeams = false;
-  } else if (opts.enableTeams !== undefined) {
-    enableTeams = opts.enableTeams;
   } else {
     const answer = await confirm({
       message: 'Enable agent teams (experimental multi-Claude orchestration)?',
@@ -504,6 +542,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     skills: { eodHook, notifications },
     hosts:
       chosenHosts.length > 0 ? (chosenHosts as [MetalmindHost, ...MetalmindHost[]]) : ['claude'],
+    install: { profile: core ? 'core' : 'full', teams: enableTeams },
   };
   if (priorConfig) {
     const keptRepos = Object.values(config.forge.groups).reduce(
@@ -521,7 +560,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
 
   const verifyCmd = flavor === 'scadrial' ? 'pulse' : 'doctor';
   if (core) {
-    log.info('Core install complete. Re-run `metalmind init` without --core to add the rest.');
+    log.info('Core install complete. Re-run `metalmind init --full` to add the rest.');
   }
   outro(`Installed. Run \`metalmind ${verifyCmd}\` to verify.`);
   return config;
