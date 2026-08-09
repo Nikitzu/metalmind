@@ -92,7 +92,7 @@ export async function checkRecallAuth(): Promise<DeepCheck> {
       return {
         name: 'recall-auth',
         ok: true,
-        detail: 'watcher predates the auth token (served in grace mode by newer CLIs)',
+        detail: 'watcher predates the auth token (harmless - the token is optional by default)',
         remediation: 'Update: `metalmind stamp` reinstalls the watcher package.',
       };
     }
@@ -111,7 +111,7 @@ export async function checkRecallAuth(): Promise<DeepCheck> {
     return {
       name: 'recall-auth',
       ok: true,
-      detail: `token present (${tokenPath}), mode: ${body.mode ?? 'grace'}`,
+      detail: `token present (${tokenPath}), mode: ${body.mode ?? 'optional'}`,
     };
   } catch {
     return {

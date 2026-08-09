@@ -19,9 +19,9 @@ _warned_tokenless = False
 def _auth_gate(handler: "_Handler") -> bool:
     """True when the request may proceed. Browser-origin requests are always
     rejected (a web page can fire POSTs at localhost; no CLI sends Origin).
-    Token mismatches reject only under enforcement; during the grace window
-    they are served with one warning per process so an updated watcher never
-    breaks an older CLI."""
+    Token mismatches reject only under METALMIND_RECALL_REQUIRE_TOKEN=1,
+    which is the shared-machine setting; otherwise they are served with one
+    note per process."""
     global _warned_tokenless
     if handler.headers.get("Origin"):
         handler._send_json(403, {"error": "browser-origin requests are not allowed"})
@@ -35,8 +35,8 @@ def _auth_gate(handler: "_Handler") -> bool:
     if not _warned_tokenless:
         _warned_tokenless = True
         print(
-            f"http recall: request without valid {auth.HEADER} served (grace mode); "
-            "update the metalmind CLI to silence this",
+            f"http recall: serving requests without {auth.HEADER}; "
+            "set METALMIND_RECALL_REQUIRE_TOKEN=1 to require it on a shared machine",
             flush=True,
         )
     return True
@@ -70,7 +70,7 @@ class _Handler(BaseHTTPRequestHandler):
                 {
                     "token_file": str(auth.token_path()),
                     "token_present": auth.token_path().exists(),
-                    "mode": "enforced" if auth.enforcement_enabled() else "grace",
+                    "mode": "enforced" if auth.enforcement_enabled() else "optional",
                 },
             )
         elif self.path == "/rerank/status":

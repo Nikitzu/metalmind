@@ -79,7 +79,7 @@ class TestHttpGate:
         assert status == 403
         assert "browser-origin" in body["error"]
 
-    def test_grace_mode_serves_tokenless_requests(self, server, monkeypatch):
+    def test_optional_mode_serves_tokenless_requests(self, server, monkeypatch):
         monkeypatch.delenv("METALMIND_RECALL_REQUIRE_TOKEN", raising=False)
         status, body = post(server, "/search", {"query": ""})
         assert status == 400
@@ -104,5 +104,5 @@ class TestHttpGate:
         with urllib.request.urlopen(f"{server}/auth/status", timeout=5) as res:
             body = json.loads(res.read().decode("utf-8"))
         assert body["token_present"] is True
-        assert body["mode"] == "grace"
+        assert body["mode"] == "optional"
         assert body["token_file"] == str(token_file)
