@@ -1,15 +1,20 @@
 """vault-doctor: hygiene checks for the Knowledge vault."""
 import argparse
+import json
+import os
 import re
 import time
 from collections import defaultdict
 from pathlib import Path
 
+from . import recall_log
 from . import rerank as rerank_mod
 from .core import VAULT, files_to_index, fts_row_count, vector_store
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 STALE_DAYS = 14
+STALE_VAULT_DAYS = int(os.environ.get("METALMIND_STALE_VAULT_DAYS", "90"))
+STALE_SKIP_TOP_DIRS = {"Archive", "Daily"}
 
 
 def parse_links(text: str) -> set[str]:
@@ -126,6 +131,59 @@ def check_rerank() -> None:
     print(f"  OK - cross-encoder rescored top hit (embedder score {top['prev_score']} → cross-enc {top['score']})")
 
 
+def recalled_files_from_log() -> set[str] | None:
+    """Files that appeared in any logged recall's top hits, or None when the
+    recall log is disabled or absent - callers must distinguish "no data"
+    from "never recalled"."""
+    path = recall_log.log_path()
+    if path is None or not path.exists():
+        return None
+    files: set[str] = set()
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        for f in rec.get("top_files") or []:
+            files.add(str(f))
+    return files
+
+
+def collect_stale_vault(
+    days: int = STALE_VAULT_DAYS, recalled: set[str] | None = None
+) -> list[tuple[int, str, bool]]:
+    """(age_days, rel_path, never_recalled) for notes untouched past `days`,
+    outside Archive/ and Daily/. `never_recalled` is False when no log exists."""
+    cutoff = time.time() - days * 86400
+    out: list[tuple[int, str, bool]] = []
+    for f in sorted(VAULT.rglob("*.md")):
+        rel = f.relative_to(VAULT)
+        if rel.parts and rel.parts[0] in STALE_SKIP_TOP_DIRS:
+            continue
+        if any(part.startswith(".") for part in rel.parts):
+            continue
+        mtime = f.stat().st_mtime
+        if mtime >= cutoff:
+            continue
+        age_days = int((time.time() - mtime) / 86400)
+        never_recalled = recalled is not None and str(rel) not in recalled
+        out.append((age_days, str(rel), never_recalled))
+    out.sort(reverse=True)
+    return out
+
+
+def check_stale_vault() -> None:
+    print(f"\n== Stale notes (>{STALE_VAULT_DAYS} days, outside Archive/ and Daily/) ==")
+    recalled = recalled_files_from_log()
+    entries = collect_stale_vault(recalled=recalled)
+    for age_days, rel, never_recalled in entries:
+        marker = "  · never recalled in log" if never_recalled else ""
+        print(f"  [{age_days}d] {rel}{marker}")
+    if recalled is None and entries:
+        print("  (recall log disabled - cannot tell which of these are still being read)")
+    print(f"  ({len(entries)} stale notes - report only; archive with `metalmind gold <note>`)")
+
+
 def check_stale_inbox() -> None:
     print(f"\n== Stale Inbox (>{STALE_DAYS} days) ==")
     cutoff = time.time() - STALE_DAYS * 86400
@@ -145,6 +203,11 @@ def main() -> None:
     ap.add_argument("--orphans", action="store_true")
     ap.add_argument("--dead-links", action="store_true")
     ap.add_argument("--stale-inbox", action="store_true")
+    ap.add_argument(
+        "--stale",
+        action="store_true",
+        help=f"whole-vault stale report (>{STALE_VAULT_DAYS}d, outside Archive/ and Daily/)",
+    )
     ap.add_argument("--fts", action="store_true", help="FTS5 index health vs the vector store")
     ap.add_argument("--rerank", action="store_true", help="cross-encoder reranker smoke-test")
     ap.add_argument("--all", action="store_true")
@@ -154,11 +217,12 @@ def main() -> None:
         args.orphans
         or args.dead_links
         or args.stale_inbox
+        or args.stale
         or args.fts
         or args.rerank
     )
     if args.all or not run_any:
-        args.orphans = args.dead_links = args.stale_inbox = True
+        args.orphans = args.dead_links = args.stale_inbox = args.stale = True
         args.fts = args.rerank = True
 
     if args.orphans:
@@ -167,6 +231,8 @@ def main() -> None:
         check_dead_links()
     if args.stale_inbox:
         check_stale_inbox()
+    if args.stale:
+        check_stale_vault()
     if args.fts:
         check_fts_index()
     if args.rerank:

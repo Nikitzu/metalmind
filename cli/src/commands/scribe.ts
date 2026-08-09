@@ -1,5 +1,6 @@
 import { log } from '@clack/prompts';
 import { readConfig } from '../config.js';
+import { findOverlappingNotes, formatOverlapWarning } from '../scribe/dedup.js';
 import {
   KIND_DIRS,
   type ScribeKind,
@@ -55,10 +56,13 @@ export async function scribeCreateCmd(
   },
 ): Promise<void> {
   try {
+    const cfg = await readConfig();
+    if (!cfg) throw new Error('metalmind not initialized - run `metalmind init` first');
     const body = opts.body ?? (await readStdin());
+    const kind = assertKind(opts.kind);
     const res = await scribeCreate(
       {
-        kind: assertKind(opts.kind),
+        kind,
         title,
         body,
         project: opts.project,
@@ -75,9 +79,18 @@ export async function scribeCreateCmd(
         moc: opts.moc,
         dryRun: opts.dryRun,
       },
-      await ctx(),
+      { vaultRoot: cfg.vaultPath },
     );
     log.success(`${opts.dryRun ? 'would create' : 'created'} ${res.relPath}`);
+    if (res.created && kind !== 'daily') {
+      const overlaps = await findOverlappingNotes({
+        title,
+        body,
+        httpEndpoint: cfg.recall.httpEndpoint,
+      });
+      const others = overlaps.filter((h) => h.file !== res.relPath);
+      if (others.length > 0) log.warn(formatOverlapWarning(others));
+    }
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
   }

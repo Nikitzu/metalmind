@@ -760,8 +760,16 @@ async function runRecallAudit(opts: DoctorOptions): Promise<void> {
   if (!existsSync(path)) {
     log.warn(`No recall log at ${path}.`);
     log.info(
-      'Set `METALMIND_RECALL_LOG_PATH=~/.metalmind/recall-log.ndjson` in the watcher env, ' +
-        'restart the watcher, and run a few queries before re-running this audit.',
+      [
+        'Recall logging is off by default: the log captures queries verbatim, like shell',
+        'history, and never leaves this machine. To enable it:',
+        '  1. Add `METALMIND_RECALL_LOG_PATH=~/.metalmind/recall-log.ndjson` to the watcher env:',
+        '     macOS: EnvironmentVariables in ~/Library/LaunchAgents/com.metalmind.vault-indexer.plist',
+        '     Linux: an Environment= line in ~/.config/systemd/user/metalmind-vault-indexer.service',
+        '  2. Restart the watcher (macOS: `launchctl kickstart -k gui/$UID/com.metalmind.vault-indexer`,',
+        '     Linux: `systemctl --user restart metalmind-vault-indexer`).',
+        '  3. Run a few queries, then re-run this audit.',
+      ].join('\n'),
     );
     return;
   }
