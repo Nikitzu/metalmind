@@ -306,7 +306,7 @@
 }
 .cmp-row {
   display: grid;
-  grid-template-columns: 1.2fr 1.2fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1.15fr 1.15fr 1fr 1fr 1fr 1fr 1fr;
   border-top: 1px solid var(--line-soft);
 }
 .cmp-row:first-child { border-top: 0; }

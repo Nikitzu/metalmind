@@ -1,19 +1,18 @@
 ---
-// Comparison matrix - adds two new rows (Scope + hit@1 @ 1k) so the
-// metalmind-vs-qmd distinction is visible. Caption clarifies the
-// "standing tokens vs no-CLAUDE.md-instruction" trade-off honestly.
-
-const cols = ['metalmind', 'native /memory', 'qmd', 'mem0', 'Letta'];
+const cols = ['metalmind', 'native auto memory', 'qmd', 'basic-memory', 'mem0', 'Letta'];
 
 const rows = [
-  { k: 'Scope',                  v: ['memory + sync + code intel + daily + synod + flare + pulse', 'memory only', 'memory only', 'memory only (LLM facts)', 'memory + agent runtime'] },
-  { k: 'Memory primitive',       v: ['Markdown chunks', 'CLAUDE.md text', 'Markdown chunks', 'LLM-extracted facts', 'Managed blocks'] },
-  { k: 'Source preserved',       v: ['✓', '✓', '✓', '-', 'partial'] },
-  { k: 'Standing tokens',        v: ['~345 (one-time prose)', 'full file', '~0', '~1,319', 'n/a'] },
-  { k: 'hit@1 @ 1k notes',       v: ['90%', 'n/a', '80%', 'n/a', 'n/a'] },
-  { k: 'Cross-repo',             v: ['✓', '-', '✓', '✓', '✓'] },
-  { k: 'State location',         v: ['local vault', 'local repo', 'local files', 'cloud / vector DB', 'cloud / Letta server'] },
-  { k: 'Walk-away cost',         v: ['zero', 'zero', 'zero', 'export needed', 'export needed'] },
+  { k: 'Scope',                  v: ['memory + sync + code intel + daily + synod + flare + pulse', 'memory only', 'memory only', 'memory (MCP knowledge graph)', 'memory only (LLM facts)', 'memory + agent runtime'] },
+  { k: 'Memory primitive',       v: ['Markdown chunks', 'MEMORY.md + topic files', 'Markdown chunks', 'Markdown entities + relations', 'LLM-extracted facts', 'Managed blocks'] },
+  { k: 'Source preserved',       v: ['✓', '✓', '✓', '✓', '-', 'partial'] },
+  { k: 'Readable without the tool', v: ['✓ plain markdown', '✓', '✓', '✓', '-', '-'] },
+  { k: 'Standing tokens',        v: ['~345 (one-time prose)', 'first 200 lines of MEMORY.md, every session', '~0', 'MCP schemas (unmeasured)', '~1,319', 'n/a'] },
+  { k: 'hit@1 @ 1k notes',       v: ['90%', 'n/a', '80%', 'n/a', 'n/a', 'n/a'] },
+  { k: 'Cross-repo',             v: ['✓', '- (per-repo by design)', '✓', '✓', '✓', '✓'] },
+  { k: 'Cross-machine',          v: ['✓ guarded git sync', '- (not synced)', 'DIY', 'DIY', '✓ (cloud)', '✓ (server)'] },
+  { k: 'Works offline',          v: ['✓', '✓', '✓', '✓', 'partial (OpenMemory)', 'partial (self-host)'] },
+  { k: 'State location',         v: ['local vault', 'local per-repo dir', 'local files', 'local markdown + SQLite', 'cloud / vector DB', 'cloud / Letta server'] },
+  { k: 'Walk-away cost',         v: ['zero', 'zero', 'zero', 'zero', 'export needed', 'export needed'] },
 ];
 ---
 <section id="compare">
@@ -21,7 +20,7 @@ const rows = [
     <div class="section-head">
       <div class="eyebrow">§ Where it earns its install cost</div>
       <h2>Different tools, different bets.</h2>
-      <p>Native /memory wins below ~50 notes in one repo. metalmind earns its install cost once knowledge crosses repo boundaries - and where you want the rest of the standard library too.</p>
+      <p>Native auto memory wins below ~50 notes in one repo - and stays in that repo, on that machine. metalmind earns its install cost once knowledge crosses repo or machine boundaries - and where you want the rest of the standard library too. <code>metalmind ingest auto-memory</code> bridges the two: native notes flow into the synced vault.</p>
     </div>
 
     <div class="cmp-table">
@@ -42,7 +41,9 @@ const rows = [
     <p class="cmp-caption">
       <strong>Honest read on standing tokens:</strong> our ~345 is one-time prose in <code>CLAUDE.md</code> that teaches Claude
       <em>when</em> to recall - work that qmd skips. qmd wins the row, but the <em>Scope</em> and <em>hit@1</em> rows above are
-      where metalmind earns it back. Pick whichever bet matches the work.
+      where metalmind earns it back. Pick whichever bet matches the work. Zep is omitted as a column: its temporal knowledge
+      graph is a hosted-service bet, the same trade the mem0 column already shows. Every competitor cell traces to that
+      tool's public docs; hit@1 is stated only for tools run on our own bench.
     </p>
   </div>
 </section>
