@@ -6,6 +6,28 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.18.0 - 2026-08-09
+
+### Added
+
+- **Token-lean recall: `--files`, `--budget <tokens>`, `--neighbors`.** The cheapest recall call is now paths and titles only (`--files`); `--budget` caps total output at roughly N tokens by shrinking snippets down a ladder before dropping hits, so a tight budget yields thinner hits rather than fewer; `--neighbors` returns the prev/next chunks around each hit for snippets that cut off mid-thought. Neighbor lookup recovers chunk position from the FTS table by exact match - no index change, no reindex. An older watcher ignores the new field and the CLI says so once; an older CLI never sends it.
+
+- **The recall port now has an auth token.** `127.0.0.1:17317` is loopback-only but reachable by every UNIX account on the machine - unlike the vault directory, which file permissions protect. The watcher writes `~/.metalmind/recall-token` (mode 0600) on boot, the CLI sends it automatically, and browser-origin requests are rejected outright. Enforcement is graced: tokenless requests are served with a logged warning so this update cannot break an older CLI mid-upgrade. The default flips to required in a later release; opt in early with `METALMIND_RECALL_REQUIRE_TOKEN=1`. Scripting against the port directly: send the file's contents as `X-Metalmind-Token`.
+
+- **`scribe create` warns about near-duplicate notes.** The draft runs through a semantic-only search after writing; existing notes scoring 0.80+ cosine are named, with a pointer at `scribe update`. Warn-only - the check never blocks a create and degrades silently when the watcher is down, because a recall outage must never break a write.
+
+- **`vault-doctor --stale`: whole-vault staleness report.** Notes untouched for 90+ days outside `Archive/` and `Daily/`, marked "never recalled in log" only when a recall log actually exists. Report-only; archiving stays a user decision. `doctor --recall-audit` with logging disabled now prints the full enable recipe - env var, per-platform unit file, restart command - with the privacy note that the log captures queries verbatim.
+
+- **Bench: MRR, NDCG@5, index size, incremental reindex cost.** hit@k could not distinguish "everything at rank 1" from "everything at rank 2" - the exact shape of the 50k labeling incident. Both recall harnesses now report MRR and NDCG@5 alongside it. recall-at-scale additionally measures on-disk index size and times a single-file reindex after the query loop: at 1k notes, 12.8 MB and 34 ms against a 34 s full index - the number a note edit actually costs.
+
+### Changed
+
+- **The compare table entered the auto-memory era.** New basic-memory column, native Claude Code column updated (per-repo, unsynced, MEMORY.md head loads every session), new rows for readable-without-the-tool, cross-machine, and offline. Sourcing rule stated in the caption: competitor cells trace to public docs, hit@1 appears only for tools run on our own bench.
+
+- **LongMemEval fixture: verdict is keep.** `bench/longmemeval/README.md` records why it maps where mem0 did not (sessions become files, `answer_session_ids` are third-party gold labels) and the gate: no number ships until the abstention column exists. Harness build is a follow-up work item.
+
+---
+
 ## 0.17.1 - 2026-08-08
 
 ### Fixed

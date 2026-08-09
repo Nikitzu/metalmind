@@ -1,6 +1,6 @@
 {
   "name": "metalmind",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "description": "Unified CLI for a local markdown-as-memory vault (Obsidian-compatible, not required) and cross-repo code intelligence. Hosts: Claude Code + Codex CLI. Mistborn-themed with a neutral alias set.",
   "license": "MIT",
   "repository": {
