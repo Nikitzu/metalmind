@@ -207,6 +207,16 @@ function attachTapFlags<T extends Command>(cmd: T): T {
       '--compact',
       'Lean per-hit render (drop prev_score, snippet text); full note via scribe show',
     )
+    .option('--files', 'Paths and titles only, zero snippets - cheapest first call')
+    .option(
+      '--budget <tokens>',
+      'Cap total output at ~N tokens (chars/4); snippets shrink before hits drop. Implies compact render',
+      (v) => Number.parseInt(v, 10),
+    )
+    .option(
+      '--neighbors',
+      'Include prev/next chunks of each hit for surrounding context (HTTP path only)',
+    )
     .option('--verbose', 'Include metadata line (overrides config.verbose)')
     .option(
       '--verify-code',
@@ -226,6 +236,9 @@ type TapCliOpts = {
   k?: number;
   json?: boolean;
   compact?: boolean;
+  files?: boolean;
+  budget?: number;
+  neighbors?: boolean;
   verbose?: boolean;
   listRecent?: number;
   verifyCode?: boolean;
@@ -241,6 +254,9 @@ function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
     k: cmdOpts.k,
     json: cmdOpts.json,
     compact: cmdOpts.compact,
+    files: cmdOpts.files,
+    budget: cmdOpts.budget,
+    neighbors: cmdOpts.neighbors,
     verbose: cmdOpts.verbose,
     listRecent: cmdOpts.listRecent,
     verifyCode: cmdOpts.verifyCode,

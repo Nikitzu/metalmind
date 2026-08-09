@@ -54,10 +54,13 @@ class _Handler(BaseHTTPRequestHandler):
                 k = int(body.get("k") or 5)
                 rerank = bool(body.get("rerank"))
                 mode = str(body.get("mode") or "hybrid")
+                neighbors = bool(body.get("neighbors"))
                 if not query.strip():
                     self._send_json(400, {"error": "query is required"})
                     return
                 hits = search.search_vault(query, k, rerank=rerank, mode=mode)
+                if neighbors:
+                    search.attach_neighbors(hits)
                 recall_log.record(query, mode=mode, rerank=rerank, k=k, hits=hits)
                 self._send_json(200, {"hits": hits})
             elif self.path == "/expand":

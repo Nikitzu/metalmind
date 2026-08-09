@@ -396,6 +396,40 @@ def search_vault(
     return hits[:k]
 
 
+def attach_neighbors(hits: list[dict]) -> None:
+    """Attach `neighbor_text` = {prev?, next?} to each hit in place.
+
+    The vector payload does not carry chunk_idx, so the hit's position is
+    recovered by exact (file, text) match against the FTS table - both
+    retrievers index the identical chunk list, so the lookup is total for
+    any hit that is still current. A hit whose source file changed since
+    indexing simply gets no neighbors.
+    """
+    with fts_conn() as conn:
+        for h in hits:
+            file = h.get("file")
+            text = h.get("text")
+            if not isinstance(file, str) or not isinstance(text, str):
+                continue
+            row = conn.execute(
+                "SELECT chunk_idx FROM chunks WHERE file = ? AND text = ? LIMIT 1",
+                (file, text),
+            ).fetchone()
+            if row is None:
+                continue
+            idx = int(row[0])
+            neighbors: dict[str, str] = {}
+            for label, delta in (("prev", -1), ("next", 1)):
+                r = conn.execute(
+                    "SELECT text FROM chunks WHERE file = ? AND chunk_idx = ?",
+                    (file, idx + delta),
+                ).fetchone()
+                if r is not None:
+                    neighbors[label] = r[0]
+            if neighbors:
+                h["neighbor_text"] = neighbors
+
+
 def related_notes(file: str) -> dict:
     """Return forward links and backlinks for a note."""
     index = file_index()

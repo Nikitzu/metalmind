@@ -13,6 +13,9 @@ export interface TapOptions {
   k?: number;
   json?: boolean;
   compact?: boolean;
+  files?: boolean;
+  budget?: number;
+  neighbors?: boolean;
   verbose?: boolean;
   listRecent?: number;
   verifyCode?: boolean;
@@ -58,6 +61,12 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
     return;
   }
 
+  if (opts.budget !== undefined && (!Number.isInteger(opts.budget) || opts.budget <= 0)) {
+    log.error('--budget takes a positive integer token count.');
+    process.exitCode = 1;
+    return;
+  }
+
   if (!query?.trim()) {
     log.error('Usage: metalmind tap copper "<query>"  |  metalmind tap copper --list-recent N');
     process.exitCode = 1;
@@ -91,6 +100,9 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       mode: resolveMode(opts),
       verbose: showMeta,
       compact: opts.compact,
+      files: opts.files,
+      budgetTokens: opts.budget,
+      neighbors: opts.neighbors,
       verifyCode: opts.verifyCode,
       forgeGroups: config.forge.groups,
       httpEndpoint: config.recall.httpEndpoint,
@@ -102,6 +114,20 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       return;
     }
     if (showMeta) log.info(`${tier} (${query.length} chars)`);
+    if (
+      opts.neighbors &&
+      result.transport === 'http' &&
+      result.hits &&
+      result.hits.length > 0 &&
+      !result.hits.some((h) => h.neighbor_text)
+    ) {
+      log.info(
+        'no neighbor context returned - hits are single-chunk notes, or the watcher predates --neighbors (restart it after updating)',
+      );
+    }
+    if (opts.neighbors && result.transport === 'stdio') {
+      log.info('--neighbors needs the HTTP recall path; stdio fallback returned plain hits.');
+    }
     process.stdout.write(`${result.text}\n`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

@@ -289,3 +289,158 @@ describe('recall transport selection', () => {
     expect(res.transport).toBe('stdio');
   });
 });
+
+describe('recall output shaping (--files, --budget, --neighbors)', () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  const hitsResponse = (hits: unknown[]) =>
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify({ hits }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+    ) as typeof fetch;
+
+  it('--files renders path plus frontmatter title and no snippet text', async () => {
+    const vault = await mkdtemp(join(tmpdir(), 'mm-recall-files-'));
+    await mkdir(join(vault, 'Work'), { recursive: true });
+    await writeFile(
+      join(vault, 'Work', 'auth.md'),
+      '---\ntitle: Auth model decision\n---\n\nlong body that must not appear\n',
+    );
+    globalThis.fetch = hitsResponse([
+      {
+        file: 'Work/auth.md',
+        heading: 'Auth model / Sessions',
+        score: 0.91,
+        text: 'long body that must not appear',
+      },
+    ]);
+
+    const res = await recall({ vaultPath: vault, query: 'auth', tier: 'fast', files: true });
+
+    expect(res.text).toContain('Work/auth.md - Auth model decision');
+    expect(res.text).not.toContain('long body');
+    await rm(vault, { recursive: true, force: true });
+  });
+
+  it('--files falls back to the first heading segment when the note is unreadable', async () => {
+    globalThis.fetch = hitsResponse([
+      { file: 'Gone/missing.md', heading: 'Missing note title / Sub', score: 0.5, text: 'body' },
+    ]);
+
+    const res = await recall({ vaultPath: '/nonexistent', query: 'q', tier: 'fast', files: true });
+
+    expect(res.text).toContain('Gone/missing.md - Missing note title');
+    expect(res.text).not.toContain('body');
+  });
+
+  it('--budget keeps every hit with shrunk snippets when they fit', async () => {
+    const longText = 'word '.repeat(200);
+    globalThis.fetch = hitsResponse([
+      { file: 'a.md', heading: '(root)', score: 0.9, text: longText },
+      { file: 'b.md', heading: '(root)', score: 0.8, text: longText },
+      { file: 'c.md', heading: '(root)', score: 0.7, text: longText },
+    ]);
+
+    const res = await recall({
+      vaultPath: '/tmp/vault',
+      query: 'q',
+      tier: 'fast',
+      budgetTokens: 150,
+    });
+
+    expect(res.text.length).toBeLessThanOrEqual(150 * 4);
+    expect(res.text).toContain('a.md');
+    expect(res.text).toContain('c.md');
+  });
+
+  it('--budget drops trailing hits only when the smallest snippet still overflows', async () => {
+    const longText = 'word '.repeat(200);
+    globalThis.fetch = hitsResponse(
+      Array.from({ length: 5 }, (_, i) => ({
+        file: `note-${i}.md`,
+        heading: '(root)',
+        score: 0.9 - i / 10,
+        text: longText,
+      })),
+    );
+
+    const res = await recall({
+      vaultPath: '/tmp/vault',
+      query: 'q',
+      tier: 'fast',
+      budgetTokens: 60,
+    });
+
+    expect(res.text.length).toBeLessThanOrEqual(60 * 4);
+    expect(res.text).toContain('note-0.md');
+    expect(res.text).not.toContain('note-4.md');
+  });
+
+  it('--neighbors sends the field and renders prev/next under the hit', async () => {
+    const fetchMock = hitsResponse([
+      {
+        file: 'a.md',
+        heading: '(root)',
+        score: 0.9,
+        text: 'the chunk itself',
+        neighbor_text: { prev: 'text before the chunk', next: 'text after the chunk' },
+      },
+    ]);
+    globalThis.fetch = fetchMock;
+
+    const res = await recall({
+      vaultPath: '/tmp/vault',
+      query: 'q',
+      tier: 'fast',
+      compact: true,
+      neighbors: true,
+    });
+
+    const call = (fetchMock as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    const body = JSON.parse((call[1] as { body: string }).body);
+    expect(body.neighbors).toBe(true);
+    expect(res.text).toContain('↳ prev: text before the chunk');
+    expect(res.text).toContain('↳ next: text after the chunk');
+  });
+
+  it('tolerates a watcher that ignores the neighbors field', async () => {
+    globalThis.fetch = hitsResponse([
+      { file: 'a.md', heading: '(root)', score: 0.9, text: 'plain hit' },
+    ]);
+
+    const res = await recall({
+      vaultPath: '/tmp/vault',
+      query: 'q',
+      tier: 'fast',
+      compact: true,
+      neighbors: true,
+    });
+
+    expect(res.text).toContain('plain hit');
+    expect(res.text).not.toContain('↳');
+  });
+
+  it('default output is unchanged when no shaping flag is passed', async () => {
+    globalThis.fetch = hitsResponse([
+      { file: 'a.md', heading: '(root)', score: 0.9, text: 'chunk' },
+    ]);
+
+    const res = await recall({ vaultPath: '/tmp/vault', query: 'q', tier: 'fast' });
+
+    expect(res.text).toBe(
+      JSON.stringify({ file: 'a.md', heading: '(root)', score: 0.9, text: 'chunk' }, null, 2),
+    );
+  });
+});

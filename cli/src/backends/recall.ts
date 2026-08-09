@@ -24,6 +24,9 @@ export interface RecallOptions {
   /** When true, log the HTTP-path failure to stderr before falling back. */
   verbose?: boolean;
   compact?: boolean;
+  files?: boolean;
+  budgetTokens?: number;
+  neighbors?: boolean;
   verifyCode?: boolean;
   forgeGroups?: ForgeGroups;
   /** Override the co-hosted HTTP recall endpoint. Defaults to env or config. */
@@ -115,7 +118,8 @@ function snippet(text: unknown, max = COMPACT_SNIPPET_CHARS): string {
   return `${trimmed.trimEnd()}…`;
 }
 
-function formatHitsCompact(hits: Array<Record<string, unknown>>): string {
+function formatHitsCompact(hits: Array<Record<string, unknown>>, snippetMax?: number): string {
+  const max = snippetMax ?? COMPACT_SNIPPET_CHARS;
   return hits
     .map((h, i) => {
       const score = typeof h.score === 'number' ? h.score.toFixed(3) : '-';
@@ -126,9 +130,80 @@ function formatHitsCompact(hits: Array<Record<string, unknown>>): string {
         typeof h.superseded_by === 'string' && h.superseded_by
           ? ` → superseded by [[${h.superseded_by}]]`
           : '';
-      return `${i + 1}. [${score}] ${file}${headPart}${superseded}\n   ${snippet(h.text)}${codeRefWarnings(h)}`;
+      const neighbors = neighborLines(h, Math.floor(max / 2));
+      return `${i + 1}. [${score}] ${file}${headPart}${superseded}\n   ${snippet(h.text, max)}${neighbors}${codeRefWarnings(h)}`;
     })
     .join('\n');
+}
+
+function neighborLines(h: Record<string, unknown>, max: number): string {
+  const nt = h.neighbor_text;
+  if (typeof nt !== 'object' || nt === null) return '';
+  const parts: string[] = [];
+  for (const key of ['prev', 'next'] as const) {
+    const text = (nt as Record<string, unknown>)[key];
+    if (typeof text === 'string' && text) parts.push(`\n   ↳ ${key}: ${snippet(text, max)}`);
+  }
+  return parts.join('');
+}
+
+function formatHitsFiles(hits: Array<Record<string, unknown>>): string {
+  return hits
+    .map((h, i) => {
+      const score = typeof h.score === 'number' ? h.score.toFixed(3) : '-';
+      const file = typeof h.file === 'string' ? h.file : '(unknown)';
+      const title =
+        typeof h.note_title === 'string' && h.note_title
+          ? h.note_title
+          : firstHeadingSegment(h.heading);
+      const superseded =
+        typeof h.superseded_by === 'string' && h.superseded_by
+          ? ` → superseded by [[${h.superseded_by}]]`
+          : '';
+      return `${i + 1}. [${score}] ${file}${title ? ` - ${title}` : ''}${superseded}`;
+    })
+    .join('\n');
+}
+
+function firstHeadingSegment(heading: unknown): string {
+  if (typeof heading !== 'string' || heading.length === 0) return '';
+  const first = (heading.split(' / ')[0] ?? '').trim();
+  return first === '(root)' ? '' : first;
+}
+
+const BUDGET_SNIPPET_LADDER = [COMPACT_SNIPPET_CHARS, 200, 160, 120, 80];
+
+function formatHitsBudget(hits: Array<Record<string, unknown>>, budgetTokens: number): string {
+  const budgetChars = Math.max(1, budgetTokens) * 4;
+  const pool = [...hits];
+  let best = '';
+  while (pool.length > 0) {
+    for (const cap of BUDGET_SNIPPET_LADDER) {
+      const rendered = formatHitsCompact(pool, cap);
+      if (rendered.length <= budgetChars) return rendered;
+      best = rendered;
+    }
+    pool.pop();
+  }
+  return best;
+}
+
+async function annotateTitles(
+  hits: Array<Record<string, unknown>>,
+  vaultPath: string,
+): Promise<void> {
+  const { resolveNotePath } = await import('../scribe/scribe.js');
+  const { frontmatterString, readNoteFrontmatter } = await import('../scribe/frontmatter.js');
+  for (const h of hits) {
+    if (typeof h.file !== 'string') continue;
+    try {
+      const fm = await readNoteFrontmatter(resolveNotePath(h.file, vaultPath));
+      const title = frontmatterString(fm, 'title');
+      if (title) h.note_title = title;
+    } catch {
+      continue;
+    }
+  }
 }
 
 async function annotateCodeRefs(
@@ -162,8 +237,14 @@ function codeRefWarnings(h: Record<string, unknown>): string {
 
 async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
   const endpoint = resolveEndpoint(opts.httpEndpoint);
-  const fmt = opts.compact ? formatHitsCompact : formatHits;
+  const fmt = (hits: Array<Record<string, unknown>>): string => {
+    if (opts.files) return formatHitsFiles(hits);
+    if (opts.budgetTokens !== undefined) return formatHitsBudget(hits, opts.budgetTokens);
+    if (opts.compact) return formatHitsCompact(hits);
+    return formatHits(hits);
+  };
   const annotate = async (hits: Array<Record<string, unknown>>): Promise<void> => {
+    if (opts.files) await annotateTitles(hits, opts.vaultPath);
     if (opts.verifyCode) await annotateCodeRefs(hits, opts.vaultPath, opts.forgeGroups ?? {});
   };
   try {
@@ -197,6 +278,7 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
         k: opts.k ?? 5,
         rerank: opts.rerank ?? false,
         mode: opts.mode ?? 'hybrid',
+        neighbors: opts.neighbors ?? false,
       },
       { rerank: opts.rerank },
     )) as { hits: Array<Record<string, unknown>> };

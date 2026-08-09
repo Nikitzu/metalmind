@@ -11,10 +11,15 @@ Full operational reference. The CLAUDE.md memory section covers when and why to 
 ## Recall - `metalmind tap copper`
 
 ```bash
-metalmind tap copper "<query>"          # Fast semantic search
-metalmind tap copper "<query>" --deep   # Hits + related notes in one call
-metalmind tap copper "<query>" --expand # Full linked-context graph
+metalmind tap copper "<query>"              # Fast semantic search
+metalmind tap copper "<query>" --deep       # Hits + related notes in one call
+metalmind tap copper "<query>" --expand     # Full linked-context graph
+metalmind tap copper "<query>" --files      # Paths + titles only, zero snippets - cheapest first call
+metalmind tap copper "<query>" --budget 300 # Cap output at ~N tokens; snippets shrink before hits drop
+metalmind tap copper "<query>" --neighbors  # Include prev/next chunks around each hit
 ```
+
+Token discipline: start with `--files`, then `metalmind scribe show <hit>` only for the hits that matter. Reach for `--neighbors` when a snippet reads truncated mid-thought.
 
 The retriever is a single embedding pass. If the vault uses different wording, run 2-3 queries with rephrasings (literal terms, synonyms, acronym, spelled-out form) and union the hits before concluding nothing is there.
 
