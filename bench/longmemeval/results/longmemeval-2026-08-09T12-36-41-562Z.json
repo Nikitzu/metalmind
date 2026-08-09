@@ -1,0 +1,524 @@
+{
+  "meta": {
+    "timestamp": "2026-08-09T12:36:41.562Z",
+    "fixture": "oracle (no distractors - smoke only)",
+    "sessions": 940,
+    "questions": 60,
+    "indexElapsedSec": 1171.233689993
+  },
+  "summaryByType": {
+    "temporal-reasoning": {
+      "n": 54,
+      "hitAt1": 0.5185185185185185,
+      "hitAt3": 0.8148148148148148,
+      "hitAt5": 0.8888888888888888,
+      "mrr": 0.6604938271604939,
+      "ndcgAt5": 0.5668697004736281,
+      "misses": 6,
+      "p50ms": 90.93356499983929,
+      "p95ms": 182.67877300013788
+    }
+  },
+  "overall": {
+    "n": 54,
+    "hitAt1": 0.5185185185185185,
+    "hitAt3": 0.8148148148148148,
+    "hitAt5": 0.8888888888888888,
+    "mrr": 0.6604938271604939,
+    "ndcgAt5": 0.5668697004736281,
+    "misses": 6,
+    "p50ms": 90.93356499983929,
+    "p95ms": 182.67877300013788
+  },
+  "abstention": {
+    "n": 6,
+    "floor": 0.1062,
+    "correctAbstainRate": 0.16666666666666666,
+    "answerableTopP50": 0.1549,
+    "abstentionTopP50": 0.1429
+  },
+  "answerable": [
+    {
+      "id": "gpt4_2655b836",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.7653606369886217,
+      "topScore": 0.0988,
+      "latencyMs": 374.58031699992716
+    },
+    {
+      "id": "gpt4_2487a7cb",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.1326,
+      "latencyMs": 100.46941399993375
+    },
+    {
+      "id": "gpt4_76048e76",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.1388,
+      "latencyMs": 111.00811800011434
+    },
+    {
+      "id": "gpt4_2312f94c",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1375,
+      "latencyMs": 87.56001599994488
+    },
+    {
+      "id": "0bb5a684",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 1,
+      "topScore": 0.2417,
+      "latencyMs": 153.62863799999468
+    },
+    {
+      "id": "08f4fc43",
+      "type": "temporal-reasoning",
+      "rank": 4,
+      "ndcg": 0.5012658353418871,
+      "topScore": 0.1301,
+      "latencyMs": 119.13982799998485
+    },
+    {
+      "id": "2c63a862",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.1062,
+      "latencyMs": 132.8234780000057
+    },
+    {
+      "id": "gpt4_385a5000",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.2092,
+      "latencyMs": 60.846660000039265
+    },
+    {
+      "id": "2a1811e2",
+      "type": "temporal-reasoning",
+      "rank": 2,
+      "ndcg": 0.6240505200038379,
+      "topScore": 0.175,
+      "latencyMs": 109.6621710001491
+    },
+    {
+      "id": "bbf86515",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 1,
+      "topScore": 0.1299,
+      "latencyMs": 89.25278300000355
+    },
+    {
+      "id": "gpt4_5dcc0aab",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.4703652827859579,
+      "topScore": 0.1565,
+      "latencyMs": 63.69571299990639
+    },
+    {
+      "id": "gpt4_0b2f1d21",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.9197207891481876,
+      "topScore": 0.1862,
+      "latencyMs": 82.44125000014901
+    },
+    {
+      "id": "f0853d11",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.9197207891481876,
+      "topScore": 0.1828,
+      "latencyMs": 66.66920199990273
+    },
+    {
+      "id": "gpt4_6ed717ea",
+      "type": "temporal-reasoning",
+      "rank": 2,
+      "ndcg": 0.6934264036172708,
+      "topScore": 0.1519,
+      "latencyMs": 88.58892100001685
+    },
+    {
+      "id": "gpt4_70e84552",
+      "type": "temporal-reasoning",
+      "rank": 2,
+      "ndcg": 0.6509209298071326,
+      "topScore": 0.1326,
+      "latencyMs": 76.87891099997796
+    },
+    {
+      "id": "a3838d2b",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.48522855511632257,
+      "topScore": 0.1708,
+      "latencyMs": 92.62017000000924
+    },
+    {
+      "id": "gpt4_93159ced",
+      "type": "temporal-reasoning",
+      "rank": 2,
+      "ndcg": 0.38685280723454163,
+      "topScore": 0.1683,
+      "latencyMs": 89.29227699991316
+    },
+    {
+      "id": "gpt4_2d58bcd6",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.1496,
+      "latencyMs": 89.40906900004484
+    },
+    {
+      "id": "gpt4_65aabe59",
+      "type": "temporal-reasoning",
+      "rank": 4,
+      "ndcg": 0.2640681225725909,
+      "topScore": 0.2284,
+      "latencyMs": 82.81701400014572
+    },
+    {
+      "id": "982b5123",
+      "type": "temporal-reasoning",
+      "rank": 3,
+      "ndcg": 0.3065735963827292,
+      "topScore": 0.1352,
+      "latencyMs": 77.66909300000407
+    },
+    {
+      "id": "b9cfe692",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1204,
+      "latencyMs": 91.99895999999717
+    },
+    {
+      "id": "gpt4_4edbafa2",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 1,
+      "topScore": 0.1819,
+      "latencyMs": 99.47186900000088
+    },
+    {
+      "id": "c8090214",
+      "type": "temporal-reasoning",
+      "rank": 3,
+      "ndcg": 0.3065735963827292,
+      "topScore": 0.1111,
+      "latencyMs": 106.29654600005597
+    },
+    {
+      "id": "gpt4_483dd43c",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 1,
+      "topScore": 0.1735,
+      "latencyMs": 82.14054899988696
+    },
+    {
+      "id": "e4e14d04",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 1,
+      "topScore": 0.1707,
+      "latencyMs": 131.58172800019383
+    },
+    {
+      "id": "c9f37c46",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.8503449055347546,
+      "topScore": 0.2017,
+      "latencyMs": 107.2300090000499
+    },
+    {
+      "id": "gpt4_2c50253f",
+      "type": "temporal-reasoning",
+      "rank": 3,
+      "ndcg": 0.3065735963827292,
+      "topScore": 0.1182,
+      "latencyMs": 74.677478000056
+    },
+    {
+      "id": "dcfa8644",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.9197207891481876,
+      "topScore": 0.1762,
+      "latencyMs": 108.41436899988912
+    },
+    {
+      "id": "gpt4_b4a80587",
+      "type": "temporal-reasoning",
+      "rank": 2,
+      "ndcg": 0.38685280723454163,
+      "topScore": 0.1199,
+      "latencyMs": 87.54878499987535
+    },
+    {
+      "id": "gpt4_9a159967",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.7653606369886217,
+      "topScore": 0.1519,
+      "latencyMs": 86.52954800007865
+    },
+    {
+      "id": "cc6d1ec1",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.2221,
+      "latencyMs": 90.93356499983929
+    },
+    {
+      "id": "gpt4_8c8961ae",
+      "type": "temporal-reasoning",
+      "rank": 2,
+      "ndcg": 0.6934264036172708,
+      "topScore": 0.1442,
+      "latencyMs": 100.9138189998921
+    },
+    {
+      "id": "gpt4_d9af6064",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.9197207891481876,
+      "topScore": 0.2573,
+      "latencyMs": 83.85856299987063
+    },
+    {
+      "id": "gpt4_7de946e7",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 1,
+      "topScore": 0.1691,
+      "latencyMs": 84.77582599991001
+    },
+    {
+      "id": "d01c6aa8",
+      "type": "temporal-reasoning",
+      "rank": 4,
+      "ndcg": 0.5012658353418871,
+      "topScore": 0.135,
+      "latencyMs": 99.19366100011393
+    },
+    {
+      "id": "993da5e2",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1601,
+      "latencyMs": 97.79850900010206
+    },
+    {
+      "id": "a3045048",
+      "type": "temporal-reasoning",
+      "rank": 4,
+      "ndcg": 0.2640681225725909,
+      "topScore": 0.1921,
+      "latencyMs": 104.38448300003074
+    },
+    {
+      "id": "gpt4_d31cdae3",
+      "type": "temporal-reasoning",
+      "rank": 3,
+      "ndcg": 0.3065735963827292,
+      "topScore": 0.1132,
+      "latencyMs": 81.78839000011794
+    },
+    {
+      "id": "gpt4_cd90e484",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.8772153153380493,
+      "topScore": 0.1451,
+      "latencyMs": 108.83341600000858
+    },
+    {
+      "id": "gpt4_88806d6e",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.2303,
+      "latencyMs": 70.73861500015482
+    },
+    {
+      "id": "gpt4_4cd9eba1",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 1,
+      "topScore": 0.1176,
+      "latencyMs": 109.37454400002025
+    },
+    {
+      "id": "gpt4_93f6379c",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.7653606369886217,
+      "topScore": 0.125,
+      "latencyMs": 67.98147700005211
+    },
+    {
+      "id": "b29f3365",
+      "type": "temporal-reasoning",
+      "rank": 2,
+      "ndcg": 0.6934264036172708,
+      "topScore": 0.1385,
+      "latencyMs": 93.12546100001782
+    },
+    {
+      "id": "gpt4_2f56ae70",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1138,
+      "latencyMs": 69.48156600003131
+    },
+    {
+      "id": "6613b389",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6713860725233041,
+      "topScore": 0.2279,
+      "latencyMs": 49.52695299987681
+    },
+    {
+      "id": "gpt4_78cf46a3",
+      "type": "temporal-reasoning",
+      "rank": 3,
+      "ndcg": 0.3065735963827292,
+      "topScore": 0.1643,
+      "latencyMs": 65.58385999989696
+    },
+    {
+      "id": "gpt4_0a05b494",
+      "type": "temporal-reasoning",
+      "rank": 3,
+      "ndcg": 0.3065735963827292,
+      "topScore": 0.1034,
+      "latencyMs": 133.31244599982165
+    },
+    {
+      "id": "gpt4_1a1dc16d",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.1114,
+      "latencyMs": 62.63128100009635
+    },
+    {
+      "id": "gpt4_2f584639",
+      "type": "temporal-reasoning",
+      "rank": 3,
+      "ndcg": 0.3065735963827292,
+      "topScore": 0.1883,
+      "latencyMs": 92.15208099992014
+    },
+    {
+      "id": "gpt4_213fd887",
+      "type": "temporal-reasoning",
+      "rank": 3,
+      "ndcg": 0.3065735963827292,
+      "topScore": 0.1713,
+      "latencyMs": 182.67877300013788
+    },
+    {
+      "id": "gpt4_5438fa52",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1549,
+      "latencyMs": 101.9165529999882
+    },
+    {
+      "id": "gpt4_c27434e8",
+      "type": "temporal-reasoning",
+      "rank": 2,
+      "ndcg": 0.6509209298071326,
+      "topScore": 0.2006,
+      "latencyMs": 88.79948100005277
+    },
+    {
+      "id": "gpt4_fe651585",
+      "type": "temporal-reasoning",
+      "rank": 1,
+      "ndcg": 0.6131471927654584,
+      "topScore": 0.1436,
+      "latencyMs": 81.31392799993046
+    },
+    {
+      "id": "8c18457d",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1984,
+      "latencyMs": 238.22420100006275
+    }
+  ],
+  "abstentionQ": [
+    {
+      "id": "gpt4_70e84552_abs",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1008,
+      "latencyMs": 75.57640699995682
+    },
+    {
+      "id": "gpt4_93159ced_abs",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1182,
+      "latencyMs": 89.35861300001852
+    },
+    {
+      "id": "982b5123_abs",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1535,
+      "latencyMs": 79.80900799995288
+    },
+    {
+      "id": "c8090214_abs",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1281,
+      "latencyMs": 91.27676800009795
+    },
+    {
+      "id": "gpt4_c27434e8_abs",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.2583,
+      "latencyMs": 119.87323200004175
+    },
+    {
+      "id": "gpt4_fe651585_abs",
+      "type": "temporal-reasoning",
+      "rank": null,
+      "ndcg": 0,
+      "topScore": 0.1429,
+      "latencyMs": 80.41477000014856
+    }
+  ]
+}
