@@ -104,7 +104,11 @@ def reindex_wipe() -> int:
 def reindex_paths(paths: list[Path]) -> int:
     """Incremental: upsert chunks for the given files to both the vector
     store and FTS5; delete entries from both for files that no longer exist.
-    Safe to call mid-query - never wipes the collection."""
+    Safe to call mid-query - never wipes the collection.
+
+    Commits per file rather than per batch. A single transaction spanning a
+    100-file bulk change holds the write lock for minutes, and readers that
+    exhaust their busy timeout inside it fail rather than wait."""
     store = vector_store()
     store.ensure_collection()
 
@@ -117,6 +121,7 @@ def reindex_paths(paths: list[Path]) -> int:
             if in_skip_dir(Path(rel)) or not abs_path.exists():
                 store.delete_by_file(rel)
                 _fts_delete_file(fts, rel)
+                fts.commit()
                 deleted += 1
                 continue
 
@@ -127,7 +132,7 @@ def reindex_paths(paths: list[Path]) -> int:
             if points:
                 store.upsert(points)
                 upserted += len(points)
-        fts.commit()
+            fts.commit()
 
     print(
         f"Incremental: {upserted} chunks upserted, {deleted} files removed.",

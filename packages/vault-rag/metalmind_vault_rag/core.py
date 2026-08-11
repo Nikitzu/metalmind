@@ -6,6 +6,7 @@ import sqlite3
 import uuid
 
 from .backends import EmbeddingBackend, make_backend
+from .sqlite_util import connect as sqlite_connect
 from .stores import VectorStore, make_store
 
 COLLECTION = os.environ.get("VAULT_COLLECTION", "vault")
@@ -68,7 +69,7 @@ def fts_conn() -> sqlite3.Connection:
     merger can de-dup hits by (file, heading) regardless of retriever source.
     """
     FTS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(FTS_DB_PATH))
+    conn = sqlite_connect(str(FTS_DB_PATH))
     conn.execute(
         """
         CREATE VIRTUAL TABLE IF NOT EXISTS chunks USING fts5(

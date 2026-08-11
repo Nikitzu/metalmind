@@ -38,6 +38,7 @@ from typing import Iterable
 
 import sqlite_vec
 
+from ..sqlite_util import connect as sqlite_connect
 from . import VectorHit, VectorPoint
 
 
@@ -90,7 +91,7 @@ class SqliteVecStore:
             except sqlite3.Error:
                 pass
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(str(self._db_path))
+        conn = sqlite_connect(str(self._db_path))
         conn.enable_load_extension(True)
         sqlite_vec.load(conn)
         conn.enable_load_extension(False)
