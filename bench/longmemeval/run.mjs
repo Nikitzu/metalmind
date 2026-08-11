@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -10,18 +11,31 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const CACHE = join(homedir(), '.cache', 'metalmind-bench', 'longmemeval');
 const RESULTS_DIR = join(HERE, 'results');
 const COLLECTION = 'metalmind_bench_longmemeval';
+const MANIFEST_PATH = join(homedir(), '.metalmind', `${COLLECTION}.bench-manifest.json`);
 const K = Number(process.env.METALMIND_BENCH_K ?? 5);
 
 function parseArgs(argv) {
-  const args = { port: 17600, oracle: false, limit: 0, scale: 0, indexHours: 12, rerank: false };
+  const args = {
+    port: 17600,
+    oracle: false,
+    limit: 0,
+    scale: 0,
+    indexHours: 12,
+    rerank: false,
+    keepIndex: false,
+    reuseIndex: false,
+  };
   for (let i = 2; i < argv.length; i += 1) {
     if (argv[i] === '--oracle') args.oracle = true;
+    else if (argv[i] === '--keep-index') args.keepIndex = true;
+    else if (argv[i] === '--reuse-index') args.reuseIndex = true;
     else if (argv[i] === '--port') args.port = Number(argv[++i]);
     else if (argv[i] === '--limit') args.limit = Number(argv[++i]);
     else if (argv[i] === '--scale') args.scale = Number(argv[++i]);
     else if (argv[i] === '--index-hours') args.indexHours = Number(argv[++i]);
     else if (argv[i] === '--rerank') args.rerank = true;
   }
+  if (args.reuseIndex) args.keepIndex = true;
   return args;
 }
 
@@ -140,12 +154,13 @@ function summarizeAnswerable(perQ) {
   };
 }
 
-function scoreAbstention(answerable, abstention) {
-  const answerableTops = answerable
-    .map((r) => r.topScore)
-    .filter((v) => typeof v === 'number')
-    .sort((a, b) => a - b);
-  const abstentionTops = abstention.map((r) => r.topScore ?? 0).sort((a, b) => a - b);
+function signalValues(records, field) {
+  return records.map((r) => (typeof r[field] === 'number' ? r[field] : 0)).sort((a, b) => a - b);
+}
+
+function scoreAbstention(answerable, abstention, field = 'topScore') {
+  const answerableTops = signalValues(answerable, field);
+  const abstentionTops = signalValues(abstention, field);
 
   let auc = 0;
   if (answerableTops.length > 0 && abstentionTops.length > 0) {
@@ -167,6 +182,27 @@ function scoreAbstention(answerable, abstention) {
     abstentionTopP50: percentile(abstentionTops, 50),
     abstentionTopP95: percentile(abstentionTops, 95),
   };
+}
+
+const SIGNALS = [
+  ['fused (RRF)', 'topScore'],
+  ['semantic cosine, top hit', 'semTop'],
+  ['semantic cosine, best of top-5', 'semMax'],
+  ['BM25, top hit', 'kwTop'],
+  ['BM25, best of top-5', 'kwMax'],
+];
+
+function compareSignals(answerable, abstention) {
+  return SIGNALS.map(([label, field]) => ({
+    label,
+    field,
+    ...scoreAbstention(answerable, abstention, field),
+  }));
+}
+
+function bestOf(hits, field) {
+  const vals = hits.map((h) => h[field]).filter((v) => typeof v === 'number');
+  return vals.length === 0 ? null : Math.max(...vals);
 }
 
 function pct(x) {
@@ -191,14 +227,41 @@ function renderTable(lines, byType, overall, heading) {
   lines.push('');
 }
 
-function renderMd({ meta, byType, overall, abstention, rerankResults }) {
+function renderSignals(lines, signals, rerankAbstention) {
+  lines.push('## Confidence signals (which score knows it does not know)');
+  lines.push('');
+  lines.push(
+    'Same 500 questions, same ranking. Only the score a caller would threshold on ' +
+      'changes. Fusion ranks by position and discards magnitude, so the question is ' +
+      'whether a raw retriever score separates answerable from unanswerable ' +
+      'better than the fused score does.',
+  );
+  lines.push('');
+  lines.push('| signal | AUC | answerable p50 | unanswerable p50 |');
+  lines.push('|---|---|---|---|');
+  for (const s of signals) {
+    lines.push(
+      `| ${s.label} | ${s.auc.toFixed(3)} | ${s.answerableTopP50.toFixed(4)} | ${s.abstentionTopP50.toFixed(4)} |`,
+    );
+  }
+  if (rerankAbstention) {
+    lines.push(
+      `| cross-encoder (reference) | ${rerankAbstention.auc.toFixed(3)} | ${rerankAbstention.answerableTopP50.toFixed(4)} | ${rerankAbstention.abstentionTopP50.toFixed(4)} |`,
+    );
+  }
+  lines.push('');
+}
+
+function renderMd({ meta, byType, overall, abstention, signals, rerankResults }) {
   const lines = [];
   lines.push('# LongMemEval results');
   lines.push('');
   lines.push(`- date: ${meta.timestamp}`);
   lines.push(`- fixture: ${meta.fixture} (${meta.sessions} sessions, ${meta.questions} questions)`);
   lines.push(`- haystack: ${meta.scale}`);
-  lines.push(`- index time: ${meta.indexElapsedSec.toFixed(1)}s`);
+  lines.push(
+    `- index time: ${meta.reusedIndex ? 'reused from an earlier run' : `${meta.indexElapsedSec.toFixed(1)}s`}`,
+  );
   lines.push('');
   renderTable(lines, byType, overall, rerankResults ? 'Hybrid (no rerank)' : null);
   if (rerankResults) {
@@ -227,6 +290,7 @@ function renderMd({ meta, byType, overall, abstention, rerankResults }) {
   lines.push(`| abstention top-score p50 | ${abstention.abstentionTopP50.toFixed(4)} |`);
   lines.push(`| abstention top-score p95 | ${abstention.abstentionTopP95.toFixed(4)} |`);
   lines.push('');
+  renderSignals(lines, signals, rerankResults?.abstention ?? null);
   lines.push(
     `- latency p50/p95 (answerable): ${overall.p50ms.toFixed(0)} / ${overall.p95ms.toFixed(0)} ms`,
   );
@@ -252,16 +316,21 @@ async function main() {
     `${noteFiles.length} sessions (${evidence.size} evidence, ${noteFiles.length - evidence.size} distractors) of ${allNotes.length} total, ${questions.length} questions\n`,
   );
 
+  const fingerprint = createHash('sha1').update([...noteFiles].sort().join('\n')).digest('hex');
+
   const tmpRoot = await mkdtemp(join(tmpdir(), 'metalmind-bench-longmemeval-'));
   const vault = join(tmpRoot, 'vault');
   await mkdir(vault, { recursive: true });
   registerTeardown(() => rm(tmpRoot, { recursive: true, force: true }));
-  registerTeardown(() =>
-    Promise.all([
-      rm(join(homedir(), '.metalmind', `fts-${COLLECTION}.db`), { force: true }),
-      rm(join(homedir(), '.metalmind', `vec-${COLLECTION}.db`), { force: true }),
-    ]),
-  );
+  if (!args.keepIndex) {
+    registerTeardown(() =>
+      Promise.all([
+        rm(join(homedir(), '.metalmind', `fts-${COLLECTION}.db`), { force: true }),
+        rm(join(homedir(), '.metalmind', `vec-${COLLECTION}.db`), { force: true }),
+        rm(MANIFEST_PATH, { force: true }),
+      ]),
+    );
+  }
   for (const f of noteFiles) {
     await copyFile(join(notesDir, f), join(vault, f));
   }
@@ -273,11 +342,38 @@ async function main() {
     VAULT_HTTP_PORT: String(args.port),
   };
 
-  process.stdout.write('indexing…\n');
-  const indexStart = performance.now();
-  await runOnce('metalmind-vault-rag-indexer', env, tmpRoot, args.indexHours * 60 * 60_000);
-  const indexElapsedSec = (performance.now() - indexStart) / 1000;
-  process.stdout.write(`indexed in ${indexElapsedSec.toFixed(1)}s\n`);
+  let indexElapsedSec = 0;
+  if (args.reuseIndex) {
+    const manifest = await readFile(MANIFEST_PATH, 'utf8')
+      .then(JSON.parse)
+      .catch(() => null);
+    if (!manifest) {
+      throw new Error(
+        `--reuse-index found no kept index at ${MANIFEST_PATH}. Run once with --keep-index first.`,
+      );
+    }
+    if (manifest.fingerprint !== fingerprint) {
+      throw new Error(
+        `--reuse-index: kept index covers a different session set (${manifest.sessions} sessions, ` +
+          `fingerprint ${manifest.fingerprint.slice(0, 12)}) than this run wants (${noteFiles.length} ` +
+          `sessions, ${fingerprint.slice(0, 12)}). Rerun with the same --scale, or reindex.`,
+      );
+    }
+    process.stdout.write(`reusing index from ${manifest.timestamp} (${manifest.sessions} sessions)\n`);
+  } else {
+    process.stdout.write('indexing…\n');
+    const indexStart = performance.now();
+    await runOnce('metalmind-vault-rag-indexer', env, tmpRoot, args.indexHours * 60 * 60_000);
+    indexElapsedSec = (performance.now() - indexStart) / 1000;
+    process.stdout.write(`indexed in ${indexElapsedSec.toFixed(1)}s\n`);
+    if (args.keepIndex) {
+      await writeFile(
+        MANIFEST_PATH,
+        `${JSON.stringify({ fingerprint, sessions: noteFiles.length, timestamp: new Date().toISOString() }, null, 2)}\n`,
+      );
+      process.stdout.write(`kept index; rerun with --reuse-index to skip indexing\n`);
+    }
+  }
 
   const watcher = spawn('metalmind-vault-rag-watcher', [], {
     env,
@@ -318,6 +414,10 @@ async function main() {
         rank: q.abstention ? null : hitRank(hits, q.expected),
         ndcg: q.abstention ? 0 : ndcgAt(hits, q.expected, K),
         topScore: typeof hits[0]?.score === 'number' ? hits[0].score : null,
+        semTop: typeof hits[0]?.sem_score === 'number' ? hits[0].sem_score : null,
+        kwTop: typeof hits[0]?.kw_score === 'number' ? hits[0].kw_score : null,
+        semMax: bestOf(hits, 'sem_score'),
+        kwMax: bestOf(hits, 'kw_score'),
         latencyMs: elapsedMs,
       };
       const bucket = rerank
@@ -347,6 +447,7 @@ async function main() {
   const summaryByType = byTypeSummary(answerable);
   const overall = summarizeAnswerable(answerable);
   const abstention = scoreAbstention(answerable, abstentionQ);
+  const signals = compareSignals(answerable, abstentionQ);
   const rerankResults = args.rerank
     ? {
         summaryByType: byTypeSummary(answerableRr),
@@ -362,13 +463,14 @@ async function main() {
     sessions: noteFiles.length,
     questions: questions.length,
     indexElapsedSec,
+    reusedIndex: args.reuseIndex,
   };
   await mkdir(RESULTS_DIR, { recursive: true });
   const stamp = meta.timestamp.replace(/[:.]/g, '-');
-  const md = renderMd({ meta, byType: summaryByType, overall, abstention, rerankResults });
+  const md = renderMd({ meta, byType: summaryByType, overall, abstention, signals, rerankResults });
   await writeFile(
     join(RESULTS_DIR, `longmemeval-${stamp}.json`),
-    `${JSON.stringify({ meta, summaryByType, overall, abstention, rerankResults, answerable, abstentionQ, answerableRr, abstentionRr }, null, 2)}\n`,
+    `${JSON.stringify({ meta, summaryByType, overall, abstention, signals, rerankResults, answerable, abstentionQ, answerableRr, abstentionRr }, null, 2)}\n`,
   );
   await writeFile(join(RESULTS_DIR, `longmemeval-${stamp}.md`), md);
   process.stdout.write(`\n${md}`);

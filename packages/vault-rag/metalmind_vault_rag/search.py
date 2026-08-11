@@ -301,6 +301,7 @@ def _rrf_merge(
     k: int,
     weights: list[float] | None = None,
     supersede_map: dict[str, str] | None = None,
+    labels: list[str] | None = None,
 ) -> list[dict]:
     """Reciprocal Rank Fusion. Each hit list contributes weight/(RRF_K + rank)
     to each unique (file, heading) key. De-dup keeps the first-seen
@@ -311,21 +312,33 @@ def _rrf_merge(
     more decisive at hit@1 for the workload (e.g. BM25 for short factual
     queries).
 
+    `labels` (optional) names each list, matching `hit_lists` order. When
+    given, every merged hit carries `<label>_score` holding that list's raw
+    score for the document, or None when the list did not return it. Fusion
+    discards score magnitude by design, so these fields are the only way a
+    caller can tell a confident match from the least-bad of a bad set. They
+    do not affect ordering.
+
     Adds a top-rank bonus once per document, keyed on the best (lowest) rank
     the doc achieved across all source lists. Documents that rank #1 in any
     list get +0.05; ranks #2-3 get +0.02. Stops pure RRF from diluting hits
     that one retriever was certain about."""
     if weights is None:
         weights = [1.0] * len(hit_lists)
+    if labels is None:
+        labels = [""] * len(hit_lists)
+    score_fields = {f"{label}_score": None for label in labels if label}
     merged: dict[tuple[str, str], dict] = {}
-    for hits, weight in zip(hit_lists, weights):
+    for hits, weight, label in zip(hit_lists, weights, labels):
         for rank, h in enumerate(hits, 1):
             key = (h["file"], h["heading"])
             if key not in merged:
-                merged[key] = {**h, "rrf": 0.0, "top_rank": rank}
+                merged[key] = {**h, **score_fields, "rrf": 0.0, "top_rank": rank}
             else:
                 if rank < merged[key]["top_rank"]:
                     merged[key]["top_rank"] = rank
+            if label and merged[key][f"{label}_score"] is None:
+                merged[key][f"{label}_score"] = h.get("score")
             merged[key]["rrf"] += weight / (RRF_K + rank)
     for entry in merged.values():
         bonus = TOP_RANK_BONUS.get(entry["top_rank"])
@@ -386,7 +399,11 @@ def search_vault(
         sem = _semantic_search(query, leg_k)
         kw = _keyword_search(query, leg_k)
         hits = _rrf_merge(
-            [sem, kw], k=fetch, weights=_fusion_weights(query), supersede_map=smap
+            [sem, kw],
+            k=fetch,
+            weights=_fusion_weights(query),
+            supersede_map=smap,
+            labels=["sem", "kw"],
         )
 
     _annotate_superseded(hits, smap)
