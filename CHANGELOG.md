@@ -6,6 +6,36 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.19.0 - 2026-08-11
+
+### Added
+
+- **The config records which install shape you chose, and `stamp` respects it.** Machines never stored whether they were installed as core or full, with or without teams, so every later template refresh had to guess. `stamp` guessed worst: it passed no profile at all, quietly reinstalling the full surface onto a machine that had deliberately chosen `--core`.
+
+  Config v4 adds `install: { profile, teams }`. Existing machines are migrated by inference from what is actually on disk, reading only metalmind-owned files - the `synod` skill and `team-*` commands - and deliberately **not** `agents/`, which users populate themselves. The wizard now resolves explicit flag first, recorded manifest second, prompt last, and says so when the record decides. A new `doctor` check reports drift between the record and the disk in either direction.
+
+  Fresh interactive installs are offered core first, with full one keystroke away. `--full` covers scripts. `--yes` keeps its historical full-install meaning, so existing automation is unaffected.
+
+### Changed
+
+- **The recall auth token stays optional by default.** v0.18.0 said enforcement would become the default in a later release. That was wrong, and this is the correction rather than the follow-through. On a single-user machine the token protects nothing that a process running as that user cannot already read, so requiring it would break callers on the port for no security gain. Enforcement stays behind `METALMIND_RECALL_REQUIRE_TOKEN=1`, documented as the shared-machine setting, where it does the job it was built for. Browser-origin rejection remains unconditional, because that vector applies to everyone. The `/auth/status` mode value is renamed from `grace` to `optional`: `grace` named a countdown that is no longer running.
+
+### Benchmarks
+
+- **First externally-labelled recall numbers, including unflattering ones.** `bench/longmemeval/` builds a fixture from the third-party [LongMemEval](https://github.com/xiaowu0162/LongMemEval) dataset (MIT): one markdown note per conversation session, with human-labelled `answer_session_ids` as the expected files. At a 3,000-session haystack, plain hybrid retrieval scores **36% hit@1 and 68% hit@5** over 470 answerable questions.
+
+  The spread matters more than the average. `single-session-assistant` - "find the session where this was discussed", the task closest to vault recall - scores **91% hit@1 with zero misses**. `single-session-preference`, which asks what you prefer when the preference was mentioned once in passing, scores **13%**. That is the retrieval-versus-extraction boundary the mem0 evaluation predicted in April, now with numbers on it.
+
+  These are not comparable to the vault-shaped numbers elsewhere in this repo, and neither replaces the other: hand-written questions over note-shaped prose measure a different thing than mechanically-generated questions over chat transcripts. Both ship, both labelled.
+
+- **The abstention control found a structural blind spot.** Questions with no answer anywhere in the corpus produced a top-hit score median marginally *higher* than answerable ones - no separation at all. RRF fuses by rank position, so the top hit earns roughly the same fused score whether it is a bullseye or the least-bad of a bad lot; similarity magnitude is discarded during fusion. The practical consequence is that recall output carries no confidence signal, so neither `tap copper` nor an agent reading it can tell that a vault does not contain the answer. Recorded in `bench/longmemeval/README.md` with the ingredients for a fix; not fixed here.
+
+### Removed
+
+- **`cli/templates/metalmind-stack/compose.yml`**, orphaned since the Qdrant stack was dropped in v0.16.0. It shipped in the published tarball but nothing read it - `uninstall` and `teardown` reference the compose file in the user's own vault directory, which this template never wrote.
+
+---
+
 ## 0.18.0 - 2026-08-09
 
 ### Added

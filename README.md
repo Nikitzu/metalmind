@@ -195,7 +195,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.18.0`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.19.0`.
 
 **From source (for hacking on metalmind itself):**
 
