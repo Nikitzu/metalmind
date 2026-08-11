@@ -6,6 +6,28 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.19.1 - 2026-08-11
+
+### Fixed
+
+- **A reindex no longer locks recall out of the vault.** Pulling a synced vault on a second machine, sweeping notes into `Archive/`, or any bulk edit would take recall down entirely for the duration of the reindex - returning `database is locked` rather than degrading. Measured on a real pull of 81 changed files: two and a half minutes during which every query, and even a bare `PRAGMA` read, was refused.
+
+  Two causes. Both SQLite databases opened with the default rollback journal, where a write transaction that outgrows the page cache escalates to an exclusive lock and blocks readers outright; and `reindex_paths` wrapped an entire batch in a single transaction, so that lock spanned the whole run. Both databases now open through one helper that sets WAL and a 30-second busy timeout, and the reindex commits per file.
+
+  Journal mode is a property of the database file rather than the connection, so **existing installs upgrade in place the first time the updated watcher opens them** - no reindex, no user action. To fix a machine without updating, `PRAGMA journal_mode=WAL` on `~/.metalmind/fts-vault.db` and `vec-vault.db` is permanent on its own.
+
+  This is the workflow metalmind exists to support - a vault synced across machines - failing precisely when an agent is most likely to ask for context.
+
+### Benchmarks
+
+- **Reranking recovers a third of the LongMemEval gap.** The 3,000-session run now reports plain and cross-encoder passes side by side: **hit@1 rises 36% to 47%**, hit@5 68% to 71%, MRR 0.47 to 0.56, for 38× the latency (7.6 s per query against 0.2 s). The first-run shortfall was substantially a ranking problem rather than a retrieval one. Not uniformly, though: `single-session-preference` gets *worse* under reranking, so the cross-encoder demotes the right note when the evidence is an implicit aside.
+
+- **Fused scores carry no confidence signal; reranked scores do.** Measured as AUC - the probability a random answerable question outscores a random unanswerable one. RRF scores land at **0.549**, a coin flip, because fusing by rank discards similarity magnitude. Cross-encoder scores reach **0.804** on the same questions. So the earlier claim that metalmind cannot tell when an answer is absent holds only for the default path; the ingredients for a real confidence signal exist and are now measured.
+
+  The abstention metric itself was replaced: its first version derived a threshold from the 5th percentile of answerable scores, which on a long-tailed distribution sat below most unanswerable scores and reported 13% for data separating 13× at the median. AUC needs no threshold. Threshold-accuracy is deliberately not reported, since class imbalance makes "always answerable" score 94%.
+
+---
+
 ## 0.19.0 - 2026-08-11
 
 ### Added

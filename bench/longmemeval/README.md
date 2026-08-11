@@ -81,26 +81,32 @@ HN-comment corpus that the other benches use:
 
 ## Results to date
 
-`--scale 3000`, plain hybrid, no rerank (2026-08-09):
+`--scale 3000 --rerank`, 500 questions, 470 answerable (2026-08-11):
 
-| type | n | hit@1 | hit@5 | MRR |
-|---|---|---|---|---|
-| single-session-assistant | 56 | 91% | 100% | 0.95 |
-| knowledge-update | 72 | 54% | 89% | 0.68 |
-| multi-session | 121 | 27% | 59% | 0.39 |
-| temporal-reasoning | 127 | 23% | 64% | 0.37 |
-| single-session-user | 64 | 17% | 61% | 0.34 |
-| single-session-preference | 30 | 13% | 23% | 0.17 |
-| **all answerable** | 470 | **36%** | **68%** | 0.47 |
+| type | n | hit@1 | hit@1 rr | hit@5 | hit@5 rr |
+|---|---|---|---|---|---|
+| single-session-assistant | 56 | 91% | 96% | 100% | 100% |
+| knowledge-update | 72 | 54% | 79% | 89% | 94% |
+| multi-session | 121 | 27% | 39% | 59% | 70% |
+| temporal-reasoning | 127 | 23% | 28% | 64% | 63% |
+| single-session-user | 64 | 17% | 42% | 61% | 63% |
+| single-session-preference | 30 | 13% | 7% | 23% | 20% |
+| **all answerable** | 470 | **36%** | **47%** | **68%** | **71%** |
 
 The spread is the finding, not the average. Where the task is "find the
 session where this was discussed", retrieval is strong. Where it needs a
 fact extracted from an implicit mention, or synthesis across sessions, it
-is weak - the boundary the mem0 evaluation predicted, now with numbers.
+is weaker - the boundary the mem0 evaluation predicted, now with numbers.
 
-Two open questions for the next run: whether the reranker closes the
-36%-to-68% gap between hit@1 and hit@5, and how much the full 19k haystack
-costs relative to this 3k slice.
+Reranking answers the open question from the first run: the hit@1 shortfall
+was substantially a **ranking** problem, not a retrieval one. It recovers
+about a third of the gap for 38x the latency (7.6 s per query against 0.2 s).
+It is not uniformly good, though - `single-session-preference` gets *worse*
+under reranking, so the cross-encoder actively demotes the right session when
+the evidence is an implicit aside.
+
+Still open: what the full 19,195-session haystack costs relative to this 3k
+slice.
 
 ## Reading the abstention column
 
@@ -115,16 +121,35 @@ Publishing gate: hit rates never ship to the site without this column
 beside them. Reporting recall while ignoring the questions designed to have
 no answer would overstate the tool.
 
-**First result: there is no separation.** At `--scale 3000`, the 30
-abstention questions produced a top-hit score median of 0.1277 against
-0.1256 for answerable ones - marginally *higher*, so the score carries no
-signal about whether an answer exists at all. The cause is structural
-rather than tuning: RRF fuses by rank position, so the top hit earns
-roughly the same fused score whether it is a bullseye or the least-bad of a
-bad lot. Similarity magnitude is discarded during fusion.
+The measure is **AUC**: the probability that a random answerable question
+outscores a random unanswerable one. 0.5 is no signal at all; 1.0 is perfect
+separation. Threshold-accuracy is deliberately not reported - with 470
+answerable questions against 30 unanswerable, "always answerable" already
+scores 94%, which looks informative and is noise.
 
-The consequence is a product one, not a benchmark one: `tap copper` cannot
+**Fused scores carry no signal; reranked scores do.**
+
+| | AUC | answerable p50 | unanswerable p50 |
+|---|---|---|---|
+| hybrid (RRF) | 0.549 | 0.126 | 0.128 |
+| + cross-encoder | 0.804 | 0.798 | 0.061 |
+
+RRF at 0.549 is a coin flip, and the cause is structural rather than
+tuning: it fuses by rank position, so the top hit earns roughly the same
+fused score whether it is a bullseye or the least-bad of a bad lot.
+Similarity magnitude is discarded during fusion. The cross-encoder keeps
+it, which is why the same questions separate at 0.804.
+
+The consequence is a product one: in its default mode `tap copper` cannot
 say "the vault does not contain this", and neither can an agent reading its
-output. The underlying embedder score survives on each hit as `prev_score`,
-and cross-encoder scores span a far wider range than RRF's narrow band, so
-a confidence signal is buildable. It has not been built.
+output. The ingredients for a confidence signal exist - `prev_score`
+survives on every hit, and the reranker's scores are demonstrably
+informative - but no such signal is exposed today.
+
+A note on how this metric was first written, since it nearly buried the
+finding: the original version derived a floor from the 5th percentile of
+answerable scores and reported the fraction of unanswerable questions
+below it. The reranked distribution has a long left tail (p05 = 0.011), so
+that floor sat *below* most unanswerable scores and reported 13% for a
+distribution separating 13x at the median. A threshold-free measure was the
+right choice from the start.

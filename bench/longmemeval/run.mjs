@@ -145,17 +145,27 @@ function scoreAbstention(answerable, abstention) {
     .map((r) => r.topScore)
     .filter((v) => typeof v === 'number')
     .sort((a, b) => a - b);
-  const floor = percentile(answerableTops, 5);
-  const below = abstention.filter((r) => r.topScore === null || r.topScore < floor).length;
+  const abstentionTops = abstention.map((r) => r.topScore ?? 0).sort((a, b) => a - b);
+
+  let auc = 0;
+  if (answerableTops.length > 0 && abstentionTops.length > 0) {
+    let better = 0;
+    for (const a of answerableTops) {
+      for (const b of abstentionTops) {
+        if (a > b) better += 1;
+        else if (a === b) better += 0.5;
+      }
+    }
+    auc = better / (answerableTops.length * abstentionTops.length);
+  }
+
   return {
     n: abstention.length,
-    floor,
-    correctAbstainRate: abstention.length === 0 ? 0 : below / abstention.length,
+    auc,
+    answerableTopP05: percentile(answerableTops, 5),
     answerableTopP50: percentile(answerableTops, 50),
-    abstentionTopP50: percentile(
-      abstention.map((r) => r.topScore ?? 0).sort((a, b) => a - b),
-      50,
-    ),
+    abstentionTopP50: percentile(abstentionTops, 50),
+    abstentionTopP95: percentile(abstentionTops, 95),
   };
 }
 
@@ -194,7 +204,7 @@ function renderMd({ meta, byType, overall, abstention, rerankResults }) {
   if (rerankResults) {
     renderTable(lines, rerankResults.summaryByType, rerankResults.overall, 'Hybrid + cross-encoder rerank');
     lines.push(
-      `Rerank correct-abstain rate: ${pct(rerankResults.abstention.correctAbstainRate)} ` +
+      `Rerank score separation: AUC ${rerankResults.abstention.auc.toFixed(3)} ` +
         `(answerable top p50 ${rerankResults.abstention.answerableTopP50.toFixed(4)} vs ` +
         `abstention ${rerankResults.abstention.abstentionTopP50.toFixed(4)}).`,
     );
@@ -203,16 +213,19 @@ function renderMd({ meta, byType, overall, abstention, rerankResults }) {
   lines.push('## Abstention (negative control)');
   lines.push('');
   lines.push(
-    `${abstention.n} questions with no correct evidence in the corpus. ` +
-      `Score floor derived as p05 of answerable top scores: ${abstention.floor.toFixed(4)} - ` +
-      'the metric measures score separation, not a hand-picked constant.',
+    `${abstention.n} questions with no correct evidence in the corpus. AUC is the ` +
+      'probability that a random answerable question outscores a random unanswerable one: ' +
+      '0.5 is no signal, 1.0 is perfect separation. Threshold-accuracy is not reported ' +
+      'because the classes are heavily imbalanced, so "always answerable" already scores 94%.',
   );
   lines.push('');
   lines.push('| metric | value |');
   lines.push('|---|---|');
-  lines.push(`| correct-abstain rate | ${pct(abstention.correctAbstainRate)} |`);
+  lines.push(`| **AUC** | **${abstention.auc.toFixed(3)}** |`);
+  lines.push(`| answerable top-score p05 | ${abstention.answerableTopP05.toFixed(4)} |`);
   lines.push(`| answerable top-score p50 | ${abstention.answerableTopP50.toFixed(4)} |`);
   lines.push(`| abstention top-score p50 | ${abstention.abstentionTopP50.toFixed(4)} |`);
+  lines.push(`| abstention top-score p95 | ${abstention.abstentionTopP95.toFixed(4)} |`);
   lines.push('');
   lines.push(
     `- latency p50/p95 (answerable): ${overall.p50ms.toFixed(0)} / ${overall.p95ms.toFixed(0)} ms`,
