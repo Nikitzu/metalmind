@@ -12,6 +12,13 @@ const CACHE = join(homedir(), '.cache', 'metalmind-bench', 'longmemeval');
 const RESULTS_DIR = join(HERE, 'results');
 const COLLECTION = 'metalmind_bench_longmemeval';
 const MANIFEST_PATH = join(homedir(), '.metalmind', `${COLLECTION}.bench-manifest.json`);
+
+function collectionFiles() {
+  const dir = join(homedir(), '.metalmind');
+  return ['fts', 'vec'].flatMap((prefix) =>
+    ['', '-shm', '-wal'].map((suffix) => join(dir, `${prefix}-${COLLECTION}.db${suffix}`)),
+  );
+}
 const K = Number(process.env.METALMIND_BENCH_K ?? 5);
 
 function parseArgs(argv) {
@@ -325,8 +332,7 @@ async function main() {
   if (!args.keepIndex) {
     registerTeardown(() =>
       Promise.all([
-        rm(join(homedir(), '.metalmind', `fts-${COLLECTION}.db`), { force: true }),
-        rm(join(homedir(), '.metalmind', `vec-${COLLECTION}.db`), { force: true }),
+        ...collectionFiles().map((f) => rm(f, { force: true })),
         rm(MANIFEST_PATH, { force: true }),
       ]),
     );

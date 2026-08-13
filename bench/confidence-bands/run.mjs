@@ -12,6 +12,13 @@ const RESULTS_DIR = join(HERE, 'results');
 const COLLECTION = 'metalmind_bench_confidence';
 const K = 5;
 
+function collectionFiles() {
+  const dir = join(homedir(), '.metalmind');
+  return ['fts', 'vec'].flatMap((prefix) =>
+    ['', '-shm', '-wal'].map((suffix) => join(dir, `${prefix}-${COLLECTION}.db${suffix}`)),
+  );
+}
+
 function parseArgs(argv) {
   const args = { vault: join(homedir(), 'Knowledge'), port: 17601, indexHours: 2 };
   for (let i = 2; i < argv.length; i += 1) {
@@ -229,8 +236,7 @@ async function main() {
   registerTeardown(() => rm(tmpRoot, { recursive: true, force: true }));
   registerTeardown(() =>
     Promise.all([
-      rm(join(homedir(), '.metalmind', `fts-${COLLECTION}.db`), { force: true }),
-      rm(join(homedir(), '.metalmind', `vec-${COLLECTION}.db`), { force: true }),
+      ...collectionFiles().map((f) => rm(f, { force: true })),
     ]),
   );
 
