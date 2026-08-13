@@ -11,15 +11,21 @@ indexer hook live elsewhere.
 """
 
 import json
+import re
 
 import pytest
 
 from metalmind_vault_rag.calibration import (
     MIN_POSITIVE_SAMPLES,
+    NEAR_MISS_COUNT,
+    NEAR_MISS_HIGH_TOLERANCE,
+    OUT_OF_DOMAIN_COUNT,
     Bands,
     classify,
     derive_bands,
     embedder_id,
+    load_near_miss,
+    load_probes,
     percentile,
     read_sidecar,
     sidecar_path,
@@ -157,6 +163,95 @@ class TestEmbedderId:
 
     def test_a_dimension_change_alone_changes_the_id(self):
         assert embedder_id("m", 384) != embedder_id("m", 768)
+
+
+FIRST_PERSON = re.compile(r"\b(I|I'm|I've|my|me|mine)\b", re.IGNORECASE)
+
+CAPITALS_WITHOUT_SIGNAL = {
+    "I",
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+    "January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December",
+}
+
+
+def invented_nouns(probe: str) -> list[str]:
+    """Capitalised tokens past the first word, minus the ones that are
+    capitalised for grammar rather than because they name something."""
+    tokens = probe.split()
+    return [
+        t.strip(".,?'s")
+        for i, t in enumerate(tokens)
+        if i > 0 and t[:1].isupper() and t.strip(".,?'s") not in CAPITALS_WITHOUT_SIGNAL
+    ]
+
+
+class TestProbes:
+    def test_ships_the_declared_counts(self):
+        assert len(load_probes()) == OUT_OF_DOMAIN_COUNT
+        assert len(load_near_miss()) == NEAR_MISS_COUNT
+
+    def test_the_two_sets_are_disjoint(self):
+        assert not set(load_probes()) & set(load_near_miss())
+
+    def test_all_unique(self):
+        every = load_probes() + load_near_miss()
+
+        assert len(set(every)) == len(every)
+
+    def test_none_empty_or_rambling(self):
+        for p in load_probes() + load_near_miss():
+            assert 4 <= len(p.split()) <= 30, p
+
+    def test_every_probe_asks_about_the_asker(self):
+        for p in load_probes() + load_near_miss():
+            assert FIRST_PERSON.search(p), p
+
+    def test_every_probe_carries_a_proper_noun(self):
+        for p in load_probes() + load_near_miss():
+            assert invented_nouns(p), p
+
+    def test_no_single_proper_noun_dominates(self):
+        counts = {}
+        for p in load_probes() + load_near_miss():
+            for noun in set(invented_nouns(p)):
+                counts[noun] = counts.get(noun, 0) + 1
+
+        worst = max(counts.items(), key=lambda kv: kv[1])
+        assert worst[1] <= 3, f"{worst[0]} appears in {worst[1]} probes"
+
+    def test_returns_a_copy_so_callers_cannot_corrupt_the_fixture(self):
+        load_probes().append("mutated")
+        load_near_miss().append("mutated")
+
+        assert len(load_probes()) == OUT_OF_DOMAIN_COUNT
+        assert len(load_near_miss()) == NEAR_MISS_COUNT
+
+
+class TestNearMissGuard:
+    """Near-miss probes are held out of edge derivation and used to catch an
+    over-confident band. They are unanswerable, so any that land in `high` are
+    cases where the tool would claim confidence about absent content."""
+
+    def test_bands_survive_a_tolerable_near_miss_rate(self):
+        scores = [i / 100 for i in range(100)]
+        near = [0.0] * 9 + [0.99]
+
+        assert derive_bands(scores, [0.0] * 100, near) is not None
+
+    def test_refuses_when_most_near_misses_read_as_high(self):
+        scores = [i / 100 for i in range(100)]
+        near = [0.99] * 10
+
+        assert derive_bands(scores, [0.0] * 100, near) is None
+
+    def test_the_guard_is_skipped_without_a_near_miss_sample(self):
+        scores = [i / 100 for i in range(100)]
+
+        assert derive_bands(scores, [0.0] * 100, []) is not None
+
+    def test_tolerance_is_a_real_fraction(self):
+        assert 0 < NEAR_MISS_HIGH_TOLERANCE <= 1
 
 
 class TestSidecarPath:

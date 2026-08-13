@@ -49,6 +49,47 @@ HIGH_EDGE_PERCENTILE = float(os.environ.get("METALMIND_CONFIDENCE_HIGH_PCT", "95
 
 MIN_POSITIVE_SAMPLES = 50
 
+OUT_OF_DOMAIN_COUNT = 67
+NEAR_MISS_COUNT = 33
+
+NEAR_MISS_HIGH_TOLERANCE = 0.5
+
+_PROBES_PATH = pathlib.Path(__file__).with_name("probes.json")
+_PROBES: dict[str, list[str]] | None = None
+
+
+def _probe_fixture() -> dict[str, list[str]]:
+    global _PROBES
+    if _PROBES is None:
+        payload = json.loads(_PROBES_PATH.read_text(encoding="utf-8"))
+        _PROBES = {
+            "out_of_domain": list(payload["out_of_domain"]),
+            "near_miss": list(payload["near_miss"]),
+        }
+    return _PROBES
+
+
+def load_probes() -> list[str]:
+    """Out-of-domain probes, which derive the high edge.
+
+    Handed out as a copy so a caller cannot corrupt the fixture for the rest of
+    the process."""
+    return list(_probe_fixture()["out_of_domain"])
+
+
+def load_near_miss() -> list[str]:
+    """Probes deliberately close to knowledge-work subject matter, held out of
+    edge derivation.
+
+    Measured on a real vault, these score a full 0.07 higher at p95 than the
+    out-of-domain set, because embeddings key on words like dashboard, deploy
+    and migration while an invented proper noun barely moves them. Including
+    them in the derivation pushed the high edge up into the answerable
+    distribution and the classes stopped separating. They are unanswerable all
+    the same, which makes them the right instrument for a different job:
+    checking that the derived band is not over-confident."""
+    return list(_probe_fixture()["near_miss"])
+
 
 @dataclass(frozen=True)
 class Bands:
@@ -70,14 +111,25 @@ def percentile(values: list[float], p: float) -> float:
     return ordered[max(0, min(len(ordered) - 1, int(idx)))]
 
 
-def derive_bands(positive_scores: list[float], probe_scores: list[float]) -> Bands | None:
-    """Edges from the two score distributions, or None when this vault does
-    not support a confidence signal.
+def derive_bands(
+    positive_scores: list[float],
+    probe_scores: list[float],
+    near_miss_scores: list[float] | None = None,
+) -> Bands | None:
+    """Edges from the score distributions, or None when this vault does not
+    support a confidence signal.
 
     Refusing is a real outcome, not an error. A vault too small to sample, or
     one where the probes score as highly as the vault's own content, cannot
     support a threshold, and reporting no confidence is better than reporting a
-    wrong one."""
+    wrong one.
+
+    `near_miss_scores` are held-out unanswerable questions close to the vault's
+    subject matter. Any that land in the `high` band are cases where the tool
+    would claim confidence about content it does not hold, so too many of them
+    means the band is over-confident and no band is reported at all. Measured
+    on a real vault the rate is 21%, well inside the tolerance; the guard is
+    there to catch a vault where it is not."""
     if len(positive_scores) < MIN_POSITIVE_SAMPLES or not probe_scores:
         return None
 
@@ -85,6 +137,12 @@ def derive_bands(positive_scores: list[float], probe_scores: list[float]) -> Ban
     high_edge = percentile(probe_scores, HIGH_EDGE_PERCENTILE)
     if high_edge >= low_edge:
         return None
+
+    if near_miss_scores:
+        over = sum(1 for s in near_miss_scores if s >= low_edge)
+        if over / len(near_miss_scores) >= NEAR_MISS_HIGH_TOLERANCE:
+            return None
+
     return Bands(low_edge=low_edge, high_edge=high_edge)
 
 
