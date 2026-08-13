@@ -220,6 +220,12 @@ are corpus-shaped: a threshold derived from chat transcripts does not transfer
 to a prose vault, so band edges have to be re-derived on vault-like data before
 anything ships.
 
+That re-derivation happened in `bench/confidence-bands`, and it overturned the
+"do not gate" conclusion for prose. On a 330-note working vault the same cosine
+signal reaches AUC 0.984 with the classes cleanly separated, where here it
+reaches 0.771 with no usable threshold. The finding on this page is about chat
+transcripts. It should not be quoted as a statement about vaults.
+
 One independent check that the signal tracks correctness and not just
 answerability: hit@1 among the questions kept rises from 36% to 44% as the
 threshold climbs. The score is picking out queries the retriever got right,
