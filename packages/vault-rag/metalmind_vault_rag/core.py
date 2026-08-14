@@ -13,6 +13,13 @@ COLLECTION = os.environ.get("VAULT_COLLECTION", "vault")
 VAULT = pathlib.Path(os.environ.get("VAULT_PATH", str(pathlib.Path.home() / "Knowledge")))
 MAX_CHUNK_CHARS = int(os.environ.get("VAULT_MAX_CHUNK_CHARS", "3500"))
 
+# Swept on LongMemEval at 1500 sessions (882 evidence, 618 distractors) against
+# 600/100, 1800/300 and a 3500/0 control. 1200/200 was best or tied on every
+# aggregate. The spread across 1200, 1800 and 3500 is about one point on 470
+# questions, which is noise; the difference worth defending is
+# single-session-user, 55% against 47% for the control. 600/100 was both the
+# worst config and the largest index, so smaller is not better. See
+# bench/longmemeval/README.md.
 CHUNK_TARGET_CHARS = int(os.environ.get("VAULT_CHUNK_TARGET_CHARS", "1200"))
 CHUNK_OVERLAP_CHARS = int(os.environ.get("VAULT_CHUNK_OVERLAP_CHARS", "200"))
 

@@ -114,6 +114,54 @@ the evidence is an implicit aside.
 Still open: what the full 19,195-session haystack costs relative to this 3k
 slice.
 
+
+## Chunker sweep (2026-08-14)
+
+Four chunk configurations at `--scale 1500`, which is 882 evidence sessions and
+618 distractors. Distractors are the point: chunking matters exactly when the
+retriever has to pick the right piece out of many wrong ones, and a first
+attempt at `--scale 500` produced 882 sessions with zero distractors, because
+the runner keeps every evidence session. Those numbers would have ranked
+nothing.
+
+| target / overlap | hit@1 | hit@3 | hit@5 | MRR | index |
+|---|---|---|---|---|---|
+| 600 / 100 | 50% | 67% | 74% | 0.59 | 163 MB |
+| **1200 / 200** | **52%** | 68% | **76%** | **0.61** | 131 MB |
+| 1800 / 300 | 51% | 69% | 76% | 0.60 | 121 MB |
+| 3500 / 0 (control) | 51% | 69% | 76% | 0.60 | 107 MB |
+
+**Chunk size is doing almost nothing.** The control keeps the old 3500-character
+size with no overlap and differs only in splitting on sentence boundaries. It
+lands within one point of the best variant on every aggregate. Whatever this arc
+gains comes from chunk identity in fusion, heading context in the embedded
+string, and cutting on boundaries rather than mid-word, not from smaller chunks.
+
+**Smaller is not better.** 600/100 is the worst configuration and the largest
+index, 52% bigger than the control.
+
+Per category, two things stand out:
+
+| target / overlap | multi-session | single-session-user | temporal | preference |
+|---|---|---|---|---|
+| 600 / 100 | 37% | 53% | 39% | 10% |
+| 1200 / 200 | 41% | 55% | 38% | 13% |
+| 1800 / 300 | 40% | 50% | 38% | 13% |
+| 3500 / 0 | 41% | 47% | 36% | 10% |
+
+`single-session-user` is the only category where size clearly matters, 55%
+against 47% for the control, and 600/100 agrees on the direction.
+
+`single-session-preference` is unmoved by every configuration. Heading context
+and sentence boundaries do not reach it. Those questions turn on a preference
+stated once as an implicit aside, and nothing about how the text is cut makes
+that phrasing closer to the question asked.
+
+These figures rank configurations against each other and say nothing about
+improvement. The recorded baseline is at `--scale 3000` with 2118 distractors,
+so it is not comparable to a 1500-session run; the confirmation run at 3000 is
+what measures the arc.
+
 ## Reading the abstention column
 
 Abstention questions have no correct evidence in the corpus. A retrieval
