@@ -5,6 +5,7 @@ from .core import (
     COLLECTION,
     VAULT,
     chunk_markdown,
+    embed_text,
     embedding_backend,
     files_to_index,
     fts_conn,
@@ -36,7 +37,7 @@ def _chunk_file(path: Path) -> tuple[str, list[tuple[str, str]]]:
 def _embed_chunks(rel: str, chunks: list[tuple[str, str]]) -> list[VectorPoint]:
     if not chunks:
         return []
-    vecs = embedding_backend().embed([t for _, t in chunks])
+    vecs = embedding_backend().embed([embed_text(rel, hp, t) for hp, t in chunks])
     return [
         VectorPoint(
             id=point_id(rel, hp, i),

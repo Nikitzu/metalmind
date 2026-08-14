@@ -141,6 +141,41 @@ def files_to_index() -> list[pathlib.Path]:
     return [p for p in VAULT.rglob("*.md") if not in_skip_dir(p)]
 
 
+def note_title(file_rel: str) -> str:
+    """A readable title from the path. The filename is always present and, for a
+    scribe-written note, is generated from the title, so it needs no frontmatter
+    parse and behaves the same for a hand-made note dropped into the vault."""
+    stem = file_rel.rsplit("/", 1)[-1]
+    if stem.lower().endswith(".md"):
+        stem = stem[:-3]
+    return stem.replace("-", " ").replace("_", " ").strip()
+
+
+def embed_text(file_rel: str, heading: str, text: str) -> str:
+    """The string handed to the embedder: where the chunk came from, then the
+    chunk.
+
+    Only this changes. Stored text, FTS rows and snippets stay what the note
+    says, so neighbours and displayed output are untouched.
+
+    The heading path already opens with the H1, which for a scribe-written note
+    is the filename stem, so the title is prepended only when the heading does
+    not already carry it. Repeating it would double that text's weight in the
+    embedding and buy nothing."""
+    title = note_title(file_rel)
+    parts: list[str] = []
+    clean_heading = (heading or "").strip()
+    if clean_heading and clean_heading != "(root)":
+        if not clean_heading.lower().startswith(title.lower()):
+            parts.append(title)
+        parts.append(clean_heading)
+    elif title:
+        parts.append(title)
+    if not parts:
+        return text
+    return f"{' / '.join(parts)}: {text}"
+
+
 def point_id(file_rel: str, heading: str, idx: int) -> str:
     h = hashlib.sha1(f"{file_rel}|{heading}|{idx}".encode()).hexdigest()
     return str(uuid.UUID(h[:32]))
