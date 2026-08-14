@@ -1,4 +1,3 @@
-import os
 import sqlite3
 from pathlib import Path
 
@@ -15,6 +14,7 @@ from .core import (
 )
 from .calibration import (
     best_semantic_score,
+    confidence_enabled,
     calibrate,
     embedder_id,
     sidecar_path,
@@ -97,9 +97,6 @@ def reindex_all() -> int:
     return total
 
 
-CALIBRATION_ENABLED = os.environ.get("METALMIND_CONFIDENCE", "1") != "0"
-
-
 def run_calibration() -> None:
     """Derive this collection's confidence bands from the index just built.
 
@@ -113,7 +110,7 @@ def run_calibration() -> None:
     Nothing here may break indexing. Confidence is advisory, and a vault that
     indexed correctly but failed to calibrate is a vault that reports no
     confidence, not a failed reindex."""
-    if not CALIBRATION_ENABLED:
+    if not confidence_enabled():
         return
     try:
         from .search import search_vault

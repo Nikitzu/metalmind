@@ -317,6 +317,43 @@ def calibrate(
     return bands
 
 
+def confidence_enabled() -> bool:
+    """Read at call time rather than import time, so a watcher that has been
+    running for days still honours the setting its user just changed."""
+    return os.environ.get("METALMIND_CONFIDENCE", "1") != "0"
+
+
+_BANDS_CACHE: tuple[pathlib.Path, float, str, Bands | None] | None = None
+
+
+def cached_bands(path: pathlib.Path, embedder: str) -> Bands | None:
+    """Bands for this collection, re-read only when the sidecar changes.
+
+    Keyed on modification time rather than cached for the process lifetime,
+    because calibration runs inside the long-lived watcher: bands written
+    mid-process have to take effect without a restart, and a sidecar cleared by
+    a refusal has to stop being reported.
+
+    The embedder is part of the key, not just an argument to the read behind
+    it. Without it a cache hit skips the staleness check entirely and keeps
+    serving bands derived under a model that is no longer loaded."""
+    global _BANDS_CACHE
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        _BANDS_CACHE = None
+        return None
+
+    if _BANDS_CACHE is not None:
+        cached_path, cached_mtime, cached_embedder, bands = _BANDS_CACHE
+        if cached_path == path and cached_mtime == mtime and cached_embedder == embedder:
+            return bands
+
+    bands = read_sidecar(path, embedder)
+    _BANDS_CACHE = (path, mtime, embedder, bands)
+    return bands
+
+
 def read_sidecar(path: pathlib.Path, embedder: str) -> Bands | None:
     """Bands for this collection, or None if there are none to be had.
 

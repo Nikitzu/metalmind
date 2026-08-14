@@ -52,7 +52,7 @@ class TestCalibrationIsAdvisory:
             raise sqlite3.OperationalError("database is locked")
 
         monkeypatch.setattr(indexer, "fts_conn", boom)
-        monkeypatch.setattr(indexer, "CALIBRATION_ENABLED", True)
+        monkeypatch.delenv("METALMIND_CONFIDENCE", raising=False)
 
         indexer.run_calibration()
 
@@ -64,7 +64,7 @@ class TestCalibrationIsAdvisory:
         would pass whether the opt-out worked or not."""
         touched = []
         monkeypatch.setattr(indexer, "fts_conn", lambda: touched.append(1))
-        monkeypatch.setattr(indexer, "CALIBRATION_ENABLED", False)
+        monkeypatch.setenv("METALMIND_CONFIDENCE", "0")
 
         indexer.run_calibration()
 
@@ -74,7 +74,7 @@ class TestCalibrationIsAdvisory:
         conn = sqlite3.connect(":memory:")
         conn.execute("CREATE TABLE chunks (file, heading, chunk_idx, text)")
         monkeypatch.setattr(indexer, "fts_conn", lambda: conn)
-        monkeypatch.setattr(indexer, "CALIBRATION_ENABLED", True)
+        monkeypatch.delenv("METALMIND_CONFIDENCE", raising=False)
         monkeypatch.setattr(indexer, "sidecar_path", lambda c: tmp_path / "c.json")
         monkeypatch.setattr(
             indexer, "embedding_backend", lambda: type("B", (), {"model_id": lambda s: "m", "dimension": lambda s: 4})()

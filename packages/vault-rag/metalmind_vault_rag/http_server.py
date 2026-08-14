@@ -101,7 +101,11 @@ class _Handler(BaseHTTPRequestHandler):
                 if neighbors:
                     search.attach_neighbors(hits)
                 recall_log.record(query, mode=mode, rerank=rerank, k=k, hits=hits)
-                self._send_json(200, {"hits": hits})
+                payload = {"hits": hits}
+                confidence = search.result_confidence(hits)
+                if confidence:
+                    payload["confidence"] = confidence
+                self._send_json(200, payload)
             elif self.path == "/expand":
                 query = str(body.get("query", ""))
                 k = int(body.get("k") or 5)

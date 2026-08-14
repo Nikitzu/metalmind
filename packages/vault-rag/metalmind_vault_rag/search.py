@@ -3,7 +3,23 @@ import os
 import re
 from pathlib import Path
 
-from .core import COLLECTION, VAULT, embed, files_to_index, fts_conn, vector_store
+from .calibration import (
+    best_semantic_score,
+    cached_bands,
+    classify,
+    confidence_enabled,
+    embedder_id,
+    sidecar_path,
+)
+from .core import (
+    COLLECTION,
+    VAULT,
+    embed,
+    embedding_backend,
+    files_to_index,
+    fts_conn,
+    vector_store,
+)
 from .rerank import overfetch_k, rerank_hits
 
 # RRF k=60 is the standard from Cormack/Clarke/Büttcher (SIGIR 2009); higher
@@ -513,3 +529,22 @@ def expand_search(query: str, k: int = 5) -> dict:
             expansions.append({"from": f, "links": resolved})
 
     return {"hits": hits, "expansions": expansions}
+
+
+def result_confidence(hits: list[dict]) -> str | None:
+    """How much of this vault's own answerable distribution this result set
+    reaches, or None when the vault has no bands to compare against.
+
+    Advisory only. Nothing here reorders, filters or removes a hit. On an
+    uncalibrated vault the caller sees no field at all rather than a warning,
+    so behaviour is unchanged from before confidence existed."""
+    if not confidence_enabled():
+        return None
+    backend = embedding_backend()
+    bands = cached_bands(
+        sidecar_path(COLLECTION),
+        embedder_id(backend.model_id(), backend.dimension()),
+    )
+    if bands is None:
+        return None
+    return classify(best_semantic_score(hits), bands)
