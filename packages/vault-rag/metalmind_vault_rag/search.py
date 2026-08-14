@@ -331,9 +331,14 @@ def _rrf_merge(
 
     Identity is (file, heading, chunk_idx). Heading alone was a proxy that held
     only while a section produced one chunk: beyond that, two different chunks
-    collapsed into one hit keeping whichever list was read first. A format 1
-    index carries no chunk_idx, so every chunk of a section keys alike there and
-    behaves as it always did, which is what lets a stale index keep answering.
+    collapsed into one hit keeping whichever list was read first.
+
+    Position is used only when every hit carries one. FTS has always had a
+    chunk_idx column while the vector payload gained it in format 2, so on an
+    older index the keyword leg reports a position and the semantic leg does
+    not. Keying on it there would split every hit the two retrievers agreed on,
+    destroying the agreement signal fusion exists to capture. Falling back to
+    heading is what lets a stale index keep answering as it always did.
 
     `weights` (optional) is a per-list multiplier matching `hit_lists` order.
     Defaults to 1.0 per list. Used to bias fusion toward backends that are
@@ -355,11 +360,16 @@ def _rrf_merge(
         weights = [1.0] * len(hit_lists)
     if labels is None:
         labels = [""] * len(hit_lists)
+    use_position = all("chunk_idx" in h for hits in hit_lists for h in hits)
     score_fields = {f"{label}_score": None for label in labels if label}
     merged: dict[tuple[str, str], dict] = {}
     for hits, weight, label in zip(hit_lists, weights, labels):
         for rank, h in enumerate(hits, 1):
-            key = (h["file"], h["heading"], h.get("chunk_idx"))
+            key = (
+                (h["file"], h["heading"], h["chunk_idx"])
+                if use_position
+                else (h["file"], h["heading"])
+            )
             if key not in merged:
                 merged[key] = {**h, **score_fields, "rrf": 0.0, "top_rank": rank}
             else:

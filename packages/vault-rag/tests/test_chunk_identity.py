@@ -68,12 +68,27 @@ class TestLegacyIndexes:
 
         assert len(merged) == 1
 
-    def test_a_mixed_index_does_not_crash(self):
+    def test_the_same_chunk_still_merges_when_only_one_leg_knows_its_position(self):
+        """FTS has always had a chunk_idx column; the vector payload never did.
+        On a format 1 index the keyword leg therefore reports a position and the
+        semantic leg does not, so keying on it unconditionally splits every hit
+        the two retrievers agreed on and destroys the agreement signal fusion
+        exists to capture."""
+        sem = [hit(text="shared", score=0.9)]
+        kw = [hit(text="shared", score=11.0, chunk_idx=0)]
+
+        merged = _rrf_merge([sem, kw], k=5, labels=LABELS)
+
+        assert len(merged) == 1
+        assert merged[0]["sem_score"] == 0.9
+        assert merged[0]["kw_score"] == 11.0
+
+    def test_a_partially_stamped_list_falls_back_rather_than_guessing(self):
         sem = [hit(text="stamped", chunk_idx=0), hit(text="legacy")]
 
         merged = _rrf_merge([sem, []], k=5, labels=LABELS)
 
-        assert len(merged) == 2
+        assert len(merged) == 1
 
 
 class TestNeighboursFromIndex:
