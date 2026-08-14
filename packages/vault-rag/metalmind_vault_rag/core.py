@@ -13,6 +13,11 @@ COLLECTION = os.environ.get("VAULT_COLLECTION", "vault")
 VAULT = pathlib.Path(os.environ.get("VAULT_PATH", str(pathlib.Path.home() / "Knowledge")))
 MAX_CHUNK_CHARS = int(os.environ.get("VAULT_MAX_CHUNK_CHARS", "3500"))
 
+CHUNK_TARGET_CHARS = int(os.environ.get("VAULT_CHUNK_TARGET_CHARS", "1200"))
+CHUNK_OVERLAP_CHARS = int(os.environ.get("VAULT_CHUNK_OVERLAP_CHARS", "200"))
+
+_SEGMENT_SPLIT = re.compile(r"(?<=[.!?])\s+|\n\s*\n")
+
 # FTS5 keyword index lives alongside Qdrant. Same chunk granularity (one row
 # per heading-chunk). Per-collection so bench runs and user vaults never
 # collide - default derived from VAULT_COLLECTION.
@@ -122,11 +127,8 @@ def chunk_markdown(text: str) -> list[tuple[str, str]]:
 
     final: list[tuple[str, str]] = []
     for hp, t in chunks:
-        if len(t) <= MAX_CHUNK_CHARS:
-            final.append((hp, t))
-        else:
-            for i in range(0, len(t), MAX_CHUNK_CHARS):
-                final.append((hp, t[i : i + MAX_CHUNK_CHARS]))
+        for piece in split_section(t, CHUNK_TARGET_CHARS, CHUNK_OVERLAP_CHARS):
+            final.append((hp, piece))
     return final
 
 
@@ -139,6 +141,76 @@ def in_skip_dir(path: pathlib.PurePath) -> bool:
 
 def files_to_index() -> list[pathlib.Path]:
     return [p for p in VAULT.rglob("*.md") if not in_skip_dir(p)]
+
+
+def split_section(text: str, target: int, overlap: int) -> list[str]:
+    """Split one section into chunks on sentence and paragraph boundaries,
+    carrying `overlap` characters of the previous chunk into the next.
+
+    The old chunker cut at a fixed offset, mid-word, with nothing shared across
+    the seam, so a fact spanning it survived in neither piece.
+
+    A segment longer than the target is emitted whole rather than cut. Splitting
+    it would recreate exactly the failure this replaces, and one oversized
+    paragraph is a smaller problem than a sentence severed at a byte offset.
+
+    That holds only up to MAX_CHUNK_CHARS. Content with no sentence boundary at
+    all, a base64 blob or a wide table, would otherwise become one enormous
+    chunk, and the embedder truncates at its token limit, so everything past the
+    limit would go unindexed entirely. Beyond the ceiling the old character cut
+    is the lesser harm: the tail survives in a later chunk.
+
+    Every chunk consumes at least one new segment. Without that, an overlap at
+    or above the target refills each chunk from the carried tail alone and the
+    loop never advances.
+
+    Overlap is clamped to half the target. It terminates without the clamp, but
+    degenerately: measured at overlap 1000 against target 200, chunks reached
+    five times the target and the count quadrupled. A mistyped sweep value would
+    otherwise build a quietly bad index rather than failing."""
+    segments = [s.strip() for s in _SEGMENT_SPLIT.split(text or "") if s and s.strip()]
+    if not segments:
+        return []
+    overlap = max(0, min(overlap, target // 2))
+
+    chunks: list[str] = []
+    carried: list[str] = []
+    current: list[str] = list(carried)
+    size = 0
+
+    def flush() -> list[str]:
+        if not current:
+            return []
+        chunks.append(" ".join(current))
+        tail: list[str] = []
+        used = 0
+        for seg in reversed(current):
+            if used + len(seg) > overlap:
+                break
+            tail.insert(0, seg)
+            used += len(seg) + 1
+        return tail
+
+    expanded: list[str] = []
+    for seg in segments:
+        if len(seg) <= MAX_CHUNK_CHARS:
+            expanded.append(seg)
+        else:
+            expanded.extend(
+                seg[i : i + MAX_CHUNK_CHARS] for i in range(0, len(seg), MAX_CHUNK_CHARS)
+            )
+
+    for seg in expanded:
+        if current and size + len(seg) + 1 > target:
+            carried = flush()
+            current = list(carried)
+            size = sum(len(s) + 1 for s in current)
+        current.append(seg)
+        size += len(seg) + 1
+
+    if current:
+        chunks.append(" ".join(current))
+    return chunks
 
 
 def note_title(file_rel: str) -> str:
