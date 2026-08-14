@@ -97,6 +97,11 @@ function rawFromText(text: string): McpToolResult {
   return { content: [{ type: 'text', text }] };
 }
 
+function confidenceNote(confidence: unknown): string {
+  if (confidence !== 'low') return '';
+  return '\nlow confidence: nothing in this vault scored like a real match for that query.';
+}
+
 function formatHits(hits: Array<Record<string, unknown>>): string {
   return hits.map((h) => JSON.stringify(h, null, 2)).join('\n');
 }
@@ -282,10 +287,11 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
         neighbors: opts.neighbors ?? false,
       },
       { rerank: opts.rerank },
-    )) as { hits: Array<Record<string, unknown>> };
+    )) as { hits: Array<Record<string, unknown>>; confidence?: string };
     await annotate(hits.hits);
+    const note = confidenceNote(hits.confidence);
     if (opts.tier === 'fast') {
-      const text = fmt(hits.hits);
+      const text = `${fmt(hits.hits)}${note}`;
       return {
         tool: 'http:search',
         text,
@@ -298,7 +304,7 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
     // deep tier: search then related_notes on the top hit
     const topFile = (hits.hits[0]?.file as string | undefined) ?? null;
     if (!topFile) {
-      const text = fmt(hits.hits);
+      const text = `${fmt(hits.hits)}${note}`;
       return {
         tool: 'http:search',
         text,
@@ -311,7 +317,7 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
     const relatedTail = opts.compact
       ? `\n+related to ${topFile} (use --deep --json for full)`
       : `\n---related to ${topFile}---\n${JSON.stringify(related, null, 2)}`;
-    const text = `${fmt(hits.hits)}${relatedTail}`;
+    const text = `${fmt(hits.hits)}${relatedTail}${note}`;
     return {
       tool: 'http:search+related',
       text,

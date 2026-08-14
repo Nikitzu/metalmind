@@ -444,3 +444,93 @@ describe('recall output shaping (--files, --budget, --neighbors)', () => {
     );
   });
 });
+
+describe('confidence advisory', () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  const respondWith = (confidence?: string) => {
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hits: [{ file: 'notes/a.md', heading: '(root)', score: 0.9, text: 'something' }],
+            ...(confidence ? { confidence } : {}),
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+    ) as typeof fetch;
+  };
+
+  const ask = () =>
+    recall({ vaultPath: '/tmp/vault', query: 'anything', tier: 'fast', compact: true });
+
+  it('warns when the vault has nothing that scored like a match', async () => {
+    respondWith('low');
+
+    expect((await ask()).text).toContain('low confidence');
+  });
+
+  it('stays quiet on medium, which is 10% of real recalls', async () => {
+    respondWith('medium');
+
+    expect((await ask()).text).not.toContain('confidence');
+  });
+
+  it('stays quiet on high', async () => {
+    respondWith('high');
+
+    expect((await ask()).text).not.toContain('confidence');
+  });
+
+  it('stays quiet when the vault is not calibrated at all', async () => {
+    respondWith(undefined);
+
+    expect((await ask()).text).not.toContain('confidence');
+  });
+
+  it('warns on the deep tier too, which also calls /related', async () => {
+    globalThis.fetch = vi.fn(async (url: unknown) =>
+      String(url).endsWith('/related')
+        ? new Response(JSON.stringify({ backlinks: [], outgoing: [] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        : new Response(
+            JSON.stringify({
+              hits: [{ file: 'notes/a.md', heading: '(root)', score: 0.9, text: 'x' }],
+              confidence: 'low',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          ),
+    ) as unknown as typeof fetch;
+
+    const res = await recall({
+      vaultPath: '/tmp/vault',
+      query: 'anything',
+      tier: 'deep',
+      compact: true,
+    });
+
+    expect(res.tool).toBe('http:search+related');
+    expect(res.text).toContain('low confidence');
+  });
+
+  it('leaves the hits themselves untouched', async () => {
+    respondWith('low');
+
+    const res = await ask();
+
+    expect(res.hits).toHaveLength(1);
+    expect(res.hits?.[0]?.file).toBe('notes/a.md');
+    expect(res.text).toContain('notes/a.md');
+  });
+});
