@@ -106,3 +106,56 @@ describe('findUnstagedEntries', () => {
     ]);
   });
 });
+
+describe('archive moves', () => {
+  it('accepts a move whose content changed on the way', () => {
+    // `metalmind gold` rewrites `status:` and `updated:` in the frontmatter, so
+    // the archived blob never matches the deleted one by sha.
+    const report = analyzeStagedChanges(
+      parseRawDiffZ(
+        raw(
+          D('old', 'Work/session.md'),
+          A('new', 'Archive/Work/session.md'),
+        ),
+      ),
+    );
+
+    expect(report.safe).toBe(true);
+    expect(report.movedNotes).toEqual(['Work/session.md']);
+  });
+
+  it('still refuses when the basename appears nowhere', () => {
+    const report = analyzeStagedChanges(
+      parseRawDiffZ(raw(D('old', 'Work/session.md'), A('new', 'Archive/Work/other.md'))),
+    );
+
+    expect(report.safe).toBe(false);
+    expect(report.violations[0]?.guard).toBe('unexplained-deletion');
+  });
+
+  it('does not treat an edit to an existing note as somewhere a deletion went', () => {
+    // A modification means that file already existed, so it cannot be where the
+    // deleted note landed. Only an addition can be.
+    const report = analyzeStagedChanges(
+      parseRawDiffZ(raw(D('old', 'Work/session.md'), M('m1', 'm2', 'Archive/Work/session.md'))),
+    );
+
+    expect(report.safe).toBe(false);
+  });
+
+  it('keeps matching identical content across a rename that git missed', () => {
+    const report = analyzeStagedChanges(
+      parseRawDiffZ(raw(D('same', 'Work/a.md'), A('same', 'Archive/Work/renamed.md'))),
+    );
+
+    expect(report.safe).toBe(true);
+    expect(report.movedNotes).toEqual(['Work/a.md']);
+  });
+
+  it('a delete-only commit is still refused even when basenames match', () => {
+    const report = analyzeStagedChanges(parseRawDiffZ(raw(D('old', 'Work/a.md'))));
+
+    expect(report.safe).toBe(false);
+    expect(report.violations.map((v) => v.guard)).toContain('delete-only');
+  });
+});

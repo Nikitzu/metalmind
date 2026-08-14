@@ -29,6 +29,10 @@ export function isNote(path: string): boolean {
   return path.toLowerCase().endsWith(NOTE_EXTENSION);
 }
 
+function basename(path: string): string {
+  return path.slice(path.lastIndexOf('/') + 1);
+}
+
 export function parseRawDiffZ(stdout: string): StagedChange[] {
   const fields = stdout.split('\0').filter((f) => f.length > 0);
   const changes: StagedChange[] = [];
@@ -71,10 +75,16 @@ export function analyzeStagedChanges(changes: StagedChange[]): GuardReport {
   const survivingShas = new Set(
     changes.filter((c) => c.status === 'A' || c.status === 'M').map((c) => c.dstSha),
   );
+  const survivingNames = new Set(
+    changes.filter((c) => c.status === 'A').map((c) => basename(c.path)),
+  );
+  const explained = (c: StagedChange) =>
+    survivingShas.has(c.srcSha) || survivingNames.has(basename(c.path));
+
   const deletedNotes = changes.filter((c) => c.status === 'D' && isNote(c.path));
-  const movedNotes = deletedNotes.filter((c) => survivingShas.has(c.srcSha)).map((c) => c.path);
+  const movedNotes = deletedNotes.filter(explained).map((c) => c.path);
   const unexplained = deletedNotes
-    .filter((c) => !survivingShas.has(c.srcSha))
+    .filter((c) => !explained(c))
     .map((c) => c.path)
     .sort();
 
@@ -84,6 +94,7 @@ export function analyzeStagedChanges(changes: StagedChange[]): GuardReport {
       guard: 'unexplained-deletion',
       message:
         `${unexplained.length} note(s) would be deleted with no matching addition in this commit. ` +
+        'Neither their content nor their filename appears anywhere else in it. ' +
         'If this is a move, the destination is missing from the index.',
       paths: unexplained,
     });
