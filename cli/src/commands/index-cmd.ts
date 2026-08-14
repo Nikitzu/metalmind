@@ -1,4 +1,4 @@
-import { log } from '@clack/prompts';
+import { confirm, isCancel, log } from '@clack/prompts';
 import { recallAuthHeaders } from '../backends/recall-token.js';
 import { readConfig } from '../config.js';
 import { runCommand } from '../util/exec.js';
@@ -122,4 +122,39 @@ export async function indexRebuildCmd(): Promise<void> {
     return;
   }
   log.success('Index rebuilt, format recorded, confidence recalibrated.');
+}
+
+
+export async function awaitIndexStatus(attempts = 6): Promise<IndexStatus | null> {
+  for (let i = 0; i < attempts; i += 1) {
+    const result = await fetchIndexStatus();
+    if (result.ok) return result.status;
+    if (result.reason === 'unsupported') return null;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  return null;
+}
+
+export async function promptRebuildIfStale(
+  status: IndexStatus | null,
+  opts: { noPrompt?: boolean },
+): Promise<void> {
+  if (!status || !status.stale) return;
+
+  const summary =
+    `Your index was built in format ${status.format_version} by ${status.embedder}; ` +
+    `this version builds format ${status.expected_format_version} with ${status.expected_embedder}.`;
+
+  if (opts.noPrompt) {
+    log.warn(`${summary} Recall still works. Run \`metalmind index rebuild\` when convenient.`);
+    return;
+  }
+
+  log.warn(`${summary} Recall still works until you do.`);
+  const answer = await confirm({ message: 'Rebuild the index now? It runs for a few minutes.' });
+  if (isCancel(answer) || !answer) {
+    log.info('  skipped - run `metalmind index rebuild` when convenient.');
+    return;
+  }
+  await indexRebuildCmd();
 }

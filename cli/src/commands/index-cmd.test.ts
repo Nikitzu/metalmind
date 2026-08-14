@@ -215,3 +215,84 @@ describe('index rebuild', () => {
     expect(process.exitCode).toBe(1);
   });
 });
+
+const { confirm, isCancel } = vi.hoisted(() => ({
+  confirm: vi.fn(),
+  isCancel: vi.fn(() => false),
+}));
+vi.mock('@clack/prompts', async (orig) => ({
+  ...(await orig<Record<string, unknown>>()),
+  confirm,
+  isCancel,
+}));
+
+const STALE: IndexStatusFixture = {
+  ...CURRENT,
+  stale: true,
+  format_version: 1,
+  expected_format_version: 2,
+};
+
+type IndexStatusFixture = typeof CURRENT;
+
+describe('promptRebuildIfStale', () => {
+  beforeEach(() => {
+    confirm.mockReset();
+    isCancel.mockReset().mockReturnValue(false);
+    runCommand.mockReset();
+    readConfig.mockReset().mockResolvedValue({ vaultPath: '/home/me/Knowledge' });
+  });
+
+  it('rebuilds when the user agrees', async () => {
+    confirm.mockResolvedValue(true);
+    runCommand.mockResolvedValue({ ok: true });
+
+    const { promptRebuildIfStale } = await import('./index-cmd.js');
+    await promptRebuildIfStale(STALE, {});
+
+    expect(runCommand).toHaveBeenCalled();
+  });
+
+  it('leaves the index alone when the user declines', async () => {
+    confirm.mockResolvedValue(false);
+
+    const { promptRebuildIfStale } = await import('./index-cmd.js');
+    await promptRebuildIfStale(STALE, {});
+
+    expect(runCommand).not.toHaveBeenCalled();
+  });
+
+  it('treats a cancelled prompt as a decline', async () => {
+    confirm.mockResolvedValue(Symbol('cancel'));
+    isCancel.mockReturnValue(true);
+
+    const { promptRebuildIfStale } = await import('./index-cmd.js');
+    await promptRebuildIfStale(STALE, {});
+
+    expect(runCommand).not.toHaveBeenCalled();
+  });
+
+  it('never prompts non-interactively, since minutes of work would be a surprise', async () => {
+    const { promptRebuildIfStale } = await import('./index-cmd.js');
+    await promptRebuildIfStale(STALE, { noPrompt: true });
+
+    expect(confirm).not.toHaveBeenCalled();
+    expect(runCommand).not.toHaveBeenCalled();
+  });
+
+  it('says nothing at all about a current index', async () => {
+    const { promptRebuildIfStale } = await import('./index-cmd.js');
+    await promptRebuildIfStale(CURRENT, {});
+
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it('says nothing when the watcher could not be asked', async () => {
+    // Mid-upgrade the watcher may be restarting. Nagging about an index we
+    // could not inspect would fire on a healthy install.
+    const { promptRebuildIfStale } = await import('./index-cmd.js');
+    await promptRebuildIfStale(null, {});
+
+    expect(confirm).not.toHaveBeenCalled();
+  });
+});

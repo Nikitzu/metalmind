@@ -1,4 +1,5 @@
 import { cancel, intro, log, outro } from '@clack/prompts';
+import { awaitIndexStatus, promptRebuildIfStale } from './index-cmd.js';
 import { type MetalmindHost, readConfig, writeConfig } from '../config.js';
 import { describeAliasSourcing, installAliases } from '../install/aliases.js';
 import { installCodex } from '../install/codex.js';
@@ -231,6 +232,8 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
       log.warn(`  skipped: ${message}`);
     }
   }
+
+  await promptRebuildIfStale(await awaitIndexStatus(), { noPrompt: opts.noPrompt });
 
   outro('Stamp complete. Run `metalmind pulse` to verify.');
 }
