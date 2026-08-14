@@ -134,3 +134,84 @@ describe('index status transport', () => {
     expect(await fetchIndexStatus()).toMatchObject({ ok: true, status: { chunks: 2970 } });
   });
 });
+
+const { readConfig, runCommand } = vi.hoisted(() => ({
+  readConfig: vi.fn(),
+  runCommand: vi.fn(),
+}));
+vi.mock('../config.js', () => ({ readConfig }));
+vi.mock('../util/exec.js', () => ({ runCommand }));
+
+describe('index rebuild', () => {
+  beforeEach(() => {
+    readConfig.mockReset();
+    runCommand.mockReset();
+    process.exitCode = undefined;
+  });
+
+  afterEach(() => {
+    process.exitCode = undefined;
+  });
+
+  it('rebuilds the configured vault', async () => {
+    readConfig.mockResolvedValue({ vaultPath: '/home/me/Knowledge' });
+    runCommand.mockResolvedValue({ ok: true });
+
+    const { indexRebuildCmd } = await import('./index-cmd.js');
+    await indexRebuildCmd();
+
+    expect(runCommand).toHaveBeenCalledWith(
+      'metalmind-vault-rag-indexer',
+      [],
+      expect.objectContaining({ env: expect.objectContaining({ VAULT_PATH: '/home/me/Knowledge' }) }),
+    );
+  });
+
+  it('shows the indexer output live, since a rebuild runs for minutes', async () => {
+    readConfig.mockResolvedValue({ vaultPath: '/home/me/Knowledge' });
+    runCommand.mockResolvedValue({ ok: true });
+
+    const { indexRebuildCmd } = await import('./index-cmd.js');
+    await indexRebuildCmd();
+
+    expect(runCommand).toHaveBeenCalledWith(
+      'metalmind-vault-rag-indexer',
+      [],
+      expect.objectContaining({ inheritStdio: true }),
+    );
+  });
+
+  it('does not impose a timeout a large vault would trip', async () => {
+    readConfig.mockResolvedValue({ vaultPath: '/home/me/Knowledge' });
+    runCommand.mockResolvedValue({ ok: true });
+
+    const { indexRebuildCmd } = await import('./index-cmd.js');
+    await indexRebuildCmd();
+
+    expect(runCommand).toHaveBeenCalledWith(
+      'metalmind-vault-rag-indexer',
+      [],
+      expect.objectContaining({ timeoutMs: 0 }),
+    );
+  });
+
+  it('refuses when no vault is configured', async () => {
+    readConfig.mockResolvedValue(null);
+
+    const { indexRebuildCmd } = await import('./index-cmd.js');
+    await indexRebuildCmd();
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('reports a failed rebuild rather than claiming success', async () => {
+    readConfig.mockResolvedValue({ vaultPath: '/home/me/Knowledge' });
+    runCommand.mockResolvedValue({ ok: false, stderr: 'boom' });
+
+    const { indexRebuildCmd } = await import('./index-cmd.js');
+    await indexRebuildCmd();
+
+    expect(process.exitCode).toBe(1);
+  });
+});

@@ -55,7 +55,7 @@ import {
   scribeSupersedeCmd,
   scribeUpdateCmd,
 } from './commands/scribe.js';
-import { indexStatusCmd } from './commands/index-cmd.js';
+import { indexRebuildCmd, indexStatusCmd } from './commands/index-cmd.js';
 import { stamp } from './commands/stamp.js';
 import { type StoreOptions, store } from './commands/store.js';
 import { type SyncCmdOptions, syncCmd } from './commands/sync.js';
@@ -169,6 +169,10 @@ indexCmd
   .command('status')
   .description('Show the index format, counts, and confidence bands')
   .action(indexStatusCmd);
+indexCmd
+  .command('rebuild')
+  .description('Rebuild the vault index from scratch, then recalibrate')
+  .action(indexRebuildCmd);
 
 const storeCmd = program
   .command('store')

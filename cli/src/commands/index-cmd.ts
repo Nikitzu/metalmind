@@ -1,5 +1,7 @@
-import { recallAuthHeaders } from '../backends/recall-token.js';
 import { log } from '@clack/prompts';
+import { recallAuthHeaders } from '../backends/recall-token.js';
+import { readConfig } from '../config.js';
+import { runCommand } from '../util/exec.js';
 
 const DEFAULT_HTTP_ENDPOINT = 'http://127.0.0.1:17317';
 const HTTP_TIMEOUT_MS = 5_000;
@@ -96,4 +98,28 @@ export async function indexStatusCmd(): Promise<void> {
     return;
   }
   process.stdout.write(`${renderIndexStatus(result.status)}\n`);
+}
+
+
+export async function indexRebuildCmd(): Promise<void> {
+  const config = await readConfig();
+  if (!config) {
+    log.error('No vault configured. Run `metalmind init` first.');
+    process.exitCode = 1;
+    return;
+  }
+
+  log.info(`Rebuilding the index for ${config.vaultPath}. This runs for minutes on a large vault.`);
+  const res = await runCommand('metalmind-vault-rag-indexer', [], {
+    inheritStdio: true,
+    timeoutMs: 0,
+    env: { ...process.env, VAULT_PATH: config.vaultPath },
+  });
+
+  if (!res.ok) {
+    log.error('Rebuild failed. The previous index is untouched.');
+    process.exitCode = 1;
+    return;
+  }
+  log.success('Index rebuilt, format recorded, confidence recalibrated.');
 }
