@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from pathlib import Path
 
@@ -11,6 +12,12 @@ from .core import (
     in_skip_dir,
     point_id,
     vector_store,
+)
+from .calibration import (
+    best_semantic_score,
+    calibrate,
+    embedder_id,
+    sidecar_path,
 )
 from .stores import VectorPoint
 
@@ -86,7 +93,56 @@ def reindex_all() -> int:
         fts.commit()
 
     print(f"Indexed {total} chunks from {len(files)} files.", flush=True)
+    run_calibration()
     return total
+
+
+CALIBRATION_ENABLED = os.environ.get("METALMIND_CONFIDENCE", "1") != "0"
+
+
+def run_calibration() -> None:
+    """Derive this collection's confidence bands from the index just built.
+
+    Only full rebuilds land here. An incremental reindex touches a handful of
+    files and would pay the whole sampling cost to move the edges by nothing.
+
+    Search is imported inside the function to keep the module import graph
+    one-way: search reads calibration, so calibration must not be reachable
+    from search at import time.
+
+    Nothing here may break indexing. Confidence is advisory, and a vault that
+    indexed correctly but failed to calibrate is a vault that reports no
+    confidence, not a failed reindex."""
+    if not CALIBRATION_ENABLED:
+        return
+    try:
+        from .search import search_vault
+
+        with fts_conn() as conn:
+            rows = conn.execute("SELECT file, text FROM chunks ORDER BY file, chunk_idx").fetchall()
+
+        backend = embedding_backend()
+
+        def score(query: str) -> float | None:
+            return best_semantic_score(search_vault(query, k=5))
+
+        bands = calibrate(
+            [(r[0], r[1]) for r in rows],
+            score,
+            embedder=embedder_id(backend.model_id(), backend.dimension()),
+            path=sidecar_path(COLLECTION),
+        )
+    except Exception as e:
+        print(f"metalmind: confidence calibration skipped ({e!r})", flush=True)
+        return
+
+    if bands is None:
+        print("metalmind: no confidence bands for this vault.", flush=True)
+    else:
+        print(
+            f"Calibrated confidence: low {bands.low_edge:.4f}, high {bands.high_edge:.4f}.",
+            flush=True,
+        )
 
 
 def reindex_wipe() -> int:

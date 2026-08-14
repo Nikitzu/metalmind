@@ -263,6 +263,60 @@ def write_sidecar(
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def best_semantic_score(hits: list[dict]) -> float | None:
+    """The strongest embedder cosine anywhere in a result set.
+
+    Best-of rather than the top hit's own score, because the question a
+    confidence signal answers is "does this vault hold anything close to what
+    was asked", not "is the document fusion happened to rank first a good
+    match". Measured on a real vault, best-of separates answerable from
+    unanswerable at AUC 0.984 against 0.929 for the top hit alone."""
+    scores = [h.get("sem_score") for h in hits]
+    usable = [s for s in scores if isinstance(s, (int, float))]
+    return max(usable) if usable else None
+
+
+def calibrate(
+    rows: list[tuple[str, str]],
+    score_fn,
+    embedder: str,
+    path: pathlib.Path,
+) -> Bands | None:
+    """Derive this collection's bands and persist them, or clear any stale
+    sidecar and report None.
+
+    `score_fn(query) -> float | None` runs one search and returns the best
+    semantic score in it. It is injected so the pass can be exercised without
+    an embedder, and so this module never has to import the search layer.
+
+    Clearing the sidecar on refusal is not tidying. A vault that no longer
+    supports a threshold, because it grew into the probes' subject matter or
+    lost the content the old edges were derived from, would otherwise keep
+    reporting confidence from edges that no longer hold."""
+    queries = sample_excerpt_queries(rows)
+    positive_scores = [s for s in (score_fn(q) for q in queries) if s is not None]
+    if len(positive_scores) < MIN_POSITIVE_SAMPLES:
+        path.unlink(missing_ok=True)
+        return None
+
+    probe_scores = [s for s in (score_fn(q) for q in load_probes()) if s is not None]
+    near_miss_scores = [s for s in (score_fn(q) for q in load_near_miss()) if s is not None]
+
+    bands = derive_bands(positive_scores, probe_scores, near_miss_scores)
+    if bands is None:
+        path.unlink(missing_ok=True)
+        return None
+
+    write_sidecar(
+        path,
+        bands,
+        embedder=embedder,
+        positives_n=len(positive_scores),
+        probes_n=len(probe_scores),
+    )
+    return bands
+
+
 def read_sidecar(path: pathlib.Path, embedder: str) -> Bands | None:
     """Bands for this collection, or None if there are none to be had.
 

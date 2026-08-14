@@ -73,6 +73,9 @@ class FastEmbedBackend:
     def dimension(self) -> int:
         return self._dim
 
+    def model_id(self) -> str:
+        return self._model_name
+
     def embed(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []

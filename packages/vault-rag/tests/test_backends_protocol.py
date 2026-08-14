@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from metalmind_vault_rag.backends import make_backend
-from metalmind_vault_rag.backends.fastembed_backend import FastEmbedBackend
+from metalmind_vault_rag.backends.fastembed_backend import DEFAULT_MODEL, FastEmbedBackend
 
 
 # -----------------------------------------------------------------------------
@@ -122,3 +122,19 @@ def test_cache_dir_env_override_wins(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setenv("FASTEMBED_CACHE_PATH", "/custom/cache")
     assert resolve_cache_dir() == "/custom/cache"
+
+
+def test_model_id_reports_the_configured_model(backend) -> None:
+    assert backend.model_id() == "fake-model"
+
+
+def test_model_id_falls_back_to_the_default_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("VAULT_EMBED_MODEL", raising=False)
+
+    assert FastEmbedBackend().model_id() == DEFAULT_MODEL
+
+
+def test_model_id_follows_the_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VAULT_EMBED_MODEL", "BAAI/bge-base-en-v1.5")
+
+    assert FastEmbedBackend().model_id() == "BAAI/bge-base-en-v1.5"

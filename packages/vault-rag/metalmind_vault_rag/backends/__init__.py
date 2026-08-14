@@ -38,6 +38,12 @@ class EmbeddingBackend(Protocol):
         """Vector dimension for the configured model. Used by the store
         to size its index. Stable for the lifetime of a process."""
 
+    def model_id(self) -> str:
+        """Name of the model producing the vectors. Confidence calibration
+        records it beside any derived threshold, because cosine distributions
+        move with the model and edges derived under one say nothing under
+        another."""
+
 
 def make_backend() -> EmbeddingBackend:
     """Build the fastembed backend.

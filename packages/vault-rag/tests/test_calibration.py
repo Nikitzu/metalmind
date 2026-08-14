@@ -27,6 +27,8 @@ from metalmind_vault_rag.calibration import (
     EXCERPT_WORDS,
     MAX_EXCERPT_SAMPLES,
     MIN_QUERY_WORDS,
+    best_semantic_score,
+    calibrate,
     embedder_id,
     excerpt_query,
     load_near_miss,
@@ -355,3 +357,114 @@ class TestSampleExcerptQueries:
 
     def test_default_limit_matches_the_documented_sample_size(self):
         assert MAX_EXCERPT_SAMPLES == 150
+
+
+class TestBestSemanticScore:
+    def test_takes_the_best_across_the_hits(self):
+        hits = [{"sem_score": 0.4}, {"sem_score": 0.82}, {"sem_score": 0.6}]
+
+        assert best_semantic_score(hits) == 0.82
+
+    def test_ignores_hits_the_semantic_leg_did_not_return(self):
+        hits = [{"sem_score": None}, {"sem_score": 0.5}, {}]
+
+        assert best_semantic_score(hits) == 0.5
+
+    def test_no_semantic_scores_at_all_is_none(self):
+        assert best_semantic_score([{"sem_score": None}, {}]) is None
+
+    def test_no_hits_is_none(self):
+        assert best_semantic_score([]) is None
+
+
+class FakeScorer:
+    """Scores answerable-looking queries high and everything else low, so a
+    calibration run can be exercised without loading an embedder."""
+
+    def __init__(self, probe_score=0.30, near_miss_score=0.55, excerpt_score=0.80):
+        self.probe_score = probe_score
+        self.near_miss_score = near_miss_score
+        self.excerpt_score = excerpt_score
+        self.seen = []
+
+    def __call__(self, query):
+        self.seen.append(query)
+        if query in set(load_probes()):
+            return self.probe_score
+        if query in set(load_near_miss()):
+            return self.near_miss_score
+        return self.excerpt_score
+
+
+class TestCalibrate:
+    def test_writes_a_sidecar_and_returns_bands(self, tmp_path):
+        path = tmp_path / "c.json"
+
+        bands = calibrate(rows(200), FakeScorer(), embedder="m@384", path=path)
+
+        assert bands is not None
+        assert path.exists()
+        assert read_sidecar(path, embedder="m@384") == bands
+
+    def test_scores_every_probe_and_near_miss(self, tmp_path):
+        scorer = FakeScorer()
+
+        calibrate(rows(200), scorer, embedder="m@384", path=tmp_path / "c.json")
+
+        assert set(load_probes()) <= set(scorer.seen)
+        assert set(load_near_miss()) <= set(scorer.seen)
+
+    def test_a_vault_too_small_writes_nothing(self, tmp_path):
+        path = tmp_path / "c.json"
+
+        assert calibrate(rows(5), FakeScorer(), embedder="m@384", path=path) is None
+        assert not path.exists()
+
+    def test_a_vault_too_small_never_scores_the_probes(self, tmp_path):
+        """A hundred searches to reach a refusal already decided by the sample
+        size. On a small vault that is the whole cost of the pass."""
+        scorer = FakeScorer()
+
+        calibrate(rows(5), scorer, embedder="m@384", path=tmp_path / "c.json")
+
+        assert not set(load_probes()) & set(scorer.seen)
+
+    def test_refusing_clears_a_sidecar_from_an_earlier_run(self, tmp_path):
+        path = tmp_path / "c.json"
+        write_sidecar(path, Bands(0.70, 0.64), embedder="m@384", positives_n=150, probes_n=67)
+
+        assert calibrate(rows(5), FakeScorer(), embedder="m@384", path=path) is None
+        assert not path.exists()
+
+    def test_a_non_separating_vault_clears_an_earlier_sidecar(self, tmp_path):
+        """Distinct from the small-vault case: here there are plenty of samples
+        and derivation itself refuses. Without this the stale edges survive and
+        the tool keeps reporting confidence the current vault cannot support."""
+        path = tmp_path / "c.json"
+        write_sidecar(path, Bands(0.70, 0.64), embedder="m@384", positives_n=150, probes_n=67)
+
+        assert calibrate(rows(200), FakeScorer(probe_score=0.9), embedder="m@384", path=path) is None
+        assert not path.exists()
+
+    def test_refuses_when_probes_score_like_real_content(self, tmp_path):
+        path = tmp_path / "c.json"
+        scorer = FakeScorer(probe_score=0.9)
+
+        assert calibrate(rows(200), scorer, embedder="m@384", path=path) is None
+        assert not path.exists()
+
+    def test_refuses_when_near_misses_read_as_high(self, tmp_path):
+        path = tmp_path / "c.json"
+        scorer = FakeScorer(near_miss_score=0.95)
+
+        assert calibrate(rows(200), scorer, embedder="m@384", path=path) is None
+        assert not path.exists()
+
+    def test_records_the_sample_sizes_it_actually_used(self, tmp_path):
+        path = tmp_path / "c.json"
+
+        calibrate(rows(200), FakeScorer(), embedder="m@384", path=path)
+        payload = json.loads(path.read_text(encoding="utf-8"))
+
+        assert payload["positives_n"] == MAX_EXCERPT_SAMPLES
+        assert payload["probes_n"] == OUT_OF_DOMAIN_COUNT
