@@ -24,8 +24,17 @@ from pathlib import Path, PurePath
 from watchfiles import watch
 
 from . import http_server
-from .core import COLLECTION, VAULT, files_to_index, fts_row_count, in_skip_dir, vector_store
-from .indexer import reindex_all, reindex_paths
+from .calibration import confidence_enabled, embedder_id, read_sidecar, sidecar_path
+from .core import (
+    COLLECTION,
+    VAULT,
+    embedding_backend,
+    files_to_index,
+    fts_row_count,
+    in_skip_dir,
+    vector_store,
+)
+from .indexer import reindex_all, reindex_paths, run_calibration
 
 DEBOUNCE_SECONDS = 2.0
 TICK_MS = 1_000  # watch() heartbeat → worst-case flush latency = DEBOUNCE + TICK
@@ -134,6 +143,35 @@ def _maybe_backfill() -> None:
         )
 
 
+def _maybe_calibrate() -> None:
+    """Derive confidence bands when this collection has none.
+
+    A full reindex calibrates on its way out, but an install that upgrades
+    without rebuilding never runs one: the backfill above only fires on an
+    empty index, and there is no user-facing reindex command. Without this a
+    populated vault would upgrade and silently never gain the feature.
+
+    Recomputing costs seconds against an index that already exists, so a vault
+    whose bands were refused simply tries again next start. That is the wanted
+    behaviour: a vault too small to calibrate today may be large enough
+    tomorrow, and a marker file recording the refusal would have to solve its
+    own staleness problem."""
+    if not confidence_enabled():
+        return
+    try:
+        backend = embedding_backend()
+        embedder = embedder_id(backend.model_id(), backend.dimension())
+        if read_sidecar(sidecar_path(COLLECTION), embedder) is not None:
+            return
+        if fts_row_count() == 0:
+            return
+    except Exception as e:
+        print(f"metalmind: confidence calibration skipped ({e!r})", flush=True)
+        return
+    print("calibrating confidence bands for this collection…", flush=True)
+    run_calibration()
+
+
 # Backwards-compatible alias for the old name in case anyone imports it.
 _maybe_backfill_fts = _maybe_backfill
 
@@ -145,6 +183,7 @@ def main() -> None:
     # Fire up the co-hosted HTTP recall endpoint (127.0.0.1 only). If the port
     # is busy or binding fails, watcher keeps working - CLI falls back to stdio.
     http_server.serve_forever()
+    _maybe_calibrate()
     pending: set[Path] = set()
     first_pending_ts = 0.0
 

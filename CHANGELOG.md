@@ -6,6 +6,20 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.20.1 - 2026-08-14
+
+### Fixed
+
+- **0.20.0 never switched itself on.** Calibration ran at the end of a full reindex, and the watcher only rebuilds when the index is empty, so an existing install upgraded, restarted, and silently kept reporting no confidence. There was no way for a user to trigger it either, since `metalmind reindex` is retired.
+
+  The watcher now derives bands at startup when the collection has none, working against the index already on disk. That is seconds rather than the minutes a rebuild costs, it happens after the recall endpoint is already serving, and it runs once: a collection that has bands skips it. Bands from a different embedding model count as absent, so changing models recalibrates.
+
+  A vault that cannot support bands retries on the next start rather than recording its refusal. That is deliberate. A vault too small to calibrate today may be large enough tomorrow, and a marker file would need to solve its own staleness problem.
+
+  Upgrading from 0.19.x or 0.20.0 needs no extra step now: install, `metalmind stamp`, and the next watcher start calibrates.
+
+---
+
 ## 0.20.0 - 2026-08-14
 
 ### Added
