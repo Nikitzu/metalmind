@@ -8,6 +8,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from . import auth, recall_log, search
+from .calibration import cached_bands, embedder_id, sidecar_path
+from .core import COLLECTION, embedding_backend
+from .index_format import FORMAT_VERSION, is_stale, read_stamp, stamp_path
 from .indexer import reindex_paths
 
 DEFAULT_HOST = "127.0.0.1"
@@ -40,6 +43,33 @@ def _auth_gate(handler: "_Handler") -> bool:
             flush=True,
         )
     return True
+
+
+def _index_status() -> dict:
+    """Everything a CLI needs to describe this index without owning any of it.
+
+    FORMAT_VERSION lives in Python. Rendering staleness on the TypeScript side
+    would mean a second copy of it, and the first bump of one and not the other
+    would report every healthy index as stale."""
+    backend = embedding_backend()
+    embedder = embedder_id(backend.model_id(), backend.dimension())
+    stamp = read_stamp(stamp_path(COLLECTION))
+    bands = cached_bands(sidecar_path(COLLECTION), embedder)
+    return {
+        "stamped": stamp is not None,
+        "stale": is_stale(stamp, embedder),
+        "expected_format_version": FORMAT_VERSION,
+        "expected_embedder": embedder,
+        "format_version": stamp.format_version if stamp else None,
+        "embedder": stamp.embedder if stamp else None,
+        "chunker": stamp.chunker if stamp else None,
+        "max_chunk_chars": stamp.max_chunk_chars if stamp else None,
+        "files": stamp.files if stamp else None,
+        "chunks": stamp.chunks if stamp else None,
+        "bands": (
+            {"low_edge": bands.low_edge, "high_edge": bands.high_edge} if bands else None
+        ),
+    }
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -80,6 +110,8 @@ class _Handler(BaseHTTPRequestHandler):
             # command in docs.
             from . import rerank as rerank_mod
             self._send_json(200, {"available": rerank_mod.is_dep_available()})
+        elif self.path == "/index/status":
+            self._send_json(200, _index_status())
         else:
             self._send_json(404, {"error": "not found"})
 

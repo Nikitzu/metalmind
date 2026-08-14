@@ -9,7 +9,9 @@ from pathlib import Path
 
 from . import recall_log
 from . import rerank as rerank_mod
-from .core import VAULT, files_to_index, fts_row_count, vector_store
+from .calibration import embedder_id
+from .core import COLLECTION, VAULT, embedding_backend, files_to_index, fts_row_count, vector_store
+from .index_format import FORMAT_VERSION, is_stale, read_stamp, stamp_path
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 STALE_DAYS = 14
@@ -93,6 +95,35 @@ def check_fts_index() -> None:
             f"  WARN: FTS5 has {fts_rows} rows vs {vec_points} vector points "
             "- significant drift. Consider `metalmind-vault-rag-indexer`."
         )
+    else:
+        print("  OK")
+
+
+def check_index_format() -> None:
+    """An index built in an older format still answers, just worse, so this is
+    a warning rather than an error. Silence on an unstamped index is deliberate:
+    those predate stamping and were built by code that still produces the
+    current format."""
+    print("\n== Index format ==")
+    try:
+        backend = embedding_backend()
+        embedder = embedder_id(backend.model_id(), backend.dimension())
+        stamp = read_stamp(stamp_path(COLLECTION))
+    except Exception as e:
+        print(f"  ERROR: could not read the index stamp ({e})")
+        return
+    if stamp is None:
+        print("  not stamped yet - the watcher records it on next start (OK)")
+        return
+    print(f"  Format:   {stamp.format_version}")
+    print(f"  Embedder: {stamp.embedder}")
+    print(f"  Built:    {stamp.files} files, {stamp.chunks} chunks")
+    if is_stale(stamp, embedder):
+        print(
+            f"  WARN: built in format {stamp.format_version} by {stamp.embedder}; "
+            f"this release builds format {FORMAT_VERSION} with {embedder}."
+        )
+        print("        Recall still works. Fix: `metalmind index rebuild`.")
     else:
         print("  OK")
 
@@ -237,6 +268,8 @@ def main() -> None:
         check_fts_index()
     if args.rerank:
         check_rerank()
+    if args.fts:
+        check_index_format()
 
 
 if __name__ == "__main__":
