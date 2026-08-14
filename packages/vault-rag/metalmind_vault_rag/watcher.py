@@ -30,9 +30,18 @@ from .core import (
     VAULT,
     embedding_backend,
     files_to_index,
+    fts_file_count,
     fts_row_count,
     in_skip_dir,
     vector_store,
+)
+from .index_format import (
+    FORMAT_VERSION,
+    current_stamp,
+    is_stale,
+    read_stamp,
+    stamp_path,
+    write_stamp,
 )
 from .indexer import reindex_all, reindex_paths, run_calibration
 
@@ -143,6 +152,41 @@ def _maybe_backfill() -> None:
         )
 
 
+def _maybe_stamp_index() -> None:
+    """Record the format of an index built before stamping existed, or report
+    one built by something else.
+
+    Backfilling rather than rebuilding is the point. Every index reaching this
+    release without a stamp was produced by code that still builds the current
+    format, so the version is already known and a rebuild would buy nothing.
+
+    A stale stamp is reported and left alone. Rewriting it would erase the only
+    evidence that the index needs rebuilding, while the index itself stayed in
+    the old format."""
+    try:
+        backend = embedding_backend()
+        embedder = embedder_id(backend.model_id(), backend.dimension())
+        path = stamp_path(COLLECTION)
+        stamp = read_stamp(path)
+        rows = fts_row_count()
+        if rows == 0:
+            return
+        if stamp is None:
+            write_stamp(path, current_stamp(embedder, files=fts_file_count(), chunks=rows))
+            return
+    except Exception as e:
+        print(f"metalmind: could not read the index stamp ({e!r})", flush=True)
+        return
+
+    if is_stale(stamp, embedder):
+        print(
+            f"metalmind: this index was built in format {stamp.format_version} "
+            f"by {stamp.embedder}; this release builds format {FORMAT_VERSION} "
+            f"with {embedder}. Recall still works. Run `metalmind index rebuild` to update it.",
+            flush=True,
+        )
+
+
 def _maybe_calibrate() -> None:
     """Derive confidence bands when this collection has none.
 
@@ -183,6 +227,7 @@ def main() -> None:
     # Fire up the co-hosted HTTP recall endpoint (127.0.0.1 only). If the port
     # is busy or binding fails, watcher keeps working - CLI falls back to stdio.
     http_server.serve_forever()
+    _maybe_stamp_index()
     _maybe_calibrate()
     pending: set[Path] = set()
     first_pending_ts = 0.0

@@ -90,6 +90,12 @@ def fts_row_count() -> int:
         return int(cur.fetchone()[0])
 
 
+def fts_file_count() -> int:
+    with fts_conn() as conn:
+        cur = conn.execute("SELECT COUNT(DISTINCT file) FROM chunks")
+        return int(cur.fetchone()[0])
+
+
 def chunk_markdown(text: str) -> list[tuple[str, str]]:
     lines = text.split("\n")
     chunks: list[tuple[str, str]] = []
