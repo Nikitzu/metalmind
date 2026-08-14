@@ -10,6 +10,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const CACHE = join(homedir(), '.cache', 'metalmind-bench', 'confidence-bands');
 const RESULTS_DIR = join(HERE, 'results');
 const COLLECTION = 'metalmind_bench_confidence';
+const SIDECAR = join(homedir(), '.metalmind', `${COLLECTION}.calibration.json`);
+
+const EXPECTED_EDGES = { low: 0.697, high: 0.648 };
+const EDGE_TOLERANCE = 0.02;
 const K = 5;
 
 function collectionFiles() {
@@ -20,11 +24,12 @@ function collectionFiles() {
 }
 
 function parseArgs(argv) {
-  const args = { vault: join(homedir(), 'Knowledge'), port: 17601, indexHours: 2 };
+  const args = { vault: join(homedir(), 'Knowledge'), port: 17601, indexHours: 2, assert: false };
   for (let i = 2; i < argv.length; i += 1) {
     if (argv[i] === '--vault') args.vault = argv[++i];
     else if (argv[i] === '--port') args.port = Number(argv[++i]);
     else if (argv[i] === '--index-hours') args.indexHours = Number(argv[++i]);
+    else if (argv[i] === '--assert') args.assert = true;
   }
   return args;
 }
@@ -160,7 +165,37 @@ function summarize(records) {
   };
 }
 
-function renderMd({ meta, sets, signals, bandTable }) {
+function renderSelfDerived(lines, derived) {
+  lines.push('## Edges the tool derived for itself');
+  lines.push('');
+  lines.push(
+    'The tables above are the measurement. This is what shipped calibration ' +
+      'produced unaided during the same index, and it is the number that regresses. ' +
+      'Both are recomputed from the vault every run, so neither is a constant.',
+  );
+  lines.push('');
+  if (!derived) {
+    lines.push('Calibration declined to derive bands for this vault.');
+    lines.push('');
+    return;
+  }
+  lines.push('| edge | derived | expected | delta | tolerance |');
+  lines.push('|---|---|---|---|---|');
+  for (const [name, value] of [
+    ['low', derived.low_edge],
+    ['high', derived.high_edge],
+  ]) {
+    const expected = EXPECTED_EDGES[name];
+    lines.push(
+      `| ${name} | ${value.toFixed(4)} | ${expected.toFixed(4)} | ${Math.abs(value - expected).toFixed(4)} | ${EDGE_TOLERANCE} |`,
+    );
+  }
+  lines.push('');
+  lines.push(`Sampled from ${derived.positives_n} excerpt queries and ${derived.probes_n} probes.`);
+  lines.push('');
+}
+
+function renderMd({ meta, sets, signals, bandTable, derived }) {
   const lines = [];
   lines.push('# Confidence band edges on a real vault');
   lines.push('');
@@ -219,6 +254,7 @@ function renderMd({ meta, sets, signals, bandTable }) {
     );
   }
   lines.push('');
+  renderSelfDerived(lines, derived);
   return `${lines.join('\n')}\n`;
 }
 
@@ -237,6 +273,7 @@ async function main() {
   registerTeardown(() =>
     Promise.all([
       ...collectionFiles().map((f) => rm(f, { force: true })),
+      rm(SIDECAR, { force: true }),
     ]),
   );
 
@@ -302,6 +339,10 @@ async function main() {
     if (done % 50 === 0) process.stdout.write(`${done}/${all.length}\n`);
   }
 
+  const derived = await readFile(SIDECAR, 'utf8')
+    .then(JSON.parse)
+    .catch(() => null);
+
   await runTeardowns();
 
   const signals = SIGNALS.map(([label, field]) => ({
@@ -336,7 +377,7 @@ async function main() {
 
   await mkdir(RESULTS_DIR, { recursive: true });
   const stamp = meta.timestamp.replace(/[:.]/g, '-');
-  const md = renderMd({ meta, sets, signals, bandTable });
+  const md = renderMd({ meta, sets, signals, bandTable, derived });
   await writeFile(
     join(RESULTS_DIR, `confidence-bands-${stamp}.json`),
     `${JSON.stringify({ meta, sets, signals, bandTable, records }, null, 2)}\n`,
@@ -349,6 +390,32 @@ async function main() {
   process.stdout.write(`\n${md}`);
   process.stdout.write(`wrote ${join(RESULTS_DIR, `confidence-bands-${stamp}.md`)}\n`);
   process.stdout.write(`negatives to eyeball: ${join(CACHE, 'negative-review.json')}\n`);
+
+  if (args.assert) {
+    const problems = [];
+    if (!derived) {
+      problems.push('calibration derived no bands for this vault');
+    } else {
+      for (const [name, key] of [
+        ['low', 'low_edge'],
+        ['high', 'high_edge'],
+      ]) {
+        const delta = Math.abs(derived[key] - EXPECTED_EDGES[name]);
+        if (delta > EDGE_TOLERANCE) {
+          problems.push(
+            `${name} edge ${derived[key].toFixed(4)} is ${delta.toFixed(4)} from the expected ` +
+              `${EXPECTED_EDGES[name]} (tolerance ${EDGE_TOLERANCE})`,
+          );
+        }
+      }
+    }
+    if (problems.length > 0) {
+      process.stderr.write(`\nregression: ${problems.join('; ')}\n`);
+      process.exitCode = 1;
+      return;
+    }
+    process.stdout.write('regression: self-derived edges within tolerance\n');
+  }
 }
 
 main().catch(async (err) => {

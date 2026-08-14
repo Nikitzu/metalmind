@@ -56,6 +56,25 @@ negatives come from it. `--vault <path>` points both scripts at a different
 vault. Indexing 330 notes takes a few minutes, so unlike the LongMemEval runner
 this one has no index-reuse machinery.
 
+`--assert` turns the run into a regression check, exiting non-zero if the edges
+the tool derived for itself drift more than 0.02 from the values recorded
+below, or if calibration declines to derive any.
+
+## What regresses, and what does not
+
+Two sets of numbers appear in a result file and they are not the same thing.
+
+The tables of AUC and band edges are the **measurement**: computed by this
+harness, using hand-authored questions and a labelled negative set, to decide
+whether a confidence signal is possible at all and where its edges belong.
+
+The last table is what **shipped calibration derived unaided** during the same
+index, from excerpt queries and the probe fixture, with no labels. That is the
+number under regression, because that is the number a user gets.
+
+Neither is a constant. Both are recomputed from the vault on every run, and the
+tolerance exists because the vault itself changes between runs.
+
 `manual.json` in the cache directory is created empty on first build and left
 alone afterwards. The run works without it, reporting the excerpt set only.
 
@@ -105,6 +124,46 @@ Band occupancy at those edges:
 Nine of 80 negatives clear the high edge. Reading them confirmed all nine are
 genuinely unanswerable, so they are true false positives at this threshold
 rather than mislabelled data.
+
+## Transfer: a second vault nobody here wrote
+
+`xy-241/CS-Notes` (MIT, 683 notes under `content/`, 4011 chunks) is a working
+Obsidian vault of computer-science study notes. Calibration derived bands for
+it unaided, with more room than it has on the vault it was developed against:
+
+| | maintainer vault | CS-Notes |
+|---|---|---|
+| low edge | 0.6970 | 0.7158 |
+| high edge | 0.6480 | 0.6332 |
+| margin | +0.0516 | +0.0826 |
+| answerable reported `high` | 86% | 90% |
+| out-of-domain reported `low` | 94% | 94% |
+| near-miss reported `high` | 21% | 0% |
+
+The near-miss column is the interesting one. Those probes ask about workplace
+particulars, sprints and retros and on-call rotas, and the maintainer vault has
+a `Work/` folder full of that vocabulary while CS-Notes is algorithms and
+databases. 21% is the harder case, not the typical one.
+
+### What a shipped constant would have cost
+
+Worth stating plainly, because it is weaker than the argument for per-vault
+calibration implies. Applying the maintainer vault's edges to CS-Notes as if
+they were constants:
+
+| applied to CS-Notes | answerable `high` | near-miss `high` |
+|---|---|---|
+| its own derived bands | 90% | 0% |
+| maintainer edges as a constant | 95% | 9% |
+
+A constant would have been usable here. Per-vault calibration is meaningfully
+better on the failure mode that matters, false confidence about absent content,
+but it is not the difference between working and broken on this corpus.
+
+The argument that survives is narrower and sturdier: the two vaults produce
+genuinely different edges, two samples cannot say whether a third would break,
+and calibration refuses rather than guessing on a vault that cannot support a
+threshold. A constant has no such fallback.
 
 ## What this does and does not license
 
