@@ -18,6 +18,7 @@ from metalmind_vault_rag.index_format import (
     IndexStamp,
     current_stamp,
     is_stale,
+    read_built_at,
     read_stamp,
     stamp_path,
     write_stamp,
@@ -148,3 +149,29 @@ class TestStampPath:
         from metalmind_vault_rag.calibration import sidecar_path
 
         assert stamp_path("vault") != sidecar_path("vault")
+
+
+class TestBuiltAt:
+    def test_reports_when_the_stamp_was_written(self, tmp_path):
+        path = tmp_path / "vault.index.json"
+        write_stamp(path, current_stamp(embedder=EMBEDDER, files=1, chunks=1))
+
+        assert read_built_at(path)
+
+    def test_absent_file_has_no_timestamp(self, tmp_path):
+        assert read_built_at(tmp_path / "missing.json") is None
+
+    def test_a_stamp_written_without_one_reads_as_none(self, tmp_path):
+        path = tmp_path / "vault.index.json"
+        path.write_text(json.dumps({"format_version": 1}), encoding="utf-8")
+
+        assert read_built_at(path) is None
+
+    def test_it_is_not_part_of_stamp_equality(self, tmp_path):
+        """Two indexes built in the same format are the same format. Folding the
+        clock into that comparison would make every stamp unique."""
+        a, b = tmp_path / "a.json", tmp_path / "b.json"
+        write_stamp(a, current_stamp(embedder=EMBEDDER, files=1, chunks=1))
+        write_stamp(b, current_stamp(embedder=EMBEDDER, files=1, chunks=1))
+
+        assert read_stamp(a) == read_stamp(b)

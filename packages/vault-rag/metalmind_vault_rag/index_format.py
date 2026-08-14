@@ -82,6 +82,20 @@ def write_stamp(path: pathlib.Path, stamp: IndexStamp) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def read_built_at(path: pathlib.Path) -> str | None:
+    """When the stamp was written, kept out of IndexStamp on purpose.
+
+    A timestamp on the dataclass would make every stamp unequal to every other
+    one, which would turn the round-trip and comparison tests into assertions
+    about the clock."""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    value = payload.get("built_at")
+    return str(value) if value else None
+
+
 def read_stamp(path: pathlib.Path) -> IndexStamp | None:
     """The recorded stamp, or None when there is nothing readable to record.
 

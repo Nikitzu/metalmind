@@ -10,7 +10,7 @@ from pathlib import Path
 from . import auth, recall_log, search
 from .calibration import cached_bands, embedder_id, sidecar_path
 from .core import COLLECTION, embedding_backend
-from .index_format import FORMAT_VERSION, is_stale, read_stamp, stamp_path
+from .index_format import FORMAT_VERSION, is_stale, read_built_at, read_stamp, stamp_path
 from .indexer import reindex_paths
 
 DEFAULT_HOST = "127.0.0.1"
@@ -53,7 +53,8 @@ def _index_status() -> dict:
     would report every healthy index as stale."""
     backend = embedding_backend()
     embedder = embedder_id(backend.model_id(), backend.dimension())
-    stamp = read_stamp(stamp_path(COLLECTION))
+    path = stamp_path(COLLECTION)
+    stamp = read_stamp(path)
     bands = cached_bands(sidecar_path(COLLECTION), embedder)
     return {
         "stamped": stamp is not None,
@@ -66,6 +67,7 @@ def _index_status() -> dict:
         "max_chunk_chars": stamp.max_chunk_chars if stamp else None,
         "files": stamp.files if stamp else None,
         "chunks": stamp.chunks if stamp else None,
+        "built_at": read_built_at(path),
         "bands": (
             {"low_edge": bands.low_edge, "high_edge": bands.high_edge} if bands else None
         ),

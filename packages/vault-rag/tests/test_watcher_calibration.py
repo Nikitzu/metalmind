@@ -101,6 +101,7 @@ class TestStartupWiring:
         order = []
         monkeypatch.setattr(watcher, "_install_log_rotation", lambda: None)
         monkeypatch.setattr(watcher, "_maybe_backfill", lambda: None)
+        monkeypatch.setattr(watcher, "_maybe_stamp_index", lambda: None)
         monkeypatch.setattr(watcher.http_server, "serve_forever", lambda: order.append("serve"))
         monkeypatch.setattr(watcher, "_maybe_calibrate", lambda: order.append("calibrate"))
 

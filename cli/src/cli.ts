@@ -55,6 +55,7 @@ import {
   scribeSupersedeCmd,
   scribeUpdateCmd,
 } from './commands/scribe.js';
+import { indexStatusCmd } from './commands/index-cmd.js';
 import { stamp } from './commands/stamp.js';
 import { type StoreOptions, store } from './commands/store.js';
 import { type SyncCmdOptions, syncCmd } from './commands/sync.js';
@@ -160,6 +161,14 @@ function attachStoreFlags<T extends Command>(cmd: T): T {
     .option('--tag <tag...>', 'Frontmatter tag (repeatable)')
     .option('-p, --project <project>', 'Frontmatter project') as T;
 }
+
+const indexCmd = program
+  .command('index')
+  .description('Vault index: what format it was built in, and rebuilding it');
+indexCmd
+  .command('status')
+  .description('Show the index format, counts, and confidence bands')
+  .action(indexStatusCmd);
 
 const storeCmd = program
   .command('store')
