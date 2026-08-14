@@ -19,6 +19,7 @@ from .calibration import (
     embedder_id,
     sidecar_path,
 )
+from .index_format import current_stamp, stamp_path, write_stamp
 from .stores import VectorPoint
 
 
@@ -93,8 +94,29 @@ def reindex_all() -> int:
         fts.commit()
 
     print(f"Indexed {total} chunks from {len(files)} files.", flush=True)
+    stamp_index(len(files), total)
     run_calibration()
     return total
+
+
+def stamp_index(files: int, chunks: int) -> None:
+    """Record the format this index was just built in.
+
+    Written before calibration rather than after. Confidence is advisory and may
+    legitimately be refused, but a collection with no format record cannot be
+    identified later, and the index exists either way."""
+    try:
+        backend = embedding_backend()
+        write_stamp(
+            stamp_path(COLLECTION),
+            current_stamp(
+                embedder=embedder_id(backend.model_id(), backend.dimension()),
+                files=files,
+                chunks=chunks,
+            ),
+        )
+    except Exception as e:
+        print(f"metalmind: could not write the index stamp ({e!r})", flush=True)
 
 
 def run_calibration() -> None:
