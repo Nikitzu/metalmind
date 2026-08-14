@@ -30,12 +30,12 @@ import pathlib
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 
-from .core import MAX_CHUNK_CHARS
+from .core import CHUNK_OVERLAP_CHARS, CHUNK_TARGET_CHARS, MAX_CHUNK_CHARS
 
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2
 
-CHUNKER = "heading-split-hard-cut"
-EMBEDDED_TEXT = "chunk-text-only"
+CHUNKER = "heading-split-sentence-overlap"
+EMBEDDED_TEXT = "title-heading-prefixed"
 
 
 @dataclass(frozen=True)
@@ -47,6 +47,8 @@ class IndexStamp:
     embedder: str
     files: int
     chunks: int
+    target_chars: int = 0
+    overlap_chars: int = 0
 
 
 def current_stamp(embedder: str, files: int, chunks: int) -> IndexStamp:
@@ -54,6 +56,8 @@ def current_stamp(embedder: str, files: int, chunks: int) -> IndexStamp:
         format_version=FORMAT_VERSION,
         chunker=CHUNKER,
         max_chunk_chars=MAX_CHUNK_CHARS,
+        target_chars=CHUNK_TARGET_CHARS,
+        overlap_chars=CHUNK_OVERLAP_CHARS,
         embedded_text=EMBEDDED_TEXT,
         embedder=embedder,
         files=files,
@@ -116,6 +120,8 @@ def read_stamp(path: pathlib.Path) -> IndexStamp | None:
             embedder=str(payload["embedder"]),
             files=int(payload["files"]),
             chunks=int(payload["chunks"]),
+            target_chars=int(payload.get("target_chars", 0)),
+            overlap_chars=int(payload.get("overlap_chars", 0)),
         )
     except (KeyError, TypeError, ValueError):
         return None

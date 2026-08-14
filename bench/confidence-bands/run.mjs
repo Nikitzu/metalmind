@@ -12,7 +12,7 @@ const RESULTS_DIR = join(HERE, 'results');
 const COLLECTION = 'metalmind_bench_confidence';
 const SIDECAR = join(homedir(), '.metalmind', `${COLLECTION}.calibration.json`);
 
-const EXPECTED_EDGES = { low: 0.697, high: 0.648 };
+const EXPECTED_EDGES = { low: 0.685, high: 0.631 };
 const EDGE_TOLERANCE = 0.02;
 const K = 5;
 

@@ -175,3 +175,28 @@ class TestBuiltAt:
         write_stamp(b, current_stamp(embedder=EMBEDDER, files=1, chunks=1))
 
         assert read_stamp(a) == read_stamp(b)
+
+
+class TestChunkerParametersInTheStamp:
+    def test_the_stamp_records_what_actually_shapes_chunks(self):
+        stamp = current_stamp(embedder=EMBEDDER, files=1, chunks=1)
+
+        assert stamp.target_chars > 0
+        assert stamp.max_chunk_chars >= stamp.target_chars
+
+    def test_a_stamp_written_before_these_fields_still_reads(self, tmp_path):
+        """A format 1 stamp has neither field. Requiring them would make it
+        unreadable, and an unreadable stamp reports as never stamped rather than
+        as stale, so the one install that needs the warning would not get it."""
+        path = tmp_path / "vault.index.json"
+        write_stamp(path, current_stamp(embedder=EMBEDDER, files=1, chunks=1))
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["format_version"] = 1
+        del payload["target_chars"]
+        del payload["overlap_chars"]
+        path.write_text(json.dumps(payload), encoding="utf-8")
+
+        loaded = read_stamp(path)
+
+        assert loaded is not None
+        assert is_stale(loaded, EMBEDDER)

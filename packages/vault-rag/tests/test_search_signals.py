@@ -41,7 +41,11 @@ class TestPerLegScores:
         assert by_file["b.md"]["sem_score"] is None
         assert by_file["b.md"]["kw_score"] == 11.4
 
-    def test_best_ranked_occurrence_wins_within_a_leg(self):
+    def test_best_ranked_occurrence_wins_within_a_leg(self, monkeypatch):
+        from metalmind_vault_rag import search
+
+        monkeypatch.setattr(search, "MAX_CHUNKS_PER_FILE", 0)
+
         sem = [hit("a.md", heading="one", score=0.9), hit("a.md", heading="two", score=0.4)]
 
         merged = _rrf_merge([sem, []], k=5, labels=LABELS)

@@ -162,6 +162,67 @@ improvement. The recorded baseline is at `--scale 3000` with 2118 distractors,
 so it is not comparable to a 1500-session run; the confirmation run at 3000 is
 what measures the arc.
 
+
+## Chunker arc result (2026-08-14)
+
+`--scale 3000`, same corpus as the 2026-08-11 baseline. Three changes measured
+together because they share a rebuild: chunk identity in fusion, heading context
+in the embedded string, and sentence-boundary splits with overlap. Plus a
+per-file cap that the first two made necessary.
+
+| | baseline | after |
+|---|---|---|
+| hit@1 | 36% | **44%** |
+| hit@3 | 57% | **62%** |
+| hit@5 | 68% | **69%** |
+| MRR | 0.47 | **0.54** |
+| NDCG@5 | 0.43 | **0.50** |
+
+| type | baseline hit@1 | after hit@1 |
+|---|---|---|
+| single-session-assistant | 91% | 96% |
+| knowledge-update | 54% | 68% |
+| multi-session | 27% | 36% |
+| temporal-reasoning | 23% | 27% |
+| single-session-user | 17% | 42% |
+| single-session-preference | 13% | **3%** |
+
+### The per-file cap, and why it exists
+
+Identity by chunk position fixed one problem and created another. Chunks of one
+note now compete for top-k slots individually where they used to collapse, so a
+long note fills the result set with itself and crowds out other notes. hit@1
+improved because ranking got sharper; hit@5 fell from 68% to 66% because hit@5
+is measured per note.
+
+Swept against the same index, so queries only:
+
+| chunks per note | hit@1 | hit@3 | hit@5 | MRR |
+|---|---|---|---|---|
+| uncapped | 44% | 60% | 66% | 0.53 |
+| 3 | 44% | 60% | 66% | 0.53 |
+| 2 | 44% | 60% | 67% | 0.53 |
+| **1** | **44%** | **62%** | **69%** | **0.54** |
+
+One chunk per note. The two changes are complements: identity lets the best
+chunk of a note claim the slot instead of the arbitrary first-seen one, and the
+cap stops that note taking every other slot too.
+
+### Two misses, recorded
+
+**`single-session-preference` fell from 13% to 3%**, which is 4 correct answers
+out of 30 down to 1. The cap does not touch it, so crowding was never the cause.
+The remaining hypothesis is that the heading prefix dilutes a short implicit
+aside, and it is **untested**: checking it needs a reindex without the prefix.
+The category is already anomalous, being the one that got worse under
+cross-encoder reranking too, so it resists anything that adds or reweights
+context.
+
+**`temporal-reasoning` hit@5 is 60% against a baseline 64%.** Unexplained.
+
+Confidence bands are unaffected: AUC 0.982 against 0.984, classes still
+separate, and the derived edges moved less than the regression tolerance.
+
 ## Reading the abstention column
 
 Abstention questions have no correct evidence in the corpus. A retrieval

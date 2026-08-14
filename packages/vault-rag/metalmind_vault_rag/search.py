@@ -193,6 +193,14 @@ def _folder_multiplier(file: str) -> float:
 # How many candidates each backend produces before fusion. Larger overfetch
 # means docs are more likely to appear in both lists, reducing single-list
 # ties at the top.
+# Chunks from one note compete for top-k slots individually now that identity
+# includes position, where they used to collapse into a single hit. Left
+# uncapped, a long note fills the list with itself and crowds out other notes.
+# Measured on LongMemEval at 3000 sessions against the same index: uncapped and
+# cap 3 give hit@5 66%, cap 2 gives 67%, cap 1 gives 69%, with hit@1 unmoved at
+# 44% throughout. One chunk per note it is. 0 disables the cap.
+MAX_CHUNKS_PER_FILE = int(os.environ.get("METALMIND_MAX_CHUNKS_PER_FILE", "1"))
+
 RRF_OVERFETCH = max(20, int(os.environ.get("METALMIND_RRF_OVERFETCH", "50")))
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
@@ -387,6 +395,16 @@ def _rrf_merge(
             mult *= SUPERSEDE_PENALTY
         entry["rrf"] *= mult
     ordered = sorted(merged.values(), key=lambda r: r["rrf"], reverse=True)
+    if MAX_CHUNKS_PER_FILE > 0:
+        per_file: dict[str, int] = {}
+        kept: list[dict] = []
+        for entry in ordered:
+            used = per_file.get(entry["file"], 0)
+            if used >= MAX_CHUNKS_PER_FILE:
+                continue
+            per_file[entry["file"]] = used + 1
+            kept.append(entry)
+        ordered = kept
     # Rewrite score to RRF so downstream code sees a consistent field; keep
     # the original embedder/BM25 score under `prev_score` for debugging.
     out = []

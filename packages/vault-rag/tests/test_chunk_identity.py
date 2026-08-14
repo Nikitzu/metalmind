@@ -11,6 +11,8 @@ produce more chunks per section: shipping them against this key would make
 retrieval worse and the bench would show it without saying why.
 """
 
+import pytest
+
 from metalmind_vault_rag.search import _rrf_merge
 
 LABELS = ["sem", "kw"]
@@ -24,6 +26,16 @@ def hit(file="a.md", heading="Note / Body", text="t", score=1.0, chunk_idx=None)
 
 
 class TestChunksAreDistinct:
+    """Merging semantics, with the per-file cap off. The cap shapes what reaches
+    a result set and is a separate concern with its own tests below; these
+    assert that fusion stops conflating different chunks in the first place."""
+
+    @pytest.fixture(autouse=True)
+    def uncapped(self, monkeypatch):
+        from metalmind_vault_rag import search
+
+        monkeypatch.setattr(search, "MAX_CHUNKS_PER_FILE", 0)
+
     def test_two_chunks_of_one_section_both_survive(self):
         sem = [hit(text="first", chunk_idx=0), hit(text="second", chunk_idx=1)]
 
@@ -149,3 +161,35 @@ class TestBothLegsReportPosition:
 
         assert len(hits) == 2
         assert {str(h["chunk_idx"]) for h in hits} == {"0", "1"}
+
+
+class TestPerFileCap:
+    def test_only_the_best_chunk_of_a_note_reaches_the_result_set(self):
+        """Identity by position lets the best chunk of a note claim the slot
+        rather than the arbitrary first-seen one. Without a cap it also lets one
+        note fill the list with itself: measured, that cost 3 points of hit@5."""
+        sem = [hit(text=f"c{i}", score=1.0 - i / 10, chunk_idx=i) for i in range(4)]
+
+        merged = _rrf_merge([sem, []], k=5, labels=LABELS)
+
+        assert len(merged) == 1
+        assert merged[0]["text"] == "c0"
+
+    def test_other_notes_still_get_their_slots(self):
+        sem = [
+            hit(file="a.md", text="a0", score=0.9, chunk_idx=0),
+            hit(file="a.md", text="a1", score=0.8, chunk_idx=1),
+            hit(file="b.md", text="b0", score=0.7, chunk_idx=0),
+        ]
+
+        merged = _rrf_merge([sem, []], k=5, labels=LABELS)
+
+        assert [m["file"] for m in merged] == ["a.md", "b.md"]
+
+    def test_the_cap_can_be_turned_off(self, monkeypatch):
+        from metalmind_vault_rag import search
+
+        monkeypatch.setattr(search, "MAX_CHUNKS_PER_FILE", 0)
+        sem = [hit(text=f"c{i}", score=1.0 - i / 10, chunk_idx=i) for i in range(4)]
+
+        assert len(search._rrf_merge([sem, []], k=5, labels=LABELS)) == 4
