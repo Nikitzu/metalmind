@@ -6,6 +6,36 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.20.0 - 2026-08-14
+
+### Added
+
+- **Recall says when the vault probably does not hold an answer.** A recall whose best hit falls below the vault's own floor now prints one line: `low confidence: nothing in this vault scored like a real match for that query.` `/search` carries a `confidence` of `high`, `medium` or `low` for callers that want the middle band too.
+
+  It never hides a hit. On the LongMemEval corpus a threshold that caught two thirds of unanswerable questions also suppressed a quarter of the real ones, so the signal reports and the reader decides. The CLI stays silent on `medium` as well as `high`: medium holds about 10% of real recalls against 3% of blanks, and a warning that fires on good answers teaches the reader to skip it.
+
+- **The threshold is derived per vault, not shipped as a constant.** Cosine distributions are shaped by the genre of the text being indexed. The same signal that separates cleanly on prose notes (AUC 0.984) manages only 0.771 on chat transcripts with no usable threshold at all, so a number tuned on one corpus says little about another.
+
+  After a full reindex, calibration samples 150 chunks from the index it just built, turns each into a query by stripping the note's title words from one of its sentences, and takes the 10th percentile of the resulting scores as the floor. The ceiling comes from 100 shipped probe queries that no vault can answer, because each asks about the asker's own private particulars and names something invented. Roughly eight seconds on a 330-note vault.
+
+  p10 is not arbitrary: on a real vault the automatic protocol landed within 0.0013 of the same percentile over hand-authored questions, and that agreement is the only reason a label-free pass is trusted.
+
+### Notes
+
+- **Calibration can refuse, and refusing is the point.** A vault under 50 usable samples, one whose probes score as high as its own content, or one where too many near-miss probes read as confident, gets no bands and reports no confidence. A refusal also clears any bands from an earlier run, so a vault that has changed cannot keep reporting a threshold it no longer supports.
+
+- **Nothing changes until a vault reindexes.** An install that has not rebuilt its index has no calibration file, so `/search` omits the field entirely and the CLI prints nothing extra - byte-identical to 0.19.1. Bands are also ignored when the embedding model differs from the one they were derived under, since cosine distributions move with the model. `METALMIND_CONFIDENCE=0` disables the whole feature without a config change.
+
+### Benchmarks
+
+- **Verified on a second vault nobody here wrote.** `xy-241/CS-Notes` (MIT, 683 notes) calibrated unaided with a wider margin than the vault this was developed against, 0.083 against 0.052, and near-miss probes never reached the confident band there at all against 21% here.
+
+  Recorded honestly: applying this vault's edges to CS-Notes as constants would also have worked, at 95% of answerable queries confident and 9% of near misses wrongly so. Per-vault calibration is better on the failure mode that matters rather than the difference between working and broken. What it adds that a constant cannot is the refusal.
+
+- `bench/confidence-bands --assert` regresses the edges calibration derives for itself, separately from the harness measurement that decided where they belong.
+
+---
+
 ## 0.19.1 - 2026-08-11
 
 ### Fixed
