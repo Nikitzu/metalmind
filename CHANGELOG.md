@@ -6,6 +6,20 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.20.2 - 2026-08-14
+
+### Fixed
+
+- **`metalmind sync` no longer calls every archive move note loss.** The deletion guard matched a removed note against surviving content by blob hash alone, and archiving is not a byte-for-byte move: `metalmind gold` rewrites `status:` and `updated:` on the way to `Archive/`, and a session note often gains its outcome at the same time. Git's own rename detection does not bridge that either - on the change set that prompted this, a note grew from 46 lines to 103 and `-M` failed to pair them.
+
+  Every archive move therefore hit `unexplained-deletion` and needed `--force`, which is exactly the habit a safety guard should not teach.
+
+  A deletion now also counts as explained when a note of the same name is added anywhere in the same commit, and is reported as a move rather than passing silently. Only an addition qualifies: a modification means that file already existed, so it cannot be where the deleted note went. Deletions whose name and content both vanish are still refused.
+
+  The guard message now names both things it looked for, since "no matching addition" gave no hint that only content was being compared.
+
+---
+
 ## 0.20.1 - 2026-08-14
 
 ### Fixed
