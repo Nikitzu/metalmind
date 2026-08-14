@@ -11,6 +11,7 @@ indexer hook live elsewhere.
 """
 
 import json
+import random
 import re
 
 import pytest
@@ -23,11 +24,16 @@ from metalmind_vault_rag.calibration import (
     Bands,
     classify,
     derive_bands,
+    EXCERPT_WORDS,
+    MAX_EXCERPT_SAMPLES,
+    MIN_QUERY_WORDS,
     embedder_id,
+    excerpt_query,
     load_near_miss,
     load_probes,
     percentile,
     read_sidecar,
+    sample_excerpt_queries,
     sidecar_path,
     write_sidecar,
 )
@@ -260,3 +266,92 @@ class TestSidecarPath:
 
     def test_sits_beside_the_index_databases(self):
         assert sidecar_path("vault").parent.name == ".metalmind"
+
+
+SENTENCE = (
+    "The watcher reopens its connection whenever the journal mode changes "
+    "underneath it during a long running rebuild of the collection."
+)
+
+
+def rows(n, prefix="Notes/topic"):
+    """Each row carries a distinct leading token. Prose that repeats across
+    rows makes the sample look seed-independent even when sampling is correct,
+    and a difference confined to a short lead-in sentence is dropped by the
+    sentence-length floor before it can vary anything."""
+    return [
+        (
+            f"{prefix}-{i}.md",
+            f"Alphaword{i} reopens its connection whenever the journal mode "
+            "changes underneath it during a long running rebuild.",
+        )
+        for i in range(n)
+    ]
+
+
+class TestExcerptQuery:
+    def test_builds_a_query_from_the_body(self):
+        q = excerpt_query(SENTENCE, "Notes/watcher.md", random.Random(1))
+
+        assert q
+        assert len(q.split()) <= EXCERPT_WORDS
+
+    def test_strips_tokens_that_appear_in_the_path(self):
+        q = excerpt_query(SENTENCE, "Notes/watcher-journal-collection.md", random.Random(1))
+
+        assert q
+        for leaked in ("watcher", "journal", "collection"):
+            assert leaked not in q.lower().split()
+
+    def test_rejects_text_too_short_to_ask_about(self):
+        assert excerpt_query("Too short.", "a.md", random.Random(1)) is None
+
+    def test_rejects_when_stripping_leaves_too_little(self):
+        text = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu"
+
+        assert excerpt_query(text, "alpha-beta-gamma-delta-epsilon-zeta-eta-theta-iota-kappa.md", random.Random(1)) is None
+
+    def test_rejects_sentences_below_the_length_floor(self):
+        """Nine words clears the query floor but not the sentence floor. A
+        fragment that short is not a question anyone would ask, and without the
+        sentence floor it would become one."""
+        text = "One two three four five six seven eight nine. Ten eleven twelve."
+
+        assert excerpt_query(text, "a.md", random.Random(1)) is None
+
+    def test_skips_headings_tables_and_fences(self):
+        text = "# " + SENTENCE + "\n| " + SENTENCE + "\n> " + SENTENCE
+
+        assert excerpt_query(text, "a.md", random.Random(1)) is None
+
+
+class TestSampleExcerptQueries:
+    def test_is_deterministic_under_a_fixed_seed(self):
+        first = sample_excerpt_queries(rows(40), limit=10, seed=7)
+        second = sample_excerpt_queries(rows(40), limit=10, seed=7)
+
+        assert first == second
+
+    def test_a_different_seed_samples_differently(self):
+        many = rows(200)
+
+        assert sample_excerpt_queries(many, limit=20, seed=1) != sample_excerpt_queries(many, limit=20, seed=2)
+
+    def test_respects_the_limit(self):
+        assert len(sample_excerpt_queries(rows(500), limit=25, seed=1)) == 25
+
+    def test_returns_empty_for_an_empty_index(self):
+        assert sample_excerpt_queries([], limit=10, seed=1) == []
+
+    def test_skips_rows_that_yield_nothing(self):
+        usable = rows(5)
+        junk = [("x.md", "tiny") for _ in range(50)]
+
+        assert len(sample_excerpt_queries(junk + usable, limit=10, seed=1)) == 5
+
+    def test_every_query_clears_the_word_floor(self):
+        for q in sample_excerpt_queries(rows(30), limit=30, seed=3):
+            assert len(q.split()) >= MIN_QUERY_WORDS
+
+    def test_default_limit_matches_the_documented_sample_size(self):
+        assert MAX_EXCERPT_SAMPLES == 150

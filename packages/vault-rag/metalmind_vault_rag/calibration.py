@@ -39,6 +39,8 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+import random
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -48,6 +50,79 @@ LOW_EDGE_PERCENTILE = float(os.environ.get("METALMIND_CONFIDENCE_LOW_PCT", "10")
 HIGH_EDGE_PERCENTILE = float(os.environ.get("METALMIND_CONFIDENCE_HIGH_PCT", "95"))
 
 MIN_POSITIVE_SAMPLES = 50
+
+MAX_EXCERPT_SAMPLES = 150
+EXCERPT_SEED = 20260813
+EXCERPT_WORDS = 14
+MIN_SENTENCE_WORDS = 12
+MIN_QUERY_WORDS = 8
+
+_WORD = re.compile(r"[A-Za-z0-9]+")
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+
+
+def _body_sentences(text: str) -> list[str]:
+    out: list[str] = []
+    for raw in text.split("\n"):
+        line = raw.strip()
+        if not line or line[0] in "#|>" or line.startswith("```"):
+            continue
+        for sentence in _SENTENCE_SPLIT.split(line):
+            clean = re.sub(r"^[-*+]\s+", "", sentence).strip()
+            if len(_WORD.findall(clean)) >= MIN_SENTENCE_WORDS:
+                out.append(clean)
+    return out
+
+
+def excerpt_query(text: str, file: str, rng: random.Random) -> str | None:
+    """One query built from a chunk's own prose, or None when the chunk cannot
+    yield a usable one.
+
+    Stripping the words that appear in the note's path is what stops this being
+    a lookup of the note by its own title. What remains is a question-shaped
+    fragment whose answer is that note.
+
+    The parameters here are not free to tune. This protocol's p10 is the low
+    edge, and it is trusted because on a real vault it landed 0.0013 away from
+    the same percentile over hand-authored questions. Changing the word counts
+    or the stripping rule changes what the low edge means and would need that
+    agreement re-established."""
+    sentences = _body_sentences(text)
+    if not sentences:
+        return None
+    picked = sentences[rng.randrange(len(sentences))]
+    path_tokens = {w.lower() for w in _WORD.findall(file)}
+    words = [w for w in _WORD.findall(picked) if w.lower() not in path_tokens]
+    if len(words) < MIN_QUERY_WORDS:
+        return None
+    return " ".join(words[:EXCERPT_WORDS])
+
+
+def sample_excerpt_queries(
+    rows: list[tuple[str, str]],
+    limit: int = MAX_EXCERPT_SAMPLES,
+    seed: int = EXCERPT_SEED,
+) -> list[str]:
+    """Up to `limit` excerpt queries drawn from indexed chunks.
+
+    Sampling the index rather than the filesystem means calibration measures
+    what is actually retrievable, chunk boundaries and skipped directories
+    included, rather than what happens to be on disk.
+
+    The seed is fixed so that recalibrating an unchanged vault produces the
+    same edges rather than drifting."""
+    rng = random.Random(seed)
+    order = list(rows)
+    rng.shuffle(order)
+    queries: list[str] = []
+    for file, text in order:
+        if len(queries) >= limit:
+            break
+        query = excerpt_query(text, file, rng)
+        if query:
+            queries.append(query)
+    return queries
+
 
 OUT_OF_DOMAIN_COUNT = 67
 NEAR_MISS_COUNT = 33
