@@ -256,6 +256,11 @@ def _semantic_search(query: str, k: int) -> list[dict]:
             "heading": h.payload["heading"],
             "score": round(h.score, 4),
             "text": h.payload["text"],
+            **(
+                {"chunk_idx": h.payload["chunk_idx"]}
+                if "chunk_idx" in h.payload
+                else {}
+            ),
         }
         for h in hits
     ]
@@ -307,6 +312,7 @@ def _keyword_search(query: str, k: int) -> list[dict]:
             "heading": row[1],
             "score": round(-float(row[4]), 4),  # flip so higher = better
             "text": row[3],
+            "chunk_idx": row[2],
         }
         for row in rows
     ]
@@ -322,6 +328,12 @@ def _rrf_merge(
     """Reciprocal Rank Fusion. Each hit list contributes weight/(RRF_K + rank)
     to each unique (file, heading) key. De-dup keeps the first-seen
     text/score. Ranks, not scores - no calibration between BM25 and cosine.
+
+    Identity is (file, heading, chunk_idx). Heading alone was a proxy that held
+    only while a section produced one chunk: beyond that, two different chunks
+    collapsed into one hit keeping whichever list was read first. A format 1
+    index carries no chunk_idx, so every chunk of a section keys alike there and
+    behaves as it always did, which is what lets a stale index keep answering.
 
     `weights` (optional) is a per-list multiplier matching `hit_lists` order.
     Defaults to 1.0 per list. Used to bias fusion toward backends that are
@@ -347,7 +359,7 @@ def _rrf_merge(
     merged: dict[tuple[str, str], dict] = {}
     for hits, weight, label in zip(hit_lists, weights, labels):
         for rank, h in enumerate(hits, 1):
-            key = (h["file"], h["heading"])
+            key = (h["file"], h["heading"], h.get("chunk_idx"))
             if key not in merged:
                 merged[key] = {**h, **score_fields, "rrf": 0.0, "top_rank": rank}
             else:
@@ -432,11 +444,13 @@ def search_vault(
 def attach_neighbors(hits: list[dict]) -> None:
     """Attach `neighbor_text` = {prev?, next?} to each hit in place.
 
-    The vector payload does not carry chunk_idx, so the hit's position is
-    recovered by exact (file, text) match against the FTS table - both
-    retrievers index the identical chunk list, so the lookup is total for
-    any hit that is still current. A hit whose source file changed since
-    indexing simply gets no neighbors.
+    A hit carrying chunk_idx knows its own position. Otherwise it came from a
+    format 1 index and the position is recovered by exact (file, text) match, as
+    it always was. That fallback cannot survive overlapping chunks: two chunks
+    sharing text would both match and `LIMIT 1` would pick one arbitrarily,
+    which is a second reason chunk_idx belongs in the payload.
+
+    A hit whose source file changed since indexing simply gets no neighbors.
     """
     with fts_conn() as conn:
         for h in hits:
@@ -444,13 +458,17 @@ def attach_neighbors(hits: list[dict]) -> None:
             text = h.get("text")
             if not isinstance(file, str) or not isinstance(text, str):
                 continue
-            row = conn.execute(
-                "SELECT chunk_idx FROM chunks WHERE file = ? AND text = ? LIMIT 1",
-                (file, text),
-            ).fetchone()
-            if row is None:
-                continue
-            idx = int(row[0])
+            known = h.get("chunk_idx")
+            if isinstance(known, int):
+                idx = known
+            else:
+                row = conn.execute(
+                    "SELECT chunk_idx FROM chunks WHERE file = ? AND text = ? LIMIT 1",
+                    (file, text),
+                ).fetchone()
+                if row is None:
+                    continue
+                idx = int(row[0])
             neighbors: dict[str, str] = {}
             for label, delta in (("prev", -1), ("next", 1)):
                 r = conn.execute(

@@ -41,7 +41,7 @@ def _embed_chunks(rel: str, chunks: list[tuple[str, str]]) -> list[VectorPoint]:
         VectorPoint(
             id=point_id(rel, hp, i),
             vector=v,
-            payload={"file": rel, "heading": hp, "text": t},
+            payload={"file": rel, "heading": hp, "text": t, "chunk_idx": i},
         )
         for i, ((hp, t), v) in enumerate(zip(chunks, vecs))
     ]
