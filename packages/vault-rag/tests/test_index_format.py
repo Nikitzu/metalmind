@@ -82,14 +82,33 @@ class TestStaleness:
         assert not is_stale(grown, EMBEDDER)
         assert not is_stale(emptied, EMBEDDER)
 
-    def test_chunker_parameters_alone_do_not_decide_staleness(self):
-        """The descriptive fields are for a human reading the file. Changing one
-        without bumping FORMAT_VERSION is the mistake this documents, not a
-        second detection path."""
+    def test_a_retuned_chunk_budget_is_stale(self):
+        """The chunk budget is settable per process through the environment, so
+        a version bump cannot catch a change that involves no version. An index
+        cut at a different budget is not the index this configuration builds."""
         stamp = current_stamp(embedder=EMBEDDER, files=1, chunks=1)
-        retuned = IndexStamp(**{**stamp.__dict__, "max_chunk_chars": 1200})
 
-        assert not is_stale(retuned, EMBEDDER)
+        assert is_stale(IndexStamp(**{**stamp.__dict__, "max_chunk_chars": 1200}), EMBEDDER)
+        assert is_stale(IndexStamp(**{**stamp.__dict__, "target_chars": 1200}), EMBEDDER)
+        assert is_stale(IndexStamp(**{**stamp.__dict__, "overlap_chars": 200}), EMBEDDER)
+
+    def test_a_different_embedded_string_is_stale(self):
+        """Embedding the bare chunk and embedding it under its heading produce
+        different vectors from identical text."""
+        stamp = current_stamp(embedder=EMBEDDER, files=1, chunks=1)
+        bare = IndexStamp(**{**stamp.__dict__, "embedded_text": "chunk-text-only"})
+
+        assert is_stale(bare, EMBEDDER)
+
+    def test_a_stamp_predating_the_budget_fields_is_not_stale_for_them(self):
+        """The first stamps recorded no target, which reads as 0. No valid
+        configuration produces a 0 target, so it means unknown rather than
+        mismatched, and those installs are not told to rebuild for a field they
+        never had the chance to record."""
+        stamp = current_stamp(embedder=EMBEDDER, files=1, chunks=1)
+        early = IndexStamp(**{**stamp.__dict__, "target_chars": 0, "overlap_chars": 0})
+
+        assert not is_stale(early, EMBEDDER)
 
 
 class TestPersistence:

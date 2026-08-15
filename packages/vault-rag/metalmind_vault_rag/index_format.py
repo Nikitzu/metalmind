@@ -6,15 +6,29 @@ the embedder. None of that was recorded. That was survivable only because none
 of it had ever changed; the moment one does, an upgraded tool reads an old index
 and returns quietly worse results with nothing to say so.
 
-`FORMAT_VERSION` is a single monotonic integer and it is the only thing that
-decides staleness, alongside the embedder identity. The chunker fields beside it
-are descriptive, there so a human opening the file can see what a version meant.
-Deriving staleness from them instead would invite an argument about which of
-them count, and would break the moment a change is semantically neutral.
+Staleness asks one question: **would this code, with this configuration, build a
+different index than the one on disk?** Every recorded field that affects the
+answer is compared, which is all of them except `files` and `chunks`. Those two
+describe the vault at build time and change on every edit, so comparing them
+would report a note added since the last reindex as a format mismatch.
 
-The consequence is a rule rather than a mechanism: **changing anything about how
-chunks are produced or embedded means bumping FORMAT_VERSION.** A test documents
-that retuning a chunker parameter alone does not mark an index stale.
+An earlier version made `FORMAT_VERSION` the only signal and kept the chunker
+fields as description, on the reasoning that deriving staleness from them would
+invite an argument about which of them count. That argument has a clean answer:
+a field earns its place in the stamp by affecting the build, so every field in
+the stamp counts. Keeping them descriptive also left a real gap, because the
+chunk budget is settable per process through `VAULT_CHUNK_TARGET_CHARS` and
+`VAULT_CHUNK_OVERLAP_CHARS`. A version bump cannot catch a change that involves
+no version.
+
+`FORMAT_VERSION` remains, now as the catch-all for a change no field captures.
+The rule it encoded still holds: **changing how chunks are produced or embedded
+in a way the stamp does not already describe means bumping it.**
+
+`target_chars` and `overlap_chars` postdate the first stamps, where they read 0.
+No valid configuration produces a 0 target, so 0 is read as unknown rather than
+as a mismatch, and a pre-existing stamp is not called stale for a field it never
+had the chance to record.
 
 The stamp sits beside the index databases rather than inside them, the same
 choice supersede and calibration made. No index schema change means shipping
@@ -27,7 +41,7 @@ from __future__ import annotations
 
 import json
 import pathlib
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timezone
 
 from .core import CHUNK_OVERLAP_CHARS, CHUNK_TARGET_CHARS, EMBED_CONTEXT, MAX_CHUNK_CHARS
@@ -70,10 +84,16 @@ def is_stale(stamp: IndexStamp | None, embedder: str) -> bool:
 
     A missing stamp is not stale. Every index without one was built by code that
     still produces the current format, so treating absence as a mismatch would
-    tell every existing install to rebuild for no gain."""
+    tell every existing install to rebuild for no gain.
+
+    A zero chunk budget means the stamp predates those fields, not that the
+    budget was zero. See the module docstring."""
     if stamp is None:
         return False
-    return stamp.format_version != FORMAT_VERSION or stamp.embedder != embedder
+    current = current_stamp(embedder=embedder, files=stamp.files, chunks=stamp.chunks)
+    if not stamp.target_chars:
+        current = replace(current, target_chars=0, overlap_chars=0)
+    return stamp != current
 
 
 def stamp_path(collection: str) -> pathlib.Path:
