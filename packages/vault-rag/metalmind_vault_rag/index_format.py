@@ -48,7 +48,7 @@ from .core import CHUNK_OVERLAP_CHARS, CHUNK_TARGET_CHARS, EMBED_CONTEXT, MAX_CH
 
 FORMAT_VERSION = 2
 
-CHUNKER = "heading-split-sentence-overlap"
+CHUNKER = "heading-split-sentence"
 EMBEDDED_TEXT = "title-heading-prefixed" if EMBED_CONTEXT else "chunk-text-only"
 
 
