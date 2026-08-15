@@ -57,6 +57,17 @@ def embed(texts: list[str]) -> list[list[float]]:
     return embedding_backend().embed(texts)
 
 
+def embed_query(texts: list[str]) -> list[list[float]]:
+    """Embed search queries, which is not the same operation as embedding a
+    document on an asymmetric retrieval model.
+
+    A backend predating this method falls back to `embed`, so a third-party
+    implementation keeps working."""
+    backend = embedding_backend()
+    fn = getattr(backend, "embed_query", None)
+    return fn(texts) if fn else backend.embed(texts)
+
+
 def ensure_collection() -> None:
     """Create the active store's collection if absent. Idempotent."""
     vector_store().ensure_collection()

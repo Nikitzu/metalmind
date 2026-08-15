@@ -14,7 +14,7 @@ from .calibration import (
 from .core import (
     COLLECTION,
     VAULT,
-    embed,
+    embed_query,
     embedding_backend,
     files_to_index,
     fts_conn,
@@ -258,7 +258,7 @@ def _semantic_search(query: str, k: int) -> list[dict]:
     """Cosine-similarity top-k from the active vector store. Returns
     {file, heading, score, text}. Score is similarity in [-1, 1] for
     both backends - see VectorStore protocol contract."""
-    vec = embed([query])[0]
+    vec = embed_query([query])[0]
     hits = vector_store().query(vec, k)
     return [
         {

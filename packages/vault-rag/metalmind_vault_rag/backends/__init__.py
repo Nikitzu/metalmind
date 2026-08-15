@@ -32,7 +32,15 @@ class EmbeddingBackend(Protocol):
     """
 
     def embed(self, texts: list[str]) -> list[list[float]]:
-        """Batch embed. Order preserved; one vector per text."""
+        """Batch embed documents. Order preserved; one vector per text."""
+
+    def embed_query(self, texts: list[str]) -> list[list[float]]:
+        """Batch embed queries.
+
+        Separate from `embed` because retrieval models are trained
+        asymmetrically and many prepend an instruction to the query side only.
+        A backend whose model is symmetric may return the same vectors as
+        `embed`; the default one does."""
 
     def dimension(self) -> int:
         """Vector dimension for the configured model. Used by the store
