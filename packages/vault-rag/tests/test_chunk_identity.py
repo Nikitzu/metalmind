@@ -229,6 +229,37 @@ class TestPerFileCap:
 
         assert [m["file"] for m in merged] == ["a.md", "b.md"]
 
+    def test_single_leg_modes_are_capped_too(self, monkeypatch):
+        """`--semantic-only` and `--keyword-only` skip fusion, so before this
+        the cap reached neither. Chunk-level identity made that visible: on
+        recall-v0 at 500 and 1000 notes, semantic-only hit@5 fell 10 points
+        because one note's chunks took slots that distinct notes used to hold."""
+        from metalmind_vault_rag import search
+
+        chunks = [hit(text=f"c{i}", score=1.0 - i / 10, chunk_idx=i) for i in range(4)]
+        chunks.append(hit(file="b.md", text="b0", score=0.5, chunk_idx=0))
+        monkeypatch.setattr(search, "_semantic_search", lambda q, k: chunks)
+        monkeypatch.setattr(search, "_keyword_search", lambda q, k: chunks)
+        monkeypatch.setattr(search, "_supersede_index", dict)
+
+        for mode in ("semantic-only", "keyword-only"):
+            hits = search.search_vault("q", k=5, mode=mode)
+
+            assert [h["file"] for h in hits] == ["a.md", "b.md"], mode
+
+    def test_a_single_leg_still_fills_k_when_notes_are_distinct(self, monkeypatch):
+        """Capping after a shallow fetch would silently shorten every result
+        set, so the leg has to overfetch first."""
+        from metalmind_vault_rag import search
+
+        many = [hit(file=f"n{i}.md", text=f"t{i}", score=1.0 - i / 100) for i in range(30)]
+        monkeypatch.setattr(search, "_semantic_search", lambda q, k: many[:k])
+        monkeypatch.setattr(search, "_supersede_index", dict)
+
+        hits = search.search_vault("q", k=5, mode="semantic-only")
+
+        assert len(hits) == 5
+
     def test_the_cap_can_be_turned_off(self, monkeypatch):
         from metalmind_vault_rag import search
 

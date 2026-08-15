@@ -328,6 +328,26 @@ def _keyword_search(query: str, k: int) -> list[dict]:
     ]
 
 
+def _cap_per_file(hits: list[dict]) -> list[dict]:
+    """Keep at most MAX_CHUNKS_PER_FILE hits per note, preserving order.
+
+    Chunks of one note compete for slots individually now that identity includes
+    position, so a long note otherwise fills the result set with itself. Callers
+    must overfetch before capping, or a query that drops chunks returns fewer
+    than k results."""
+    if MAX_CHUNKS_PER_FILE <= 0:
+        return hits
+    per_file: dict[str, int] = {}
+    kept: list[dict] = []
+    for entry in hits:
+        used = per_file.get(entry["file"], 0)
+        if used >= MAX_CHUNKS_PER_FILE:
+            continue
+        per_file[entry["file"]] = used + 1
+        kept.append(entry)
+    return kept
+
+
 def _rrf_merge(
     hit_lists: list[list[dict]],
     k: int,
@@ -403,17 +423,7 @@ def _rrf_merge(
         if supersede_map is not None and entry["file"] in supersede_map:
             mult *= SUPERSEDE_PENALTY
         entry["rrf"] *= mult
-    ordered = sorted(merged.values(), key=lambda r: r["rrf"], reverse=True)
-    if MAX_CHUNKS_PER_FILE > 0:
-        per_file: dict[str, int] = {}
-        kept: list[dict] = []
-        for entry in ordered:
-            used = per_file.get(entry["file"], 0)
-            if used >= MAX_CHUNKS_PER_FILE:
-                continue
-            per_file[entry["file"]] = used + 1
-            kept.append(entry)
-        ordered = kept
+    ordered = _cap_per_file(sorted(merged.values(), key=lambda r: r["rrf"], reverse=True))
     # Rewrite score to RRF so downstream code sees a consistent field; keep
     # the original embedder/BM25 score under `prev_score` for debugging.
     out = []
@@ -452,9 +462,9 @@ def search_vault(
 
     smap = _supersede_index()
     if mode == "semantic-only":
-        hits = _semantic_search(query, fetch)
+        hits = _cap_per_file(_semantic_search(query, max(fetch, RRF_OVERFETCH)))[:fetch]
     elif mode == "keyword-only":
-        hits = _keyword_search(query, fetch)
+        hits = _cap_per_file(_keyword_search(query, max(fetch, RRF_OVERFETCH)))[:fetch]
     else:
         # Hybrid: overfetch both legs deeply so RRF has enough cross-coverage
         # to break ties at the top. RRF_OVERFETCH (default 50) is independent
