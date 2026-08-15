@@ -30,12 +30,12 @@ import pathlib
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 
-from .core import CHUNK_OVERLAP_CHARS, CHUNK_TARGET_CHARS, MAX_CHUNK_CHARS
+from .core import CHUNK_OVERLAP_CHARS, CHUNK_TARGET_CHARS, EMBED_CONTEXT, MAX_CHUNK_CHARS
 
 FORMAT_VERSION = 2
 
 CHUNKER = "heading-split-sentence-overlap"
-EMBEDDED_TEXT = "title-heading-prefixed"
+EMBEDDED_TEXT = "title-heading-prefixed" if EMBED_CONTEXT else "chunk-text-only"
 
 
 @dataclass(frozen=True)

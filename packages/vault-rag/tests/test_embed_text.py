@@ -91,3 +91,15 @@ class TestWiring:
 
         assert seen == ["lock ordering / WAL: it depends"]
         assert points[0].payload["text"] == "it depends"
+
+
+class TestContextToggle:
+    def test_disabling_context_embeds_the_bare_chunk(self, monkeypatch):
+        """An A/B switch for the preference regression. The stamp descriptor
+        follows it, so an index built with the prefix off does not claim to
+        carry it."""
+        from metalmind_vault_rag import core
+
+        monkeypatch.setattr(core, "EMBED_CONTEXT", False)
+
+        assert core.embed_text("Learnings/lock-ordering.md", "lock ordering / WAL", "it depends") == "it depends"
