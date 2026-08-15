@@ -201,6 +201,8 @@ def _folder_multiplier(file: str) -> float:
 # 44% throughout. One chunk per note it is. 0 disables the cap.
 MAX_CHUNKS_PER_FILE = int(os.environ.get("METALMIND_MAX_CHUNKS_PER_FILE", "1"))
 
+CHUNK_IDENTITY = os.environ.get("METALMIND_CHUNK_IDENTITY", "1") != "0"
+
 RRF_OVERFETCH = max(20, int(os.environ.get("METALMIND_RRF_OVERFETCH", "50")))
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
@@ -348,6 +350,11 @@ def _rrf_merge(
     destroying the agreement signal fusion exists to capture. Falling back to
     heading is what lets a stale index keep answering as it always did.
 
+    `METALMIND_CHUNK_IDENTITY=0` forces the heading key even when every hit
+    carries a position, reproducing pre-format-2 identity. Fusion is the only
+    thing it changes, so an existing index can answer under either setting and
+    the two are directly comparable without a rebuild.
+
     `weights` (optional) is a per-list multiplier matching `hit_lists` order.
     Defaults to 1.0 per list. Used to bias fusion toward backends that are
     more decisive at hit@1 for the workload (e.g. BM25 for short factual
@@ -368,7 +375,9 @@ def _rrf_merge(
         weights = [1.0] * len(hit_lists)
     if labels is None:
         labels = [""] * len(hit_lists)
-    use_position = all("chunk_idx" in h for hits in hit_lists for h in hits)
+    use_position = CHUNK_IDENTITY and all(
+        "chunk_idx" in h for hits in hit_lists for h in hits
+    )
     score_fields = {f"{label}_score": None for label in labels if label}
     merged: dict[tuple[str, str], dict] = {}
     for hits, weight, label in zip(hit_lists, weights, labels):

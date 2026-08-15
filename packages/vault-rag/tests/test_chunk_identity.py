@@ -103,6 +103,49 @@ class TestLegacyIndexes:
         assert len(merged) == 1
 
 
+class TestIdentityToggle:
+    """`METALMIND_CHUNK_IDENTITY=0` reproduces pre-format-2 fusion against a
+    current index, so the arc's open question can be measured without a rebuild.
+    It has to reach the collapse itself, not merely read the variable, or a run
+    under the toggle would silently measure the shipped behaviour."""
+
+    @pytest.fixture(autouse=True)
+    def uncapped(self, monkeypatch):
+        from metalmind_vault_rag import search
+
+        monkeypatch.setattr(search, "MAX_CHUNKS_PER_FILE", 0)
+
+    def test_disabled_identity_collapses_chunks_of_one_section(self, monkeypatch):
+        from metalmind_vault_rag import search
+
+        monkeypatch.setattr(search, "CHUNK_IDENTITY", False)
+        sem = [hit(text="first", chunk_idx=0), hit(text="second", chunk_idx=1)]
+
+        merged = search._rrf_merge([sem, []], k=5, labels=LABELS)
+
+        assert len(merged) == 1
+
+    def test_enabled_is_the_default_and_keeps_them_apart(self):
+        sem = [hit(text="first", chunk_idx=0), hit(text="second", chunk_idx=1)]
+
+        merged = _rrf_merge([sem, []], k=5, labels=LABELS)
+
+        assert len(merged) == 2
+
+    def test_disabling_identity_does_not_disturb_distinct_sections(self, monkeypatch):
+        from metalmind_vault_rag import search
+
+        monkeypatch.setattr(search, "CHUNK_IDENTITY", False)
+        sem = [
+            hit(heading="Note / One", text="one", chunk_idx=0),
+            hit(heading="Note / Two", text="two", chunk_idx=0),
+        ]
+
+        merged = search._rrf_merge([sem, []], k=5, labels=LABELS)
+
+        assert len(merged) == 2
+
+
 class TestNeighboursFromIndex:
     def test_a_hit_that_knows_its_position_needs_no_text_lookup(self, tmp_path, monkeypatch):
         """Overlapping chunks share text, so the old lookup would match two rows
