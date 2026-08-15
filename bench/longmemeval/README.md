@@ -87,7 +87,9 @@ HN-comment corpus that the other benches use:
 
 ## Results to date
 
-`--scale 3000 --rerank`, 500 questions, 470 answerable (2026-08-11):
+`--scale 3000 --rerank`, 500 questions, 470 answerable (2026-08-11). This is the
+recorded baseline that later sections measure against, not the current numbers.
+For those see "Chunker arc result" below.
 
 | type | n | hit@1 | hit@1 rr | hit@5 | hit@5 rr |
 |---|---|---|---|---|---|
@@ -162,30 +164,78 @@ improvement. The recorded baseline is at `--scale 3000` with 2118 distractors,
 so it is not comparable to a 1500-session run; the confirmation run at 3000 is
 what measures the arc.
 
+**This ranking did not survive the larger corpus, and the defaults now follow
+the 3000-session run instead.** See "Sizing, re-decided at 3000" below. A sweep
+that ranks configurations at one distractor density is not evidence about
+another, which is the lesson worth keeping from this section.
+
 
 ## Chunker arc result (2026-08-14)
 
-`--scale 3000`, same corpus as the 2026-08-11 baseline. Three changes measured
-together because they share a rebuild: chunk identity in fusion, heading context
-in the embedded string, and sentence-boundary splits with overlap. Plus a
-per-file cap that the first two made necessary.
+`--scale 3000`, same corpus as the 2026-08-11 baseline, at the shipped defaults.
 
 | | baseline | after |
 |---|---|---|
 | hit@1 | 36% | **44%** |
 | hit@3 | 57% | **62%** |
-| hit@5 | 68% | **69%** |
+| hit@5 | 68% | **70%** |
 | MRR | 0.47 | **0.54** |
 | NDCG@5 | 0.43 | **0.50** |
 
-| type | baseline hit@1 | after hit@1 |
+Per category, at three depths. Reporting hit@1 alone across a 30-question
+category is what made the preference row below look like a collapse.
+
+| type | n | baseline | after |
+|---|---|---|---|
+| single-session-assistant | 56 | 91 / 100 / 100 | 95 / 98 / 100 |
+| knowledge-update | 72 | 54 / 78 / 89 | 65 / 88 / 92 |
+| multi-session | 121 | 27 / 47 / 59 | 34 / 54 / 67 |
+| temporal-reasoning | 127 | 23 / 47 / 64 | 29 / 54 / 62 |
+| single-session-user | 64 | 17 / 50 / 61 | 39 / 56 / 64 |
+| single-session-preference | 30 | 13 / 17 / 23 | 7 / 13 / 17 |
+
+### What each change is actually worth
+
+The arc bundled four changes because they shared a rebuild, which made the
+result unattributable. Chunk identity is a fusion-time decision, so
+`METALMIND_CHUNK_IDENTITY=0` reproduces pre-format-2 behaviour against a current
+index and the cap already had an env switch. That turns the attribution into a
+2x2 run against one index, queries only:
+
+| identity | cap | hit@1 | hit@3 | hit@5 | MRR | preference | single-session-user |
+|---|---|---|---|---|---|---|---|
+| off | off | 36% | 57% | 66% | 0.47 | 13% | 17% |
+| off | on | 36% | 60% | 68% | 0.48 | 13% | 17% |
+| on | off | 44% | 59% | 67% | 0.52 | 7% | 39% |
+| **on** | **on** | **44%** | **62%** | **70%** | **0.54** | 7% | 39% |
+
+The `off / off` cell reproduces the recorded baseline exactly, which is what
+makes the other three trustworthy.
+
+**Chunk identity is the whole engine**: +8 hit@1, +22 on `single-session-user`,
+and it alone accounts for the preference movement. **The cap is orthogonal and
+free**: +3 hit@3, +3 hit@5, hit@1 untouched. **Sizing and heading context carry
+nothing measurable** at this scale, each tested by its own isolated rebuild.
+
+### Sizing, re-decided at 3000
+
+The 1500-session sweep picked 1200/200. At 3000 sessions that lead disappears,
+so the defaults moved back to the old 3500-character budget with overlap off,
+keeping only the sentence-boundary cut points.
+
+| | 1200 / 200 | 3500 / 0 |
 |---|---|---|
-| single-session-assistant | 91% | 96% |
-| knowledge-update | 54% | 68% |
-| multi-session | 27% | 36% |
-| temporal-reasoning | 23% | 27% |
-| single-session-user | 17% | 42% |
-| single-session-preference | 13% | **3%** |
+| hit@1 / hit@3 / hit@5 | 44 / 62 / 69 | 44 / 62 / **70** |
+| MRR | 0.54 | 0.54 |
+| temporal-reasoning (n=127) | 27 / 54 / 60 | **29 / 54 / 62** |
+| single-session-preference (n=30) | **3 / 20 / 23** | 7 / 13 / 17 |
+| index at 1500 sessions | 131 MB | **107 MB** |
+
+The two categories disagree, and the decision rests on the larger one.
+`temporal-reasoning` has 127 questions and prefers 3500/0 at both depths;
+`single-session-preference` has 30, of which 25 are missed by every
+configuration ever run here, so its two-question swings are not evidence.
+Smaller index and no overlap machinery in the default path settle the rest.
 
 ### The per-file cap, and why it exists
 
@@ -208,17 +258,54 @@ One chunk per note. The two changes are complements: identity lets the best
 chunk of a note claim the slot instead of the arbitrary first-seen one, and the
 cap stops that note taking every other slot too.
 
-### Two misses, recorded
+### The preference category, and how not to read it
 
-**`single-session-preference` fell from 13% to 3%**, which is 4 correct answers
-out of 30 down to 1. The cap does not touch it, so crowding was never the cause.
-The remaining hypothesis is that the heading prefix dilutes a short implicit
-aside, and it is **untested**: checking it needs a reindex without the prefix.
-The category is already anomalous, being the one that got worse under
-cross-encoder reranking too, so it resists anything that adds or reweights
-context.
+`single-session-preference` moved from 13% to 7% at hit@1, and it cost three
+reindexes to establish that this is not a defect. The per-question ranks are
+what settle it. Nine of the thirty questions are ever answered under any
+configuration tested; the other twenty-one are missed by all of them.
 
-**`temporal-reasoning` hit@5 is 60% against a baseline 64%.** Unexplained.
+Ranks for those nine, across the runs that isolate each change:
+
+| question | baseline | 1200 / 200 | no prefix | 3500 / 0 (shipped) |
+|---|---|---|---|---|
+| `8a2466db` | 1 | 1 | 1 | 1 |
+| `54026fce` | 1 | 2 | 2 | 1 |
+| `caf03d32` | 1 | 3 | 3 | 4 |
+| `1da05512` | 1 | 2 | 2 | 2 |
+| `195a1a1b` | 2 | miss | 2 | miss |
+| `fca70973` | 4 | miss | 2 | miss |
+| `b0479f84` | 4 | 3 | 3 | miss |
+| `35a27287` | miss | 2 | miss | 2 |
+| `0a34ad58` | miss | 5 | miss | miss |
+
+One question is 3.3 points here. Two questions sliding out of rank 1 is the
+entire reported collapse, and `35a27287` became retrievable in the same run.
+At 1200/200 the category holds 23 misses, exactly the baseline's, with hit@3
+*better* than baseline at 20% against 17%.
+
+The lesson is procedural, not technical: open the per-question ranks before
+attributing a small-n category move to a code change. Two of the three reindexes
+spent on this were avoidable.
+
+### What was ruled out along the way
+
+**Heading context.** A reindex at `--scale 3000` with
+`METALMIND_EMBED_CONTEXT=0` left the category unmoved and every aggregate flat.
+That run is also the only isolated measurement of what the prefix buys: about 6
+points on `single-session-user` against 2 lost on `temporal-reasoning`. Weak but
+positive, so it stays on.
+
+**The per-file cap.** Unmoved at cap 1, 2, 3 and uncapped.
+
+**Chunk sizing.** Unmoved across 600/100, 1200/200, 1800/300 and 3500/0.
+
+What remains is chunk identity, which the 2x2 above attributes cleanly and which
+earns +8 hit@1 and +22 on `single-session-user` in exchange.
+
+**`temporal-reasoning` hit@5 is 62% against a baseline 64%**, while its hit@1
+and hit@3 both improve by 6 or 7 points. Two questions out of 127, in the one
+place the arc reaches least. Recorded, not explained.
 
 Confidence bands are unaffected: AUC 0.982 against 0.984, classes still
 separate, and the derived edges moved less than the regression tolerance.
