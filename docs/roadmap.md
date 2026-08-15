@@ -2,15 +2,27 @@
 
 > What's being worked on, what's next, and what isn't planned. Updated at each release.
 >
-> **Last updated:** 2026-08-08 · **Current release:** v0.17.0
+> **Last updated:** 2026-08-15 · **Current release:** v0.21.0
 
 metalmind is maintained by one person. This page exists so that's a known
 quantity rather than a guess: you can see what's coming, what's stalled, and
 what has been ruled out.
 
+## Answered since this page last said otherwise
+
+**Recall is now measured on data nobody here wrote.** This page used to name
+third-party measurement as the standing objection. `bench/longmemeval/`
+(v0.19.0) runs 500 human-labelled questions from an MIT dataset over a
+3,000-session haystack, including 30 questions with no answer in the corpus at
+all, and publishes the unflattering rows next to the good ones. v0.20.0 then
+verified per-vault calibration on `xy-241/CS-Notes`, 683 notes written by
+someone else. The objection is not fully closed, since neither is a real
+working vault, but it is no longer true that every number comes from a corpus
+metalmind generated.
+
 ## Track record
 
-68 releases since 2026-04-20. `CHANGELOG.md` carries the reasoning for each
+76 releases since 2026-04-20. `CHANGELOG.md` carries the reasoning for each
 one, not just the diff. Every performance claim on the site traces to a
 harness in `bench/` you can run yourself.
 
@@ -19,16 +31,12 @@ history you can check.
 
 ## Now (next 90 days)
 
-**Third-party vault benchmark.** Every recall number published today, 50k
-included, is measured on corpora metalmind generated. That's the standing
-objection and it cannot be answered from inside. It needs a real vault from
-someone who isn't the maintainer, which makes recruitment the blocker rather
-than code. It also gates the adversarial bench below.
-
 **Adversarial benchmark.** Queries designed to break recall rather than
-flatter it, on the real-vault fixture above. If hit@1 holds at 80%+ there's a
-number worth quoting. If it doesn't, better to find out here than in someone
-else's review.
+flatter it. If hit@1 holds at 80%+ there's a number worth quoting. If it
+doesn't, better to find out here than in someone else's review. The abstention
+control added in v0.19.0 is the nearest thing that exists today, and it is not
+the same test: it measures whether unanswerable questions score differently,
+not whether hostile phrasing breaks a question that does have an answer.
 
 **Recall precision follow-ups.** Intent reranking and a branch-aware filter,
 both deferred from the v0.9.0 external-repo-leverage scope.

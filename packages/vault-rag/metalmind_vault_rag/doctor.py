@@ -89,11 +89,11 @@ def check_fts_index() -> None:
     print(f"  FTS5 rows:     {fts_rows}")
     if vec_points > 0 and fts_rows == 0:
         print("  WARN: FTS5 empty while vector store populated - hybrid search is running semantic-only.")
-        print("        Fix: restart the watcher (auto-backfills) or run `metalmind-vault-rag-indexer`.")
+        print("        Fix: restart the watcher (auto-backfills) or run `metalmind index rebuild`.")
     elif vec_points > 0 and fts_rows < vec_points // 2:
         print(
             f"  WARN: FTS5 has {fts_rows} rows vs {vec_points} vector points "
-            "- significant drift. Consider `metalmind-vault-rag-indexer`."
+            "- significant drift. Consider `metalmind index rebuild`."
         )
     else:
         print("  OK")

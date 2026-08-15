@@ -9,6 +9,55 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.21.0',
+    date: '2026-08-15',
+    headline: 'Two chunks of one note are two documents, and the index says what built it',
+    summary: "Fusion de-duplicated hits on (file, heading), which is a proxy for chunk identity that holds only while a section produces one chunk. Past that, two different chunks collapsed into one hit keeping whichever retriever answered first - neither the best-scoring nor a deliberate choice. Identity now includes chunk position, worth hit@1 36% to 44% on LongMemEval at 3,000 sessions and 17% to 39% on the category that asks what you said about yourself once, measured in isolation against a single index rather than inferred from the bundle. A cap of one chunk per note stops a long note taking every slot it now competes for individually. The index also carries a stamp naming the format, chunker and embedder that built it, so a stale index is detectable rather than quietly answering with chunks this code would never produce: metalmind index status reports it, metalmind index rebuild fixes it. Published recall-v0 numbers are remeasured against a distractor corpus that is now committed instead of regenerated, because a formatting sweep had edited the generator months earlier and the corpus behind those numbers no longer existed.",
+    tag_kind: 'changed',
+  },
+  {
+    tag: '0.20.2',
+    date: '2026-08-14',
+    headline: 'sync stops calling every archive move note loss',
+    summary: "The deletion guard matched a removed note against surviving content by blob hash alone, and archiving is not a byte-for-byte move: metalmind gold rewrites status: and updated: on the way to Archive/, and a session note often gains its outcome at the same time. Git's own rename detection does not bridge that either - on the change set that prompted this, a note grew from 46 lines to 103 and -M failed to pair them. Every archive move therefore hit unexplained-deletion and needed --force, which is exactly the habit a safety guard should not teach. A deletion now also counts as explained when a note of the same name is added anywhere in the same commit, and is reported as a move rather than passing silently. Deletions whose name and content both vanish are still refused.",
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.20.1',
+    date: '2026-08-14',
+    headline: '0.20.0 never switched itself on',
+    summary: "Calibration ran at the end of a full reindex, and the watcher only rebuilds when the index is empty, so an existing install upgraded, restarted, and silently kept reporting no confidence. There was no way for a user to trigger it either, since metalmind reindex is retired. The watcher now derives bands at startup when the collection has none, working against the index already on disk: seconds rather than the minutes a rebuild costs, after the recall endpoint is already serving, and once per collection. A vault that cannot support bands retries on the next start rather than recording its refusal, because a vault too small to calibrate today may be large enough tomorrow and a marker file would need to solve its own staleness problem.",
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.20.0',
+    date: '2026-08-14',
+    headline: 'Recall says when the vault probably does not hold an answer',
+    summary: "A recall whose best hit falls below the vault's own low edge now says so, instead of returning five confident-looking hits about nothing. The threshold is derived per vault rather than shipped as a constant, because cosine distributions are shaped by the genre and vocabulary of the corpus, and a number tuned on one vault describes that vault. Calibration can refuse, and refusing is the point: a vault under 50 usable samples, or one whose probes score as highly as its answerable questions, produces no bands at all rather than a wrong threshold. Nothing changes until a vault reindexes, so no install silently acquires a gate it did not ask for. Verified on a second vault nobody here wrote - xy-241/CS-Notes, MIT, 683 notes - which calibrated unaided.",
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.19.1',
+    date: '2026-08-11',
+    headline: 'A reindex no longer locks recall out of the vault',
+    summary: "Pulling a synced vault on a second machine, sweeping notes into Archive/, or any bulk edit would take recall down entirely for the duration of the reindex, returning database is locked rather than degrading. Measured on a real pull of 81 changed files: two and a half minutes during which every query, and even a bare PRAGMA read, was refused. Two causes: both SQLite databases opened with the default rollback journal, where a write transaction that outgrows the page cache escalates to an exclusive lock and blocks readers outright, and reindex_paths wrapped an entire batch in one transaction so that lock spanned the whole run. Both now open through a single helper setting WAL and a 30-second busy timeout, and the reindex commits per file. Journal mode is a property of the file, so existing installs upgrade in place the first time the updated watcher opens them. This is the workflow metalmind exists to support failing precisely when an agent is most likely to ask for context.",
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.19.0',
+    date: '2026-08-11',
+    headline: 'First externally-labelled recall numbers, including unflattering ones',
+    summary: "bench/longmemeval/ builds a fixture from the third-party LongMemEval dataset (MIT): one markdown note per conversation session, with human-labelled answer_session_ids as the expected files. At a 3,000-session haystack, plain hybrid retrieval scores 36% hit@1 and 68% hit@5 over 470 answerable questions. The spread matters more than the average: single-session-assistant, the task closest to vault recall, scores 91% hit@1 with zero misses, while single-session-preference scores 13%. That is the retrieval-versus-extraction boundary, now with numbers on it. The abstention control also found a structural blind spot: questions with no answer anywhere in the corpus produce fused scores indistinguishable from answerable ones, because RRF ranks by position and discards similarity magnitude.",
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.18.0',
+    date: '2026-08-09',
+    headline: 'Token-lean recall, and a port that refuses browsers',
+    summary: "The cheapest recall call is now paths and titles only (--files); --budget caps total output at roughly N tokens by shrinking snippets down a ladder before dropping hits, so a tight budget yields thinner hits rather than fewer; --neighbors returns the prev/next chunks around each hit for snippets that cut off mid-thought, recovering chunk position from the FTS table with no index change and no reindex. Separately, 127.0.0.1:17317 is loopback-only but reachable by every UNIX account on the machine, unlike the vault directory that file permissions protect: browser-origin requests are now refused unconditionally, and an opt-in token generated at ~/.metalmind/recall-token (mode 0600) is sent automatically by the CLI but not enforced by default, since on a single-user machine it would buy nothing. Also: scribe create warns about near-duplicate notes, vault-doctor --stale reports notes untouched for 90+ days, and both recall harnesses gained MRR and NDCG@5 because hit@k could not distinguish everything at rank 1 from everything at rank 2.",
+    tag_kind: 'added',
+  },
+  {
     tag: '0.17.0',
     date: '2026-08-08',
     headline: 'Try the memory thesis without installing the workflow layer',
