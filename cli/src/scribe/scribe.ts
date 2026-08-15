@@ -491,6 +491,7 @@ export async function scribeSupersede(
   const stamp = isoDate(now);
   let oldNext = rewriteFrontmatterField(oldRaw, 'status', 'superseded');
   oldNext = rewriteFrontmatterField(oldNext, 'superseded_by', yamlScalar(newStem));
+  oldNext = rewriteFrontmatterField(oldNext, 'superseded_at', stamp);
   oldNext = rewriteFrontmatterField(oldNext, 'updated', stamp);
   await writeFile(oldAbs, oldNext, 'utf8');
 

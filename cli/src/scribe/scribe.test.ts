@@ -401,11 +401,31 @@ describe('scribe CRUD', () => {
     expect(oldRaw).toContain('status: superseded');
     expect(oldRaw).toContain('superseded_by: 2026-04-21-new-way');
     expect(oldRaw).toContain('updated: 2026-04-22');
+    expect(oldRaw).toContain('superseded_at: 2026-04-22');
     const newRaw = await readFile(newPath, 'utf8');
     expect(newRaw).toContain('supersedes: 2026-04-21-old-way');
     expect(newRaw).toContain('updated: 2026-04-22');
     expect(res.oldStem).toBe('2026-04-21-old-way');
     expect(res.newStem).toBe('2026-04-21-new-way');
+  });
+
+  it('supersede: superseded_at records the supersede, not the last edit', async () => {
+    const ctx = { vaultRoot: vault, now: fixedNow };
+    const { path: oldPath } = await scribeCreate({ kind: 'plan', title: 'old', body: 'a' }, ctx);
+    const { path: newPath } = await scribeCreate({ kind: 'plan', title: 'new', body: 'b' }, ctx);
+    await scribeSupersede(oldPath, newPath, {
+      vaultRoot: vault,
+      now: () => new Date('2026-04-22T10:00:00.000Z'),
+    });
+
+    await scribeUpdate(oldPath, 'a later edit', {
+      vaultRoot: vault,
+      now: () => new Date('2026-06-01T10:00:00.000Z'),
+    });
+
+    const raw = await readFile(oldPath, 'utf8');
+    expect(raw).toContain('superseded_at: 2026-04-22');
+    expect(raw).toContain('updated: 2026-06-01');
   });
 
   it('supersede: errors when old or new is missing', async () => {
