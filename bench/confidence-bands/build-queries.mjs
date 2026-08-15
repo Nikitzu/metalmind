@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { dirname, join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, relative } from 'node:path';
 
-const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(homedir(), '.cache', 'metalmind-bench', 'confidence-bands');
 const LONGMEMEVAL_QUESTIONS = join(
   homedir(),

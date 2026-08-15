@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
-import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -201,7 +201,9 @@ function renderMd({ meta, sets, signals, bandTable, derived }) {
   lines.push('');
   lines.push(`- date: ${meta.timestamp}`);
   lines.push(`- corpus: ${meta.notes} notes (a working personal vault, not a generated fixture)`);
-  lines.push(`- excerpt positives: ${meta.excerpt} | manual positives: ${meta.manual} | negatives: ${meta.negatives}`);
+  lines.push(
+    `- excerpt positives: ${meta.excerpt} | manual positives: ${meta.manual} | negatives: ${meta.negatives}`,
+  );
   lines.push('');
   lines.push(
     'The corpus is private, so this file records aggregate statistics only. No note names, ' +
@@ -225,7 +227,9 @@ function renderMd({ meta, sets, signals, bandTable, derived }) {
   lines.push('| signal | AUC (excerpt) | AUC (manual) |');
   lines.push('|---|---|---|');
   for (const s of signals) {
-    lines.push(`| ${s.label} | ${s.excerpt.toFixed(3)} | ${s.manual === null ? 'n/a' : s.manual.toFixed(3)} |`);
+    lines.push(
+      `| ${s.label} | ${s.excerpt.toFixed(3)} | ${s.manual === null ? 'n/a' : s.manual.toFixed(3)} |`,
+    );
   }
   lines.push('');
   lines.push('## Band edges');
@@ -304,7 +308,10 @@ async function main() {
   process.stdout.write('indexing…\n');
   await runOnce('metalmind-vault-rag-indexer', env, tmpRoot, args.indexHours * 60 * 60_000);
 
-  const watcher = spawn('metalmind-vault-rag-watcher', [], { env, stdio: ['ignore', 'ignore', 'ignore'] });
+  const watcher = spawn('metalmind-vault-rag-watcher', [], {
+    env,
+    stdio: ['ignore', 'ignore', 'ignore'],
+  });
   registerTeardown(async () => {
     if (!watcher.killed) watcher.kill('SIGTERM');
   });
@@ -385,7 +392,11 @@ async function main() {
   await writeFile(join(RESULTS_DIR, `confidence-bands-${stamp}.md`), md);
   await writeFile(
     join(CACHE, 'negative-review.json'),
-    `${JSON.stringify(negativeReview.sort((a, b) => (b.semMax ?? 0) - (a.semMax ?? 0)), null, 2)}\n`,
+    `${JSON.stringify(
+      negativeReview.sort((a, b) => (b.semMax ?? 0) - (a.semMax ?? 0)),
+      null,
+      2,
+    )}\n`,
   );
   process.stdout.write(`\n${md}`);
   process.stdout.write(`wrote ${join(RESULTS_DIR, `confidence-bands-${stamp}.md`)}\n`);
