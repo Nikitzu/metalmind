@@ -180,6 +180,45 @@ def _annotate_superseded(hits: list[dict], smap: dict[str, str]) -> None:
             h["superseded_by"] = by
 
 
+def _enforce_supersede_order(hits: list[dict], smap: dict[str, str]) -> list[dict]:
+    """Reorder so no note outranks the successor it names, scores untouched.
+
+    The 0.4x penalty is a multiplier competing against score magnitude. That
+    holds while scores come from RRF and stops holding when they come from a
+    cross-encoder, which is confident and rewards exactly what a superseded note
+    tends to be: the longer, more detailed, more on-topic document. Measured on
+    the adversarial bench, reranking cost `competing-near-duplicates` 25 points
+    of hit@1 and two of the six regressions were a superseded note winning.
+
+    Raising the penalty until it survives that would bury superseded notes that
+    are the only answer, so this is a constraint rather than a stronger knob.
+    Only the pairs that violate it move; everything else keeps its order.
+
+    A successor outside the candidate set is left alone. It cannot be promoted,
+    and demoting its predecessor would remove a hit and offer nothing back.
+
+    The pass repeats until stable, bounded by the hit count because two notes
+    that supersede each other are writable by hand and would otherwise loop.
+    """
+    if not smap or len(hits) < 2:
+        return hits
+
+    out = list(hits)
+    for _ in range(len(out)):
+        moved = False
+        for i, h in enumerate(out):
+            successor = smap.get(h["file"])
+            if not successor:
+                continue
+            j = next((n for n, x in enumerate(out) if Path(x["file"]).stem == successor), None)
+            if j is not None and j > i:
+                out[i], out[j] = out[j], out[i]
+                moved = True
+        if not moved:
+            break
+    return out
+
+
 def _folder_multiplier(file: str) -> float:
     """Score multiplier for the fused RRF score, keyed on the top-level
     vault folder. Archived shipped plans and unsorted inbox clippings
@@ -484,8 +523,8 @@ def search_vault(
     _annotate_superseded(hits, smap)
 
     if rerank:
-        return rerank_hits(query, hits, k, penalties=_hit_penalties(hits, smap))
-    return hits[:k]
+        hits = rerank_hits(query, hits, len(hits), penalties=_hit_penalties(hits, smap))
+    return _enforce_supersede_order(hits, smap)[:k]
 
 
 def attach_neighbors(hits: list[dict]) -> None:
