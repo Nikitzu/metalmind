@@ -45,3 +45,6 @@ bench/compact-v0/results/*
 # Working spec for in-flight branch (lives in metalmind vault, not git)
 SPEC.md
 tasks/
+
+# specs/ is excluded by the global gitignore; design history belongs in this repo.
+!specs/
