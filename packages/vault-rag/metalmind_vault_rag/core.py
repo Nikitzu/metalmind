@@ -13,15 +13,8 @@ COLLECTION = os.environ.get("VAULT_COLLECTION", "vault")
 VAULT = pathlib.Path(os.environ.get("VAULT_PATH", str(pathlib.Path.home() / "Knowledge")))
 MAX_CHUNK_CHARS = int(os.environ.get("VAULT_MAX_CHUNK_CHARS", "3500"))
 
-# Swept on LongMemEval at 1500 sessions (882 evidence, 618 distractors) against
-# 600/100, 1800/300 and a 3500/0 control. 1200/200 was best or tied on every
-# aggregate. The spread across 1200, 1800 and 3500 is about one point on 470
-# questions, which is noise; the difference worth defending is
-# single-session-user, 55% against 47% for the control. 600/100 was both the
-# worst config and the largest index, so smaller is not better. See
-# bench/longmemeval/README.md.
-CHUNK_TARGET_CHARS = int(os.environ.get("VAULT_CHUNK_TARGET_CHARS", "1200"))
-CHUNK_OVERLAP_CHARS = int(os.environ.get("VAULT_CHUNK_OVERLAP_CHARS", "200"))
+CHUNK_TARGET_CHARS = int(os.environ.get("VAULT_CHUNK_TARGET_CHARS", "3500"))
+CHUNK_OVERLAP_CHARS = int(os.environ.get("VAULT_CHUNK_OVERLAP_CHARS", "0"))
 
 _SEGMENT_SPLIT = re.compile(r"(?<=[.!?])\s+|\n\s*\n")
 
@@ -157,6 +150,13 @@ def split_section(text: str, target: int, overlap: int) -> list[str]:
     The old chunker cut at a fixed offset, mid-word, with nothing shared across
     the seam, so a fact spanning it survived in neither piece.
 
+    Defaults are 3500/0, which is the old character budget with better cut
+    points rather than smaller chunks. A 1500-session sweep preferred 1200/200,
+    but that ranking did not survive the 3000-session corpus: there 3500/0 reads
+    44/62/70 against 1200/200's 44/62/69 on a smaller index. Sizing carries none
+    of the arc's gain, which came from chunk identity in fusion. Overlap earns
+    nothing at this budget, so it stays off by default and stays configurable.
+
     A segment longer than the target is emitted whole rather than cut. Splitting
     it would recreate exactly the failure this replaces, and one oversized
     paragraph is a smaller problem than a sentence severed at a byte offset.
@@ -230,6 +230,9 @@ def note_title(file_rel: str) -> str:
     return stem.replace("-", " ").replace("_", " ").strip()
 
 
+EMBED_CONTEXT = os.environ.get("METALMIND_EMBED_CONTEXT", "1") != "0"
+
+
 def embed_text(file_rel: str, heading: str, text: str) -> str:
     """The string handed to the embedder: where the chunk came from, then the
     chunk.
@@ -241,6 +244,8 @@ def embed_text(file_rel: str, heading: str, text: str) -> str:
     is the filename stem, so the title is prepended only when the heading does
     not already carry it. Repeating it would double that text's weight in the
     embedding and buy nothing."""
+    if not EMBED_CONTEXT:
+        return text
     title = note_title(file_rel)
     parts: list[str] = []
     clean_heading = (heading or "").strip()
