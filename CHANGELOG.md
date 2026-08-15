@@ -6,6 +6,36 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.21.0 - 2026-08-15
+
+### Changed
+
+- **Two chunks of one note are now two documents.** Fusion de-duplicated on `(file, heading)`, a proxy for chunk identity that holds only while a section yields exactly one chunk. Beyond that, two different chunks collapsed into one hit keeping whichever retriever answered first, which is neither the best-scoring nor a deliberate choice. Identity is now `(file, heading, chunk_idx)`.
+
+  On LongMemEval at 3,000 sessions this is worth **hit@1 36% to 44%**, MRR 0.47 to 0.54, and **17% to 39% on `single-session-user`**, the category that asks what you said about yourself once. Measured in isolation against a single index, so it is that change and not the rest of the release.
+
+  Identity alone also crowds: chunks of one note compete for top-k slots individually where they used to collapse, so a long note fills the result set with itself. A cap of one chunk per note restores hit@5 and costs nothing at hit@1. `METALMIND_MAX_CHUNKS_PER_FILE` tunes it, 0 disables it.
+
+- **Sections split on sentence boundaries.** The old chunker cut at a fixed character offset, mid-word, with nothing shared across the seam, so a fact spanning it survived in neither piece. Splits now fall between sentences or paragraphs.
+
+  The character budget stays at 3,500 with overlap off. A 1,500-session sweep preferred 1200/200 and a 3,000-session run did not reproduce that: the larger corpus reads 44/62/70 against 1200/200's 44/62/69, on an index 18% smaller. Chunk sizing turned out to carry none of this release's gain. `VAULT_CHUNK_TARGET_CHARS` and `VAULT_CHUNK_OVERLAP_CHARS` remain configurable.
+
+- **Each chunk is embedded with the note and section it came from.** A chunk reading "decided against it, too slow" embeds as `Fusion weights / Rejected: decided against it, too slow`. Worth about 6 points on `single-session-user` against 2 lost on `temporal-reasoning`, and flat on every aggregate: weak, positive, kept. `METALMIND_EMBED_CONTEXT=0` turns it off.
+
+### Added
+
+- **The index records what built it.** A sidecar next to each index stores format version, chunker, embedder, and chunk budget, so a stale index is detectable rather than silently answering with chunks the current code would never produce. `metalmind index status` reports it, `metalmind index rebuild` fixes it, `metalmind stamp` and `metalmind doctor` say so when it is stale. No index schema change: a format 1 index keeps answering as it always did, including through fusion, which falls back to heading identity when the vector payload carries no position.
+
+- **`METALMIND_CHUNK_IDENTITY=0`** reproduces pre-format-2 fusion against a current index. It exists because attributing a bundled rebuild to one of four changes otherwise costs a rebuild per hypothesis, and fusion is a query-time decision.
+
+### Note on measurement
+
+`single-session-preference` reads 13% to 7% at hit@1 across this release, and three reindexes went into establishing that this is not a defect. Nine of its thirty questions are ever answered under any configuration tested; two sliding out of the top slot is the whole movement. The bench README now reports that category at three depths, because hit@1 alone on 30 questions is not a signal. See [`bench/longmemeval/README.md`](bench/longmemeval/README.md).
+
+**Upgrading:** the index format changed, so an existing install answers from a stale index until it is rebuilt. `metalmind index status` reports it and `metalmind index rebuild` does it.
+
+---
+
 ## 0.20.2 - 2026-08-14
 
 ### Fixed
