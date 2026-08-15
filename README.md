@@ -66,7 +66,7 @@ Temporal supersedes keeps the semantic layer honest (old truths re-rank below th
 - **Save once.** `metalmind store copper "<insight>"` (alias: `save`) deposits a decision into your local vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes.
 
 - **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session - most memory tools silently inject a handful of tool schemas - often heavily over-specified - into every host session before you've typed a prompt (measured: [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/)). We stamp the command into your `CLAUDE.md` (and `~/.codex/AGENTS.md` when Codex is installed) so the model reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback for hosts that need it. Browser-origin requests to that port are always rejected, so a web page cannot poke it. The watcher also writes an auth token to `~/.metalmind/recall-token` (mode 0600) and the CLI sends it automatically, but the token is **not enforced by default**: on a single-user machine it would buy nothing, since anything running as you can read the vault directory anyway. Set `METALMIND_RECALL_REQUIRE_TOKEN=1` in the watcher env on a **shared machine**, where it stops other UNIX accounts from querying your vault. Scripting against the port under enforcement? Send the file's contents as `X-Metalmind-Token`.
-  <br><sub>**Measured** on the 12-note fake vault in [`bench/recall-v0/`](bench/recall-v0/): **hit@5 = 90%**, **hit@3 = 85%**, **hit@1 = 70%**, latency **median 45 ms / p95 87 ms**. Hit payloads are billed like any other bash output; the MCP tax we avoid is the standing tool-schema cost, not the result tokens.</sub>
+  <br><sub>**Measured** on the 12-note fake vault in [`bench/recall-v0/`](bench/recall-v0/): **hit@5 = 100%**, **hit@3 = 95%**, **hit@1 = 95%**, latency **median 7 ms / p95 15 ms**. Hit payloads are billed like any other bash output; the MCP tax we avoid is the standing tool-schema cost, not the result tokens.</sub>
 
 - **Session-start awareness without nagging.** metalmind installs a Claude Code SessionStart hook plus a top-of-file block in `~/.claude/CLAUDE.md` with explicit WHEN→DO triggers, so every new Claude session discovers the vault on its own - no "did you check memory?" prompting. Re-stamp anytime with `metalmind burn brass` (alias: `stamp`) after an upgrade.
 
@@ -129,10 +129,18 @@ Token cost is only half the story - recall has to actually find your note. `v0.5
 
 | Vault size | sem-only hit@5 | **hybrid hit@1** | **hybrid hit@5** | **+rerank hit@1** | **+rerank hit@5** |
 |---:|---:|---:|---:|---:|---:|
-| 12 notes | 95% | **90%** | **95%** | **90%** | 95% |
-| 100 notes | 95% | **85%** | **95%** | **90%** | 95% |
-| 500 notes | 90% | **85%** | **90%** | **90%** | 95% |
-| 1,000 notes | 90% | **85%** | **85%** | **90%** | 95% |
+| 12 notes | 100% | **95%** | **100%** | **90%** | 95% |
+| 100 notes | 95% | **85%** | **90%** | **95%** | 95% |
+| 500 notes | 80% | **85%** | **85%** | **90%** | 90% |
+| 1,000 notes | 80% | **85%** | **85%** | **90%** | 90% |
+
+Remeasured for v0.21.0 against a committed distractor corpus. The previous
+table read up to 5 points higher at 500 and 1,000 notes and could not be
+reproduced: the corpus was generated rather than committed, and a repo-wide
+formatting sweep had since edited the generator, changing the text of every
+distractor it emits. Running the pre-v0.21.0 code against today's corpus
+reproduces the new numbers, not the old ones, so the difference is the corpus
+and not a regression. 20 questions per scale, so one question is 5 points.
 
 **At 50,000 notes** ([`bench/recall-at-scale/`](bench/recall-at-scale/), HN comments, 12-core Linux):
 
@@ -151,11 +159,11 @@ Hybrid is the default. Fusion weights adapt per query: exact-match tokens (UUIDs
 | Vault size | metalmind hit@1<br>(+rerank) | qmd hit@1 | metalmind hit@5<br>(+rerank) | qmd hit@5 |
 |---:|---:|---:|---:|---:|
 | 12 notes | **90%** | 85% | 95% | **100%** |
-| 100 notes | **90%** | 70% | 95% | **100%** |
-| 500 notes | **90%** | 85% | **95%** | 90% |
-| 1,000 notes | **90%** | 80% | **95%** | 90% |
+| 100 notes | **95%** | 80% | 95% | 95% |
+| 500 notes | **90%** | 85% | 90% | **95%** |
+| 1,000 notes | **90%** | 85% | 90% | 90% |
 
-qmd ships the same shape (BM25 + vector + RRF + rerank) with different defaults - `qwen3-reranker`, a fine-tuned 1.7B query expansion model, GGUF stack, ~2 GB on first run. qmd wins hit@5 at small scales (more recall headroom from query expansion); metalmind wins hit@1 across every scale (better top-of-list precision after the v0.4.0 weighted-RRF fix). Reproduce with `node bench/recall-v0/run.mjs --scales 12,100,500,1000 --rerank` from the repo root.
+qmd ships the same shape (BM25 + vector + RRF + rerank) with different defaults - `qwen3-reranker`, a fine-tuned 1.7B query expansion model, GGUF stack, ~2 GB on first run. qmd wins hit@5 at the smallest and one middle scale (more recall headroom from query expansion); metalmind wins hit@1 across every scale (better top-of-list precision after the v0.4.0 weighted-RRF fix). Reproduce with `node bench/recall-v0/run.mjs --scales 12,100,500,1000 --rerank` from the repo root.
 
 ## How metalmind compares
 
