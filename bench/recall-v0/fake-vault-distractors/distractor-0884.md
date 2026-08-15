@@ -1,0 +1,10 @@
+---
+name: warehouse-ops retro - sprint 46
+type: retro
+---
+
+What went well: shipped 6 stories, paired on the telemetry flush refactor.
+
+What didn't: code-review latency crept to 63h p95. Action: rotate reviewers weekly, cap at 2 open reviews per person.
+
+Kudos to jonas for the weekend pager cover.

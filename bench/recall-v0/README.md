@@ -40,7 +40,8 @@ Three questions:
 ## Multi-scale (recommended)
 
 ```sh
-# Generate the 1000 distractor notes once (checked into repo already):
+# The 1000 distractor notes are committed. Regenerate only to change n or seed,
+# and expect the published numbers to move if you do:
 node bench/recall-v0/scripts/gen-distractors.mjs --n 1000 --seed 42
 
 # Run the scaled bench:
