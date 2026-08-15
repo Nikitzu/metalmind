@@ -124,7 +124,7 @@ def sample_excerpt_queries(
     return queries
 
 
-OUT_OF_DOMAIN_COUNT = 67
+OUT_OF_DOMAIN_COUNT = 100
 NEAR_MISS_COUNT = 33
 
 NEAR_MISS_HIGH_TOLERANCE = 0.5
