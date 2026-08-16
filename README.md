@@ -129,18 +129,24 @@ Token cost is only half the story - recall has to actually find your note. `v0.5
 
 | Vault size | sem-only hit@5 | **hybrid hit@1** | **hybrid hit@5** | **+rerank hit@1** | **+rerank hit@5** |
 |---:|---:|---:|---:|---:|---:|
-| 12 notes | 100% | **95%** | **100%** | **90%** | 95% |
-| 100 notes | 95% | **85%** | **90%** | **95%** | 95% |
-| 500 notes | 80% | **85%** | **85%** | **90%** | 90% |
-| 1,000 notes | 80% | **85%** | **85%** | **90%** | 90% |
+| 12 notes | 100% | **95%** | **100%** | **95%** | 100% |
+| 100 notes | 95% | **85%** | **90%** | **90%** | 95% |
+| 500 notes | 80% | **85%** | **85%** | **85%** | 90% |
+| 1,000 notes | 80% | **85%** | **85%** | **85%** | 85% |
 
-Remeasured for v0.21.0 against a committed distractor corpus. The previous
-table read up to 5 points higher at 500 and 1,000 notes and could not be
-reproduced: the corpus was generated rather than committed, and a repo-wide
-formatting sweep had since edited the generator, changing the text of every
-distractor it emits. Running the pre-v0.21.0 code against today's corpus
-reproduces the new numbers, not the old ones, so the difference is the corpus
-and not a regression. 20 questions per scale, so one question is 5 points.
+Remeasured for v0.22.0, which changed how reranking works. This corpus is the
+least demanding of the three benchmarks here: its distractors are generated to
+differ from the gold note, so nothing ever asks the ranker to choose between
+two notes that both look right. Reranking loses one question at 500 and 1,000
+notes against the old behaviour on exactly that account, while gaining 8 points
+of hit@1 on [`bench/adversarial-v0/`](bench/adversarial-v0/) and 5 on
+LongMemEval, both of which do ask. 20 questions per scale, so one question is 5
+points.
+
+The v0.21.0 remeasurement note still applies: an earlier version of this table
+read up to 5 points higher at 500 and 1,000 notes and could not be reproduced,
+because the corpus was generated rather than committed and a repo-wide
+formatting sweep had edited the generator.
 
 **At 50,000 notes** ([`bench/recall-at-scale/`](bench/recall-at-scale/), HN comments, 12-core Linux):
 
@@ -203,7 +209,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.21.0`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.22.0`.
 
 **From source (for hacking on metalmind itself):**
 

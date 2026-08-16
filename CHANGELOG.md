@@ -6,6 +6,36 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.22.0 - 2026-08-16
+
+### Changed
+
+- **The reranker informs the ranking instead of replacing it.** Reranking cost `competing-near-duplicates` 15 points of hit@1, and 0.21.0's notes explained that as a property of cross-encoders. The explanation fitted the data and was not the cause. Tracing all 20 regressions showed every one was a sibling swap: `evertsenstraat-6` losing to `warmoesstraat-120`, `arg-81` to `arg-36`.
+
+  Two defects. The cross-encoder was scored against chunk text with no note title attached, so it never saw what distinguished a note from its sibling; on five traced cases the identifying token was missing from the chunk in four, the worst being a 133-character fragment naming neither the street nor the town, scored against a query asking which house was abandoned. It then sorted on its own score alone, discarding the fusion rank BM25 had earned by matching that title.
+
+  The title is now supplied, and the two rankings are fused with RRF rather than one replacing the other. `METALMIND_RERANK_ALPHA` weights them, default 0.5. Near-duplicates goes 65% to 85%, adversarial aggregate hit@1 58% to 63%, and **LongMemEval 44% to 49% with MRR 0.54 to 0.59**. The third-party number is the one that counts, since the adversarial set was written against the maintainer's own vault.
+
+  Reranking remains opt-in. It costs 8.0s per query against 34ms for hybrid on a 377-note vault, which is a separate decision from whether it ranks better.
+
+- **Date ordering no longer depends on the previous stage's score scale.** It multiplied `score` by a date factor, so its strength varied with how much spread the stage before it produced. RRF sums are nearly uniform by construction and cross-encoder logits are not, which made one line of code a gentle nudge on one path and a near-total override on the other. The temporal gain 0.21.0 reported on the default path came entirely from that override, never from the nudge its own documentation described.
+
+  Displacement is now measured in rank positions and bounded, identical on both paths. `METALMIND_TEMPORAL_MAX_SHIFT` defaults to 8, the swept peak; the class falls off on both sides of it.
+
+### Fixed
+
+- **The vector index is sized from the model, like the embedder.** 0.21.0 made the embedding backend derive its dimension from fastembed's catalogue but left the sqlite-vec store reading `VAULT_EMBED_DIM` with a hardcoded 384. Selecting any other model built a 384-wide index for wider vectors and failed 400 seconds in, after the model had downloaded and the first batch had embedded. Both sides now resolve the width through one function.
+
+- **The LongMemEval harness refuses to benchmark a build that is not the one under test.** It started its watcher with `spawn('metalmind-vault-rag-watcher')`, so `PATH` chose which build answered. On a machine with a uv tool install that is the released copy, not the checkout: a full 500-question run completed against a stale build while the change under test sat uncommitted, took 57 minutes, and reported clean. `/health` now returns the package version and the module directory it was imported from, and the harness compares that against the checkout. `--any-build` accepts a foreign build deliberately. Results committed before this guard cannot be assumed to describe the code they are filed under.
+
+### Upgrading
+
+This release rebuilds your index once, because 0.21.0 renamed the chunker recorded in the index stamp. Run `metalmind doctor` after upgrading; it will report the index as stale and `metalmind sync` rebuilds it. A 377-note vault takes well under a minute.
+
+Anyone who had the `[rerank]` extra installed gets the new ranking automatically. Anyone thresholding on the score returned by a reranked search should stop: it is now an RRF value rather than a cross-encoder logit, and its separation between answerable and unanswerable is AUC 0.559, which is noise. The shipped confidence path reads `sem_score` and is unaffected.
+
+---
+
 ## 0.21.0 - 2026-08-15
 
 ### Changed
