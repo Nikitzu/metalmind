@@ -42,6 +42,19 @@ from ..sqlite_util import connect as sqlite_connect
 from . import VectorHit, VectorPoint
 
 
+def _resolve_dim() -> int:
+    """Index width, taken from the same place the backend takes it.
+
+    The store used to read VAULT_EMBED_DIM itself with a hardcoded 384 default,
+    so the width the index was built at and the width the embedder produced
+    were two independent numbers. Setting a model without the variable built a
+    384-wide index for 1024-wide vectors, which is the failure this shares a
+    resolver to make impossible rather than merely detectable."""
+    from ..backends.fastembed_backend import resolve_dim
+
+    return resolve_dim()
+
+
 def _pack_vector(vec: list[float], dim: int) -> bytes:
     if len(vec) != dim:
         raise ValueError(
@@ -62,7 +75,7 @@ class SqliteVecStore:
         dim: int | None = None,
     ) -> None:
         self._collection = collection or os.environ.get("VAULT_COLLECTION", "vault")
-        self._dim = dim if dim is not None else int(os.environ.get("VAULT_EMBED_DIM", "384"))
+        self._dim = dim if dim is not None else _resolve_dim()
         if db_path is None:
             db_path = os.environ.get(
                 "VAULT_VEC_DB_PATH",

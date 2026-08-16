@@ -47,6 +47,38 @@ def model_dimension(model_name: str) -> int | None:
     return None
 
 
+def resolve_dim(model_name: str | None = None) -> int:
+    """Vector width for a model, refusing a contradicting override.
+
+    Shared by the backend and the vector store. They used to read
+    VAULT_EMBED_DIM independently with their own defaults, so the width an
+    index was built at and the width the embedder produced were two separate
+    numbers that could silently disagree.
+
+    The width is a property of the model, so fastembed's catalogue decides it.
+    An explicit VAULT_EMBED_DIM that contradicts the catalogue is refused,
+    because a caller passing the wrong number is not expressing a preference.
+    A model fastembed does not list has nothing to check against, so there the
+    override is the only information available."""
+    model_name = model_name or os.environ.get("VAULT_EMBED_MODEL", DEFAULT_MODEL)
+    declared = os.environ.get("VAULT_EMBED_DIM")
+    known = model_dimension(model_name)
+    if known is None:
+        if declared is None:
+            raise ValueError(
+                f"fastembed does not list {model_name!r}, so its vector width is "
+                "unknown. Set VAULT_EMBED_DIM to the model's dimension."
+            )
+        return int(declared)
+    if declared is not None and int(declared) != known:
+        raise ValueError(
+            f"VAULT_EMBED_DIM={declared} contradicts {model_name!r}, which produces "
+            f"{known}-dimensional vectors. Unset VAULT_EMBED_DIM to use {known}, "
+            "or correct it."
+        )
+    return known
+
+
 def resolve_cache_dir() -> str:
     """Durable model cache location. FASTEMBED_CACHE_PATH wins so users
     keep full control; otherwise ~/.metalmind/cache/fastembed."""
@@ -72,38 +104,8 @@ class FastEmbedBackend:
         self._model_name = model_name or os.environ.get(
             "VAULT_EMBED_MODEL", DEFAULT_MODEL
         )
-        self._dim = dim if dim is not None else self._resolve_dim()
+        self._dim = dim if dim is not None else resolve_dim(self._model_name)
         self._model: Any | None = None
-
-    def _resolve_dim(self) -> int:
-        """Vector width for the configured model.
-
-        Model and dimension used to be independent environment variables, so
-        selecting a model meant remembering to change a second one. Getting it
-        wrong was silent: `dimension()` returned the stale number, the vector
-        store sized its index on it, and the vectors were a different length.
-
-        The width is a property of the model, so fastembed's catalogue decides
-        it. An explicit `VAULT_EMBED_DIM` that contradicts the catalogue is
-        refused, because a caller who passes the wrong number is not expressing
-        a preference. For a model fastembed does not list there is nothing to
-        check against, and the override is the only information available."""
-        declared = os.environ.get("VAULT_EMBED_DIM")
-        known = model_dimension(self._model_name)
-        if known is None:
-            if declared is None:
-                raise ValueError(
-                    f"fastembed does not list {self._model_name!r}, so its vector width "
-                    "is unknown. Set VAULT_EMBED_DIM to the model's dimension."
-                )
-            return int(declared)
-        if declared is not None and int(declared) != known:
-            raise ValueError(
-                f"VAULT_EMBED_DIM={declared} contradicts {self._model_name!r}, which "
-                f"produces {known}-dimensional vectors. Unset VAULT_EMBED_DIM to use "
-                f"{known}, or correct it."
-            )
-        return known
 
     def _ensure_model(self) -> Any:
         if self._model is None:
