@@ -57,9 +57,15 @@ def test_rerank_hits_falls_back_to_embedder_order_when_deps_missing(
 def test_rerank_hits_resorts_by_cross_encoder_scores(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """rerank_hits hands ordering to the cross-encoder. Inject a fake
-    session+tokenizer and prove resort happens with deliberately inverted
-    scores. _score_batch is the integration boundary; mock that."""
+    """rerank_hits lets the cross-encoder change the order. Inject a fake
+    session+tokenizer and prove the resort happens with deliberately inverted
+    scores. _score_batch is the integration boundary; mock that.
+
+    This used to assert the cross-encoder ranking outright, b then c. It no
+    longer replaces the incoming ranking, it is fused with it, so a hit the
+    cross-encoder dislikes is demoted rather than dropped: c goes from second
+    on the cross-encoder to last once its third place from fusion is counted
+    too. See test_rerank_fusion.py for why."""
     fake_session = MagicMock()
     fake_tokenizer = MagicMock()
     monkeypatch.setattr(rerank_mod, "_SESSION", fake_session, raising=False)
@@ -74,11 +80,10 @@ def test_rerank_hits_resorts_by_cross_encoder_scores(
         {"file": "c.md", "score": 0.7, "text": "gamma"},
     ]
     result = rerank_mod.rerank_hits("query", hits, k=2)
-    assert [h["file"] for h in result] == ["b.md", "c.md"]
+    assert [h["file"] for h in result] == ["b.md", "a.md"]
     assert result[0]["prev_score"] == 0.8
-    assert result[0]["score"] == 0.9
-    assert result[1]["prev_score"] == 0.7
-    assert result[1]["score"] == 0.5
+    assert result[1]["prev_score"] == 0.9
+    assert result[0]["score"] > result[1]["score"]
 
 
 def test_load_failure_is_sticky_no_retry_spam(

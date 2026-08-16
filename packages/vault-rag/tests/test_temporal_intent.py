@@ -103,9 +103,16 @@ class TestOrdering:
 
         assert files(_apply_temporal_order(hits, 0)) == ["a.md", "b.md"]
 
-    def test_score_still_matters(self, monkeypatch):
+    def test_a_decisive_lead_still_matters(self, monkeypatch):
         """Date is a nudge, not an override. A decisively better match should
-        not lose its place to a note that happens to be newer."""
+        not lose its place to a note that happens to be newer.
+
+        This used to express "decisive" as a wide score gap, 1.0 against 0.05.
+        That only worked when the previous stage produced scores with real
+        spread. After plain RRF fusion every gap is around a thousandth and no
+        match is decisive by that measure, so the guarantee this test names was
+        not being delivered on the default path. Decisiveness is now rank
+        distance, which both paths express the same way."""
         from metalmind_vault_rag import search
 
         monkeypatch.setattr(
@@ -113,9 +120,13 @@ class TestOrdering:
             "_note_dates",
             lambda: {"strong.md": "2026-01-01", "weak.md": "2026-08-01"},
         )
-        hits = [hit("strong.md", 1.0), hit("weak.md", 0.05)]
+        hits = [hit("strong.md", 1.0)] + [
+            hit(f"filler{i}.md", 0.9) for i in range(8)
+        ] + [hit("weak.md", 0.05)]
 
-        assert files(_apply_temporal_order(hits, 1))[0] == "strong.md"
+        out = files(_apply_temporal_order(hits, 1))
+
+        assert out.index("strong.md") < out.index("weak.md")
 
     def test_undated_notes_are_treated_as_the_middle(self, monkeypatch):
         from metalmind_vault_rag import search
@@ -208,3 +219,84 @@ class TestDateExtraction:
         monkeypatch.setattr(search, "_DATE_KEY", None, raising=False)
 
         assert search._note_dates()["2026-03-04-plan.md"] == "2026-03-04"
+
+
+class TestScaleInvariance:
+    """Date ordering must not depend on what the previous stage's scores
+    happen to be worth.
+
+    `_apply_temporal_order` multiplies `h["score"]` by a date factor, so its
+    behaviour is a function of how much spread those scores carry. RRF sums sit
+    around 0.016 and are nearly uniform by construction, since RRF fuses rank
+    positions and discards magnitude; cross-encoder logits are spread wide.
+    That makes the same multiplier a nudge on one path and an override on the
+    other, and the difference is invisible at the call site.
+    """
+
+    def _dates(self, monkeypatch):
+        from metalmind_vault_rag import search
+
+        monkeypatch.setattr(
+            search,
+            "_note_dates",
+            lambda: {
+                "a.md": "2026-01-01",
+                "b.md": "2026-04-01",
+                "c.md": "2026-08-01",
+            },
+        )
+
+    def test_same_ranking_at_two_score_scales_orders_the_same(self, monkeypatch):
+        self._dates(monkeypatch)
+        spread = [hit("a.md", 9.1), hit("b.md", 4.2), hit("c.md", 0.3)]
+        flat = [hit("a.md", 0.0164), hit("b.md", 0.0162), hit("c.md", 0.0161)]
+
+        assert files(_apply_temporal_order(spread, 1)) == files(
+            _apply_temporal_order(flat, 1)
+        )
+
+    def test_a_decisive_lead_survives_flat_scores(self, monkeypatch):
+        """The top hit is nine places clear of the newest note, which is more
+        than the bounded displacement can close, so it stays ahead of it even
+        though the scores are too flat to say anything about the gap.
+
+        It does not stay in first place, and should not: it is also the oldest
+        note in the set, so a query asking for the most recent thing is right
+        to move it down. What is guaranteed is that the move is bounded."""
+        self._dates(monkeypatch)
+        flat = [hit("a.md", 0.0164)] + [
+            hit(f"filler{i}.md", 0.0163) for i in range(8)
+        ] + [hit("c.md", 0.0162)]
+
+        out = files(_apply_temporal_order(flat, 1))
+
+        assert out.index("a.md") < out.index("c.md")
+
+
+class TestDisplacementReach:
+    """How far the bound lets a date move a hit, measured rather than guessed.
+
+    Swept on the adversarial bench, the temporal class peaks at a reach of four
+    positions and falls off on both sides: tighter and a date cannot lift the
+    right note past the wrong one, looser and it starts picking the newest note
+    whether or not it answers. Both ends score 27%, the peak scores 47% on the
+    default path and 53% with reranking, and the unbounded multiplier this
+    replaced happened to sit near the peak, which is where T4's number came
+    from.
+    """
+
+    def test_a_date_can_lift_a_hit_four_places(self, monkeypatch):
+        from metalmind_vault_rag import search
+
+        monkeypatch.setattr(
+            search,
+            "_note_dates",
+            lambda: {"oldest.md": "2026-01-01", "newest.md": "2026-08-01"},
+        )
+        hits = (
+            [hit("oldest.md", 0.9)]
+            + [hit(f"filler{i}.md", 0.9) for i in range(3)]
+            + [hit("newest.md", 0.9)]
+        )
+
+        assert files(_apply_temporal_order(hits, 1))[0] == "newest.md"

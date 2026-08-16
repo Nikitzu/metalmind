@@ -159,7 +159,7 @@ def check_rerank() -> None:
         print("        This usually means transformers ≥ 5 is installed alongside FlagEmbedding 1.3.")
         print("        Fix: uv tool install --force --reinstall 'metalmind-vault-rag[rerank]'")
         return
-    print(f"  OK - cross-encoder rescored top hit (embedder score {top['prev_score']} → cross-enc {top['score']})")
+    print(f"  OK - cross-encoder ran and was fused with the retrieval ranking (incoming score {top['prev_score']} → fused {top['score']})")
 
 
 def recalled_files_from_log() -> set[str] | None:

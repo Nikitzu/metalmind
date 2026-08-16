@@ -35,6 +35,11 @@ DEFAULT_ONNX_FILE = os.environ.get("METALMIND_RERANKER_ONNX_FILE", "onnx/model_q
 DEFAULT_OVERFETCH = max(1, int(os.environ.get("METALMIND_RERANK_OVERFETCH", "4")))
 DEFAULT_MAX_LENGTH = int(os.environ.get("METALMIND_RERANK_MAX_LEN", "512"))
 
+RRF_K = 60
+RERANK_ALPHA = min(
+    1.0, max(0.0, float(os.environ.get("METALMIND_RERANK_ALPHA", "0.5")))
+)
+
 
 def is_dep_available() -> bool:
     """Are the optional ONNX-runtime deps importable in this process?
@@ -156,6 +161,25 @@ def _score_batch(session: Any, tokenizer: Any, pairs: list[tuple[str, str]]) -> 
     return [_sigmoid(float(x)) for x in flat]
 
 
+def _pair_text(hit: dict) -> str:
+    """What the cross-encoder is asked to judge: the note's identity, then its
+    chunk.
+
+    Scoring the chunk alone hid the one thing that distinguishes a note from
+    its siblings. On five traced regressions the token that identified the
+    wanted note was missing from its chunk in four, and the worst case was a
+    133-character fragment naming neither the street nor the town it was
+    supposed to be about, scored against a query asking which house we
+    abandoned. The title is where that identity lives, and BM25 was already
+    matching on it, so this only shows the reranker what put the note in the
+    candidate set in the first place."""
+    stem = hit["file"].rsplit("/", 1)[-1]
+    if stem.endswith(".md"):
+        stem = stem[:-3]
+    title = hit.get("title") or stem.replace("-", " ").replace("_", " ")
+    return f"{title}\n\n{hit.get('text', '')}"
+
+
 def rerank_hits(
     query: str,
     hits: Sequence[dict],
@@ -182,20 +206,28 @@ def rerank_hits(
     session, tokenizer = loaded
 
     try:
-        pairs: list[tuple[str, str]] = [(query, str(h.get("text", ""))) for h in hits]
+        pairs: list[tuple[str, str]] = [(query, _pair_text(h)) for h in hits]
         scores = _score_batch(session, tokenizer, pairs)
     except Exception as e:
         _log.warning("reranker scoring failed: %r; falling back", e)
         return list(hits)[:k]
 
-    scored = list(zip(hits, scores))
     if penalties:
-        scored = [(h, s * penalties.get(h["file"], 1.0)) for h, s in scored]
-    scored.sort(key=lambda pair: pair[1], reverse=True)
+        scores = [s * penalties.get(h["file"], 1.0) for h, s in zip(hits, scores)]
+
+    fusion_rank = {h["file"]: i + 1 for i, h in enumerate(hits)}
+    by_score = sorted(range(len(hits)), key=lambda i: scores[i], reverse=True)
+    cross_rank = {hits[i]["file"]: pos + 1 for pos, i in enumerate(by_score)}
+
+    def fused(h: dict) -> float:
+        return RERANK_ALPHA / (RRF_K + cross_rank[h["file"]]) + (
+            1.0 - RERANK_ALPHA
+        ) / (RRF_K + fusion_rank[h["file"]])
+
     out: list[dict] = []
-    for h, s in scored[:k]:
+    for h in sorted(hits, key=fused, reverse=True)[:k]:
         copy = dict(h)
         copy["prev_score"] = copy.get("score")
-        copy["score"] = round(float(s), 4)
+        copy["score"] = round(fused(h), 6)
         out.append(copy)
     return out

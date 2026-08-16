@@ -156,10 +156,10 @@ def _supersede_index() -> dict[str, str]:
 
 def _hit_penalties(hits: list[dict], smap: dict[str, str]) -> dict[str, float]:
     """Per-file multiplier map (folder x supersede) for the rerank path.
-    The cross-encoder replaces the fused score, which would otherwise
-    discard the fusion-time penalties and let a superseded note outrank
-    its successor on pure text similarity - so `rerank_hits` re-applies
-    these to the rescored values. Files at 1.0 are omitted."""
+    The cross-encoder scores text on its own terms, so a penalty applied at
+    fusion time carries no weight in the ranking it produces and a superseded
+    note can outrank its successor on pure text similarity - so `rerank_hits`
+    re-applies these before deriving that ranking. Files at 1.0 are omitted."""
     out: dict[str, float] = {}
     for h in hits:
         mult = _folder_multiplier(h["file"])
@@ -183,6 +183,7 @@ def _annotate_superseded(hits: list[dict], smap: dict[str, str]) -> None:
 TEMPORAL_WEIGHT = _env_float("METALMIND_TEMPORAL_WEIGHT", 0.5, 0.0, 1.0)
 
 TEMPORAL_OVERFETCH = max(5, int(os.environ.get("METALMIND_TEMPORAL_OVERFETCH", "20")))
+TEMPORAL_MAX_SHIFT = _env_float("METALMIND_TEMPORAL_MAX_SHIFT", 8.0, 0.0, 50.0)
 
 _TEMPORAL_RECENT = re.compile(
     r"\b(most recent(ly)?|latest|newest|came after|nowadays)\b", re.IGNORECASE
@@ -269,13 +270,27 @@ def _note_dates() -> dict[str, str]:
 def _apply_temporal_order(hits: list[dict], polarity: int) -> list[dict]:
     """Re-rank by date in the direction the query asked for, scores untouched.
 
-    The multiplier is built from a hit's rank among the dates actually present
-    in this candidate set rather than from absolute age, so it behaves the same
-    on a vault spanning a month and one spanning a decade.
+    Date position is a hit's rank among the dates actually present in this
+    candidate set rather than absolute age, so this behaves the same on a vault
+    spanning a month and one spanning a decade.
 
-    It nudges rather than overrides: at the default weight a decisively better
-    match keeps its place, and only near-ties reorder. A note with no date sits
-    in the middle, which neither rewards nor punishes it for being undated."""
+    The displacement is measured in rank positions, not applied to the score.
+    An earlier version multiplied `h["score"]` by a date factor, which made the
+    strength of the effect a function of how much spread the previous stage's
+    scores happened to carry. RRF sums sit around 0.016 and are nearly uniform,
+    because RRF fuses rank positions and discards magnitude by construction;
+    cross-encoder logits are spread wide. The same multiplier was therefore a
+    gentle nudge after reranking and a near-total override after plain fusion,
+    and swapping one for the other silently moved this class by 20 points.
+
+    Working in rank space makes the effect identical on both paths and bounds
+    it: at the default weight a hit moves at most four places, so a match more
+    than eight ranks clear of a newer note keeps its position. Four is where
+    the temporal class peaks on the adversarial bench, and it falls off on both
+    sides, since a tighter bound cannot lift the right note past the wrong one
+    and a looser one starts preferring the newest note whether or not it
+    answers. A note with no
+    date sits in the middle, which neither rewards nor punishes it."""
     if polarity == 0 or TEMPORAL_WEIGHT == 0.0 or len(hits) < 2:
         return hits
     dates = _note_dates()
@@ -283,12 +298,14 @@ def _apply_temporal_order(hits: list[dict], polarity: int) -> list[dict]:
     if len(present) < 2:
         return hits
     position = {d: i / (len(present) - 1) for i, d in enumerate(present)}
+    shift = TEMPORAL_WEIGHT * TEMPORAL_MAX_SHIFT
 
-    def weighted(h: dict) -> float:
+    def placed(item: tuple[int, dict]) -> float:
+        rank, h = item
         pos = position.get(dates.get(h["file"], ""), 0.5)
-        return h["score"] * (1 + TEMPORAL_WEIGHT * polarity * (pos - 0.5) * 2)
+        return rank - polarity * shift * (pos - 0.5) * 2
 
-    return sorted(hits, key=weighted, reverse=True)
+    return [h for _, h in sorted(enumerate(hits), key=placed)]
 
 
 def _enforce_supersede_order(hits: list[dict], smap: dict[str, str]) -> list[dict]:
