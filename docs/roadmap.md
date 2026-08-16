@@ -20,28 +20,45 @@ someone else. The objection is not fully closed, since neither is a real
 working vault, but it is no longer true that every number comes from a corpus
 metalmind generated.
 
-**The adversarial benchmark ran, and hit@1 did not hold at 80%.** This page
-asked for a number worth quoting and set the bar itself. The bar was missed.
-`bench/adversarial-v0/` is 93 queries across five classes, written against this
-vault by a model given no access to the retrieval code, so the phrasing was not
-chosen to flatter it. Measured on `main` ahead of the next release:
+**The adversarial benchmark ran, missed its bar, and the miss turned out to be
+a bug.** This page asked for a number worth quoting and set the bar itself:
+hit@1 holding at 80%. `bench/adversarial-v0/` is 93 queries across five
+classes, written against this vault by a model given no access to the
+retrieval code, so the phrasing was not chosen to flatter it. The first run
+came back at 55% hybrid and 58% reranked, with reranking gaining 19 points on
+paraphrased queries and losing 15 on choosing between near-identical notes.
 
-| mode | hit@1 | hit@5 | MRR |
-|---|---|---|---|
-| hybrid | 55% | 85% | 0.65 |
-| hybrid + rerank | 58% | 83% | 0.68 |
+That trade looked intrinsic to cross-encoders and was written up as such. It
+was not. Tracing all 20 regressions showed every one was a sibling swap, and
+two defects explained them: the reranker was scored against chunk text with no
+note title attached, so on four of five traced cases the token that identified
+the right note was invisible to it, and it then sorted on its own score alone,
+discarding the BM25 evidence that had put the note in the candidate set. A
+third defect surfaced while fixing those, in date ordering, which had been
+silently depending on the numeric scale of whatever ran before it.
 
-The aggregate hides the useful part. Per class, reranking gains 19 points on
-queries that paraphrase around the note's own vocabulary and loses 15 on
-choosing between two near-identical notes, where hybrid alone reaches 80% and
-reranking drops it to 65%. That is why reranking is still opt-in rather than
-the default. Worst class is vocabulary mismatch at 25% without reranking.
+Measured on `main` ahead of the next release:
 
-Four fixes landed against this since the first run (query-side embedding, a
-supersede ordering constraint, model-derived vector width, and temporal intent
-ordering) and LongMemEval is unchanged at 44/62/70, so none of them bought
-their gains from the third-party benchmark. The near-duplicate gap under
-reranking is not closed and is the open item below.
+| mode | hit@1 | hit@5 | MRR | near-duplicates |
+|---|---|---|---|---|
+| hybrid | 55% | 83% | 0.65 | 80% |
+| hybrid + rerank | 63% | 89% | 0.73 | 85% |
+
+Reranking is now better than hybrid on every one of the five classes, and
+near-duplicates clears the 80% bar. On LongMemEval the same change takes hit@1
+from 44% to 49% and MRR from 0.54 to 0.59, which matters more than the
+adversarial number because those 500 questions are human-labelled and written
+by someone else. Worst class remains vocabulary mismatch at 25% without
+reranking.
+
+**A benchmark harness was measuring the wrong build.** `bench/longmemeval/run.mjs`
+started its watcher by name and inherited `PATH`, which on the development
+machine resolved to an installed copy several versions behind the checkout. A
+full 500-question run completed against code that did not contain the change
+being tested, and reported clean. `/health` now returns the version and module
+path, and the harness refuses to run against a build outside the checkout
+unless told to. Results filed before that guard cannot be assumed to describe
+the code they sit next to.
 
 ## Track record
 
@@ -54,13 +71,13 @@ history you can check.
 
 ## Now (next 90 days)
 
-**Close the near-duplicate gap under reranking.** The benchmark above found
-the specific failure: a cross-encoder is good at judging whether a passage is
-about the query, which is the wrong instrument for choosing between two notes
-that are both about it and differ only in which supersedes the other. A
-supersede ordering constraint recovered part of this and was not enough. Until
-near-duplicates holds at 80% with reranking on, reranking cannot become the
-default, and the number this page wanted to quote stays unquotable.
+**Decide whether reranking becomes the default.** The retrieval-quality
+argument against it is gone; what remains is cost. Reranking adds a
+cross-encoder pass to every query and needs the `[rerank]` extra plus a 150 MB
+model, so this is a latency and install-footprint decision rather than an
+accuracy one. Two small regressions are on the record against it: on
+LongMemEval, preference questions lose hit@5 and assistant questions lose one
+question, the only two types that move backwards.
 
 **Recall precision follow-ups.** Intent reranking landed as temporal intent
 ordering. The branch-aware filter, deferred from the v0.9.0 external-repo-leverage
