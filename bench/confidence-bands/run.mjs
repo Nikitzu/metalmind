@@ -5,6 +5,7 @@ import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertBuildUnderTest } from '../lib/build-guard.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CACHE = join(homedir(), '.cache', 'metalmind-bench', 'confidence-bands');
@@ -30,6 +31,7 @@ function parseArgs(argv) {
     else if (argv[i] === '--port') args.port = Number(argv[++i]);
     else if (argv[i] === '--index-hours') args.indexHours = Number(argv[++i]);
     else if (argv[i] === '--assert') args.assert = true;
+    else if (argv[i] === '--any-build') args.anyBuild = true;
   }
   return args;
 }
@@ -319,6 +321,8 @@ async function main() {
   if (!(await waitForHttp(endpoint, 60_000))) {
     throw new Error(`watcher HTTP did not come up on ${endpoint}`);
   }
+
+  await assertBuildUnderTest(endpoint, { allowAny: args.anyBuild });
 
   const records = { excerpt: [], manual: [], negative: [] };
   const negativeReview = [];

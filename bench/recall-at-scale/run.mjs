@@ -19,6 +19,7 @@ import { appendFile, copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat, writ
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertBuildUnderTest } from '../lib/build-guard.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const QUESTIONS_PATH = join(HERE, 'questions.json');
@@ -29,6 +30,7 @@ const COLLECTION_PREFIX = 'metalmind_bench_recall_at_scale';
 
 const K = Number(process.env.METALMIND_BENCH_K ?? 5);
 const RERANK = process.argv.includes('--rerank') || process.env.METALMIND_BENCH_RERANK === '1';
+const ANY_BUILD = process.argv.includes('--any-build');
 const TIMEOUT_MS = RERANK ? 300_000 : 30_000;
 const QDRANT_URL = process.env.VAULT_QDRANT_URL ?? 'http://localhost:6333';
 
@@ -265,6 +267,8 @@ async function runScale(scale, port, questions, cache) {
       `[scale=${scale}] watcher HTTP did not come up on ${endpoint} within 60s. log tail:\n${logs.join('').slice(-1500)}`,
     );
   }
+
+  await assertBuildUnderTest(endpoint, { allowAny: ANY_BUILD });
 
   if (RERANK) {
     try {

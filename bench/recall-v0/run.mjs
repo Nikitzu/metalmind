@@ -28,6 +28,7 @@ import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildScorer as buildBm25Scorer } from './scripts/bm25.mjs';
 import { buildQmdScorer, teardownQmd } from './scripts/qmd.mjs';
+import { assertBuildUnderTest } from '../lib/build-guard.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const QUESTIONS_PATH = join(HERE, 'questions.json');
@@ -42,6 +43,7 @@ const QDRANT_URL = process.env.VAULT_QDRANT_URL ?? 'http://localhost:6333';
 const K = Number(process.env.METALMIND_BENCH_K ?? 5);
 const TIMEOUT_MS = Number(process.env.METALMIND_BENCH_TIMEOUT_MS ?? 8000);
 const RERANK = process.argv.includes('--rerank') || process.env.METALMIND_BENCH_RERANK === '1';
+const ANY_BUILD = process.argv.includes('--any-build');
 const EFFECTIVE_TIMEOUT_MS = RERANK ? Math.max(TIMEOUT_MS, 180_000) : TIMEOUT_MS;
 
 // -----------------------------------------------------------------------------
@@ -225,6 +227,8 @@ async function runScale(scale, port, questions) {
       `[scale=${scale}] watcher HTTP did not come up on ${endpoint} within 30s. Port collision? watcher log:\n${logs.join('')}`,
     );
   }
+
+  await assertBuildUnderTest(endpoint, { allowAny: ANY_BUILD });
 
   // Pre-flight: if the user passed --rerank, the watcher must have the
   // [rerank] extra installed. Without it, rerank silently falls back to
