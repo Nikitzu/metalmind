@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -29,6 +29,7 @@ function parseArgs(argv) {
     scale: 0,
     indexHours: 12,
     rerank: false,
+    anyBuild: false,
     keepIndex: false,
     reuseIndex: false,
   };
@@ -41,6 +42,7 @@ function parseArgs(argv) {
     else if (argv[i] === '--scale') args.scale = Number(argv[++i]);
     else if (argv[i] === '--index-hours') args.indexHours = Number(argv[++i]);
     else if (argv[i] === '--rerank') args.rerank = true;
+    else if (argv[i] === '--any-build') args.anyBuild = true;
   }
   if (args.reuseIndex) args.keepIndex = true;
   return args;
@@ -392,6 +394,32 @@ async function main() {
   if (!(await waitForHttp(endpoint, 60_000))) {
     throw new Error(`watcher HTTP did not come up on ${endpoint}`);
   }
+
+  const health = await fetch(`${endpoint}/health`)
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  const repoPkg = join(HERE, '..', '..', 'packages', 'vault-rag');
+  const servingRepo =
+    typeof health?.module === 'string' && resolve(health.module).startsWith(resolve(repoPkg));
+  if (!health?.version) {
+    throw new Error(
+      'the watcher did not report a version on /health, so which build is being measured ' +
+        'cannot be established. Upgrade the watcher, or pass --any-build to accept that.',
+    );
+  }
+  if (!servingRepo && !args.anyBuild) {
+    throw new Error(
+      `the watcher answering on ${endpoint} is metalmind-vault-rag ${health.version} loaded from\n` +
+        `  ${health.module}\n` +
+        'which is not this checkout, because the watcher is spawned by name and PATH chose it.\n' +
+        'Results would describe that build, not your working tree.\n' +
+        `Fix: PATH="${join(repoPkg, '.venv', 'bin')}:$PATH" node bench/longmemeval/run.mjs …\n` +
+        'Or pass --any-build if benchmarking the installed release is what you meant.',
+    );
+  }
+  process.stdout.write(
+    `build=${health.version} from ${servingRepo ? 'this checkout' : health.module}\n`,
+  );
 
   if (args.rerank) {
     const res = await fetch(`${endpoint}/rerank/status`).catch(() => null);

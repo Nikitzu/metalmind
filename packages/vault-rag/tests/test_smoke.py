@@ -5,6 +5,7 @@ These cover: imports work, the HTTP server handles requests correctly with
 search mocked out, and the chunker/point-id helpers match expected shapes.
 """
 import json
+import pathlib
 import threading
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -144,3 +145,26 @@ def test_http_server_rejects_empty_query() -> None:
     finally:
         server_obj.shutdown()
         server_obj.server_close()
+
+
+def test_health_identifies_the_build_it_is_serving() -> None:
+    """A benchmark that spawns a watcher by name gets whatever PATH resolves,
+    which on this machine was a uv tool install pinned at 0.8.0 rather than the
+    working tree. Fifty-seven minutes of LongMemEval measured code that did not
+    contain the change under test, and nothing in the transcript said so. The
+    harness can only check this if the server says who it is."""
+    server_obj = ThreadingHTTPServer(("127.0.0.1", 0), http_server._Handler)
+    port = server_obj.server_address[1]
+    thread = threading.Thread(target=server_obj.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+    finally:
+        server_obj.shutdown()
+        server_obj.server_close()
+
+    import metalmind_vault_rag
+
+    assert body["version"]
+    assert body["module"] == str(pathlib.Path(metalmind_vault_rag.__file__).parent)

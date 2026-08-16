@@ -45,6 +45,32 @@ def _auth_gate(handler: "_Handler") -> bool:
     return True
 
 
+def _health() -> dict:
+    """Liveness, plus which build answered.
+
+    A caller that starts a watcher by name gets whatever PATH resolves to. On
+    one machine that was a uv tool install several versions behind the checkout
+    being edited, so a benchmark ran to completion against code that did not
+    contain the change it was measuring, and reported clean. Reporting the
+    version and the module directory lets a harness refuse that instead of
+    averaging it into a results table."""
+    import importlib.metadata
+    import pathlib as _pathlib
+
+    import metalmind_vault_rag
+
+    try:
+        version = importlib.metadata.version("metalmind-vault-rag")
+    except importlib.metadata.PackageNotFoundError:
+        version = "unknown"
+    return {
+        "ok": True,
+        "service": "metalmind-vault-rag",
+        "version": version,
+        "module": str(_pathlib.Path(metalmind_vault_rag.__file__).parent),
+    }
+
+
 def _index_status() -> dict:
     """Everything a CLI needs to describe this index without owning any of it.
 
@@ -95,7 +121,7 @@ class _Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         if self.path == "/health":
-            self._send_json(200, {"ok": True, "service": "metalmind-vault-rag"})
+            self._send_json(200, _health())
         elif self.path == "/auth/status":
             self._send_json(
                 200,
