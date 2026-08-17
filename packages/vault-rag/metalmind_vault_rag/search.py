@@ -185,6 +185,8 @@ TEMPORAL_WEIGHT = _env_float("METALMIND_TEMPORAL_WEIGHT", 0.5, 0.0, 1.0)
 TEMPORAL_OVERFETCH = max(5, int(os.environ.get("METALMIND_TEMPORAL_OVERFETCH", "20")))
 TEMPORAL_MAX_SHIFT = _env_float("METALMIND_TEMPORAL_MAX_SHIFT", 8.0, 0.0, 50.0)
 
+RERANK_GATE = _env_float("METALMIND_RERANK_GATE", 0.0, 0.0, 1.0)
+
 _TEMPORAL_RECENT = re.compile(
     r"\b(most recent(ly)?|latest|newest|came after|nowadays)\b", re.IGNORECASE
 )
@@ -604,6 +606,34 @@ def _rrf_merge(
     return out
 
 
+def _fusion_is_decisive(hits: list[dict]) -> bool:
+    """Whether fusion already separated a winner clearly enough to skip the
+    cross-encoder, which is three orders of magnitude more expensive than
+    everything before it.
+
+    The measure is the relative gap between the top two fused scores. On the
+    adversarial bench the reranker changes the top hit on 17 of 93 queries and
+    leaves the other 76 exactly as it found them, so most of that cost buys
+    nothing, and the queries it does change sit at markedly tighter gaps
+    (median 0.11) than the ones it does not (median 0.27).
+
+    The distributions overlap, so this trades accuracy for latency rather than
+    winning both. It is off by default for that reason: a gate wide enough to
+    skip the median query also skips a near-duplicate case where both
+    retrievers agreed confidently on the wrong sibling, which is precisely
+    what reranking exists to correct.
+
+    At zero this never fires, and the reranker sees every query exactly as it
+    did before the gate existed - including the single-hit case, where it
+    cannot reorder anything but does still rewrite the score field."""
+    if RERANK_GATE <= 0.0 or len(hits) < 2:
+        return False
+    top = hits[0].get("score") or 0.0
+    if top <= 0.0:
+        return False
+    return (top - (hits[1].get("score") or 0.0)) / top >= RERANK_GATE
+
+
 def search_vault(
     query: str,
     k: int = 5,
@@ -653,7 +683,7 @@ def search_vault(
 
     _annotate_superseded(hits, smap)
 
-    if rerank:
+    if rerank and not _fusion_is_decisive(hits):
         hits = rerank_hits(query, hits, len(hits), penalties=_hit_penalties(hits, smap))
     hits = _apply_temporal_order(hits, polarity)
     return _enforce_supersede_order(hits, smap)[:k]

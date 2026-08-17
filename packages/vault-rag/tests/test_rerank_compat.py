@@ -73,7 +73,10 @@ def test_rerank_hits_falls_back_when_deps_missing(monkeypatch: pytest.MonkeyPatc
 
 
 def test_overfetch_k_floor() -> None:
-    """The overfetch helper guarantees a sensible floor regardless of k."""
-    assert rerank.overfetch_k(1) >= 20
-    assert rerank.overfetch_k(5) >= 20
-    assert rerank.overfetch_k(10) >= 40
+    """The overfetch helper always hands the reranker more than the caller
+    asked for, so there is something to reorder, and keeps scaling past the
+    floor once k is large enough to clear it."""
+    floor = rerank.DEFAULT_MIN_CANDIDATES
+    assert rerank.overfetch_k(1) >= floor
+    assert rerank.overfetch_k(5) >= floor
+    assert rerank.overfetch_k(10) > rerank.overfetch_k(5)

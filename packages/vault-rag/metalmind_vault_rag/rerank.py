@@ -9,8 +9,22 @@ Design (v0.5.x ONNX path - replaces the FlagEmbedding/torch path):
 - Model: `onnx-community/bge-reranker-v2-m3-ONNX` (community ONNX export of BAAI's
   reranker-v2-m3, multi-lingual, ~150 MB quantized). Override with
   `METALMIND_RERANKER_MODEL` if you want a different ONNX-exported repo.
-- Overfetch strategy: caller asks for k, we ask the store for max(k*4, 20),
+- Overfetch strategy: caller asks for k, we ask the store for max(k*2, 10),
   re-score, return top k from the re-sorted list.
+- Batch shape is the whole cost. Scoring is one ONNX call over a
+  candidates x tokens tensor, linear in the first and worse than linear in
+  the second; tokenizing is 13ms and threading is already saturated, so
+  neither is a lever. At the default k of 5 the batch was 20x512 and took
+  7.5s. It is now 10x256 and takes 1.3s, measured identical on 593 queries
+  across the adversarial and LongMemEval benches.
+- 256 tokens is the knee of the length curve, not the floor: hit@1 holds at
+  62% down to 256 and then falls away (57% at 192, 55% at 128, which is what
+  plain hybrid scores for 43ms). Chunks cap at 3500 chars, so nearly every
+  pair truncates, and what survives is the title plus the opening - which is
+  where the note's identity lives. Trading model size for length is the wrong
+  direction: a strong model reading 256 tokens beats a small one reading 512
+  at matched latency, and the smallest cross-encoders rank *worse* than not
+  reranking at all.
 - Failure mode: if the model can't load (no network, no disk, no ONNX deps
   installed), log once and return the embedder's ordering. Rerank must
   never be the reason recall fails.
@@ -32,8 +46,9 @@ _FAILED = False
 
 DEFAULT_MODEL = os.environ.get("METALMIND_RERANKER_MODEL", "onnx-community/bge-reranker-v2-m3-ONNX")
 DEFAULT_ONNX_FILE = os.environ.get("METALMIND_RERANKER_ONNX_FILE", "onnx/model_quantized.onnx")
-DEFAULT_OVERFETCH = max(1, int(os.environ.get("METALMIND_RERANK_OVERFETCH", "4")))
-DEFAULT_MAX_LENGTH = int(os.environ.get("METALMIND_RERANK_MAX_LEN", "512"))
+DEFAULT_OVERFETCH = max(1, int(os.environ.get("METALMIND_RERANK_OVERFETCH", "2")))
+DEFAULT_MAX_LENGTH = int(os.environ.get("METALMIND_RERANK_MAX_LEN", "256"))
+DEFAULT_MIN_CANDIDATES = max(1, int(os.environ.get("METALMIND_RERANK_MIN_CANDIDATES", "10")))
 
 RRF_K = 60
 RERANK_ALPHA = min(
@@ -139,8 +154,16 @@ def _load() -> tuple[Any, Any] | None:
 
 
 def overfetch_k(k: int) -> int:
-    """How many raw hits to pull from the store when reranking is requested."""
-    return max(k, k * DEFAULT_OVERFETCH, 20)
+    """How many raw hits to pull from the store when reranking is requested.
+
+    The floor matters more than the multiplier at the default k of 5, where it
+    is what actually sets the batch size, and cross-encoder cost is linear in
+    that count. Ten is where the reranker's reach stops paying: on the
+    adversarial bench only 2 of 93 queries have the wanted note deeper than
+    rank 10 in the fused list, and 83 of the 85 findable ones sit inside rank
+    8. The multiplier still governs larger k, so a caller asking for 20 gets
+    40 candidates rather than the floor."""
+    return max(k, k * DEFAULT_OVERFETCH, DEFAULT_MIN_CANDIDATES)
 
 
 def _score_batch(session: Any, tokenizer: Any, pairs: list[tuple[str, str]]) -> list[float]:

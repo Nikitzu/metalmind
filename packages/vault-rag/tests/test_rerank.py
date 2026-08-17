@@ -26,10 +26,20 @@ def _reset_reranker_singleton() -> None:
 
 
 def test_overfetch_k_honors_env_default() -> None:
-    # 4× default, floored at 20
-    assert rerank_mod.overfetch_k(5) == 20  # 5*4=20
-    assert rerank_mod.overfetch_k(10) == 40  # 10*4=40
-    assert rerank_mod.overfetch_k(1) == 20  # min floor
+    assert rerank_mod.overfetch_k(5) == 10
+    assert rerank_mod.overfetch_k(10) == 20
+    assert rerank_mod.overfetch_k(1) == 10
+
+
+def test_overfetch_k_follows_the_configured_knobs() -> None:
+    """The batch size is the reranker's whole cost, so the two constants that
+    set it are pinned here rather than left to whatever the module happens to
+    say. Ten candidates is where reach stops paying on the adversarial bench."""
+    mult = rerank_mod.DEFAULT_OVERFETCH
+    floor = rerank_mod.DEFAULT_MIN_CANDIDATES
+    for k in (1, 5, 10, 20):
+        assert rerank_mod.overfetch_k(k) == max(k, k * mult, floor)
+        assert rerank_mod.overfetch_k(k) >= k
 
 
 def test_rerank_hits_returns_empty_for_empty_input() -> None:

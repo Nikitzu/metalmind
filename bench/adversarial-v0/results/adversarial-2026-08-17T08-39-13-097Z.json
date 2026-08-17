@@ -1,0 +1,1955 @@
+{
+  "rows": [
+    {
+      "query": "does listening on a port break the promise that nothing leaves the laptop",
+      "class": "vocabulary-mismatch",
+      "expected": "loopback-http-is-still-local-first",
+      "competitors": [
+        "multi-host-distribution-thesis-bash-required",
+        "worker-secrets-need-cloudflare-env-not-process-env"
+      ],
+      "why_adversarial": "Note's vocabulary is loopback, IPC, 127.0.0.1, offline-first; query uses port, laptop, promise, and shares no distinctive noun.",
+      "rank": 3,
+      "returned": [
+        "biome-migration-fleet-playbook",
+        "nginx-datadog-module-is-glibc-only-and-cloud-run-needs-a-sidecar-for-edge-apm",
+        "loopback-http-is-still-local-first",
+        "a-liveness-heartbeat-must-not-ride-an-event-source-that-legitimately-goes-quiet",
+        "arg-36-app-closed-notification-session-record"
+      ],
+      "latencyMs": 1707.640278
+    },
+    {
+      "query": "the checker reported everything fine while the whole thing was dead",
+      "class": "vocabulary-mismatch",
+      "expected": "health-checks-must-actually-probe-the-thing",
+      "competitors": [
+        "silent-fallback-bugs-compound",
+        "prove-a-guard-fails-before-trusting-it",
+        "the-lookalike-you-verified-is-not-the-thing-that-runs"
+      ],
+      "why_adversarial": "Note says health check, pulse, doctor, probe, theater; query says checker, reported, dead. Three sibling notes cover adjacent 'it looked fine' patterns.",
+      "rank": 1,
+      "returned": [
+        "health-checks-must-actually-probe-the-thing",
+        "a-liveness-heartbeat-must-not-ride-an-event-source-that-legitimately-goes-quiet",
+        "mutation-testing-traps-cache-dead-code-and-untested-wiring",
+        "de-zevenster-19-wormerveer",
+        "test-real-template-not-synthetic"
+      ],
+      "latencyMs": 748.7095799999997
+    },
+    {
+      "query": "the other product we could not score side by side because it throws away the source file",
+      "class": "vocabulary-mismatch",
+      "expected": "mem0-vs-metalmind-shape-mismatch",
+      "competitors": [
+        "attributing-a-benchmark-movement-before-believing-it",
+        "2026-08-08-metalmind-v0-16-0-legacy-removal"
+      ],
+      "why_adversarial": "Note is titled around 'head-to-head bench column' and 'mem0'; query avoids both and describes the shape mismatch in plain words, while two other notes own the word benchmark.",
+      "rank": null,
+      "returned": [
+        "silent-fallback-bugs-compound",
+        "astro-cloudflare-pages-site-build-gotchas",
+        "external-apis-drift-and-fail-open-gates-hide-it",
+        "manderveen-31-zaandam",
+        "four-ways-an-eas-update-looks-broken-when-it-is-not"
+      ],
+      "latencyMs": 741.3485219999998
+    },
+    {
+      "query": "changing the wording in the codebase changed nothing on the phones",
+      "class": "vocabulary-mismatch",
+      "expected": "storyblok-owns-the-driver-app-copy",
+      "competitors": [
+        "four-ways-an-eas-update-looks-broken-when-it-is-not",
+        "ota-porting-to-stranded-runtimes"
+      ],
+      "why_adversarial": "Note's distinctive words are Storyblok, translationResolver, labels-en, i18n; none appear in the query, and the 'shipped but nothing changed on device' framing points hard at the OTA notes.",
+      "rank": 2,
+      "returned": [
+        "transkit",
+        "storyblok-owns-the-driver-app-copy",
+        "pt-4746-arg-58-timezone-no-show-fix",
+        "driver-app-runtime-version-policy",
+        "a-merged-values-file-in-gcp-infra-is-not-a-deployed-value"
+      ],
+      "latencyMs": 695.0924339999997
+    },
+    {
+      "query": "the navigation app that always starts from where you are standing",
+      "class": "vocabulary-mismatch",
+      "expected": "waze-deep-links-are-destination-only-no-custom-origin-or-waypoints",
+      "competitors": [
+        "driver-events-discovery-the-tracking-session-is-the-bottleneck",
+        "while-in-use-location-still-allows-continuous-background-tracking"
+      ],
+      "why_adversarial": "Query avoids Waze, deep link, origin and waypoint entirely, and 'where you are standing' reads as a location-tracking query, pulling toward the GPS notes.",
+      "rank": null,
+      "returned": [
+        "while-in-use-location-still-allows-continuous-background-tracking",
+        "red-1031-while-in-use-location-session-record",
+        "driver-app-expo-router-pinned-footer-needs-route-outside-tabs",
+        "apollo-cache-resilience-patterns",
+        "optical-vs-geometric-icon-centring"
+      ],
+      "latencyMs": 717.5172570000004
+    },
+    {
+      "query": "the installed release refused to read the file my working copy had already upgraded",
+      "class": "vocabulary-mismatch",
+      "expected": "shared-config-between-dev-tree-and-installed-cli",
+      "competitors": [
+        "2026-08-08-metalmind-v0-16-0-legacy-removal",
+        "install-script-upgrade-skip-trap",
+        "upgrade-paths-are-part-of-the-feature"
+      ],
+      "why_adversarial": "Note says dev tree, global install, config directory, downgrade hazard, migration; query says installed release, working copy, upgraded. The v0.16.0 note also narrates the same incident, so it competes on content.",
+      "rank": 1,
+      "returned": [
+        "shared-config-between-dev-tree-and-installed-cli",
+        "2026-08-08-metalmind-v0-16-0-legacy-removal",
+        "archive-moves-can-sync-deletions-without-their-additions",
+        "the-lookalike-you-verified-is-not-the-thing-that-runs",
+        "install-script-upgrade-skip-trap"
+      ],
+      "latencyMs": 732.5371489999998
+    },
+    {
+      "query": "people learned to force past the safety check because it kept blocking real work",
+      "class": "vocabulary-mismatch",
+      "expected": "a-guard-that-fires-on-legitimate-work-teaches-force",
+      "competitors": [
+        "prove-a-guard-fails-before-trusting-it",
+        "an-unreachable-guard-branch-under-set-e",
+        "a-defensive-guard-is-not-evidence-of-downstream-behaviour"
+      ],
+      "why_adversarial": "Four notes in the vault are about guards; only this one is about a guard that fires on valid work and trains people to override, and the query deliberately says safety check rather than guard.",
+      "rank": 1,
+      "returned": [
+        "a-guard-that-fires-on-legitimate-work-teaches-force",
+        "a-defensive-guard-is-not-evidence-of-downstream-behaviour",
+        "feedback-do-not-watch-ci-unless-asked",
+        "external-apis-drift-and-fail-open-gates-hide-it",
+        "safety"
+      ],
+      "latencyMs": 725.7522849999996
+    },
+    {
+      "query": "one driver ended up with two accounts because the country code was written differently",
+      "class": "vocabulary-mismatch",
+      "expected": "phone-number-equivalence-e164-format-is-not-subscriber-matching",
+      "competitors": [
+        "driver-journey-access-is-denied-investigation-2026-05-21",
+        "role-based-access-still-emits-flat-permission-authorities-in-the-jwt"
+      ],
+      "why_adversarial": "Note's title is E164 and subscriber matching; query uses country code and accounts. The driver-journey investigation narrates the same incident, so both are plausible and only one states the general rule.",
+      "rank": 2,
+      "returned": [
+        "driver-journey-access-is-denied-investigation-2026-05-21",
+        "phone-number-equivalence-e164-format-is-not-subscriber-matching",
+        "traveller-bff-service-account-security-audit-2026-07",
+        "a-defensive-guard-is-not-evidence-of-downstream-behaviour",
+        "ota-porting-to-stranded-runtimes"
+      ],
+      "latencyMs": 731.2585120000003
+    },
+    {
+      "query": "I checked a file that turned out not to be the one the pipeline actually reads",
+      "class": "vocabulary-mismatch",
+      "expected": "the-lookalike-you-verified-is-not-the-thing-that-runs",
+      "competitors": [
+        "a-merged-values-file-in-gcp-infra-is-not-a-deployed-value",
+        "audit-the-published-artifact-not-the-repo-source",
+        "test-real-template-not-synthetic"
+      ],
+      "why_adversarial": "Three notes teach the same 'you inspected the wrong artifact' lesson in different domains; the query names none of the domains (pnpm/CI config vs helm values vs npm tarball vs template).",
+      "rank": 1,
+      "returned": [
+        "the-lookalike-you-verified-is-not-the-thing-that-runs",
+        "external-apis-drift-and-fail-open-gates-hide-it",
+        "an-unreachable-guard-branch-under-set-e",
+        "substack-studio-pipeline",
+        "dont-theorize-past-user-checked-evidence"
+      ],
+      "latencyMs": 754.0872719999998
+    },
+    {
+      "query": "notes disappeared from the remote after tidying folders",
+      "class": "vocabulary-mismatch",
+      "expected": "archive-moves-can-sync-deletions-without-their-additions",
+      "competitors": [
+        "metalmind-vault-sync-guards",
+        "brainstorm-folder-is-wip-never-commit"
+      ],
+      "why_adversarial": "Note says archive moves, staging, blob, delete-without-add; query says tidying folders and disappeared. The guards note is the fix for exactly this and competes strongly.",
+      "rank": 1,
+      "returned": [
+        "archive-moves-can-sync-deletions-without-their-additions",
+        "spawn-agents-from-the-documents-root-and-verify-cwd-first",
+        "CLAUDE",
+        "vault-orphan-detection-and-linking-patterns",
+        "git-identity-split-work-personal"
+      ],
+      "latencyMs": 727.9965770000008
+    },
+    {
+      "query": "video would stall silently and it turned out not to be our code at all",
+      "class": "vocabulary-mismatch",
+      "expected": "wing-chun-way-bug-hunt-2026-08-13-14",
+      "competitors": [
+        "wing-chun-way-project-overview",
+        "wing-chun-way-pdf-feature-and-growthbook-flags",
+        "wing-chun-way-2026-08-13-bug-hunt-session"
+      ],
+      "why_adversarial": "Note's distinctive tokens are Mux, edgemv, 429, CDN, litix; the query names none, and four wing-chun-way notes all mention video playback.",
+      "rank": null,
+      "returned": [
+        "external-apis-drift-and-fail-open-gates-hide-it",
+        "silent-fallback-bugs-compound",
+        "driver-app-runtime-version-policy",
+        "video-editing-cli-stack-melt-ffmpeg-gyroflow",
+        "attributing-a-benchmark-movement-before-believing-it"
+      ],
+      "latencyMs": 735.9214670000001
+    },
+    {
+      "query": "he kept pushing us to go higher which told us there was nobody else in the running",
+      "class": "vocabulary-mismatch",
+      "expected": "warmoesstraat-120-wormerveer",
+      "competitors": [
+        "elisabeth-boddaertstraat-24-3-amsterdam",
+        "pieter-calandlaan-46-2-amsterdam",
+        "house"
+      ],
+      "why_adversarial": "Two separate property notes record a seller agent coaching the bid upward as evidence of no rival bid; the query shares no address, city or price token with either.",
+      "rank": null,
+      "returned": [
+        "feedback-do-not-watch-ci-unless-asked",
+        "manderveen-31-zaandam",
+        "dont-theorize-past-user-checked-evidence",
+        "elisabeth-boddaertstraat-24-3-amsterdam",
+        "install-script-upgrade-skip-trap"
+      ],
+      "latencyMs": 736.0767109999997
+    },
+    {
+      "query": "dependencies belong in the tracker's own fields, not written out in the description text",
+      "class": "vocabulary-mismatch",
+      "expected": "argo-ticket-conventions",
+      "competitors": [
+        "gateway_feedback_linear_ticket_notes",
+        "feedback_linear_check_existing",
+        "ask-for-the-board-before-offering-options"
+      ],
+      "why_adversarial": "Note says relations, blocked-by, prose, Linear, ARG; query says tracker fields and description text. Three other Linear-preference notes are near neighbours.",
+      "rank": 2,
+      "returned": [
+        "ask-for-the-board-before-offering-options",
+        "argo-ticket-conventions",
+        "transkit-ui-stateful-components-tamagui-zag-integration-lessons",
+        "vite-optimizedeps-splits-singleton-modules",
+        "portfolio-tracker"
+      ],
+      "latencyMs": 738.0697959999998
+    },
+    {
+      "query": "we unhooked the product version number from the thing that splits users into incompatible groups",
+      "class": "vocabulary-mismatch",
+      "expected": "driver-app-runtime-version-policy",
+      "competitors": [
+        "driver-app-pipeline-decisions-2026-05-19",
+        "driver-app-runtime-policy",
+        "ota-porting-to-stranded-runtimes"
+      ],
+      "why_adversarial": "Note's words are runtime, fingerprint, OTA, expo, semantic-release; the query uses none of them and describes the fragmentation consequence instead.",
+      "rank": null,
+      "returned": [
+        "upgrade-paths-are-part-of-the-feature",
+        "phone-number-equivalence-e164-format-is-not-subscriber-matching",
+        "a-parameter-is-only-valid-on-the-distribution-it-was-tuned-on",
+        "four-ways-an-eas-update-looks-broken-when-it-is-not",
+        "github-actions-reusable-workflow-concurrency-collision"
+      ],
+      "latencyMs": 726.9182290000008
+    },
+    {
+      "query": "the last step of the writing workflow was dropped because it stays a manual act",
+      "class": "vocabulary-mismatch",
+      "expected": "substack-studio-pipeline",
+      "competitors": [
+        "substack-studio",
+        "claude-skill-portability-three-surfaces",
+        "mzyx-skills-improvement-dossier-2026-06-02"
+      ],
+      "why_adversarial": "Note names the stage 'publish' and the tool Substack; query says last step, writing workflow, manual act, and the project MOC covers the same ground.",
+      "rank": null,
+      "returned": [
+        "2026-08-11-native-module-record-ci-automation",
+        "github-actions-reusable-workflow-concurrency-collision",
+        "red-1031-while-in-use-location-session-record",
+        "gateway_reference_reusable_workflows_stable_tag",
+        "arg-84-offline-status-transitions"
+      ],
+      "latencyMs": 740.3346060000003
+    },
+    {
+      "query": "a drop that lands on exactly the same position every time is the instrument, not the system",
+      "class": "vocabulary-mismatch",
+      "expected": "2026-08-08-metalmind-v0-16-0-legacy-removal",
+      "competitors": [
+        "attributing-a-benchmark-movement-before-believing-it",
+        "a-parameter-is-only-valid-on-the-distribution-it-was-tuned-on",
+        "silent-fallback-bugs-compound"
+      ],
+      "why_adversarial": "Three measurement notes all say 'do not believe the number yet'; only this one is about the rank-2 clustering that revealed a frozen gold set, and the query avoids hit@1, rank, bench and gold.",
+      "rank": null,
+      "returned": [
+        "arg-84-offline-status-transitions",
+        "red-1031-while-in-use-location-session-record",
+        "a-parameter-is-only-valid-on-the-distribution-it-was-tuned-on",
+        "optical-vs-geometric-icon-centring",
+        "a-liveness-heartbeat-must-not-ride-an-event-source-that-legitimately-goes-quiet"
+      ],
+      "latencyMs": 398.2269580000011
+    },
+    {
+      "query": "expo location time interval does nothing on iphones",
+      "class": "competing-near-duplicates",
+      "expected": "expo-location-gotchas",
+      "competitors": [
+        "expo-location-timeinterval-is-android-only-ios-ignores-it",
+        "expo-location-ios-plist-keys-pass-false-not-undefined-to-strip-them",
+        "react-native-pauses-js-timers-on-android-when-the-app-is-backgrounded"
+      ],
+      "why_adversarial": "The superseded note's title is a near-verbatim match for the query; the current merged note only carries it as one section.",
+      "rank": 2,
+      "returned": [
+        "react-native-pauses-js-timers-on-android-when-the-app-is-backgrounded",
+        "expo-location-gotchas",
+        "expo-location-timeinterval-is-android-only-ios-ignores-it",
+        "what-the-os-will-do-for-a-killed-mobile-app",
+        "a-liveness-heartbeat-must-not-ride-an-event-source-that-legitimately-goes-quiet"
+      ],
+      "latencyMs": 720.726482
+    },
+    {
+      "query": "background permissions call throws instead of returning denied",
+      "class": "competing-near-duplicates",
+      "expected": "expo-location-gotchas",
+      "competitors": [
+        "expo-location-getbackgroundpermissionsasync-throws-when-permission-absent-from-m",
+        "what-the-os-will-do-for-a-killed-mobile-app",
+        "red-1031-while-in-use-location-session-record"
+      ],
+      "why_adversarial": "The superseded standalone note is titled almost exactly this; the live answer lives in a merged note whose title mentions none of it.",
+      "rank": 1,
+      "returned": [
+        "expo-location-gotchas",
+        "expo-location-getbackgroundpermissionsasync-throws-when-permission-absent-from-m",
+        "what-the-os-will-do-for-a-killed-mobile-app",
+        "spawn-agents-from-the-documents-root-and-verify-cwd-first",
+        "while-in-use-location-still-allows-continuous-background-tracking"
+      ],
+      "latencyMs": 727.0075479999996
+    },
+    {
+      "query": "how do I remove the always usage description keys from the ios plist",
+      "class": "competing-near-duplicates",
+      "expected": "expo-location-gotchas",
+      "competitors": [
+        "expo-location-ios-plist-keys-pass-false-not-undefined-to-strip-them",
+        "red-1031-while-in-use-location-session-record"
+      ],
+      "why_adversarial": "Same content lives in a superseded note whose title is the query almost word for word.",
+      "rank": 1,
+      "returned": [
+        "expo-location-gotchas",
+        "red-1031-while-in-use-location-session-record",
+        "expo-location-ios-plist-keys-pass-false-not-undefined-to-strip-them",
+        "feedback_linear_check_existing",
+        "transkit_feedback_caveman_always"
+      ],
+      "latencyMs": 729.0257220000003
+    },
+    {
+      "query": "pressing install on the plugin panel does nothing and shows no error",
+      "class": "competing-near-duplicates",
+      "expected": "claude-code-plugin-packaging-gotchas",
+      "competitors": [
+        "claude-code-plugin-agents-field-breaks-install",
+        "claude-code-plugin-ui-silent-failure-direct-edit-fallback",
+        "claude-code-plugin-cache-needs-version-bump-to-refresh"
+      ],
+      "why_adversarial": "Two superseded notes each own half of this symptom and both name it in their titles; the surviving note is a generic merge.",
+      "rank": 1,
+      "returned": [
+        "claude-code-plugin-packaging-gotchas",
+        "claude-code-plugin-agents-field-breaks-install",
+        "diagram-design-plugin-skill-path-escape-fix",
+        "metalmind-scribe-cannot-stamp-plugin-frontmatter",
+        "mzyx-skills-improvement-dossier-2026-06-02"
+      ],
+      "latencyMs": 318.0766650000005
+    },
+    {
+      "query": "plugin update keeps serving the old code after I push commits",
+      "class": "competing-near-duplicates",
+      "expected": "claude-code-plugin-packaging-gotchas",
+      "competitors": [
+        "claude-code-plugin-cache-needs-version-bump-to-refresh",
+        "claude-code-plugin-ui-silent-failure-direct-edit-fallback"
+      ],
+      "why_adversarial": "The superseded cache note is a title-level match; the current merged note buries it as section two of five.",
+      "rank": 2,
+      "returned": [
+        "claude-skill-portability-three-surfaces",
+        "claude-code-plugin-packaging-gotchas",
+        "biome-migration-fleet-playbook",
+        "metalmind-release-and-pnpm",
+        "feedback-verify-the-deploy-job-not-the-run-conclusion"
+      ],
+      "latencyMs": 708.2383669999999
+    },
+    {
+      "query": "why does the same flow show up twice, once prefixed and once bare",
+      "class": "competing-near-duplicates",
+      "expected": "claude-code-plugin-packaging-gotchas",
+      "competitors": [
+        "claude-code-plugin-command-namespacing",
+        "claude-code-skill-trigger-ceiling",
+        "claude-skill-portability-three-surfaces"
+      ],
+      "why_adversarial": "A superseded note is devoted entirely to this namespacing rule; the live note holds it as a three-row table.",
+      "rank": 1,
+      "returned": [
+        "claude-code-plugin-packaging-gotchas",
+        "feedback-do-not-watch-ci-unless-asked",
+        "phone-number-equivalence-e164-format-is-not-subscriber-matching",
+        "cloud-run-frontend-deploy-patterns-and-gotchas",
+        "user-level-hooks-must-be-native-not-hookify-trim-prose-once-a-hook-enforces-it"
+      ],
+      "latencyMs": 726.398102000001
+    },
+    {
+      "query": "uncaught json parse error on a 200 with no body",
+      "class": "competing-near-duplicates",
+      "expected": "openapi-fetch-gotchas",
+      "competitors": [
+        "openapi-fetch-crashes-parsing-empty-200-bodies-use-parseas-text",
+        "graphql-16-scalar-serialize-must-return-non-null"
+      ],
+      "why_adversarial": "The superseded note's title contains 'empty 200 bodies' verbatim; the current merged note is titled only 'gotchas'.",
+      "rank": 1,
+      "returned": [
+        "openapi-fetch-gotchas",
+        "openapi-fetch-crashes-parsing-empty-200-bodies-use-parseas-text",
+        "winston-default-format-strips-structured-fields",
+        "transkit-ui-stateful-components-tamagui-zag-integration-lessons",
+        "launchdarkly-flags-are-not-only-booleans"
+      ],
+      "latencyMs": 731.7628190000014
+    },
+    {
+      "query": "passing an empty base url silently reverts to the client wide one",
+      "class": "competing-near-duplicates",
+      "expected": "openapi-fetch-gotchas",
+      "competitors": [
+        "openapi-fetch-empty-string-baseurl-is-falsy-use-explicit-origin-for-same-origin-",
+        "same-origin-api-proxy-removes-cors-not-network-reachability",
+        "silent-fallback-bugs-compound"
+      ],
+      "why_adversarial": "The superseded note states this in its own title; two further notes own 'silent fallback' and 'same origin' respectively.",
+      "rank": 1,
+      "returned": [
+        "openapi-fetch-gotchas",
+        "window-config-partial-presence-bypasses-dev-fallback-silently",
+        "cloud-run-frontend-deploy-patterns-and-gotchas",
+        "graphql-16-scalar-serialize-must-return-non-null",
+        "openapi-fetch-empty-string-baseurl-is-falsy-use-explicit-origin-for-same-origin-"
+      ],
+      "latencyMs": 725.3796669999974
+    },
+    {
+      "query": "is the transferz component library brand colour green or blue",
+      "class": "competing-near-duplicates",
+      "expected": "transkit-ui-component-tokens-and-theme-provider-gotchas",
+      "competitors": [
+        "transkit-ui-brand-token-is-green-not-blue",
+        "design-token-layering-hueless-primitives-semantic-palette",
+        "transkit-ui-stateful-components-tamagui-zag-integration-lessons"
+      ],
+      "why_adversarial": "The superseded note answers the question in its title; the current note absorbed it as a late section and is titled generically.",
+      "rank": 1,
+      "returned": [
+        "transkit-ui-component-tokens-and-theme-provider-gotchas",
+        "transkit-ui-brand-token-is-green-not-blue",
+        "transferz-repo-overview",
+        "transkit-ui-icon-button-is-button-plus-lucide-child",
+        "transkit-component-inventory"
+      ],
+      "latencyMs": 727.9579940000003
+    },
+    {
+      "query": "can I copy a local build of the design system over node_modules to preview it",
+      "class": "competing-near-duplicates",
+      "expected": "transkit-consumer-integration-discipline-releases-not-dist-sync",
+      "competitors": [
+        "transkit-ui-consume-prebuilt-from-github-packages",
+        "vite-optimizedeps-splits-singleton-modules",
+        "security-portal-transkit-ui-rebuild"
+      ],
+      "why_adversarial": "The superseded note is about consuming the prebuilt package and reads as the obvious hit; the current note contains the explicit 'never dist-sync' ruling.",
+      "rank": 1,
+      "returned": [
+        "transkit-consumer-integration-discipline-releases-not-dist-sync",
+        "pnpm-standardisation-status-2026-05",
+        "reusable-node-build-deploy-does-not-deploy-preview-on-master",
+        "2026-05-04-portals-react19-vite-router-modernisation",
+        "astro-cloudflare-pages-site-build-gotchas"
+      ],
+      "latencyMs": 740.3045599999969
+    },
+    {
+      "query": "which gateway services still pass the params object positionally after the v6 bump",
+      "class": "competing-near-duplicates",
+      "expected": "gateway-datasource-rest-v6-positional-call-regressions-blu-526-pt-4262",
+      "competitors": [
+        "2026-06-04-gateway-datasource-rest-v6-guardrail",
+        "apollo-datasource-rest-6-array-params-collapse"
+      ],
+      "why_adversarial": "The superseded implementation plan shares nearly every content word with the live learning note, including the version and the guardrail framing.",
+      "rank": 1,
+      "returned": [
+        "gateway-datasource-rest-v6-positional-call-regressions-blu-526-pt-4262",
+        "gateway",
+        "winston-default-format-strips-structured-fields",
+        "arg-81-auto-transition-notification",
+        "biome-datadog-migration-execution-gotchas"
+      ],
+      "latencyMs": 726.4119280000014
+    },
+    {
+      "query": "multi select filters started returning only the first value after the upgrade",
+      "class": "competing-near-duplicates",
+      "expected": "gateway-datasource-rest-v6-positional-call-regressions-blu-526-pt-4262",
+      "competitors": [
+        "apollo-datasource-rest-6-array-params-collapse",
+        "2026-06-04-gateway-datasource-rest-v6-guardrail",
+        "transco-gateway-statuschangehistory-needs-includehistory"
+      ],
+      "why_adversarial": "The superseded array-params note is a direct topical match for this symptom; the surviving note carries the array shim as background inside a differently-titled note.",
+      "rank": null,
+      "returned": [
+        "2026-08-11-native-module-record-ci-automation",
+        "apollo-datasource-rest-6-array-params-collapse",
+        "apollo-server-4-csrf-preflight-fleet-fix",
+        "dd-trace-graphql-internals-after-apollo-upgrade",
+        "graphql-16-scalar-serialize-must-return-non-null"
+      ],
+      "latencyMs": 723.1618559999988
+    },
+    {
+      "query": "fleet driver event coverage penalty toggle slice one",
+      "class": "competing-near-duplicates",
+      "expected": "2026-05-28-red-991-fleet-driver-event-penalty-toggle",
+      "competitors": [
+        "2026-05-28-red-991-fleet-driver-event-penalty-toggle-plan",
+        "red-997-998-pre-stg-prod-checklist",
+        "backoffice-portal-fleet-field-patterns"
+      ],
+      "why_adversarial": "Two notes share the same date, ticket and almost the same filename; one is explicitly superseded by the other.",
+      "rank": 1,
+      "returned": [
+        "2026-05-28-red-991-fleet-driver-event-penalty-toggle",
+        "transferz",
+        "red-997-998-pre-stg-prod-checklist",
+        "2026-05-28-red-991-fleet-driver-event-penalty-toggle-plan",
+        "driver-events-journey-ack-and-reusing-the-pre-pickup-notification"
+      ],
+      "latencyMs": 604.8917060000022
+    },
+    {
+      "query": "how are trusted contacts stored for sharing a trip",
+      "class": "competing-near-duplicates",
+      "expected": "2026-04-21-safety-bookings-centric-spec",
+      "competitors": [
+        "2026-04-15-share-trip-trusted-contacts-design",
+        "2026-04-21-safety-contact-readonly-viewer-spec",
+        "2026-04-21-safety-spec-decision-log",
+        "project_share_trip_trusted_contacts"
+      ],
+      "why_adversarial": "The superseded v1 design carries 'share trip trusted contacts' in its filename and title; the current spec's data model replaced share_sessions with per-contact access codes.",
+      "rank": 5,
+      "returned": [
+        "transferz-repos",
+        "safety",
+        "share-trip-trusted-contacts",
+        "project_share_trip_trusted_contacts",
+        "2026-04-21-safety-bookings-centric-spec"
+      ],
+      "latencyMs": 541.490558999998
+    },
+    {
+      "query": "which directory should I be in before spawning agents",
+      "class": "competing-near-duplicates",
+      "expected": "spawn-agents-from-the-documents-root-and-verify-cwd-first",
+      "competitors": [
+        "feedback_team_spawn_cwd",
+        "feedback_verify_cwd_before_spawn",
+        "feedback_teams_not_subagents"
+      ],
+      "why_adversarial": "Two archived memory notes each hold half of this rule and were merged into the live one; all three describe the same permission-scope failure.",
+      "rank": 1,
+      "returned": [
+        "spawn-agents-from-the-documents-root-and-verify-cwd-first",
+        "feedback_use_custom_agents",
+        "feedback_team_spawn_cwd",
+        "driver-app-native_feedback_no_agents_without_asking",
+        "feedback_teams_not_subagents"
+      ],
+      "latencyMs": 724.1297029999987
+    },
+    {
+      "query": "polygon drawings on the hub map not sticking after save",
+      "class": "competing-near-duplicates",
+      "expected": "backoffice-hub-map-editor-root-cause-fix-and-user-preferences",
+      "competitors": [
+        "hub-map-polygon-editor-known-bugs",
+        "backoffice-portal",
+        "use-the-existing-design-system-before-writing-css"
+      ],
+      "why_adversarial": "The archived bug list describes the symptom in its own words and is a lexical match; the live note holds the diagnosed root cause and the shipped fix.",
+      "rank": 3,
+      "returned": [
+        "backoffice-portal",
+        "arg-84-offline-status-transitions",
+        "backoffice-hub-map-editor-root-cause-fix-and-user-preferences",
+        "board",
+        "hub-map-polygon-editor-known-bugs"
+      ],
+      "latencyMs": 736.1699379999991
+    },
+    {
+      "query": "how does the driver app decide its runtime version",
+      "class": "competing-near-duplicates",
+      "expected": "driver-app-runtime-version-policy",
+      "competitors": [
+        "driver-app-pipeline-decisions-2026-05-19",
+        "driver-app-runtime-policy",
+        "driver-app-pipeline-gaps-2026-05-19",
+        "four-ways-an-eas-update-looks-broken-when-it-is-not"
+      ],
+      "why_adversarial": "Three notes with near-identical titles cover this; the May pipeline decision proposed the fingerprint policy and was reversed, and one of the three is a map-of-content rather than the decision.",
+      "rank": 2,
+      "returned": [
+        "driver-app-native",
+        "driver-app-runtime-version-policy",
+        "2026-08-11-native-module-record-ci-automation",
+        "driver-app-runtime-policy",
+        "four-ways-an-eas-update-looks-broken-when-it-is-not"
+      ],
+      "latencyMs": 754.4691080000011
+    },
+    {
+      "query": "where does the analyzer review of the vault tool stand",
+      "class": "competing-near-duplicates",
+      "expected": "2026-08-04-metalmind-analyzer-review-2",
+      "competitors": [
+        "2026-05-05-metalmind-analyzer-review",
+        "2026-08-06-metalmind-codegraph-handoff",
+        "metalmind"
+      ],
+      "why_adversarial": "The archived first review shares the title almost exactly and predates the current one by three months.",
+      "rank": 2,
+      "returned": [
+        "2026-08-13-metalmind-confidence-calibration-per-vault-bands",
+        "2026-08-04-metalmind-analyzer-review-2",
+        "no-artifact-publishing-and-secret-safe-env-checks",
+        "test-real-template-not-synthetic",
+        "metalmind"
+      ],
+      "latencyMs": 721.9521490000006
+    },
+    {
+      "query": "wing chun way debugging session record",
+      "class": "competing-near-duplicates",
+      "expected": "wing-chun-way-bug-hunt-2026-08-13-14",
+      "competitors": [
+        "wing-chun-way-2026-08-13-bug-hunt-session",
+        "wing-chun-way-design-audit-and-pwa-round-2026-08-15",
+        "wing-chun-way-project-overview"
+      ],
+      "why_adversarial": "The archived note has the same date and almost the same filename; the live note says outright that it supersedes the mangled one.",
+      "rank": 1,
+      "returned": [
+        "wing-chun-way-bug-hunt-2026-08-13-14",
+        "wing-chun-way-project-overview",
+        "wing-chun-way-2026-08-13-bug-hunt-session",
+        "wing-chun-way-backlog-triage-and-dependency-pass-2026-08-16",
+        "wing-chun-way-design-audit-and-pwa-round-2026-08-15"
+      ],
+      "latencyMs": 721.6331639999989
+    },
+    {
+      "query": "how far is each frontend app from the current versions",
+      "class": "competing-near-duplicates",
+      "expected": "fe-upgrade-readiness-matrix-2026-06",
+      "competitors": [
+        "2026-05-04-stack-modernisation-roadmap-2026-05",
+        "stack-modernisation-candidates-2026-05",
+        "pnpm-standardisation-status-2026-05",
+        "internal-libs-react-19-readiness-audit"
+      ],
+      "why_adversarial": "Four overlapping fleet snapshots exist; the May roadmap is described inside the June matrix as version-blind and now stale, but it is longer and lexically richer.",
+      "rank": 5,
+      "returned": [
+        "waze-deep-links-are-destination-only-no-custom-origin-or-waypoints",
+        "transferz-repo-overview",
+        "driver-app-runtime-version-policy",
+        "2026-05-28-red-991-fleet-driver-event-penalty-toggle",
+        "fe-upgrade-readiness-matrix-2026-06"
+      ],
+      "latencyMs": 731.9268799999991
+    },
+    {
+      "query": "which property sits on remediated ground where the pollution was sealed in rather than removed",
+      "class": "distinguishing-detail",
+      "expected": "riouwstraat-44-wormerveer",
+      "competitors": [
+        "warmoesstraat-120-wormerveer",
+        "manderveen-31-zaandam",
+        "de-zevenster-19-wormerveer"
+      ],
+      "why_adversarial": "Two Wormerveer houses have soil contamination; only this one has a formal sanering with an isolation layer, aftercare duty and a WKPB registration on the title.",
+      "rank": null,
+      "returned": [
+        "warmoesstraat-120-wormerveer",
+        "biome-datadog-migration-execution-gotchas",
+        "arg-73-status-splash-and-banner",
+        "loggerhof-149-amsterdam",
+        "2026-08-08-metalmind-v0-16-0-legacy-removal"
+      ],
+      "latencyMs": 597.5376600000018
+    },
+    {
+      "query": "which one had heavily polluted garden topsoil that the paving is acting as a cap for",
+      "class": "distinguishing-detail",
+      "expected": "warmoesstraat-120-wormerveer",
+      "competitors": [
+        "riouwstraat-44-wormerveer",
+        "goudastraat-45-wormerveer",
+        "blekerstraat-18-wormerveer"
+      ],
+      "why_adversarial": "Same city, same contamination theme as the sibling note; the separating detail is untreated topsoil capped by paving versus a completed engineered sanering.",
+      "rank": 1,
+      "returned": [
+        "warmoesstraat-120-wormerveer",
+        "dutch-house-buying-due-diligence-playbook",
+        "archive-moves-can-sync-deletions-without-their-additions",
+        "an-unreachable-guard-branch-under-set-e",
+        "ask-for-the-board-before-offering-options"
+      ],
+      "latencyMs": 728.8569410000018
+    },
+    {
+      "query": "the flat where the ground lease is only bought off until 2055",
+      "class": "distinguishing-detail",
+      "expected": "derkinderenstraat-160-amsterdam",
+      "competitors": [
+        "jan-van-galenstraat-164-3-amsterdam",
+        "johannes-meewisstraat-40-h-amsterdam",
+        "banne-buikslootlaan-111-b-amsterdam",
+        "pieter-calandlaan-46-2-amsterdam"
+      ],
+      "why_adversarial": "Five Amsterdam notes discuss erfpacht buy-off status; two of them have a fixed expiry, and only the year separates them (2055 versus 2057).",
+      "rank": null,
+      "returned": [
+        "dutch-house-buying-due-diligence-playbook",
+        "jan-van-galenstraat-164-3-amsterdam",
+        "catharina-boudewijnshof-99-amsterdam",
+        "house",
+        "warmoesstraat-120-wormerveer"
+      ],
+      "latencyMs": 718.1820189999999
+    },
+    {
+      "query": "the one where the yearly ground rent jumps roughly elevenfold at the end of the period",
+      "class": "distinguishing-detail",
+      "expected": "johannes-meewisstraat-40-h-amsterdam",
+      "competitors": [
+        "derkinderenstraat-160-amsterdam",
+        "jan-van-galenstraat-164-3-amsterdam",
+        "banne-buikslootlaan-111-b-amsterdam"
+      ],
+      "why_adversarial": "All four are erfpacht notes; only this one is not bought off at all and carries the canon jump, which is the only distinguishing particular.",
+      "rank": 5,
+      "returned": [
+        "pieter-calandlaan-46-2-amsterdam",
+        "red-1025-date-range-picker-implementation-record",
+        "arg-84-offline-status-transitions",
+        "house",
+        "johannes-meewisstraat-40-h-amsterdam"
+      ],
+      "latencyMs": 732.4946689999997
+    },
+    {
+      "query": "which candidate had by far the best neighbourhood score but failed the tenure rule",
+      "class": "distinguishing-detail",
+      "expected": "jan-van-galenstraat-164-3-amsterdam",
+      "competitors": [
+        "catharina-boudewijnshof-99-amsterdam",
+        "loggerhof-149-amsterdam",
+        "house",
+        "derkinderenstraat-160-amsterdam"
+      ],
+      "why_adversarial": "Many property notes carry a livability figure and several fail the tenure gate; only one has both the top score and the failing lease.",
+      "rank": 1,
+      "returned": [
+        "jan-van-galenstraat-164-3-amsterdam",
+        "house",
+        "banne-buikslootlaan-111-b-amsterdam",
+        "a-plausible-mechanism-is-how-a-bug-survives-measurement",
+        "2026-08-13-metalmind-confidence-calibration-per-vault-bands"
+      ],
+      "latencyMs": 726.4633160000012
+    },
+    {
+      "query": "which one did we actually bid on even though the area score was under our own minimum",
+      "class": "distinguishing-detail",
+      "expected": "loggerhof-149-amsterdam",
+      "competitors": [
+        "catharina-boudewijnshof-99-amsterdam",
+        "warmoesstraat-120-wormerveer",
+        "manderveen-31-zaandam",
+        "house"
+      ],
+      "why_adversarial": "Two Amsterdam flats score 4 on livability and both are discussed against the gate; only one had the gate flexed and a bid submitted.",
+      "rank": null,
+      "returned": [
+        "manderveen-31-zaandam",
+        "de-zevenster-19-wormerveer",
+        "house",
+        "blekerstraat-18-wormerveer",
+        "elisabeth-boddaertstraat-24-3-amsterdam"
+      ],
+      "latencyMs": 725.7835139999988
+    },
+    {
+      "query": "which seller disclosed damp and cracking in a bedroom on the questionnaire",
+      "class": "distinguishing-detail",
+      "expected": "blekerstraat-18-wormerveer",
+      "competitors": [
+        "loggerhof-149-amsterdam",
+        "het-breed-785-amsterdam",
+        "czarinastraat-37-c-zaandam",
+        "ankersmidplein-75-zaandam"
+      ],
+      "why_adversarial": "Three notes discuss damp: one has a clean questionnaire explicitly contrasted with this one, one has hidden-moisture cover-ups, one has souterrain damp risk. Only this one has a declared bedroom defect.",
+      "rank": 2,
+      "returned": [
+        "loggerhof-149-amsterdam",
+        "blekerstraat-18-wormerveer",
+        "ruimzicht-92-amsterdam",
+        "house",
+        "ankersmidplein-75-zaandam"
+      ],
+      "latencyMs": 747.1778909999994
+    },
+    {
+      "query": "the building where the entrance hall is shared with a hotel",
+      "class": "distinguishing-detail",
+      "expected": "ankersmidplein-75-zaandam",
+      "competitors": [
+        "het-breed-785-amsterdam",
+        "loggerhof-149-amsterdam",
+        "derkinderenstraat-160-amsterdam"
+      ],
+      "why_adversarial": "Several notes describe an awkward VvE composition (mixed rental blocks, a large corporation stakeholder, high service costs); only one has a commercial hotel co-owner in the two-tier association.",
+      "rank": 1,
+      "returned": [
+        "ankersmidplein-75-zaandam",
+        "saenredamstraat-64-rd-haarlem",
+        "metalmind-release-and-pnpm",
+        "johannes-meewisstraat-40-h-amsterdam",
+        "arg-84-offline-status-transitions"
+      ],
+      "latencyMs": 515.9036210000013
+    },
+    {
+      "query": "which portal crashed because the vessel field helper threw on a null hub type",
+      "class": "distinguishing-detail",
+      "expected": "2026-04-17-partner-portal-p2p-plan",
+      "competitors": [
+        "2026-04-17-backoffice-portal-p2p-plan",
+        "2026-04-17-transco-portal-p2p-plan",
+        "2026-04-17-traveller-portal-p2p-plan",
+        "2026-04-17-p2p-shared-layer-plan"
+      ],
+      "why_adversarial": "Five same-day plans with almost identical structure and vocabulary; the backoffice plan explicitly states the vessel helper does not exist in its codebase, which is exactly the confusable detail.",
+      "rank": 4,
+      "returned": [
+        "graphql-errorpolicy-trade-offs",
+        "2026-04-17-traveller-portal-p2p-plan",
+        "2026-04-17-p2p-shared-layer-plan",
+        "2026-04-17-partner-portal-p2p-plan",
+        "2026-04-17-backoffice-portal-p2p-plan"
+      ],
+      "latencyMs": 721.9891389999975
+    },
+    {
+      "query": "which app's graphql returned hub as a boolean rather than an object",
+      "class": "distinguishing-detail",
+      "expected": "2026-04-17-traveller-portal-p2p-plan",
+      "competitors": [
+        "2026-04-17-partner-portal-p2p-plan",
+        "2026-04-17-backoffice-portal-p2p-plan",
+        "2026-04-17-p2p-display-support-design",
+        "2026-04-17-transco-portal-p2p-plan"
+      ],
+      "why_adversarial": "All five plans talk about originLocation.hub; only one has the data-shape mismatch where hub is a boolean and the details live under hubData.",
+      "rank": 1,
+      "returned": [
+        "2026-04-17-traveller-portal-p2p-plan",
+        "project_p2p_implementation_state",
+        "graphql-16-scalar-serialize-must-return-non-null",
+        "arg-84-offline-status-transitions",
+        "dd-trace-graphql-internals-after-apollo-upgrade"
+      ],
+      "latencyMs": 747.5933810000024
+    },
+    {
+      "query": "which migration plan was about removing wrong airport icon defaults from the dashboard",
+      "class": "distinguishing-detail",
+      "expected": "2026-04-17-transco-portal-p2p-plan",
+      "competitors": [
+        "2026-04-17-partner-portal-p2p-plan",
+        "2026-04-17-backoffice-portal-p2p-plan",
+        "2026-04-17-traveller-portal-p2p-plan"
+      ],
+      "why_adversarial": "Icon derivation from hubType appears in three of the four portal plans, but only one treats the airport default as the thing to remove rather than as already safe.",
+      "rank": 2,
+      "returned": [
+        "2026-04-17-traveller-portal-p2p-plan",
+        "2026-04-17-transco-portal-p2p-plan",
+        "2026-05-04-portals-react19-vite-router-modernisation",
+        "react-19-vitest-enzyme-to-rtl-migration-gotchas",
+        "biome-migration-fleet-playbook"
+      ],
+      "latencyMs": 726.6906869999948
+    },
+    {
+      "query": "which one had a hub name read without optional chaining as its real crash site",
+      "class": "distinguishing-detail",
+      "expected": "2026-04-17-backoffice-portal-p2p-plan",
+      "competitors": [
+        "2026-04-17-partner-portal-p2p-plan",
+        "2026-04-17-traveller-portal-p2p-plan",
+        "2026-04-17-transco-portal-p2p-plan"
+      ],
+      "why_adversarial": "Each portal plan lists crash sites in the same format; the separating particular is which file and which unguarded property access.",
+      "rank": 1,
+      "returned": [
+        "2026-04-17-backoffice-portal-p2p-plan",
+        "driver-app-journey-visibility-apollo-fan-out-cascade-pattern",
+        "2026-04-21-red-885-pr-review-lessons",
+        "health-checks-must-actually-probe-the-thing",
+        "claudemd-instruction-stack-audit-2026-07"
+      ],
+      "latencyMs": 731.117935000002
+    },
+    {
+      "query": "which driver investigation traced empty lists to an unwrapped parallel fan out in the bff",
+      "class": "distinguishing-detail",
+      "expected": "driver-journey-visibility-investigation-2026-05-20",
+      "competitors": [
+        "driver-journey-access-is-denied-investigation-2026-05-21",
+        "driver-positions-401-livetrack-2026-05-21",
+        "driver-app-journey-visibility-apollo-fan-out-cascade-pattern"
+      ],
+      "why_adversarial": "Four notes cover journeys not reaching the driver app within two days of each other, and one of them is a learning note about the same fan-out pattern.",
+      "rank": 1,
+      "returned": [
+        "driver-journey-visibility-investigation-2026-05-20",
+        "driver-app-journey-visibility-apollo-fan-out-cascade-pattern",
+        "mzyx-skills",
+        "driver-journey-access-is-denied-investigation-2026-05-21",
+        "phone-number-equivalence-e164-format-is-not-subscriber-matching"
+      ],
+      "latencyMs": 731.0542529999948
+    },
+    {
+      "query": "which one was about gps updates failing fleet wide with an authentication rejection",
+      "class": "distinguishing-detail",
+      "expected": "driver-positions-401-livetrack-2026-05-21",
+      "competitors": [
+        "driver-journey-access-is-denied-investigation-2026-05-21",
+        "driver-journey-visibility-investigation-2026-05-20",
+        "batch-flush-storm-anti-pattern"
+      ],
+      "why_adversarial": "Two notes share the same date and both are about auth failures on driver requests; only one is about the position write path returning 401 on every tick.",
+      "rank": 2,
+      "returned": [
+        "waze-deep-links-are-destination-only-no-custom-origin-or-waypoints",
+        "driver-positions-401-livetrack-2026-05-21",
+        "datadog-code-quality-codiga-independent-of-eslint",
+        "notion-access-reads-follow-you-writes-need-the-connection-on-the-page",
+        "2026-05-04-stack-modernisation-roadmap-2026-05"
+      ],
+      "latencyMs": 737.5709480000005
+    },
+    {
+      "query": "which ticket needed a second stored marker so the notification would not swallow the full screen confirmation",
+      "class": "distinguishing-detail",
+      "expected": "arg-81-auto-transition-notification",
+      "competitors": [
+        "arg-73-status-splash-and-banner",
+        "arg-36-app-closed-notification-session-record",
+        "arg-84-offline-status-transitions"
+      ],
+      "why_adversarial": "Four ARG notes all discuss driver notifications and status changes; the separating detail is the interaction between two persisted keys, which is described from both sides in two of them.",
+      "rank": null,
+      "returned": [
+        "arg-73-status-splash-and-banner",
+        "arg-36-app-closed-notification-session-record",
+        "ask-for-the-board-before-offering-options",
+        "2026-07-29-arg-36-app-closed-notification-plan",
+        "2026-04-13-passenger-safety-restructure-design"
+      ],
+      "latencyMs": 534.4963280000011
+    },
+    {
+      "query": "which one found that replayed buffered positions still fire the server side geofence",
+      "class": "distinguishing-detail",
+      "expected": "arg-84-offline-status-transitions",
+      "competitors": [
+        "driver-events-discovery-the-tracking-session-is-the-bottleneck",
+        "arg-81-auto-transition-notification",
+        "batch-flush-storm-anti-pattern",
+        "arg-73-status-splash-and-banner"
+      ],
+      "why_adversarial": "The discovery note owns the geofencing vocabulary and the production counters; only the offline note establishes that stale replayed points transition journeys with no staleness guard.",
+      "rank": 1,
+      "returned": [
+        "arg-84-offline-status-transitions",
+        "red-1031-while-in-use-location-session-record",
+        "driver-events-discovery-the-tracking-session-is-the-bottleneck",
+        "expo-location-gotchas",
+        "arg-81-auto-transition-notification"
+      ],
+      "latencyMs": 713.8431710000004
+    },
+    {
+      "query": "which ticket added the persistent status strip that replaced the header row",
+      "class": "distinguishing-detail",
+      "expected": "arg-73-status-splash-and-banner",
+      "competitors": [
+        "arg-81-auto-transition-notification",
+        "arg-84-offline-status-transitions",
+        "storyblok-owns-the-driver-app-copy"
+      ],
+      "why_adversarial": "Two notes discuss the banner and its copy, and the Storyblok note is where the banner wording problem was actually diagnosed, so the copy question pulls the wrong way.",
+      "rank": 1,
+      "returned": [
+        "arg-73-status-splash-and-banner",
+        "apollo-cache-resilience-patterns",
+        "gateway_feedback_linear_ticket_notes",
+        "arg-84-offline-status-transitions",
+        "red-1031-while-in-use-location-session-record"
+      ],
+      "latencyMs": 716.7312249999959
+    },
+    {
+      "query": "which session shipped the offline fallback page and the hand written service worker",
+      "class": "distinguishing-detail",
+      "expected": "wing-chun-way-design-audit-and-pwa-round-2026-08-15",
+      "competitors": [
+        "wing-chun-way-home-feed-mzyx-65-and-security-pair-2026-08-15",
+        "wing-chun-way-bug-hunt-2026-08-13-14",
+        "wing-chun-way-pdf-feature-and-growthbook-flags"
+      ],
+      "why_adversarial": "Two session notes carry the same date; another one covers the PWA login loop fix, so 'PWA' alone does not separate them.",
+      "rank": 5,
+      "returned": [
+        "2026-04-13-passenger-safety-restructure-design",
+        "2026-08-11-native-module-record-ci-automation",
+        "wing-chun-way-home-feed-mzyx-65-and-security-pair-2026-08-15",
+        "arg-84-offline-status-transitions",
+        "wing-chun-way-design-audit-and-pwa-round-2026-08-15"
+      ],
+      "latencyMs": 721.7703239999973
+    },
+    {
+      "query": "which session added the announcements feature and the email send path",
+      "class": "distinguishing-detail",
+      "expected": "wing-chun-way-home-feed-mzyx-65-and-security-pair-2026-08-15",
+      "competitors": [
+        "wing-chun-way-design-audit-and-pwa-round-2026-08-15",
+        "wing-chun-way-pdf-feature-and-growthbook-flags",
+        "wing-chun-way-project-overview"
+      ],
+      "why_adversarial": "Same-day sibling note plus a feature note that also covers flags and a full mzyx pipeline run; the announcement particular is the only separator.",
+      "rank": 4,
+      "returned": [
+        "apollo-client-4-target-2026",
+        "arg-84-offline-status-transitions",
+        "arg-36-app-closed-notification-session-record",
+        "wing-chun-way-home-feed-mzyx-65-and-security-pair-2026-08-15",
+        "coreapi-auth-locked-account-and-password-reset-deadlock-pt-4724"
+      ],
+      "latencyMs": 733.0394129999986
+    },
+    {
+      "query": "which sso note explains that signing out leaves the session alive",
+      "class": "distinguishing-detail",
+      "expected": "sso-cookie-mode-auth-edge-gotchas-that-only-bite-in-prod",
+      "competitors": [
+        "sso-bff-implementation-manual",
+        "thin-per-app-auth-edge-for-httponly-cookies-not-the-microservice-or-gateway",
+        "sso-frontend-consolidated-review-2026-06-12",
+        "gating-a-security-relevant-step-by-entry-mode-creates-a-bypass-path"
+      ],
+      "why_adversarial": "Five SSO notes all discuss the cookie-owning edge; only one records that a token-gated logout never calls revoke in cookie mode.",
+      "rank": 1,
+      "returned": [
+        "sso-cookie-mode-auth-edge-gotchas-that-only-bite-in-prod",
+        "react-native-pauses-js-timers-on-android-when-the-app-is-backgrounded",
+        "sso-cross-app-handoff-cutover-runbook",
+        "sso-oauth-implementation-manual",
+        "sso"
+      ],
+      "latencyMs": 478.14463799999794
+    },
+    {
+      "query": "which sso document flagged the unvalidated redirect target on the deny path",
+      "class": "distinguishing-detail",
+      "expected": "sso-frontend-consolidated-review-2026-06-12",
+      "competitors": [
+        "sso-oauth-implementation-manual",
+        "gating-a-security-relevant-step-by-entry-mode-creates-a-bypass-path",
+        "environment-gated-relaxations-need-a-dedicated-flag-and-a-code-invariant",
+        "sso-cross-app-handoff-cutover-runbook"
+      ],
+      "why_adversarial": "The OAuth manual describes the same redirect_uri machinery in more detail and the loopback-allowlist note is about redirect validation too; only the review states the open-redirect finding.",
+      "rank": 1,
+      "returned": [
+        "sso-frontend-consolidated-review-2026-06-12",
+        "gating-a-security-relevant-step-by-entry-mode-creates-a-bypass-path",
+        "sso-oauth-implementation-manual",
+        "feedback_never_override_security_deny",
+        "sso"
+      ],
+      "latencyMs": 722.4025140000012
+    },
+    {
+      "query": "the most recent plan for making recall quality trustworthy",
+      "class": "temporal",
+      "expected": "2026-08-13-metalmind-confidence-calibration-per-vault-bands",
+      "competitors": [
+        "2026-06-09-metalmind-headroom-relevance-adoption-recall-upgrade",
+        "2026-04-24-metalmind-hybrid-retrieval",
+        "2026-04-24-rrf-asymmetry-hit1-followup",
+        "2026-05-01-2026-05-01-recall-at-scale-and-audit"
+      ],
+      "why_adversarial": "Five recall-quality plans span April to August, and the older ones use the words recall, bench and hit@1 far more heavily than the newest.",
+      "rank": 2,
+      "returned": [
+        "attributing-a-benchmark-movement-before-believing-it",
+        "2026-08-13-metalmind-confidence-calibration-per-vault-bands",
+        "metalmind",
+        "2026-06-09-metalmind-headroom-relevance-adoption-recall-upgrade",
+        "2026-05-01-2026-05-01-recall-at-scale-and-audit"
+      ],
+      "latencyMs": 708.9835830000011
+    },
+    {
+      "query": "the first time keyword and vector search were combined in the vault tool",
+      "class": "temporal",
+      "expected": "2026-04-24-metalmind-hybrid-retrieval",
+      "competitors": [
+        "2026-04-24-rrf-asymmetry-hit1-followup",
+        "2026-06-09-metalmind-headroom-relevance-adoption-recall-upgrade",
+        "2026-08-13-metalmind-confidence-calibration-per-vault-bands"
+      ],
+      "why_adversarial": "The follow-up note carries the same date and the same RRF vocabulary; only one of the two is the original shipping plan.",
+      "rank": null,
+      "returned": [
+        "vault-orphan-detection-and-linking-patterns",
+        "2026-08-13-metalmind-confidence-calibration-per-vault-bands",
+        "install-script-upgrade-skip-trap",
+        "tzcript-spec-docs-to-notion",
+        "uv-tool-run-from-resolves-pypi-not-local"
+      ],
+      "latencyMs": 706.6073589999942
+    },
+    {
+      "query": "what did we think about the retrieval imbalance immediately after hybrid shipped",
+      "class": "temporal",
+      "expected": "2026-04-24-rrf-asymmetry-hit1-followup",
+      "competitors": [
+        "2026-04-24-metalmind-hybrid-retrieval",
+        "2026-06-09-metalmind-headroom-relevance-adoption-recall-upgrade",
+        "attributing-a-benchmark-movement-before-believing-it"
+      ],
+      "why_adversarial": "Two same-day notes, one shipping and one follow-up, both containing the same tables; the query turns on which came second.",
+      "rank": null,
+      "returned": [
+        "templates-must-not-name-user-private-tools",
+        "2026-06-09-metalmind-headroom-relevance-adoption-recall-upgrade",
+        "metalmind",
+        "name-it-from-the-list-not-from-memory",
+        "2026-08-06-metalmind-codegraph-handoff"
+      ],
+      "latencyMs": 604.5488150000019
+    },
+    {
+      "query": "the earliest snapshot of which repos use which package manager",
+      "class": "temporal",
+      "expected": "pnpm-standardisation-status-2026-05",
+      "competitors": [
+        "fe-upgrade-readiness-matrix-2026-06",
+        "stack-modernisation-candidates-2026-05",
+        "2026-05-04-stack-modernisation-roadmap-2026-05",
+        "metalmind-release-and-pnpm"
+      ],
+      "why_adversarial": "The June matrix carries a manager column too and is more recent and richer; the query asks for the earliest, not the best.",
+      "rank": 2,
+      "returned": [
+        "cli-never-show-wired-package-manager-commands",
+        "pnpm-standardisation-status-2026-05",
+        "fe-upgrade-readiness-matrix-2026-06",
+        "2026-08-06-metalmind-intent-integration",
+        "traveller-bff-service-account-security-audit-2026-07"
+      ],
+      "latencyMs": 522.0703920000014
+    },
+    {
+      "query": "which property was the front runner before the one we ended up buying",
+      "class": "temporal",
+      "expected": "manderveen-31-zaandam",
+      "competitors": [
+        "de-zevenster-19-wormerveer",
+        "warmoesstraat-120-wormerveer",
+        "house",
+        "saenredamstraat-64-rd-haarlem"
+      ],
+      "why_adversarial": "Two properties held the lead at different points and both were killed on 2026-07-20; the note that calls itself 'the current leader' is the older claim and the winner is a third note.",
+      "rank": null,
+      "returned": [
+        "de-zevenster-19-wormerveer",
+        "house",
+        "warmoesstraat-120-wormerveer",
+        "arg-84-offline-status-transitions",
+        "ruimzicht-92-amsterdam"
+      ],
+      "latencyMs": 565.0417319999979
+    },
+    {
+      "query": "the newest lesson about whether to believe a benchmark movement",
+      "class": "temporal",
+      "expected": "attributing-a-benchmark-movement-before-believing-it",
+      "competitors": [
+        "a-parameter-is-only-valid-on-the-distribution-it-was-tuned-on",
+        "2026-08-08-metalmind-v0-16-0-legacy-removal",
+        "mem0-vs-metalmind-shape-mismatch"
+      ],
+      "why_adversarial": "Three measurement notes were written within a week of each other and cross-reference one another; only the dates separate them.",
+      "rank": 1,
+      "returned": [
+        "attributing-a-benchmark-movement-before-believing-it",
+        "2026-08-08-metalmind-v0-16-0-legacy-removal",
+        "a-plausible-mechanism-is-how-a-bug-survives-measurement",
+        "metalmind-release-and-pnpm",
+        "apollo-modal-open-blink-global-loading-link-cache-first-reuse"
+      ],
+      "latencyMs": 378.9723129999984
+    },
+    {
+      "query": "the first of the driver journey investigations",
+      "class": "temporal",
+      "expected": "driver-journey-visibility-investigation-2026-05-20",
+      "competitors": [
+        "driver-journey-access-is-denied-investigation-2026-05-21",
+        "driver-positions-401-livetrack-2026-05-21",
+        "2026-05-21-driver-journey-flow-fixes"
+      ],
+      "why_adversarial": "Four notes within two days share almost all vocabulary; two carry the same later date.",
+      "rank": 4,
+      "returned": [
+        "driver-journey-access-is-denied-investigation-2026-05-21",
+        "driver-app-journey-visibility-apollo-fan-out-cascade-pattern",
+        "driver-positions-401-livetrack-2026-05-21",
+        "driver-journey-visibility-investigation-2026-05-20",
+        "driver-events-journey-ack-and-reusing-the-pre-pickup-notification"
+      ],
+      "latencyMs": 768.0599660000007
+    },
+    {
+      "query": "the latest of the driver notification tickets",
+      "class": "temporal",
+      "expected": "arg-81-auto-transition-notification",
+      "competitors": [
+        "arg-84-offline-status-transitions",
+        "arg-73-status-splash-and-banner",
+        "arg-36-app-closed-notification-session-record",
+        "2026-07-29-arg-36-app-closed-notification-plan"
+      ],
+      "why_adversarial": "Five notification-related notes span July to August, and the oldest one has the richest notification vocabulary and the longest body.",
+      "rank": 1,
+      "returned": [
+        "arg-81-auto-transition-notification",
+        "arg-36-app-closed-notification-session-record",
+        "driver-events-journey-ack-and-reusing-the-pre-pickup-notification",
+        "argo-ticket-conventions",
+        "board"
+      ],
+      "latencyMs": 734.6980330000006
+    },
+    {
+      "query": "what did we decide about the release pipeline back in may",
+      "class": "temporal",
+      "expected": "driver-app-pipeline-decisions-2026-05-19",
+      "competitors": [
+        "driver-app-pipeline-gaps-2026-05-19",
+        "driver-app-runtime-version-policy",
+        "driver-app-runtime-policy",
+        "2026-05-20-driver-app-test-automation"
+      ],
+      "why_adversarial": "The audit note carries the same date and the same project, and the August policy note answers the same question for the present, so recency bias points the wrong way.",
+      "rank": 1,
+      "returned": [
+        "driver-app-pipeline-decisions-2026-05-19",
+        "metalmind",
+        "ota-porting-to-stranded-runtimes",
+        "mikita-site-synod-rounds",
+        "fe-platform-foundation-decision-research-record"
+      ],
+      "latencyMs": 464.0206969999999
+    },
+    {
+      "query": "the older of the two trip sharing specs",
+      "class": "temporal",
+      "expected": "2026-04-15-share-trip-trusted-contacts-design",
+      "competitors": [
+        "2026-04-21-safety-bookings-centric-spec",
+        "2026-04-21-safety-contact-readonly-viewer-spec",
+        "2026-04-21-safety-spec-decision-log"
+      ],
+      "why_adversarial": "Inverts the usual pull: the superseded note is the correct answer here, and three newer siblings from the same week are the wrong ones.",
+      "rank": null,
+      "returned": [
+        "share-trip-trusted-contacts",
+        "transferz-repos",
+        "safety",
+        "driver-app-journey-visibility-apollo-fan-out-cascade-pattern",
+        "template-shared-content-needs-directory-level-extraction"
+      ],
+      "latencyMs": 335.66132800000196
+    },
+    {
+      "query": "what did the very first plan for the knowledge cli set out to do",
+      "class": "temporal",
+      "expected": "2026-04-19-metalmind-v1",
+      "competitors": [
+        "2026-04-20-product-analysis-and-roadmap",
+        "2026-04-30-metalmind-v0-4-0",
+        "metalmind",
+        "vault-stack-setup"
+      ],
+      "why_adversarial": "A dozen metalmind plans span April to August and later ones are longer and richer; the original v1 plan is the only one that predates the product analysis written a day after it.",
+      "rank": 5,
+      "returned": [
+        "apollo-server-4-csrf-preflight-fleet-fix",
+        "transferz-repos",
+        "reference_claude_agent_teams_field_inheritance",
+        "vault-stack-setup",
+        "2026-04-19-metalmind-v1"
+      ],
+      "latencyMs": 718.8496879999948
+    },
+    {
+      "query": "the host port that came after codex",
+      "class": "temporal",
+      "expected": "2026-05-16-2026-05-16-metalmind-cursor-host-port",
+      "competitors": [
+        "2026-05-06-codex-host-integration-impl",
+        "2026-05-06-2026-05-06-metalmind-codex-host-integration",
+        "multi-host-distribution-thesis-bash-required"
+      ],
+      "why_adversarial": "The query names codex, which appears in the titles of the two wrong answers and nowhere in the right one.",
+      "rank": 1,
+      "returned": [
+        "2026-05-16-2026-05-16-metalmind-cursor-host-port",
+        "metalmind-stamp-replaces-config-hosts-and-host-intersects-with-detected",
+        "metalmind-release-and-pnpm",
+        "metalmind",
+        "multi-host-distribution-thesis-bash-required"
+      ],
+      "latencyMs": 414.7020929999999
+    },
+    {
+      "query": "what did the vault sync design settle on most recently",
+      "class": "temporal",
+      "expected": "metalmind-vault-sync-guards",
+      "competitors": [
+        "archive-moves-can-sync-deletions-without-their-additions",
+        "git-identity-split-work-personal",
+        "check-for-existing-tooling-before-doing-it-by-hand"
+      ],
+      "why_adversarial": "The two sync notes are two days apart, the older one states the requirements and the newer one records which of them were actually implemented and which was deliberately demoted.",
+      "rank": 2,
+      "returned": [
+        "archive-moves-can-sync-deletions-without-their-additions",
+        "metalmind-vault-sync-guards",
+        "2026-08-13-metalmind-confidence-calibration-per-vault-bands",
+        "metalmind",
+        "a-guard-that-fires-on-legitimate-work-teaches-force"
+      ],
+      "latencyMs": 521.6438710000002
+    },
+    {
+      "query": "the current guidance on how a consumer app should take design system changes",
+      "class": "temporal",
+      "expected": "transkit-consumer-integration-discipline-releases-not-dist-sync",
+      "competitors": [
+        "transkit-ui-consume-prebuilt-from-github-packages",
+        "transkit-ui-component-tokens-and-theme-provider-gotchas",
+        "security-portal-transkit-ui-rebuild",
+        "inline-alert-removal-consumer-migration"
+      ],
+      "why_adversarial": "Five transkit notes overlap heavily; the superseded one is titled around consuming the package, which is closer to the query's surface form.",
+      "rank": 2,
+      "returned": [
+        "transkit_project_package_scope",
+        "transkit-consumer-integration-discipline-releases-not-dist-sync",
+        "use-the-existing-design-system-before-writing-css",
+        "transkit-component-inventory",
+        "synod-tzcript-adoption-verdict"
+      ],
+      "latencyMs": 716.2549800000052
+    },
+    {
+      "query": "how did the house search stand at the end",
+      "class": "temporal",
+      "expected": "house",
+      "competitors": [
+        "warmoesstraat-120-wormerveer",
+        "manderveen-31-zaandam",
+        "dutch-house-buying-due-diligence-playbook",
+        "blekerstraat-18-wormerveer"
+      ],
+      "why_adversarial": "About twenty individual property notes each end with their own status line; only the map-of-content holds the ranking as of the final date, and it is much shorter than any of them.",
+      "rank": null,
+      "returned": [
+        "pyfunda-v3-and-uvx-gotchas",
+        "a-plausible-mechanism-is-how-a-bug-survives-measurement",
+        "2026-08-06-metalmind-codegraph-handoff",
+        "feedback_linear_check_existing",
+        "external-apis-drift-and-fail-open-gates-hide-it"
+      ],
+      "latencyMs": 595.6665569999968
+    },
+    {
+      "query": "what are we deliberately not building in the first version of the investment app",
+      "class": "negation-and-absence",
+      "expected": "portfolio-tracker",
+      "competitors": [
+        "mikita-site",
+        "substack-studio-pipeline",
+        "wing-chun-way-project-overview"
+      ],
+      "why_adversarial": "Two project notes carry a literal cuts list, and a system that ignores 'not' will match the built-features half of the same note.",
+      "rank": 4,
+      "returned": [
+        "driver-app-runtime-policy",
+        "driver-app-runtime-version-policy",
+        "shared-config-between-dev-tree-and-installed-cli",
+        "portfolio-tracker",
+        "arg-84-offline-status-transitions"
+      ],
+      "latencyMs": 734.1637689999989
+    },
+    {
+      "query": "what got cut from the personal site's first release",
+      "class": "negation-and-absence",
+      "expected": "mikita-site",
+      "competitors": [
+        "2026-05-03-mikita-site-v1-build",
+        "mikita-site-synod-rounds",
+        "portfolio-tracker"
+      ],
+      "why_adversarial": "The build plan and the synod note both cover the same project and the same round of decisions; only the map-of-content carries the do-not-build list.",
+      "rank": null,
+      "returned": [
+        "mzyx-skills-improvement-dossier-2026-06-02",
+        "astro-cloudflare-pages-site-build-gotchas",
+        "driver-app-runtime-policy",
+        "git-identity-split-work-personal",
+        "mikita-site-synod-rounds"
+      ],
+      "latencyMs": 740.9866140000013
+    },
+    {
+      "query": "which stage was removed from the essay workflow",
+      "class": "negation-and-absence",
+      "expected": "substack-studio-pipeline",
+      "competitors": [
+        "substack-studio",
+        "claude-skill-portability-three-surfaces",
+        "mzyx-skills-improvement-dossier-2026-06-02"
+      ],
+      "why_adversarial": "The note enumerates five kept stages and one dropped one; ignoring 'removed' returns the pipeline description rather than the cut.",
+      "rank": 1,
+      "returned": [
+        "substack-studio-pipeline",
+        "github-actions-reusable-workflow-concurrency-collision",
+        "substack-studio",
+        "a-merged-values-file-in-gcp-infra-is-not-a-deployed-value",
+        "gateway_reference_reusable_workflows_stable_tag"
+      ],
+      "latencyMs": 674.4769359999991
+    },
+    {
+      "query": "the typescript library we evaluated and turned down for the fleet",
+      "class": "negation-and-absence",
+      "expected": "effect-evaluation-portals-and-gateway",
+      "competitors": [
+        "stack-modernisation-candidates-2026-05",
+        "2026-05-04-stack-modernisation-roadmap-2026-05",
+        "synod-tzcript-adoption-verdict"
+      ],
+      "why_adversarial": "The candidates and roadmap notes are full of libraries we did adopt; the rejected one is the answer and shares all the same adoption vocabulary.",
+      "rank": 1,
+      "returned": [
+        "effect-evaluation-portals-and-gateway",
+        "transferz-repo-overview",
+        "gateway",
+        "claude-code-skill-model-field-overrides-the-entire-turn-not-just-the-skill",
+        "biome-datadog-migration-execution-gotchas"
+      ],
+      "latencyMs": 729.8109620000032
+    },
+    {
+      "query": "the analytics vendor we wired up and then removed",
+      "class": "negation-and-absence",
+      "expected": "wing-chun-way-pdf-feature-and-growthbook-flags",
+      "competitors": [
+        "wing-chun-way-project-overview",
+        "launchdarkly-flags-are-not-only-booleans",
+        "wing-chun-way-home-feed-mzyx-65-and-security-pair-2026-08-15"
+      ],
+      "why_adversarial": "The note's title and body are dominated by the vendor that stayed; the rejected one appears in one clause, and another note owns the feature-flag vocabulary outright.",
+      "rank": null,
+      "returned": [
+        "de-vendor-is-phase-0-not-teardown",
+        "de-zevenster-19-wormerveer",
+        "2026-08-06-metalmind-codegraph-handoff",
+        "apollo-server-4-removes-built-in-health-endpoint",
+        "transkit"
+      ],
+      "latencyMs": 730.010070999997
+    },
+    {
+      "query": "the frontend standard the council said not to make mandatory",
+      "class": "negation-and-absence",
+      "expected": "synod-tzcript-adoption-verdict",
+      "competitors": [
+        "transcript-tzcript-analysis-and-ecosystem-impact",
+        "tanstack-fit-for-tzcript-intent-markdown-cli",
+        "tzcript-spec-docs-to-notion",
+        "fe-platform-foundation-decision-research-record"
+      ],
+      "why_adversarial": "Four notes describe the same tool enthusiastically; only one carries the do-not-adopt verdict, and it is the shortest of them on tool detail.",
+      "rank": null,
+      "returned": [
+        "transferz-agent-rules-mcp",
+        "narrowing-flags-must-not-veto-explicit-ones",
+        "transferz-repo-overview",
+        "2026-05-04-portals-react19-vite-router-modernisation",
+        "auditing-a-closed-source-desktop-app"
+      ],
+      "latencyMs": 758.2034579999963
+    },
+    {
+      "query": "is refusing the always on location permission actually a blocker for continuous tracking",
+      "class": "negation-and-absence",
+      "expected": "while-in-use-location-still-allows-continuous-background-tracking",
+      "competitors": [
+        "what-the-os-will-do-for-a-killed-mobile-app",
+        "red-1031-while-in-use-location-session-record",
+        "expo-location-gotchas",
+        "2026-06-09-red-1031-while-in-use-location-plan"
+      ],
+      "why_adversarial": "The answer is no, and four sibling notes describe the permission tiers and their restrictions in detail, so a system reading the query as 'what does background permission require' returns the wrong one.",
+      "rank": 1,
+      "returned": [
+        "while-in-use-location-still-allows-continuous-background-tracking",
+        "what-the-os-will-do-for-a-killed-mobile-app",
+        "red-1031-while-in-use-location-session-record",
+        "expo-location-gotchas",
+        "transkit"
+      ],
+      "latencyMs": 403.8560470000011
+    },
+    {
+      "query": "which retrieval signal was deliberately left out of the confidence calculation",
+      "class": "negation-and-absence",
+      "expected": "2026-08-13-metalmind-confidence-calibration-per-vault-bands",
+      "competitors": [
+        "2026-04-24-metalmind-hybrid-retrieval",
+        "2026-06-09-metalmind-headroom-relevance-adoption-recall-upgrade",
+        "a-parameter-is-only-valid-on-the-distribution-it-was-tuned-on"
+      ],
+      "why_adversarial": "The excluded leg is BM25, and the hybrid-retrieval plan is entirely about adopting BM25, so ignoring 'left out' returns the opposite note.",
+      "rank": 1,
+      "returned": [
+        "2026-08-13-metalmind-confidence-calibration-per-vault-bands",
+        "ct-specs-against-fake-wrappers-prove-nothing",
+        "a-plausible-mechanism-is-how-a-bug-survives-measurement",
+        "prove-a-guard-fails-before-trusting-it",
+        "attributing-a-benchmark-movement-before-believing-it"
+      ],
+      "latencyMs": 532.8920609999986
+    },
+    {
+      "query": "which house did we abandon because the ground was measurably sinking",
+      "class": "negation-and-absence",
+      "expected": "evertsenstraat-6-wormerveer",
+      "competitors": [
+        "goudastraat-45-wormerveer",
+        "warmoesstraat-120-wormerveer",
+        "ankersmidplein-75-zaandam",
+        "manderveen-31-zaandam"
+      ],
+      "why_adversarial": "Four Zaanstreek notes discuss peat soil and foundation risk; only one has a monitoring report qualifying settlement as large, and the winning property cites it as a contrast.",
+      "rank": 4,
+      "returned": [
+        "dutch-house-buying-due-diligence-playbook",
+        "warmoesstraat-120-wormerveer",
+        "goudastraat-45-wormerveer",
+        "evertsenstraat-6-wormerveer",
+        "a-plausible-mechanism-is-how-a-bug-survives-measurement"
+      ],
+      "latencyMs": 719.9850040000019
+    },
+    {
+      "query": "which one was dropped because the repair paperwork was for the neighbour's number",
+      "class": "negation-and-absence",
+      "expected": "goudastraat-45-wormerveer",
+      "competitors": [
+        "evertsenstraat-6-wormerveer",
+        "warmoesstraat-120-wormerveer",
+        "blekerstraat-18-wormerveer"
+      ],
+      "why_adversarial": "The sibling kill note shares the city, the era and the foundation vocabulary; the separator is that here the restoration evidence exists but for the wrong address.",
+      "rank": 4,
+      "returned": [
+        "blekerstraat-18-wormerveer",
+        "dutch-house-buying-due-diligence-playbook",
+        "a-parameter-is-only-valid-on-the-distribution-it-was-tuned-on",
+        "goudastraat-45-wormerveer",
+        "arg-84-offline-status-transitions"
+      ],
+      "latencyMs": 731.8352769999983
+    },
+    {
+      "query": "the existing switch we refused to reuse for the relaxation",
+      "class": "negation-and-absence",
+      "expected": "environment-gated-relaxations-need-a-dedicated-flag-and-a-code-invariant",
+      "competitors": [
+        "gating-a-security-relevant-step-by-entry-mode-creates-a-bypass-path",
+        "narrowing-flags-must-not-veto-explicit-ones",
+        "launchdarkly-flags-are-not-only-booleans"
+      ],
+      "why_adversarial": "Three flag notes exist; only one is about rejecting an existing flag in favour of a dedicated one, and the rejected flag is named in a single clause.",
+      "rank": 1,
+      "returned": [
+        "environment-gated-relaxations-need-a-dedicated-flag-and-a-code-invariant",
+        "transkit-consumer-integration-discipline-releases-not-dist-sync",
+        "house",
+        "transco-portal",
+        "gateway_reference_reusable_workflows_stable_tag"
+      ],
+      "latencyMs": 682.6386839999977
+    },
+    {
+      "query": "why we chose not to put a model in that release automation",
+      "class": "negation-and-absence",
+      "expected": "2026-08-11-native-module-record-ci-automation",
+      "competitors": [
+        "driver-app-runtime-version-policy",
+        "notion-access-reads-follow-you-writes-need-the-connection-on-the-page",
+        "tzcript-spec-docs-to-notion"
+      ],
+      "why_adversarial": "The note's own section is titled around the absence of an agent, while two neighbouring notes own the Notion-publishing vocabulary that the query's surface most resembles.",
+      "rank": 5,
+      "returned": [
+        "upgrade-paths-are-part-of-the-feature",
+        "semantic-release-angular-preset-release-traps",
+        "2026-08-08-metalmind-v0-16-0-legacy-removal",
+        "feedback_agent_model_split",
+        "2026-08-11-native-module-record-ci-automation"
+      ],
+      "latencyMs": 735.1545390000028
+    },
+    {
+      "query": "why the flow only runs in one direction",
+      "class": "negation-and-absence",
+      "expected": "tzcript-spec-docs-to-notion",
+      "competitors": [
+        "metalmind-vault-sync-guards",
+        "portfolio-tracker",
+        "notion-access-reads-follow-you-writes-need-the-connection-on-the-page"
+      ],
+      "why_adversarial": "Three notes reject bidirectional sync for the same reason (two writable stores); the query gives no domain, and the strongest lexical match on 'sync' is the vault note.",
+      "rank": 1,
+      "returned": [
+        "tzcript-spec-docs-to-notion",
+        "skill-creator-run-eval-produces-uniform-0-0-trigger-rates-nested-inside-claude-c",
+        "gating-a-security-relevant-step-by-entry-mode-creates-a-bypass-path",
+        "2026-05-04-stack-modernisation-roadmap-2026-05",
+        "biome-migration-fleet-playbook"
+      ],
+      "latencyMs": 726.7904759999947
+    },
+    {
+      "query": "the one thing teammates must stop short of doing at the end of their work",
+      "class": "negation-and-absence",
+      "expected": "feedback_agents_no_prs",
+      "competitors": [
+        "feedback_teams_not_subagents",
+        "feedback_agent_team_vs_humans",
+        "subagent-idle-is-not-terminated",
+        "feedback_use_custom_agents"
+      ],
+      "why_adversarial": "Five agent-behaviour memories overlap; the query never names pull requests, and the sibling notes are about spawning, models and lifecycle rather than the terminal state.",
+      "rank": 2,
+      "returned": [
+        "subagent-idle-is-not-terminated",
+        "feedback_agents_no_prs",
+        "reference_claude_agent_teams_field_inheritance",
+        "feedback_teams_not_subagents",
+        "arg-84-offline-status-transitions"
+      ],
+      "latencyMs": 727.8500389999972
+    },
+    {
+      "query": "what should I stop doing right after pushing a branch",
+      "class": "negation-and-absence",
+      "expected": "feedback-do-not-watch-ci-unless-asked",
+      "competitors": [
+        "feedback-verify-the-deploy-job-not-the-run-conclusion",
+        "reusable-node-build-deploy-does-not-deploy-preview-on-master",
+        "github-actions-reusable-workflow-concurrency-collision"
+      ],
+      "why_adversarial": "The sibling memory tells you to verify the deploy job, which is the opposite instruction, and both are about CI runs after a push.",
+      "rank": 1,
+      "returned": [
+        "feedback-do-not-watch-ci-unless-asked",
+        "github-ssh-and-branch-rename-gotchas",
+        "feedback_agents_no_prs",
+        "feedback-verify-the-deploy-job-not-the-run-conclusion",
+        "arg-36-app-closed-notification-session-record"
+      ],
+      "latencyMs": 743.7400330000019
+    },
+    {
+      "query": "the kind of output I am never supposed to produce for analysis",
+      "class": "negation-and-absence",
+      "expected": "no-artifact-publishing-and-secret-safe-env-checks",
+      "competitors": [
+        "user-message-style",
+        "transkit_feedback_caveman_always",
+        "feedback_no_em_dash",
+        "feedback_never_override_security_deny"
+      ],
+      "why_adversarial": "Several style and safety memories constrain output; only this one bans publishing an artifact, and the query avoids artifact, publish and web page.",
+      "rank": 2,
+      "returned": [
+        "ct-specs-against-fake-wrappers-prove-nothing",
+        "no-artifact-publishing-and-secret-safe-env-checks",
+        "a-parameter-is-only-valid-on-the-distribution-it-was-tuned-on",
+        "test-real-template-not-synthetic",
+        "a-plausible-mechanism-is-how-a-bug-survives-measurement"
+      ],
+      "latencyMs": 382.6302499999947
+    },
+    {
+      "query": "what kind of native change does not force a new store build",
+      "class": "negation-and-absence",
+      "expected": "driver-app-runtime-version-policy",
+      "competitors": [
+        "driver-app-pipeline-decisions-2026-05-19",
+        "ota-porting-to-stranded-runtimes",
+        "four-ways-an-eas-update-looks-broken-when-it-is-not",
+        "driver-app-runtime-policy"
+      ],
+      "why_adversarial": "Expo's own rule is that any native change forces a bump, so the whole vault's surrounding vocabulary argues for the wrong answer; only this note states the exception.",
+      "rank": 1,
+      "returned": [
+        "driver-app-runtime-version-policy",
+        "driver-app-pipeline-decisions-2026-05-19",
+        "storyblok-owns-the-driver-app-copy",
+        "upgrade-paths-are-part-of-the-feature",
+        "four-ways-an-eas-update-looks-broken-when-it-is-not"
+      ],
+      "latencyMs": 710.8400580000016
+    },
+    {
+      "query": "the component that does not exist in the design system even though people keep reaching for it",
+      "class": "negation-and-absence",
+      "expected": "transkit-ui-component-tokens-and-theme-provider-gotchas",
+      "competitors": [
+        "transkit-ui-icon-button-is-button-plus-lucide-child",
+        "transkit-component-inventory",
+        "optical-vs-geometric-icon-centring",
+        "transkit-ui-stateful-components-tamagui-zag-integration-lessons"
+      ],
+      "why_adversarial": "The superseded note is titled after the missing component and is the obvious lexical hit; the inventory note lists components that do exist, which is the other direction of the negation.",
+      "rank": null,
+      "returned": [
+        "use-the-existing-design-system-before-writing-css",
+        "upgrade-paths-are-part-of-the-feature",
+        "argo-ticket-conventions",
+        "2026-05-04-stack-modernisation-roadmap-2026-05",
+        "driver-app-runtime-version-policy"
+      ],
+      "latencyMs": 733.6408349999983
+    },
+    {
+      "query": "the pipeline redesign that was written up and then never actually built",
+      "class": "negation-and-absence",
+      "expected": "driver-app-pipeline-decisions-2026-05-19",
+      "competitors": [
+        "driver-app-pipeline-gaps-2026-05-19",
+        "driver-app-runtime-version-policy",
+        "2026-05-20-driver-app-test-automation",
+        "driver-app-runtime-policy"
+      ],
+      "why_adversarial": "The note reads as a set of firm decisions and only a late banner records that it was never implemented and was reversed on the merits; the audit that prompted it shares the date.",
+      "rank": 2,
+      "returned": [
+        "driver-app-runtime-policy",
+        "driver-app-pipeline-decisions-2026-05-19",
+        "a-defensive-guard-is-not-evidence-of-downstream-behaviour",
+        "an-unreachable-guard-branch-under-set-e",
+        "substack-studio-pipeline"
+      ],
+      "latencyMs": 727.4985820000002
+    },
+    {
+      "query": "what do we leave out of a ticket description on purpose",
+      "class": "negation-and-absence",
+      "expected": "argo-ticket-conventions",
+      "competitors": [
+        "gateway_feedback_linear_ticket_notes",
+        "feedback_linear_check_existing",
+        "ask-for-the-board-before-offering-options",
+        "user-message-style"
+      ],
+      "why_adversarial": "Four Linear-process memories compete; only this one enumerates what must not appear (acceptance criteria by default, file paths, relations as prose).",
+      "rank": 3,
+      "returned": [
+        "gateway_feedback_linear_ticket_notes",
+        "arg-73-status-splash-and-banner",
+        "argo-ticket-conventions",
+        "feedback_agent_team_vs_humans",
+        "2026-04-13-passenger-safety-restructure-design"
+      ],
+      "latencyMs": 726.6441389999964
+    },
+    {
+      "query": "why the browser side check is not where the real enforcement lives",
+      "class": "negation-and-absence",
+      "expected": "gating-a-security-relevant-step-by-entry-mode-creates-a-bypass-path",
+      "competitors": [
+        "sso-frontend-consolidated-review-2026-06-12",
+        "thin-per-app-auth-edge-for-httponly-cookies-not-the-microservice-or-gateway",
+        "role-based-access-still-emits-flat-permission-authorities-in-the-jwt",
+        "environment-gated-relaxations-need-a-dedicated-flag-and-a-code-invariant"
+      ],
+      "why_adversarial": "Four SSO notes discuss client-side gating; only one states that the frontend gate is not the security boundary and that the mint endpoint checks nothing.",
+      "rank": null,
+      "returned": [
+        "user-level-hooks-must-be-native-not-hookify-trim-prose-once-a-hook-enforces-it",
+        "a-defensive-guard-is-not-evidence-of-downstream-behaviour",
+        "auditing-a-closed-source-desktop-app",
+        "feedback_no_em_dash",
+        "driver-journey-access-is-denied-investigation-2026-05-21"
+      ],
+      "latencyMs": 722.6044070000062
+    }
+  ],
+  "byClass": [
+    [
+      "vocabulary-mismatch",
+      {
+        "n": 16,
+        "hitAt1": 0.3125,
+        "hitAt3": 0.5625,
+        "hitAt5": 0.5625,
+        "mrr": 0.4270833333333333,
+        "ndcgAt5": 0.46204932879464833,
+        "misses": 7
+      }
+    ],
+    [
+      "competing-near-duplicates",
+      {
+        "n": 20,
+        "hitAt1": 0.6,
+        "hitAt3": 0.85,
+        "hitAt5": 0.95,
+        "mrr": 0.7366666666666666,
+        "ndcgAt5": 0.7898712314377457,
+        "misses": 1
+      }
+    ],
+    [
+      "distinguishing-detail",
+      {
+        "n": 21,
+        "hitAt1": 0.47619047619047616,
+        "hitAt3": 0.6190476190476191,
+        "hitAt5": 0.8095238095238095,
+        "mrr": 0.5904761904761904,
+        "ndcgAt5": 0.6441832376823925,
+        "misses": 4
+      }
+    ],
+    [
+      "temporal",
+      {
+        "n": 15,
+        "hitAt1": 0.26666666666666666,
+        "hitAt3": 0.5333333333333333,
+        "hitAt5": 0.6666666666666666,
+        "mrr": 0.43,
+        "ndcgAt5": 0.48941655863958433,
+        "misses": 5
+      }
+    ],
+    [
+      "negation-and-absence",
+      {
+        "n": 21,
+        "hitAt1": 0.38095238095238093,
+        "hitAt3": 0.5714285714285714,
+        "hitAt5": 0.7619047619047619,
+        "mrr": 0.5134920634920634,
+        "ndcgAt5": 0.5748415115318616,
+        "misses": 5
+      }
+    ]
+  ],
+  "overall": {
+    "n": 93,
+    "hitAt1": 0.41935483870967744,
+    "hitAt3": 0.6344086021505376,
+    "hitAt5": 0.7634408602150538,
+    "mrr": 0.5505376344086022,
+    "ndcgAt5": 0.6035589462641117,
+    "misses": 22
+  }
+}
