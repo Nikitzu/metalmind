@@ -6,6 +6,36 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.23.0 - 2026-08-17
+
+### Changed
+
+- **Reranking is 5.6x faster and ranks the same.** 0.22.0 shipped it at 8.0s per query and said the cost was a separate decision from whether it ranked better. That cost turned out to be almost entirely batch shape rather than anything intrinsic.
+
+  Scoring is a single ONNX call over a candidates by tokens tensor, linear in the first and worse than linear in the second. Tokenizing is 13ms of it and threading is already saturated (one core takes 19.8s, six take 7.4s, twelve take 7.6s), so neither is a lever. The batch was 20 x 512. It is now 10 x 256, and the query takes **1.3s instead of 7.5s**.
+
+  Ten candidates because reach stops paying there: on the adversarial bench only 2 of 93 queries have the wanted note deeper than rank 10 in the fused list, and 83 of the 85 findable ones sit inside rank 8. 256 tokens because that is the knee of the length curve rather than the floor. hit@1 holds at 62% down to 256 and then falls away, 57% at 192 and 55% at 128, which is what plain hybrid scores for 43ms. Chunks cap at 3500 characters, so nearly every pair was already truncating; what survives is the title and the opening, which is where a note's identity lives.
+
+  Measured identical on 593 queries: adversarial hit@1 63% to 62% with MRR 0.73 to 0.72, and **LongMemEval hit@1 49% to 50% with MRR 0.59 unchanged** across 470 human-labelled questions. `single-session-preference`, one of the two types 0.22.0 recorded as regressing under reranking, goes 10% to 13% hit@1.
+
+  Trading model size for sequence length is the wrong direction, and it is worth writing down because it looks like the obvious saving. A strong model reading 256 tokens beats a small one reading 512 at matched latency: bge-reranker-v2-m3 at 256 scores 62% in 2911ms against bge-reranker-base at 512 scoring 58% in 2654ms. The smallest cross-encoders are not merely weaker, they rank *worse than not reranking at all*. ms-marco-MiniLM-L6 scores 42% against hybrid's 55%, actively destroying a ranking that cost 43ms to produce.
+
+### Added
+
+- **`METALMIND_RERANK_GATE` skips the cross-encoder when fusion already separated a winner.** Off by default. Reranking changes the top hit on 17 of 93 adversarial queries and leaves the other 76 exactly as it found them, and the ones it changes sit at markedly tighter gaps between the top two fused scores (median 0.11) than the ones it does not (median 0.27). Setting the gate to that relative gap spends the cross-encoder only where the gap falls below it.
+
+  It is off by default because the saving is corpus-dependent and the cost is not. At 0.25 the gate skips 52% of queries on a 379-note vault, taking p50 from 1334ms to 68ms for 3 queries of hit@1. On LongMemEval's 3000-session haystack the same threshold skips 36%, costs nothing measurable (hit@1 50%, MRR 0.59 to 0.58) and moves p50 barely at all. Bigger haystacks produce tighter gaps, so the gate fires least where queries cost most. A conservative 0.40 skips 15% to 20% and costs at most one query on either bench.
+
+  The gap is measured relative to the top score rather than absolutely: RRF sums are small and their scale moves with how many retrievers found a document, so an absolute threshold would gate differently on identical rankings. The calibrated confidence band is the wrong signal for this despite being free, since `confidence == high` skips 72% but loses 5 queries: near-duplicates score high precisely when they are wrong.
+
+- **`METALMIND_RERANK_MIN_CANDIDATES` exposes the candidate floor.** It was a hardcoded 20 that `METALMIND_RERANK_OVERFETCH` could not reach, since `k * overfetch` already exceeded it at every default.
+
+### Upgrading
+
+`npm install -g metalmind`, then **`metalmind init`**. The retrieval change lives in the Python package, which is only reinstalled when the installer sees the bundled version differ from the installed one, so a CLI reporting 0.23.0 can still be running the old ranking if that step is skipped. No reindex is required.
+
+0.22.0's upgrade note said `metalmind sync` rebuilds the index. It does not; `sync` commits and pushes the vault to its remote. The index rebuild is `metalmind index rebuild`, and it is needed only when `metalmind index status` reports the index stale.
+
 ## 0.22.0 - 2026-08-16
 
 ### Changed

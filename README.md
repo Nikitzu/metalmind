@@ -130,18 +130,17 @@ Token cost is only half the story - recall has to actually find your note. `v0.5
 | Vault size | sem-only hit@5 | **hybrid hit@1** | **hybrid hit@5** | **+rerank hit@1** | **+rerank hit@5** |
 |---:|---:|---:|---:|---:|---:|
 | 12 notes | 100% | **95%** | **100%** | **95%** | 100% |
-| 100 notes | 95% | **85%** | **90%** | **90%** | 95% |
+| 100 notes | 95% | **85%** | **90%** | **85%** | 95% |
 | 500 notes | 80% | **85%** | **85%** | **85%** | 90% |
-| 1,000 notes | 80% | **85%** | **85%** | **85%** | 85% |
+| 1,000 notes | 80% | **85%** | **85%** | **85%** | 90% |
 
-Remeasured for v0.22.0, which changed how reranking works. This corpus is the
-least demanding of the three benchmarks here: its distractors are generated to
-differ from the gold note, so nothing ever asks the ranker to choose between
-two notes that both look right. Reranking loses one question at 500 and 1,000
-notes against the old behaviour on exactly that account, while gaining 8 points
-of hit@1 on [`bench/adversarial-v0/`](bench/adversarial-v0/) and 5 on
-LongMemEval, both of which do ask. 20 questions per scale, so one question is 5
-points.
+Remeasured for v0.23.0, which cut reranking from 7.5s to 1.3s per query. This
+corpus is the least demanding of the three benchmarks here: its distractors are
+generated to differ from the gold note, so nothing ever asks the ranker to
+choose between two notes that both look right. Reranking buys nothing at hit@1
+on it at any scale, while gaining 7 points on
+[`bench/adversarial-v0/`](bench/adversarial-v0/) and 6 on LongMemEval, both of
+which do ask. 20 questions per scale, so one question is 5 points.
 
 The v0.21.0 remeasurement note still applies: an earlier version of this table
 read up to 5 points higher at 500 and 1,000 notes and could not be reproduced,
@@ -158,7 +157,7 @@ formatting sweep had edited the generator.
 
 Every question finds its answer inside the top 3 at every scale, and nothing misses at k=5. 50× the corpus costs ~15× the query latency - still sub-620 ms p95, with no server and no daemon. This was the gate on deleting the Qdrant + Ollama backend; it held, and that backend is gone as of v0.16.0.
 
-Hybrid is the default. Fusion weights adapt per query: exact-match tokens (UUIDs, numeric IDs, ticket IDs like `RED-991`, hostnames, emails) raise the keyword-leg weight, since BM25 beats embeddings on literal identifiers (`METALMIND_RRF_ADAPTIVE=0` restores fixed weights). Fused scores are folder-weighted - `Archive/` 0.4x, `Inbox/` 0.7x - so stale notes re-rank below in-flight work. `--rerank` (opt-in) adds a cross-encoder rescore at ~2 s per query. `--semantic-only` and `--keyword-only` flags let you A/B any query. The `BAAI/bge-small-en-v1.5` embedding model is a 30 MB ONNX wheel cached at `~/.metalmind/cache/fastembed/`.
+Hybrid is the default. Fusion weights adapt per query: exact-match tokens (UUIDs, numeric IDs, ticket IDs like `RED-991`, hostnames, emails) raise the keyword-leg weight, since BM25 beats embeddings on literal identifiers (`METALMIND_RRF_ADAPTIVE=0` restores fixed weights). Fused scores are folder-weighted - `Archive/` 0.4x, `Inbox/` 0.7x - so stale notes re-rank below in-flight work. `--rerank` (opt-in) adds a cross-encoder rescore at ~1.3 s per query. `--semantic-only` and `--keyword-only` flags let you A/B any query. The `BAAI/bge-small-en-v1.5` embedding model is a 30 MB ONNX wheel cached at `~/.metalmind/cache/fastembed/`.
 
 **Side-by-side with [qmd 2.1.0](https://github.com/tobi/qmd) on the same fixture:**
 
@@ -209,7 +208,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.22.0`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.23.0`.
 
 **From source (for hacking on metalmind itself):**
 
