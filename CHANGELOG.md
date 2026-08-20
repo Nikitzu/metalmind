@@ -6,6 +6,14 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.24.1 - 2026-08-20
+
+### Fixed
+
+- **`teardown` swept output styles from the real `~/.claude` instead of the directory it was given.** `cleanupOutputStyle` defaults its four paths to the running user's home, and teardown overrode only two of them. Uninstall itself was unaffected, since there the two directories are the same. Running the test suite was not: it deleted the developer's own `output-styles/marsh.md` and `skills/marsh`. Teardown now derives every path from its `claudeDir`, matching the convention the rest of the module already followed, and a regression test pins the sweep inside the sandbox.
+
+---
+
 ## 0.24.0 - 2026-08-20
 
 ### Removed

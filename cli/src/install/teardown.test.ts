@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Config } from '../config.js';
@@ -150,6 +150,43 @@ describe('teardown', () => {
     expect(result.stackStopped).toBe(false);
     expect(result.stackRemoved).toBe(true);
     expect(result.configRemoved).toBe(true);
+  });
+
+  it('sweeps the retired output style only inside the given claudeDir', async () => {
+    runCommand.mockResolvedValue(ok());
+
+    // Regression guard: cleanupOutputStyle defaults every directory to the real
+    // ~/.claude. teardown must override all of them, or running this suite
+    // deletes the developer's own styles and skills.
+    await mkdir(join(claudeDir, 'output-styles'), { recursive: true });
+    await mkdir(join(claudeDir, 'skills', 'marsh'), { recursive: true });
+    await writeFile(join(claudeDir, 'output-styles', 'marsh.md'), '# marsh', 'utf8');
+    await writeFile(join(claudeDir, 'skills', 'marsh', 'SKILL.md'), '# skill', 'utf8');
+
+    const homeStyles = join(homedir(), '.claude', 'output-styles');
+    const homeSkills = join(homedir(), '.claude', 'skills');
+
+    const { teardown } = await import('./teardown.js');
+    const result = await teardown({
+      config: baseConfig(vaultPath),
+      launchAgentsDir,
+      claudeJsonPath,
+      aliasesPath,
+      zshrcPath,
+      claudeDir,
+      platformOverride: 'darwin',
+      settingsPath,
+      configPath,
+    });
+
+    expect(result.outputStyle.stylesRemoved).toEqual(['marsh']);
+    expect(result.outputStyle.skillsRemoved).toEqual(['marsh']);
+    expect(existsSync(join(claudeDir, 'output-styles', 'marsh.md'))).toBe(false);
+    expect(existsSync(join(claudeDir, 'skills', 'marsh'))).toBe(false);
+
+    // Nothing the sweep touched may resolve outside the sandbox.
+    expect(join(claudeDir, 'output-styles')).not.toBe(homeStyles);
+    expect(join(claudeDir, 'skills')).not.toBe(homeSkills);
   });
 
   it('preserves other MCP servers in ~/.claude.json', async () => {

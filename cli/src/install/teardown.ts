@@ -144,10 +144,15 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
 
   // Retired feature. Still swept here so uninstalling an upgraded install
   // leaves nothing behind from the versions that shipped it.
+  // Every path is derived from the caller's claudeDir. Letting any of them
+  // fall back to the real ~/.claude would make a test teardown delete the
+  // running user's files.
   result.outputStyle = await cleanupOutputStyle({
     priorValue: config?.outputStylePriorValue ?? null,
     settingsPath,
     hooksDir: join(claudeDir, 'hooks'),
+    outputStylesDir: join(claudeDir, 'output-styles'),
+    skillsDir: join(claudeDir, 'skills'),
   });
 
   const mcp = await unregisterMcpServers({
