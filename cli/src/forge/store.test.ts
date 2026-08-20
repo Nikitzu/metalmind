@@ -6,10 +6,10 @@ import type { Config } from '../config.js';
 
 function baseConfig(): Config {
   return {
-    version: 4,
+    version: 5,
     flavor: 'scadrial',
     vaultPath: '/v',
-    outputStyle: { installed: 'marsh', priorValue: null },
+    outputStylePriorValue: null,
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast', httpEndpoint: null },
     verbose: false,

@@ -21,10 +21,10 @@ function fail(stderr = 'fail'): CommandResult {
 
 function baseConfig(vaultPath: string): Config {
   return {
-    version: 4,
+    version: 5,
     flavor: 'scadrial',
     vaultPath,
-    outputStyle: { installed: null, priorValue: null },
+    outputStylePriorValue: null,
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast', httpEndpoint: null },
     verbose: false,

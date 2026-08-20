@@ -292,7 +292,7 @@ Your notes, embeddings, and code graphs never leave your machine. The only netwo
 metalmind uninstall
 ```
 
-Unloads the watcher service, strips the metalmind managed blocks from `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md` (user content outside the sentinel markers is preserved), removes the SessionStart hook + its entry in `~/.claude/settings.json` (other hooks stay), strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, restores your prior output-style, and removes shell aliases. Interactive prompts ask whether to also `uv tool uninstall` Serena and `metalmind-vault-rag`, and whether to remove the embedding index (keep it if you don't want to re-embed the vault). On a machine that ran the pre-v0.16.0 Qdrant + Ollama stack it also stops those containers, removes `<vault>/.metalmind-stack/`, and offers to drop their volumes.
+Unloads the watcher service, strips the metalmind managed blocks from `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md` (user content outside the sentinel markers is preserved), removes the SessionStart hook + its entry in `~/.claude/settings.json` (other hooks stay), strips MCP entries, clears `CLAUDE_CODE_DISABLE_AUTO_MEMORY` from settings, sweeps the retired output-style feature (its two hooks, style files, and skill bundles), and removes shell aliases. Interactive prompts ask whether to also `uv tool uninstall` Serena and `metalmind-vault-rag`, and whether to remove the embedding index (keep it if you don't want to re-embed the vault). On a machine that ran the pre-v0.16.0 Qdrant + Ollama stack it also stops those containers, removes `<vault>/.metalmind-stack/`, and offers to drop their volumes.
 
 **Never touches your notes.**
 

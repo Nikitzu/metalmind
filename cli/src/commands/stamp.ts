@@ -1,17 +1,11 @@
 import { cancel, intro, log, outro } from '@clack/prompts';
-import { awaitIndexStatus, promptRebuildIfStale } from './index-cmd.js';
 import { type MetalmindHost, readConfig, writeConfig } from '../config.js';
 import { describeAliasSourcing, installAliases } from '../install/aliases.js';
 import { installCodex } from '../install/codex.js';
 import { installCursor } from '../install/cursor.js';
 import { promptHosts } from '../install/host-prompt.js';
-import { migrateTerseToTelegraph, refreshOutputStyleAssets } from '../install/output-style.js';
-import {
-  applyMemoryRouting,
-  applyMetalmindSessionStartHook,
-  applyOutputStyleSessionStartHook,
-  applyOutputStyleUserPromptSubmitHook,
-} from '../install/settings.js';
+import { cleanupOutputStyle } from '../install/output-style-cleanup.js';
+import { applyMemoryRouting, applyMetalmindSessionStartHook } from '../install/settings.js';
 import { copyClaudeHooks, copyClaudeTemplates, stampClaudeMd } from '../install/templates.js';
 import { setupVault } from '../install/vault.js';
 import {
@@ -20,6 +14,7 @@ import {
   resolveWatcherBinPath,
 } from '../install/vault-rag.js';
 import { installWatcher } from '../install/watcher.js';
+import { awaitIndexStatus, promptRebuildIfStale } from './index-cmd.js';
 
 export interface StampOptions {
   skipWatcher?: boolean;
@@ -96,45 +91,30 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
       hookReg.changed ? '  settings.json: registered' : '  settings.json: already registered',
     );
 
-    log.step('Output-style rename: terse → telegraph (legacy migration)');
-    const styleMigration = await migrateTerseToTelegraph();
-    if (styleMigration.migrated) {
-      if (styleMigration.fileRenamed) log.info('  ~/.claude/output-styles/terse.md → telegraph.md');
-      if (styleMigration.settingsUpdated)
-        log.info('  settings.json: outputStyle terse → telegraph');
+    log.step('Retired output-style cleanup');
+    const styleCleanup = await cleanupOutputStyle({
+      priorValue: config.outputStylePriorValue,
+    });
+    if (!styleCleanup.cleaned) {
+      log.info('  nothing to remove');
     } else {
-      log.info('  no legacy terse style found; nothing to migrate');
+      if (styleCleanup.stylesRemoved.length > 0)
+        log.info(`  output-styles removed: ${styleCleanup.stylesRemoved.join(', ')}`);
+      if (styleCleanup.skillsRemoved.length > 0)
+        log.info(`  skills removed: ${styleCleanup.skillsRemoved.join(', ')}`);
+      if (styleCleanup.hookScriptsRemoved.length > 0)
+        log.info(`  hook scripts removed: ${styleCleanup.hookScriptsRemoved.join(', ')}`);
+      if (styleCleanup.sessionStartHookCleared)
+        log.info('  settings.json: SessionStart registration removed');
+      if (styleCleanup.userPromptSubmitHookCleared)
+        log.info('  settings.json: UserPromptSubmit registration removed');
+      if (styleCleanup.settingsChanged)
+        log.info(
+          styleCleanup.settingsOutputStyle
+            ? `  settings.json: outputStyle restored to ${styleCleanup.settingsOutputStyle}`
+            : '  settings.json: outputStyle cleared',
+        );
     }
-
-    log.step('Output-style asset refresh');
-    const styleRefresh = await refreshOutputStyleAssets();
-    log.info(
-      styleRefresh.refreshed.length > 0
-        ? `  refreshed from bundled assets: ${styleRefresh.refreshed.join(', ')}`
-        : '  installed styles already match bundled assets',
-    );
-
-    log.step('Output-style activation hook');
-    const outputStyleHookReg = await applyOutputStyleSessionStartHook({
-      hookCommand: hookScript.outputStyleHookCommand,
-    });
-    log.info(`  script: ${hookScript.outputStyleAction}`);
-    log.info(
-      outputStyleHookReg.changed
-        ? '  settings.json: registered'
-        : '  settings.json: already registered',
-    );
-
-    log.step('Output-style re-anchor hook (per-turn drift guard)');
-    const outputStyleReanchorReg = await applyOutputStyleUserPromptSubmitHook({
-      hookCommand: hookScript.outputStyleReanchorHookCommand,
-    });
-    log.info(`  script: ${hookScript.outputStyleReanchorAction}`);
-    log.info(
-      outputStyleReanchorReg.changed
-        ? '  settings.json: registered (UserPromptSubmit)'
-        : '  settings.json: already registered',
-    );
   }
 
   if (chosenHosts.includes('codex')) {

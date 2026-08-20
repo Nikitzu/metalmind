@@ -19,7 +19,7 @@ const ForgeGroupSchema = z.object({
   repos: z.array(z.string()),
 });
 
-export const CURRENT_CONFIG_VERSION = 4 as const;
+export const CURRENT_CONFIG_VERSION = 5 as const;
 
 const InstallShapeSchema = z.object({
   profile: z.enum(['core', 'full']),
@@ -30,10 +30,13 @@ export const ConfigSchema = z.object({
   version: z.literal(CURRENT_CONFIG_VERSION),
   flavor: FlavorSchema,
   vaultPath: z.string(),
-  outputStyle: z.object({
-    installed: z.string().nullable(),
-    priorValue: z.string().nullable(),
-  }),
+  /**
+   * What `settings.outputStyle` held before metalmind first overwrote it, kept
+   * so the 0.24.0 cleanup can put it back. The output-style feature itself is
+   * gone; this is the last trace of it and can be dropped once no install
+   * predating 0.24.0 remains.
+   */
+  outputStylePriorValue: z.string().nullable().default(null),
   embeddings: z.object({
     provider: EmbeddingsProviderSchema,
     baseURL: z.string().nullable(),
@@ -110,6 +113,18 @@ const MIGRATIONS: Record<number, Migration> = {
     version: 4,
     install: inferInstallShape(),
   }),
+  // 4 → 5: the marsh/telegraph output-style feature is gone. Drop the object
+  // but carry its priorValue forward, because that is what `stamp` needs to
+  // restore settings.outputStyle rather than just deleting the key.
+  4: (raw) => {
+    const { outputStyle: dropped, ...rest } = raw;
+    const priorValue = (dropped as { priorValue?: unknown } | undefined)?.priorValue;
+    return {
+      ...rest,
+      version: 5,
+      outputStylePriorValue: typeof priorValue === 'string' ? priorValue : null,
+    };
+  },
 };
 
 function migrate(raw: RawConfig): RawConfig {

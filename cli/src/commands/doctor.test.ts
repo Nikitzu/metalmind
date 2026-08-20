@@ -63,10 +63,10 @@ describe('doctor deep checks', () => {
       await mkdir(join(tmp, '.claude'), { recursive: true });
       await mkdir(join(tmp, 'vault'), { recursive: true });
       config = {
-        version: 4,
+        version: 5,
         flavor: 'scadrial',
         vaultPath: join(tmp, 'vault'),
-        outputStyle: { installed: null, priorValue: null },
+        outputStylePriorValue: null,
         embeddings: { provider: 'local', baseURL: null },
         recall: { defaultTier: 'fast', httpEndpoint: null },
         verbose: false,
@@ -454,10 +454,10 @@ describe('checkInstallManifest', () => {
 
   function cfgWith(install: Config['install']): Config {
     return {
-      version: 4,
+      version: 5,
       flavor: 'scadrial',
       vaultPath: '/v',
-      outputStyle: { installed: null, priorValue: null },
+      outputStylePriorValue: null,
       embeddings: { provider: 'local', baseURL: null },
       recall: { defaultTier: 'fast', httpEndpoint: null },
       verbose: false,

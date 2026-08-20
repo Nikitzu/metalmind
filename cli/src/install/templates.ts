@@ -32,11 +32,11 @@ export interface CopyClaudeTemplatesOptions {
   core?: boolean;
 }
 
-/** Skill bundles the core install keeps. The output-style bundles are here
- *  because the stamped block's voice depends on the chosen flavour, and
- *  metalmind-cli because recall is unusable without the command reference.
- *  `using-teams` joins them when --teams is explicitly requested. */
-const CORE_SKILLS = new Set(['metalmind-cli', 'writing-vault-notes', 'marsh', 'telegraph']);
+/** Skill bundles the core install keeps. `metalmind-cli` is here because
+ *  recall is unusable without the command reference, and `writing-vault-notes`
+ *  because every note body goes through it. `using-teams` joins them when
+ *  --teams is explicitly requested. */
+const CORE_SKILLS = new Set(['metalmind-cli', 'writing-vault-notes']);
 
 const SENTINEL_BLOCK_RE = (key: string) =>
   new RegExp(
@@ -139,17 +139,9 @@ export interface CopyClaudeHooksResult {
   hookScriptPath: string;
   hookCommand: string;
   action: 'created' | 'updated' | 'unchanged';
-  outputStyleHookScriptPath: string;
-  outputStyleHookCommand: string;
-  outputStyleAction: 'created' | 'updated' | 'unchanged';
-  outputStyleReanchorHookScriptPath: string;
-  outputStyleReanchorHookCommand: string;
-  outputStyleReanchorAction: 'created' | 'updated' | 'unchanged';
 }
 
 export const METALMIND_HOOK_FILENAME = 'metalmind-session-start.sh';
-export const OUTPUT_STYLE_HOOK_FILENAME = 'metalmind-output-style-activate.sh';
-export const OUTPUT_STYLE_REANCHOR_HOOK_FILENAME = 'metalmind-output-style-reanchor.sh';
 
 // Renderer may be sync OR async - async needed for renderers that call
 // resolvePartials (which reads files) to compose cleanly into the copy flow.
@@ -426,56 +418,10 @@ export async function copyClaudeHooks(
     await chmod(hookScriptPath, 0o755);
   }
 
-  // Output-style activation hook: re-anchors the active output-style body on
-  // every SessionStart so the rules survive context compaction. No template
-  // variables - bash reads ~/.claude/settings.json + output-styles/ at runtime.
-  const outputStyleHookScriptPath = join(hooksDir, OUTPUT_STYLE_HOOK_FILENAME);
-  const outputStyleSrc = join(templatesDir, 'claude', 'hooks', 'output-style-activate.sh.template');
-  const outputStyleRaw = await readFile(outputStyleSrc, 'utf8');
-
-  let outputStyleAction: CopyClaudeHooksResult['outputStyleAction'] = 'created';
-  if (existsSync(outputStyleHookScriptPath)) {
-    const existing = await readFile(outputStyleHookScriptPath, 'utf8');
-    outputStyleAction = existing === outputStyleRaw ? 'unchanged' : 'updated';
-  }
-  if (outputStyleAction !== 'unchanged') {
-    await writeFile(outputStyleHookScriptPath, outputStyleRaw, 'utf8');
-    await chmod(outputStyleHookScriptPath, 0o755);
-  }
-
-  // Output-style re-anchor hook: UserPromptSubmit sibling that emits a short
-  // (~25 token) reminder every turn. Anchors the style against mid-session
-  // drift even after the SessionStart body fades from attention. No template
-  // variables - bash reads ~/.claude/settings.json at runtime.
-  const outputStyleReanchorHookScriptPath = join(hooksDir, OUTPUT_STYLE_REANCHOR_HOOK_FILENAME);
-  const outputStyleReanchorSrc = join(
-    templatesDir,
-    'claude',
-    'hooks',
-    'output-style-reanchor.sh.template',
-  );
-  const outputStyleReanchorRaw = await readFile(outputStyleReanchorSrc, 'utf8');
-
-  let outputStyleReanchorAction: CopyClaudeHooksResult['outputStyleReanchorAction'] = 'created';
-  if (existsSync(outputStyleReanchorHookScriptPath)) {
-    const existing = await readFile(outputStyleReanchorHookScriptPath, 'utf8');
-    outputStyleReanchorAction = existing === outputStyleReanchorRaw ? 'unchanged' : 'updated';
-  }
-  if (outputStyleReanchorAction !== 'unchanged') {
-    await writeFile(outputStyleReanchorHookScriptPath, outputStyleReanchorRaw, 'utf8');
-    await chmod(outputStyleReanchorHookScriptPath, 0o755);
-  }
-
   return {
     hookScriptPath,
     hookCommand: `bash ${hookScriptPath}`,
     action,
-    outputStyleHookScriptPath,
-    outputStyleHookCommand: `bash ${outputStyleHookScriptPath}`,
-    outputStyleAction,
-    outputStyleReanchorHookScriptPath,
-    outputStyleReanchorHookCommand: `bash ${outputStyleReanchorHookScriptPath}`,
-    outputStyleReanchorAction,
   };
 }
 

@@ -208,41 +208,6 @@ export async function applyMetalmindSessionStartHook(
   return { settingsPath, changed: true };
 }
 
-/**
- * Register the output-style activation hook as a sibling SessionStart entry
- * alongside the metalmind memory hook. Independent group so users can disable
- * one without losing the other. Idempotent: same hookCommand → no-op.
- */
-export async function applyOutputStyleSessionStartHook(
-  opts: SessionStartHookOptions,
-): Promise<SessionStartHookResult> {
-  const settingsPath = opts.settingsPath ?? DEFAULT_SETTINGS_PATH;
-  const data = await readSettings(settingsPath);
-  const hooks = data.hooks ?? {};
-  const sessionStart = hooks.SessionStart ?? [];
-
-  const desired: ClaudeHookGroup = {
-    matcher: '',
-    hooks: [{ type: 'command', command: opts.hookCommand }],
-  };
-
-  const other = sessionStart.filter((g) => !isOutputStyleHookGroup(g));
-  const existing = sessionStart.find(isOutputStyleHookGroup);
-  const alreadyCorrect =
-    existing !== undefined &&
-    existing.hooks.length === 1 &&
-    existing.hooks[0]?.command === opts.hookCommand;
-
-  if (alreadyCorrect && other.length === sessionStart.length - 1) {
-    return { settingsPath, changed: false };
-  }
-
-  hooks.SessionStart = [...other, desired];
-  data.hooks = hooks;
-  await writeSettings(settingsPath, data);
-  return { settingsPath, changed: true };
-}
-
 export async function clearOutputStyleSessionStartHook(settingsPath?: string): Promise<boolean> {
   const path = settingsPath ?? DEFAULT_SETTINGS_PATH;
   if (!existsSync(path)) return false;
@@ -259,43 +224,6 @@ export async function clearOutputStyleSessionStartHook(settingsPath?: string): P
   else data.hooks = hooks;
   await writeSettings(path, data);
   return true;
-}
-
-/**
- * Register the output-style re-anchor hook on UserPromptSubmit. Mirrors the
- * SessionStart sibling, but fires every user message - emits a *short* (~25
- * token) reminder so the active style survives long sessions and post-compact
- * drift. Independent group so users can disable one without losing the other.
- * Idempotent: same hookCommand → no-op.
- */
-export async function applyOutputStyleUserPromptSubmitHook(
-  opts: SessionStartHookOptions,
-): Promise<SessionStartHookResult> {
-  const settingsPath = opts.settingsPath ?? DEFAULT_SETTINGS_PATH;
-  const data = await readSettings(settingsPath);
-  const hooks = data.hooks ?? {};
-  const userPromptSubmit = hooks.UserPromptSubmit ?? [];
-
-  const desired: ClaudeHookGroup = {
-    matcher: '',
-    hooks: [{ type: 'command', command: opts.hookCommand }],
-  };
-
-  const other = userPromptSubmit.filter((g) => !isOutputStyleReanchorHookGroup(g));
-  const existing = userPromptSubmit.find(isOutputStyleReanchorHookGroup);
-  const alreadyCorrect =
-    existing !== undefined &&
-    existing.hooks.length === 1 &&
-    existing.hooks[0]?.command === opts.hookCommand;
-
-  if (alreadyCorrect && other.length === userPromptSubmit.length - 1) {
-    return { settingsPath, changed: false };
-  }
-
-  hooks.UserPromptSubmit = [...other, desired];
-  data.hooks = hooks;
-  await writeSettings(settingsPath, data);
-  return { settingsPath, changed: true };
 }
 
 export async function clearOutputStyleUserPromptSubmitHook(

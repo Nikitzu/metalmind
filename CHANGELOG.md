@@ -6,6 +6,24 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.24.0 - 2026-08-20
+
+### Removed
+
+- **The marsh / telegraph output styles are gone.** Claude Code now ships its own brevity styles, so metalmind maintaining a competing pair stopped earning its keep. What goes with them is the whole subsystem, not just the two files: the bundled style assets, the two self-triggering skill bundles, the SessionStart activation hook, the UserPromptSubmit re-anchor hook, and the `outputStyle` object in `~/.metalmind/config.json`.
+
+  Nothing about recall, notes, forge, or the flavour system changes. `flavor: scadrial | classic` still picks the verb set (`tap copper` vs `recall`); it simply no longer picks a voice as well.
+
+### Changed
+
+- **`metalmind stamp` sweeps what earlier versions installed.** Deleting the code does not undo what it wrote into `~/.claude`, so an upgraded install would otherwise keep two hook scripts firing on every session and every prompt, pointed at a style file nothing maintains. The stamp now removes the style files (including the pre-0.8.14 `terse` and `caveman` names), the two skill directories, both hook scripts, and both settings registrations.
+
+  `settings.outputStyle` is restored to whatever it held before metalmind first overwrote it, and deleted when there was nothing to restore. A style you chose yourself is never touched: the sweep only acts when the setting names one of metalmind's own retired slugs. The whole thing no-ops on installs that never had the feature, and is safe to run repeatedly.
+
+- **Config schema v5.** The v4 to v5 migration drops the `outputStyle` object and carries its `priorValue` forward as a top-level `outputStylePriorValue`, which is what the sweep reads to put the setting back. That field is the last trace of the feature and can go once no install predating 0.24.0 remains.
+
+---
+
 ## 0.23.0 - 2026-08-17
 
 ### Changed

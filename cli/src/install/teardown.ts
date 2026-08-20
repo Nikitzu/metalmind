@@ -7,20 +7,10 @@ import { removeSentinelBlock, type SentinelRemoveAction } from '../util/sentinel
 import { uninstallAliases } from './aliases.js';
 import { removeGraphifyResidue } from './graphify-legacy.js';
 import { unregisterMcpServers } from './mcp.js';
-import { uninstallOutputStyle } from './output-style.js';
+import { type CleanupOutputStyleResult, cleanupOutputStyle } from './output-style-cleanup.js';
 import { uninstallSerena } from './serena.js';
-import {
-  clearAgentTeams,
-  clearMemoryRouting,
-  clearMetalmindSessionStartHook,
-  clearOutputStyleSessionStartHook,
-  clearOutputStyleUserPromptSubmitHook,
-} from './settings.js';
-import {
-  METALMIND_HOOK_FILENAME,
-  OUTPUT_STYLE_HOOK_FILENAME,
-  OUTPUT_STYLE_REANCHOR_HOOK_FILENAME,
-} from './templates.js';
+import { clearAgentTeams, clearMemoryRouting, clearMetalmindSessionStartHook } from './settings.js';
+import { METALMIND_HOOK_FILENAME } from './templates.js';
 import { uninstallVaultRag } from './vault-rag.js';
 import type { WatcherPlatform } from './watcher.js';
 import { uninstallWatcher } from './watcher.js';
@@ -67,14 +57,12 @@ export interface TeardownResult {
   graphifyUninstalled: boolean;
   mcp: { removed: string[]; notPresent: string[] };
   aliases: { removedAliases: boolean; removedSourceLine: boolean };
-  outputStyle: { styleRemoved: boolean; settingsRestored: boolean };
+  outputStyle: CleanupOutputStyleResult;
   configRemoved: boolean;
   vaultRagUninstalled: boolean;
   memoryRoutingCleared: boolean;
   agentTeamsCleared: boolean;
   sessionStartHook: { registrationCleared: boolean; scriptRemoved: boolean };
-  outputStyleHook: { registrationCleared: boolean; scriptRemoved: boolean };
-  outputStyleReanchorHook: { registrationCleared: boolean; scriptRemoved: boolean };
   claudeMdBlocks: { global: SentinelRemoveAction; vault: SentinelRemoveAction };
 }
 
@@ -90,14 +78,21 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
     graphifyUninstalled: false,
     mcp: { removed: [], notPresent: [] },
     aliases: { removedAliases: false, removedSourceLine: false },
-    outputStyle: { styleRemoved: false, settingsRestored: false },
+    outputStyle: {
+      cleaned: false,
+      stylesRemoved: [],
+      skillsRemoved: [],
+      hookScriptsRemoved: [],
+      sessionStartHookCleared: false,
+      userPromptSubmitHookCleared: false,
+      settingsOutputStyle: null,
+      settingsChanged: false,
+    },
     configRemoved: false,
     vaultRagUninstalled: false,
     memoryRoutingCleared: false,
     agentTeamsCleared: false,
     sessionStartHook: { registrationCleared: false, scriptRemoved: false },
-    outputStyleHook: { registrationCleared: false, scriptRemoved: false },
-    outputStyleReanchorHook: { registrationCleared: false, scriptRemoved: false },
     claudeMdBlocks: { global: 'no-file', vault: 'no-file' },
   };
 
@@ -147,24 +142,13 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
     result.sessionStartHook.scriptRemoved = true;
   }
 
-  result.outputStyleHook.registrationCleared = await clearOutputStyleSessionStartHook(settingsPath);
-  const outputStyleHookScriptPath = join(claudeDir, 'hooks', OUTPUT_STYLE_HOOK_FILENAME);
-  if (existsSync(outputStyleHookScriptPath)) {
-    await rm(outputStyleHookScriptPath, { force: true });
-    result.outputStyleHook.scriptRemoved = true;
-  }
-
-  result.outputStyleReanchorHook.registrationCleared =
-    await clearOutputStyleUserPromptSubmitHook(settingsPath);
-  const outputStyleReanchorHookScriptPath = join(
-    claudeDir,
-    'hooks',
-    OUTPUT_STYLE_REANCHOR_HOOK_FILENAME,
-  );
-  if (existsSync(outputStyleReanchorHookScriptPath)) {
-    await rm(outputStyleReanchorHookScriptPath, { force: true });
-    result.outputStyleReanchorHook.scriptRemoved = true;
-  }
+  // Retired feature. Still swept here so uninstalling an upgraded install
+  // leaves nothing behind from the versions that shipped it.
+  result.outputStyle = await cleanupOutputStyle({
+    priorValue: config?.outputStylePriorValue ?? null,
+    settingsPath,
+    hooksDir: join(claudeDir, 'hooks'),
+  });
 
   const mcp = await unregisterMcpServers({
     servers: ['vault-rag', 'serena'],
@@ -178,14 +162,6 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
     zshrcPath: opts.zshrcPath,
   });
   result.aliases = aliases;
-
-  if (config?.outputStyle.installed) {
-    const style = await uninstallOutputStyle({
-      styleName: config.outputStyle.installed,
-      priorValue: config.outputStyle.priorValue,
-    });
-    result.outputStyle = style;
-  }
 
   const globalClaudeMd = join(claudeDir, 'CLAUDE.md');
   const vaultClaudeMd = config?.vaultPath ? join(config.vaultPath, 'CLAUDE.md') : null;

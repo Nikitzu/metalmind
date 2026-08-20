@@ -33,10 +33,10 @@ describe('config', () => {
     const { readConfig, writeConfig } = await import('./config.js');
 
     const cfg: Config = {
-      version: 4,
+      version: 5,
       flavor: 'scadrial',
       vaultPath: '/tmp/vault',
-      outputStyle: { installed: 'marsh', priorValue: null },
+      outputStylePriorValue: null,
       embeddings: { provider: 'local', baseURL: null },
       recall: { defaultTier: 'fast', httpEndpoint: null },
       verbose: false,
@@ -68,7 +68,7 @@ describe('config', () => {
       version: 3,
       flavor: 'classic',
       vaultPath: '/tmp/vault',
-      outputStyle: { installed: null, priorValue: null },
+      outputStylePriorValue: null,
       embeddings: { provider: 'local', baseURL: null },
       recall: { defaultTier: 'fast', httpEndpoint: null },
       verbose: false,
@@ -95,7 +95,7 @@ describe('config', () => {
       flavor: 'scadrial',
       vaultPath: '/tmp/vault',
       graphifyCmd: 'graphify',
-      outputStyle: { installed: null, priorValue: null },
+      outputStylePriorValue: null,
       embeddings: { provider: 'local', baseURL: null },
       recall: { defaultTier: 'fast', httpEndpoint: null },
       verbose: false,
@@ -111,13 +111,13 @@ describe('config', () => {
 
     const { readConfig } = await import('./config.js');
     const loaded = await readConfig();
-    expect(loaded?.version).toBe(4);
+    expect(loaded?.version).toBe(5);
     expect(loaded?.mcp.registered).toEqual(['serena']);
     expect(loaded?.hooks.claudeCode).toBe(false);
     expect(loaded).not.toHaveProperty('graphifyCmd');
 
     const onDisk = JSON.parse(await readFile(path, 'utf8'));
-    expect(onDisk.version).toBe(4);
+    expect(onDisk.version).toBe(5);
     expect(onDisk).not.toHaveProperty('graphifyCmd');
     expect(onDisk.mcp.registered).toEqual(['serena']);
   });
@@ -157,6 +157,42 @@ describe('config', () => {
     expect(loaded?.embeddings.baseURL).toBeNull();
     expect(loaded?.hosts).toEqual(['claude', 'codex']);
     expect(loaded?.verbose).toBe(true);
+    // v4 to v5 drops the retired output-style object but keeps the value the
+    // cleanup needs to put settings.outputStyle back where it found it.
+    expect(loaded?.version).toBe(5);
+    expect(loaded?.outputStylePriorValue).toBe('explanatory');
+    expect((loaded as unknown as Record<string, unknown>).outputStyle).toBeUndefined();
+  });
+
+  it('drops the output-style object at v5 with no prior value to keep', async () => {
+    vi.doMock('node:os', async (orig) => ({
+      ...(await orig<typeof import('node:os')>()),
+      homedir: () => tmp,
+    }));
+    await mkdir(join(tmp, '.metalmind'), { recursive: true });
+    const v4 = {
+      version: 4,
+      flavor: 'scadrial',
+      vaultPath: '/custom/vault',
+      outputStyle: { installed: 'marsh', priorValue: null },
+      embeddings: { provider: 'local', baseURL: null },
+      recall: { defaultTier: 'fast', httpEndpoint: null },
+      verbose: false,
+      mcp: { registered: [] },
+      hooks: { claudeCode: true },
+      forge: { groups: {} },
+      memoryRouting: 'vault-only',
+      skills: { eodHook: true, notifications: true },
+      hosts: ['claude'],
+      install: { profile: 'full', teams: false },
+    };
+    await writeFile(join(tmp, '.metalmind', 'config.json'), JSON.stringify(v4), 'utf8');
+
+    const { readConfig } = await import('./config.js');
+    const loaded = await readConfig();
+    expect(loaded?.version).toBe(5);
+    expect(loaded?.outputStylePriorValue).toBeNull();
+    expect((loaded as unknown as Record<string, unknown>).outputStyle).toBeUndefined();
   });
 
   it('round-trips hosts ["claude", "codex"]', async () => {
@@ -166,10 +202,10 @@ describe('config', () => {
     }));
     const { readConfig, writeConfig } = await import('./config.js');
     const cfg: Config = {
-      version: 4,
+      version: 5,
       flavor: 'classic',
       vaultPath: '/tmp/vault',
-      outputStyle: { installed: null, priorValue: null },
+      outputStylePriorValue: null,
       embeddings: { provider: 'local', baseURL: null },
       recall: { defaultTier: 'fast', httpEndpoint: null },
       verbose: false,
@@ -211,7 +247,7 @@ describe('config', () => {
       version: 3,
       flavor: 'classic',
       vaultPath: '/tmp/vault',
-      outputStyle: { installed: null, priorValue: null },
+      outputStylePriorValue: null,
       embeddings: { provider: 'local', baseURL: null },
       recall: { defaultTier: 'fast', httpEndpoint: null },
       verbose: false,
@@ -271,7 +307,7 @@ describe('config v3 → v4 install manifest migration', () => {
     version: 3,
     flavor: 'scadrial',
     vaultPath: '/tmp/vault',
-    outputStyle: { installed: null, priorValue: null },
+    outputStylePriorValue: null,
     embeddings: { provider: 'local', baseURL: null },
     recall: { defaultTier: 'fast', httpEndpoint: null },
     verbose: false,
@@ -301,7 +337,7 @@ describe('config v3 → v4 install manifest migration', () => {
     const { readConfig } = await loadWithHome();
     const cfg = await readConfig();
 
-    expect(cfg?.version).toBe(4);
+    expect(cfg?.version).toBe(5);
     expect(cfg?.install).toEqual({ profile: 'full', teams: true });
   });
 
@@ -324,7 +360,7 @@ describe('config v3 → v4 install manifest migration', () => {
     await readConfig();
 
     const onDisk = JSON.parse(await readFile(join(tmp, '.metalmind', 'config.json'), 'utf8'));
-    expect(onDisk.version).toBe(4);
+    expect(onDisk.version).toBe(5);
     expect(onDisk.install).toBeDefined();
   });
 });

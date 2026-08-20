@@ -311,48 +311,6 @@ describe('templates', () => {
       const body = await readFile(second.hookScriptPath, 'utf8');
       expect(body).toContain('metalmind recall');
     });
-
-    it('installs the output-style activation hook alongside the memory hook', async () => {
-      const hooksDir = join(claudeDir, 'hooks');
-      const { copyClaudeHooks } = await import('./templates.js');
-      const result = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
-
-      expect(result.outputStyleAction).toBe('created');
-      expect(result.outputStyleHookCommand).toBe(`bash ${result.outputStyleHookScriptPath}`);
-      const body = await readFile(result.outputStyleHookScriptPath, 'utf8');
-      expect(body).toContain('output-style activate stub');
-    });
-
-    it('is idempotent for the output-style hook on re-run', async () => {
-      const hooksDir = join(claudeDir, 'hooks');
-      const { copyClaudeHooks } = await import('./templates.js');
-      await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
-      const second = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
-
-      expect(second.outputStyleAction).toBe('unchanged');
-    });
-
-    it('installs the output-style re-anchor hook alongside the activate hook', async () => {
-      const hooksDir = join(claudeDir, 'hooks');
-      const { copyClaudeHooks } = await import('./templates.js');
-      const result = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
-
-      expect(result.outputStyleReanchorAction).toBe('created');
-      expect(result.outputStyleReanchorHookCommand).toBe(
-        `bash ${result.outputStyleReanchorHookScriptPath}`,
-      );
-      const body = await readFile(result.outputStyleReanchorHookScriptPath, 'utf8');
-      expect(body).toContain('output-style reanchor stub');
-    });
-
-    it('is idempotent for the re-anchor hook on re-run', async () => {
-      const hooksDir = join(claudeDir, 'hooks');
-      const { copyClaudeHooks } = await import('./templates.js');
-      await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
-      const second = await copyClaudeHooks({ templatesDir, hooksDir, flavor: 'scadrial' });
-
-      expect(second.outputStyleReanchorAction).toBe('unchanged');
-    });
   });
 });
 

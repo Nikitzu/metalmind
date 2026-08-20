@@ -13,24 +13,18 @@ import { setupVaultGit } from './git.js';
 import { removeGraphifyResidue } from './graphify-legacy.js';
 import { promptHosts } from './host-prompt.js';
 import { registerMcpServers } from './mcp.js';
-import { type FlavorChoice, installOutputStyle } from './output-style.js';
+import { cleanupOutputStyle } from './output-style-cleanup.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
+import { resolveProfile, resolveTeams } from './profile.js';
 import { runPendingRepairs } from './repair.js';
 import { installSerena } from './serena.js';
-import {
-  applyAgentTeams,
-  applyMemoryRouting,
-  applyMetalmindSessionStartHook,
-  applyOutputStyleSessionStartHook,
-  applyOutputStyleUserPromptSubmitHook,
-} from './settings.js';
+import { applyAgentTeams, applyMemoryRouting, applyMetalmindSessionStartHook } from './settings.js';
 import {
   appendGlobalGitignore,
   copyClaudeHooks,
   copyClaudeTemplates,
   stampClaudeMd,
 } from './templates.js';
-import { resolveProfile, resolveTeams } from './profile.js';
 import { installUv, UV_INSTALL_COMMAND } from './uv.js';
 import { promptVaultPath, setupVault } from './vault.js';
 import { installVaultRag, resolveWatcherBinPath } from './vault-rag.js';
@@ -196,7 +190,6 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     checkCancelled(answer, 'theme prompt');
     flavor = answer as 'scadrial' | 'classic';
   }
-  const styleChoice: FlavorChoice = flavor === 'scadrial' ? 'marsh' : 'telegraph';
 
   let memoryRouting: 'vault-only' | 'both';
   if (opts.memoryRouting !== undefined) {
@@ -377,9 +370,6 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
   const installCodexHost = chosenHosts.includes('codex');
   const installCursorHost = chosenHosts.includes('cursor');
 
-  let stylePriorValue: string | null = null;
-  let stampedOutputStyle: FlavorChoice | null = null;
-
   if (installClaude) {
     log.step('Registering MCP servers (serena)');
     const mcp = await registerMcpServers({ serena });
@@ -421,30 +411,6 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       hookReg.changed ? '  registered in settings.json → SessionStart' : '  already registered',
     );
 
-    log.step('Installing output-style activation hook (re-anchors style against drift)');
-    const outputStyleHookReg = await applyOutputStyleSessionStartHook({
-      hookCommand: hookScript.outputStyleHookCommand,
-    });
-    log.success(`  ${hookScript.outputStyleAction} ${hookScript.outputStyleHookScriptPath}`);
-    log.info(
-      outputStyleHookReg.changed
-        ? '  registered in settings.json → SessionStart'
-        : '  already registered',
-    );
-
-    log.step('Installing output-style re-anchor hook (per-turn drift guard)');
-    const outputStyleReanchorReg = await applyOutputStyleUserPromptSubmitHook({
-      hookCommand: hookScript.outputStyleReanchorHookCommand,
-    });
-    log.success(
-      `  ${hookScript.outputStyleReanchorAction} ${hookScript.outputStyleReanchorHookScriptPath}`,
-    );
-    log.info(
-      outputStyleReanchorReg.changed
-        ? '  registered in settings.json → UserPromptSubmit'
-        : '  already registered',
-    );
-
     log.step('Copying rules, agents, commands');
     const tpl = await copyClaudeTemplates({
       withTeams: enableTeams,
@@ -469,15 +435,24 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
       log.info(`  refreshed metalmind block → ${claudeMd.path}`);
     else log.info(`  metalmind block up to date in ${claudeMd.path}`);
 
-    log.step(`Installing ${styleChoice} output-style`);
-    const style = await installOutputStyle({ choice: styleChoice });
-    if (style.migrated) log.success(`  migrated legacy style → ${style.stylePath}`);
-    else if (style.installed) log.success(`  copied bundled style → ${style.stylePath}`);
-    else if (style.updated) log.success(`  refreshed stale style from asset → ${style.stylePath}`);
-    else log.info(`  ${style.stylePath} already present - kept`);
-    if (style.priorValue) log.info(`  prior settings.json outputStyle: ${style.priorValue}`);
-    stylePriorValue = style.priorValue;
-    stampedOutputStyle = styleChoice;
+    const styleCleanup = await cleanupOutputStyle({
+      priorValue: priorConfig?.outputStylePriorValue ?? null,
+    });
+    if (styleCleanup.cleaned) {
+      log.step('Removing the retired output-style feature');
+      if (styleCleanup.stylesRemoved.length > 0)
+        log.success(`  removed styles: ${styleCleanup.stylesRemoved.join(', ')}`);
+      if (styleCleanup.skillsRemoved.length > 0)
+        log.success(`  removed skills: ${styleCleanup.skillsRemoved.join(', ')}`);
+      if (styleCleanup.hookScriptsRemoved.length > 0)
+        log.success(`  removed hooks: ${styleCleanup.hookScriptsRemoved.join(', ')}`);
+      if (styleCleanup.settingsChanged)
+        log.success(
+          styleCleanup.settingsOutputStyle
+            ? `  settings.json outputStyle restored to ${styleCleanup.settingsOutputStyle}`
+            : '  settings.json outputStyle cleared',
+        );
+    }
   }
 
   if (installCodexHost) {
@@ -529,7 +504,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     version: CURRENT_CONFIG_VERSION,
     flavor,
     vaultPath: vault.vaultPath,
-    outputStyle: { installed: stampedOutputStyle, priorValue: stylePriorValue },
+    outputStylePriorValue: priorConfig?.outputStylePriorValue ?? null,
     embeddings: priorConfig?.embeddings ?? { provider: 'local', baseURL: null },
     recall: priorConfig?.recall ?? { defaultTier: 'fast', httpEndpoint: null },
     verbose: priorConfig?.verbose ?? false,

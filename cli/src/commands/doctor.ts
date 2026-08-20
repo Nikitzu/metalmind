@@ -3,16 +3,14 @@ import { readFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { basename, join } from 'node:path';
 import { intro, log, outro } from '@clack/prompts';
+import { recallTokenPath } from '../backends/recall-token.js';
 import {
   type CodeRefStatus,
   collectVaultCodeRefs,
   type ForgeGroups,
   verifyCodeRefs,
 } from '../coderefs/coderefs.js';
-import { recallTokenPath } from '../backends/recall-token.js';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
-import { inferInstallShape } from '../install/profile.js';
-import { DEFAULT_CLAUDE_DIR } from '../install/templates.js';
 import {
   DEFAULT_CODEX_DIR,
   DEFAULT_CODEX_MCP_NAME,
@@ -25,7 +23,9 @@ import { METALMIND_CURSOR_HOOK_FILENAME } from '../install/cursor/hooks.js';
 import { DEFAULT_CURSOR_DIR } from '../install/cursor.js';
 import { isGraphifyInstalled } from '../install/graphify-legacy.js';
 import { detectPrereqs } from '../install/prereqs.js';
+import { inferInstallShape } from '../install/profile.js';
 import { findGraphifyHooks } from '../install/settings.js';
+import { DEFAULT_CLAUDE_DIR } from '../install/templates.js';
 import { scanForgeIntentSkills } from '../intent/intent.js';
 import {
   frontmatterString,
@@ -133,7 +133,8 @@ export function checkInstallManifest(
       name: 'install-manifest',
       ok: false,
       detail: 'config records a full install but the synod skill is missing on disk',
-      remediation: 'Re-run `metalmind init` to restore the full surface, or `metalmind init --core` to record core.',
+      remediation:
+        'Re-run `metalmind init` to restore the full surface, or `metalmind init --core` to record core.',
     };
   }
   if (recorded.teams && !onDisk.teams) {
@@ -141,7 +142,8 @@ export function checkInstallManifest(
       name: 'install-manifest',
       ok: false,
       detail: 'config records teams but no team-* commands exist on disk',
-      remediation: 'Re-run `metalmind init` to restore them, or `metalmind init --no-teams` to record the change.',
+      remediation:
+        'Re-run `metalmind init` to restore them, or `metalmind init --no-teams` to record the change.',
     };
   }
   return {
@@ -932,7 +934,6 @@ export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Pr
     log.info(`flavor:         ${config.flavor}`);
     log.info(`vaultPath:      ${config.vaultPath}`);
     log.info(`hosts:          ${config.hosts.join(', ')}`);
-    log.info(`outputStyle:    ${config.outputStyle.installed ?? '(none - codex-only install)'}`);
     log.info(`embeddings:     ${config.embeddings.provider}`);
     log.info(`recall.default: ${config.recall.defaultTier}`);
     log.info(`mcp:            ${config.mcp.registered.join(', ') || '(none)'}`);

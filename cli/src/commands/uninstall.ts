@@ -190,8 +190,14 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
       log.success(`MCP entries removed: ${result.mcp.removed.join(', ')}`);
     if (result.aliases.removedAliases) log.success('Aliases file removed');
     if (result.aliases.removedSourceLine) log.success('.zshrc source line removed');
-    if (result.outputStyle.styleRemoved) log.success('Output-style file removed');
-    if (result.outputStyle.settingsRestored) log.success('settings.json outputStyle restored');
+    if (result.outputStyle.stylesRemoved.length > 0)
+      log.success(`Output-style files removed: ${result.outputStyle.stylesRemoved.join(', ')}`);
+    if (result.outputStyle.settingsChanged)
+      log.success(
+        result.outputStyle.settingsOutputStyle
+          ? `settings.json outputStyle restored to ${result.outputStyle.settingsOutputStyle}`
+          : 'settings.json outputStyle cleared',
+      );
     if (result.claudeMdBlocks.global === 'removed' || result.claudeMdBlocks.global === 'file-empty')
       log.success('Stripped metalmind block from ~/.claude/CLAUDE.md');
     if (result.claudeMdBlocks.vault === 'removed' || result.claudeMdBlocks.vault === 'file-empty')

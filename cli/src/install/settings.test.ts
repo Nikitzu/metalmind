@@ -7,7 +7,6 @@ import {
   applyAgentTeams,
   applyMemoryRouting,
   applyMetalmindSessionStartHook,
-  applyOutputStyleUserPromptSubmitHook,
   type ClaudeSettings,
   clearAgentTeams,
   clearMemoryRouting,
@@ -300,65 +299,6 @@ describe('settings', () => {
     });
   });
 
-  describe('applyOutputStyleUserPromptSubmitHook', () => {
-    const hookCommand = 'bash /x/metalmind-output-style-reanchor.sh';
-
-    it('registers a new UserPromptSubmit group in an empty settings file', async () => {
-      const result = await applyOutputStyleUserPromptSubmitHook({ settingsPath, hookCommand });
-      expect(result.changed).toBe(true);
-
-      const data = await readJson(settingsPath);
-      expect(data.hooks?.UserPromptSubmit).toHaveLength(1);
-      expect(data.hooks?.UserPromptSubmit?.[0]?.hooks?.[0]?.command).toBe(hookCommand);
-    });
-
-    it('preserves pre-existing unrelated UserPromptSubmit hooks', async () => {
-      await writeFile(
-        settingsPath,
-        JSON.stringify({
-          hooks: {
-            UserPromptSubmit: [
-              { matcher: '', hooks: [{ type: 'command', command: 'bash /other.sh' }] },
-            ],
-          },
-        }),
-        'utf8',
-      );
-      await applyOutputStyleUserPromptSubmitHook({ settingsPath, hookCommand });
-
-      const data = await readJson(settingsPath);
-      expect(data.hooks?.UserPromptSubmit).toHaveLength(2);
-      const commands = data.hooks?.UserPromptSubmit?.flatMap((g) => g.hooks.map((h) => h.command));
-      expect(commands).toContain('bash /other.sh');
-      expect(commands).toContain(hookCommand);
-    });
-
-    it('is idempotent: re-apply with identical command returns changed=false', async () => {
-      await applyOutputStyleUserPromptSubmitHook({ settingsPath, hookCommand });
-      const second = await applyOutputStyleUserPromptSubmitHook({ settingsPath, hookCommand });
-      expect(second.changed).toBe(false);
-    });
-
-    it('replaces a stale entry when the hookCommand changes', async () => {
-      await applyOutputStyleUserPromptSubmitHook({
-        settingsPath,
-        hookCommand: 'bash /old/metalmind-output-style-reanchor.sh',
-      });
-      const second = await applyOutputStyleUserPromptSubmitHook({
-        settingsPath,
-        hookCommand: 'bash /new/metalmind-output-style-reanchor.sh',
-      });
-      expect(second.changed).toBe(true);
-
-      const data = await readJson(settingsPath);
-      const entries = data.hooks?.UserPromptSubmit?.filter((g) =>
-        g.hooks.some((h) => h.command.includes('metalmind-output-style-reanchor.sh')),
-      );
-      expect(entries).toHaveLength(1);
-      expect(entries?.[0]?.hooks?.[0]?.command).toContain('/new/');
-    });
-  });
-
   describe('clearOutputStyleUserPromptSubmitHook', () => {
     it('removes only the re-anchor entry, keeps other UserPromptSubmit groups', async () => {
       await writeFile(
@@ -390,10 +330,20 @@ describe('settings', () => {
     });
 
     it('deletes UserPromptSubmit array entirely when it was the only entry', async () => {
-      await applyOutputStyleUserPromptSubmitHook({
+      await writeFile(
         settingsPath,
-        hookCommand: 'bash /metalmind-output-style-reanchor.sh',
-      });
+        JSON.stringify({
+          hooks: {
+            UserPromptSubmit: [
+              {
+                matcher: '',
+                hooks: [{ type: 'command', command: 'bash /metalmind-output-style-reanchor.sh' }],
+              },
+            ],
+          },
+        }),
+        'utf8',
+      );
       const changed = await clearOutputStyleUserPromptSubmitHook(settingsPath);
       expect(changed).toBe(true);
 
