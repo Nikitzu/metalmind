@@ -6,6 +6,20 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## Unreleased
+
+### Added
+
+- **`metalmind judge status|enable|disable`: opt-in Jev (TypeSafe) judgments.** Key from `TYPESAFE_API_KEY` or the macOS Keychain item `typesafe-api-key`; `METALMIND_JUDGE=0` turns it off for one shell. Every judged command reports its own failure inline as `unjudged: <reason>` (no key, offline, timeout, rejected) and keeps its exit code.
+- **`scribe create` and `scribe update` refuse a draft an existing note already covers.** One coverage score per candidate (distinct / overlaps / covered); at or above 1.5 the note is named with the `scribe update` shortcut and nothing is written, `--force` overrides, between 0.5 and 1.5 an `extends` line is printed. The 0.80 cosine warning survives only as the unjudged fallback. The check now runs before the write, not after.
+- **`tap copper` shows hits in judged relevance order** with off-topic hits dropped, answering hits marked, and `judged: N of M kept` in place of the low-confidence line; `--no-judge` per call. A frontmatter-only chunk is judged by its note's opening. Config v6 carries `judge: { enabled, model }`.
+
+### Removed
+
+- **The cross-encoder `--rerank` tier.** On the maintainer vault the judge beat it on top-1 and MRR and, unlike it, returns nothing on questions the vault cannot answer (`bench/judge-relevance/`). `--rerank` is kept as an alias of the judged order; the Python `[rerank]` extra stays one release for installs that already have it.
+
+---
+
 ## 0.24.1 - 2026-08-20
 
 ### Fixed
