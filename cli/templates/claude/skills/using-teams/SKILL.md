@@ -66,6 +66,9 @@ When a teammate's tool call requires permission (Edit outside its allowed paths,
 - Each task ID maps to one commit / one logical unit of work.
 - Use `addBlockedBy` to encode the dependency DAG.
 - Mark tasks `completed` immediately when done - don't batch.
+- A teammate's `SendMessage` summary is a pointer, not the deliverable. Before consolidating,
+  `Read` each teammate's report file from disk in full, and keep those files until the
+  consolidation has been checked against them. A summary can be a subset of its own report.
 
 ## Spawn order for `/team-feature`
 

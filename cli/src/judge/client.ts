@@ -70,8 +70,7 @@ export function clipForState(body: string): string {
 
 export function unjudgedLine(res: JudgeResult): string {
   if (!res.unjudged) return '';
-  const reason =
-    res.unjudged === 'rejected' ? `rejected ${res.status ?? ''}`.trim() : res.unjudged;
+  const reason = res.unjudged === 'rejected' ? `rejected ${res.status ?? ''}`.trim() : res.unjudged;
   return `unjudged: ${reason}`;
 }
 
