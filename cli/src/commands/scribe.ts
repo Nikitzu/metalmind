@@ -1,8 +1,12 @@
+import { relative } from 'node:path';
 import { log } from '@clack/prompts';
 import { readConfig } from '../config.js';
+import { judgeEnabled } from '../judge/client.js';
+import { gateDraft, realGateDeps } from '../judge/scribe-gate.js';
 import { findOverlappingNotes, formatOverlapWarning } from '../scribe/dedup.js';
 import {
   KIND_DIRS,
+  resolveNotePath,
   type ScribeKind,
   type ScribeOpts,
   scribeArchive,
@@ -53,6 +57,7 @@ export async function scribeCreateCmd(
     moc?: boolean;
     dryRun?: boolean;
     code?: string;
+    force?: boolean;
   },
 ): Promise<void> {
   try {
@@ -60,6 +65,25 @@ export async function scribeCreateCmd(
     if (!cfg) throw new Error('metalmind not initialized - run `metalmind init` first');
     const body = opts.body ?? (await readStdin());
     const kind = assertKind(opts.kind);
+    const judged = judgeEnabled(cfg.judge) && kind !== 'daily';
+    if (judged) {
+      const gate = await gateDraft({
+        title,
+        body,
+        exclude: [],
+        ...realGateDeps({
+          vaultRoot: cfg.vaultPath,
+          httpEndpoint: cfg.recall.httpEndpoint,
+          model: cfg.judge.model,
+        }),
+      });
+      for (const line of gate.lines) log.warn(line);
+      if (gate.refuse && !opts.force) {
+        fail(`not created: ${gate.refuse} already covers this (--force to create anyway)`);
+        return;
+      }
+      if (gate.refuse && opts.force) log.warn(`--force: creating despite ${gate.refuse}`);
+    }
     const res = await scribeCreate(
       {
         kind,
@@ -82,7 +106,7 @@ export async function scribeCreateCmd(
       { vaultRoot: cfg.vaultPath },
     );
     log.success(`${opts.dryRun ? 'would create' : 'created'} ${res.relPath}`);
-    if (res.created && kind !== 'daily') {
+    if (!judged && res.created && kind !== 'daily') {
       const overlaps = await findOverlappingNotes({
         title,
         body,
@@ -98,7 +122,7 @@ export async function scribeCreateCmd(
 
 export async function scribeUpdateCmd(
   notePath: string,
-  opts: { body?: string; date?: string; dryRun?: boolean; code?: string },
+  opts: { body?: string; date?: string; dryRun?: boolean; code?: string; force?: boolean },
 ): Promise<void> {
   try {
     const code =
@@ -112,11 +136,37 @@ export async function scribeUpdateCmd(
     if (!body.trim() && code === undefined) {
       throw new Error('empty body - pipe content on stdin or pass --body');
     }
-    const res = await scribeUpdate(notePath, body, await ctx(), {
-      date: opts.date,
-      dryRun: opts.dryRun,
-      code,
-    });
+    const cfg = await readConfig();
+    if (!cfg) throw new Error('metalmind not initialized - run `metalmind init` first');
+    if (judgeEnabled(cfg.judge) && body.trim()) {
+      const target = relative(cfg.vaultPath, resolveNotePath(notePath, cfg.vaultPath));
+      const gate = await gateDraft({
+        title: notePath,
+        body,
+        exclude: [target],
+        ...realGateDeps({
+          vaultRoot: cfg.vaultPath,
+          httpEndpoint: cfg.recall.httpEndpoint,
+          model: cfg.judge.model,
+        }),
+      });
+      for (const line of gate.lines) log.warn(line);
+      if (gate.refuse && !opts.force) {
+        fail(`not updated: ${gate.refuse} already covers this (--force to append anyway)`);
+        return;
+      }
+      if (gate.refuse && opts.force) log.warn(`--force: appending despite ${gate.refuse}`);
+    }
+    const res = await scribeUpdate(
+      notePath,
+      body,
+      { vaultRoot: cfg.vaultPath },
+      {
+        date: opts.date,
+        dryRun: opts.dryRun,
+        code,
+      },
+    );
     log.success(`${opts.dryRun ? 'would update' : 'updated'} ${res.path}`);
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));

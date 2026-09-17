@@ -407,6 +407,7 @@ function attachScribeSubcommands(parent: Command): void {
     .option('--code <csv>', 'Comma-separated code refs (repo#symbol) this note is about')
     .option('--no-moc', 'Skip appending a link to the project MOC')
     .option('--dry-run', 'Preview only')
+    .option('--force', 'Create even when the judge says an existing note covers it')
     .action((title: string, cmdOpts) => scribeCreateCmd(title, cmdOpts));
   parent
     .command('update <note>')
@@ -415,6 +416,7 @@ function attachScribeSubcommands(parent: Command): void {
     .option('--code <csv>', 'Re-stamp the code: frontmatter refs (repo#symbol, comma-separated)')
     .option('--date <date>', dateFlagDescription)
     .option('--dry-run', 'Preview only')
+    .option('--force', 'Append even when the judge says an existing note covers it')
     .action((note: string, cmdOpts) => scribeUpdateCmd(note, cmdOpts));
   parent
     .command('patch <note>')
