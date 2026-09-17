@@ -15,21 +15,31 @@ describe('resolveJudgeKey', () => {
     expect(keychain).not.toHaveBeenCalled();
   });
 
-  it('falls back to the keychain', async () => {
+  it('falls back to the keychain on macOS', async () => {
     delete process.env.TYPESAFE_API_KEY;
     const keychain = vi.fn(async () => ' kc-key\n');
-    await expect(resolveJudgeKey({ keychain })).resolves.toEqual({
+    await expect(resolveJudgeKey({ keychain, platform: 'darwin' })).resolves.toEqual({
       key: 'kc-key',
       source: 'keychain',
     });
   });
 
-  it('reports none when both are empty', async () => {
+  it('falls back to pass on Linux without touching the keychain', async () => {
     delete process.env.TYPESAFE_API_KEY;
-    await expect(resolveJudgeKey({ keychain: async () => '' })).resolves.toEqual({
-      key: null,
-      source: 'none',
+    const keychain = vi.fn(async () => 'kc-key');
+    const pass = vi.fn(async () => 'pass-key\n');
+    await expect(resolveJudgeKey({ keychain, pass, platform: 'linux' })).resolves.toEqual({
+      key: 'pass-key',
+      source: 'pass',
     });
+    expect(keychain).not.toHaveBeenCalled();
+  });
+
+  it('reports none when every source is empty', async () => {
+    delete process.env.TYPESAFE_API_KEY;
+    await expect(
+      resolveJudgeKey({ keychain: async () => '', pass: async () => '', platform: 'darwin' }),
+    ).resolves.toEqual({ key: null, source: 'none' });
   });
 });
 
@@ -165,11 +175,22 @@ describe('storeJudgeKey', () => {
       '-U',
     ]);
   });
-  it('does not store on other platforms and says to use the env var', async () => {
+  it('inserts into pass on Linux with the key on stdin', async () => {
     const { storeJudgeKey } = await import('./client.js');
-    const exec = vi.fn();
+    const exec = vi.fn(async () => ({ stdout: '' }));
+    const res = await storeJudgeKey('k-1', { platform: 'linux', user: 'me', exec });
+    expect(res).toEqual({ stored: 'pass' });
+    const [cmd, args, input] = exec.mock.calls[0] as unknown as [string, string[], string];
+    expect(cmd).toBe('pass');
+    expect(args).toEqual(['insert', '-m', '-f', 'typesafe-api-key']);
+    expect(input).toBe('k-1\n');
+  });
+  it('reports none when pass is missing', async () => {
+    const { storeJudgeKey } = await import('./client.js');
+    const exec = vi.fn(async () => {
+      throw new Error('ENOENT');
+    });
     const res = await storeJudgeKey('k-1', { platform: 'linux', user: 'me', exec });
     expect(res).toEqual({ stored: 'none' });
-    expect(exec).not.toHaveBeenCalled();
   });
 });

@@ -6,6 +6,14 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.25.2 - 2026-09-17
+
+### Added
+
+- **`pass` is the Linux key store for the judge.** `resolveJudgeKey` reads `TYPESAFE_API_KEY`, then the macOS Keychain, then `pass show typesafe-api-key`; `init` and `storeJudgeKey` write there on Linux. `judge status` names the source.
+
+---
+
 ## 0.25.1 - 2026-09-17
 
 ### Added

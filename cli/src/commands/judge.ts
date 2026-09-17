@@ -4,6 +4,7 @@ import {
   type JudgeConfig,
   KEYCHAIN_SERVICE,
   type KeySource,
+  PASS_ENTRY,
   resolveJudgeKey,
 } from '../judge/client.js';
 
@@ -16,7 +17,11 @@ export function renderJudgeStatus(
       ? 'key: env (TYPESAFE_API_KEY)'
       : key.source === 'keychain'
         ? `key: keychain (${KEYCHAIN_SERVICE})`
-        : `key: none (set TYPESAFE_API_KEY or add a Keychain item with service ${KEYCHAIN_SERVICE})`;
+        : key.source === 'pass'
+          ? `key: pass (${PASS_ENTRY})`
+          : process.platform === 'darwin'
+            ? `key: none (set TYPESAFE_API_KEY or add a Keychain item with service ${KEYCHAIN_SERVICE})`
+            : `key: none (set TYPESAFE_API_KEY or pass insert ${PASS_ENTRY})`;
   const lines = [`enabled: ${cfg.enabled ? 'yes' : 'no'}`, keyLine, `model: ${cfg.model}`];
   if (!cfg.enabled) lines.push('turn on with: metalmind judge enable');
   return lines.join('\n');

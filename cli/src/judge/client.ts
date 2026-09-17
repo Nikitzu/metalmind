@@ -11,7 +11,8 @@ export const JUDGE_TIMEOUT_MS = 4_000;
 export const STATE_CAP_CHARS = 2_000;
 
 export type Unjudged = 'no-key' | 'offline' | 'timeout' | 'rejected';
-export type KeySource = 'env' | 'keychain' | 'none';
+export type KeySource = 'env' | 'keychain' | 'pass' | 'none';
+export const PASS_ENTRY = 'typesafe-api-key';
 
 export interface JudgeConfig {
   enabled: boolean;
@@ -53,13 +54,31 @@ async function keychainKey(): Promise<string> {
   }
 }
 
+async function passKey(): Promise<string> {
+  try {
+    const { stdout } = await execFileAsync('pass', ['show', PASS_ENTRY]);
+    return stdout.split('\n')[0] ?? '';
+  } catch {
+    return '';
+  }
+}
+
 export async function resolveJudgeKey(
-  opts: { keychain?: () => Promise<string> } = {},
+  opts: {
+    keychain?: () => Promise<string>;
+    pass?: () => Promise<string>;
+    platform?: NodeJS.Platform;
+  } = {},
 ): Promise<{ key: string | null; source: KeySource }> {
   const env = process.env.TYPESAFE_API_KEY?.trim();
   if (env) return { key: env, source: 'env' };
-  const kc = (await (opts.keychain ?? keychainKey)()).trim();
-  if (kc) return { key: kc, source: 'keychain' };
+  const platform = opts.platform ?? process.platform;
+  if (platform === 'darwin') {
+    const kc = (await (opts.keychain ?? keychainKey)()).trim();
+    if (kc) return { key: kc, source: 'keychain' };
+  }
+  const fromPass = (await (opts.pass ?? passKey)()).trim();
+  if (fromPass) return { key: fromPass, source: 'pass' };
   return { key: null, source: 'none' };
 }
 
@@ -68,24 +87,38 @@ export async function storeJudgeKey(
   opts: {
     platform?: NodeJS.Platform;
     user?: string;
-    exec?: (cmd: string, args: string[]) => Promise<unknown>;
+    exec?: (cmd: string, args: string[], input?: string) => Promise<unknown>;
   } = {},
-): Promise<{ stored: 'keychain' | 'none' }> {
+): Promise<{ stored: 'keychain' | 'pass' | 'none' }> {
   const platform = opts.platform ?? process.platform;
-  if (platform !== 'darwin') return { stored: 'none' };
-  const user = opts.user ?? process.env.USER ?? 'metalmind';
-  const exec = opts.exec ?? execFileAsync;
-  await exec('security', [
-    'add-generic-password',
-    '-a',
-    user,
-    '-s',
-    KEYCHAIN_SERVICE,
-    '-w',
-    key,
-    '-U',
-  ]);
-  return { stored: 'keychain' };
+  const exec = opts.exec ?? execWithInput;
+  if (platform === 'darwin') {
+    const user = opts.user ?? process.env.USER ?? 'metalmind';
+    await exec('security', [
+      'add-generic-password',
+      '-a',
+      user,
+      '-s',
+      KEYCHAIN_SERVICE,
+      '-w',
+      key,
+      '-U',
+    ]);
+    return { stored: 'keychain' };
+  }
+  try {
+    await exec('pass', ['insert', '-m', '-f', PASS_ENTRY], `${key}\n`);
+    return { stored: 'pass' };
+  } catch {
+    return { stored: 'none' };
+  }
+}
+
+function execWithInput(cmd: string, args: string[], input?: string): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const child = execFile(cmd, args, (err, stdout) => (err ? reject(err) : resolve(stdout)));
+    if (input !== undefined) child.stdin?.end(input);
+  });
 }
 
 export function clipForState(body: string): string {
