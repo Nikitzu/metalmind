@@ -3,6 +3,8 @@ import { type RecallMode, type RecallTier, recall } from '../backends/recall.js'
 import { ensureRerankExtra } from '../backends/rerank-bootstrap.js';
 import { listRecentNotes } from '../backends/vault-browse.js';
 import { readConfig } from '../config.js';
+import { judge as judgeCall, judgeEnabled } from '../judge/client.js';
+import { formatJudgedTail, JUDGED_FETCH_K, judgeHits } from '../judge/rerank.js';
 
 export interface TapOptions {
   deep?: boolean;
@@ -19,6 +21,7 @@ export interface TapOptions {
   verbose?: boolean;
   listRecent?: number;
   verifyCode?: boolean;
+  noJudge?: boolean;
 }
 
 function resolveMode(opts: TapOptions): RecallMode {
@@ -75,8 +78,22 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
 
   const tier = resolveTier(opts, config.recall.defaultTier);
   const showMeta = opts.verbose ?? config.verbose;
+  const judged = judgeEnabled(config.judge) && !opts.noJudge && tier !== 'expand';
+  const k = opts.k ?? 5;
+  const judgeHook = judged
+    ? async (hits: Array<Record<string, unknown>>) => {
+        const r = await judgeHits({
+          query,
+          hits,
+          k,
+          judge: ({ state, questions }) =>
+            judgeCall({ state, questions, model: config.judge.model }),
+        });
+        return { hits: r.hits, tail: r.judged ? formatJudgedTail(r) : (r.unjudgedLine ?? '') };
+      }
+    : undefined;
 
-  if (opts.rerank) {
+  if (opts.rerank && !judged) {
     // One-time bootstrap: installs `metalmind-vault-rag[rerank]` and kicks the
     // watcher so the new process picks up onnxruntime. No-op after the first
     // successful call. Falls through silently if the watcher HTTP endpoint is
@@ -95,8 +112,9 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       vaultPath: config.vaultPath,
       query,
       tier,
-      k: opts.k,
-      rerank: opts.rerank,
+      k: judged ? Math.max(k, JUDGED_FETCH_K) : opts.k,
+      rerank: judged ? false : opts.rerank,
+      judgeHits: judgeHook,
       mode: resolveMode(opts),
       verbose: showMeta,
       compact: opts.compact,
@@ -109,7 +127,7 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
     });
     if (opts.json) {
       process.stdout.write(
-        `${JSON.stringify({ tier, query, text: result.text, hits: result.hits, raw: result.raw }, null, 2)}\n`,
+        `${JSON.stringify({ tier, query, judged, text: result.text, hits: result.hits, raw: result.raw }, null, 2)}\n`,
       );
       return;
     }

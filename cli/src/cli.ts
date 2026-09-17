@@ -222,8 +222,9 @@ function attachTapFlags<T extends Command>(cmd: T): T {
     .option('--expand', 'expand_search: hits + linked context in one call')
     .option(
       '--rerank',
-      'Cross-encoder reranker tier (opt-in; first call downloads ~500 MB, needs vault-rag[rerank])',
+      'Alias for the judged order when the judge is enabled; cross-encoder tier otherwise (~500 MB download on first call)',
     )
+    .option('--no-judge', 'Skip Jev reranking for this call')
     .option(
       '--semantic-only',
       'Vector search only, skip BM25 (HTTP path; stdio fallback stays hybrid)',
@@ -273,6 +274,7 @@ type TapCliOpts = {
   verbose?: boolean;
   listRecent?: number;
   verifyCode?: boolean;
+  judge?: boolean;
 };
 
 function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
@@ -291,6 +293,7 @@ function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
     verbose: cmdOpts.verbose,
     listRecent: cmdOpts.listRecent,
     verifyCode: cmdOpts.verifyCode,
+    noJudge: cmdOpts.judge === false,
   };
 }
 

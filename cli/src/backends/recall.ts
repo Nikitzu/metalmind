@@ -32,6 +32,12 @@ export interface RecallOptions {
   forgeGroups?: ForgeGroups;
   /** Override the co-hosted HTTP recall endpoint. Defaults to env or config. */
   httpEndpoint?: string | null;
+  /** Post-search hook: reorder or drop hits and return a tail line. When set,
+   *  it replaces the watcher's low-confidence note. */
+  judgeHits?: (hits: Array<Record<string, unknown>>) => Promise<{
+    hits: Array<Record<string, unknown>>;
+    tail: string;
+  }>;
 }
 
 export interface RecallResult {
@@ -129,6 +135,8 @@ function formatHitsCompact(hits: Array<Record<string, unknown>>, snippetMax?: nu
   return hits
     .map((h, i) => {
       const score = typeof h.score === 'number' ? h.score.toFixed(3) : '-';
+      const judged = h.judge as { level?: string } | undefined;
+      const mark = judged?.level === 'answers' ? ' ✓' : '';
       const file = typeof h.file === 'string' ? h.file : '(unknown)';
       const head = lastHeadingSegment(h.heading);
       const headPart = head ? ` › ${head}` : '';
@@ -137,7 +145,7 @@ function formatHitsCompact(hits: Array<Record<string, unknown>>, snippetMax?: nu
           ? ` → superseded by [[${h.superseded_by}]]`
           : '';
       const neighbors = neighborLines(h, Math.floor(max / 2));
-      return `${i + 1}. [${score}] ${file}${headPart}${superseded}\n   ${snippet(h.text, max)}${neighbors}${codeRefWarnings(h)}`;
+      return `${i + 1}. [${score}]${mark} ${file}${headPart}${superseded}\n   ${snippet(h.text, max)}${neighbors}${codeRefWarnings(h)}`;
     })
     .join('\n');
 }
@@ -289,7 +297,13 @@ async function httpRecall(opts: RecallOptions): Promise<RecallResult | null> {
       { rerank: opts.rerank },
     )) as { hits: Array<Record<string, unknown>>; confidence?: string };
     await annotate(hits.hits);
-    const note = confidenceNote(hits.confidence);
+    let judgedTail = '';
+    if (opts.judgeHits) {
+      const judged = await opts.judgeHits(hits.hits);
+      hits.hits = judged.hits;
+      judgedTail = judged.tail ? `\n${judged.tail}` : '';
+    }
+    const note = opts.judgeHits ? judgedTail : confidenceNote(hits.confidence);
     if (opts.tier === 'fast') {
       const text = `${fmt(hits.hits)}${note}`;
       return {
