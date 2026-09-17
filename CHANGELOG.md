@@ -6,6 +6,14 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.25.1 - 2026-09-17
+
+### Added
+
+- **`metalmind init` asks about Jev judgments.** Default no; on yes it finds an existing key or takes one and stores it in the macOS Keychain (`typesafe-api-key`), elsewhere it points at `TYPESAFE_API_KEY`. `--judge` / `--no-judge` for scripted installs, `--yes` leaves it off. Without a key metalmind behaves exactly as before.
+
+---
+
 ## 0.25.0 - 2026-09-17
 
 ### Added
