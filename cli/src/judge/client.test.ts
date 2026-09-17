@@ -145,3 +145,31 @@ describe('judge', () => {
     expect(res).toEqual({ answers: null, unjudged: 'timeout' });
   });
 });
+
+describe('storeJudgeKey', () => {
+  it('writes the key to the keychain item on macOS via security', async () => {
+    const { storeJudgeKey } = await import('./client.js');
+    const exec = vi.fn(async () => ({ stdout: '' }));
+    const res = await storeJudgeKey('k-1', { platform: 'darwin', user: 'me', exec });
+    expect(res).toEqual({ stored: 'keychain' });
+    const [cmd, args] = exec.mock.calls[0] as unknown as [string, string[]];
+    expect(cmd).toBe('security');
+    expect(args).toEqual([
+      'add-generic-password',
+      '-a',
+      'me',
+      '-s',
+      'typesafe-api-key',
+      '-w',
+      'k-1',
+      '-U',
+    ]);
+  });
+  it('does not store on other platforms and says to use the env var', async () => {
+    const { storeJudgeKey } = await import('./client.js');
+    const exec = vi.fn();
+    const res = await storeJudgeKey('k-1', { platform: 'linux', user: 'me', exec });
+    expect(res).toEqual({ stored: 'none' });
+    expect(exec).not.toHaveBeenCalled();
+  });
+});

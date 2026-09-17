@@ -1,4 +1,4 @@
-import { cancel, confirm, intro, isCancel, log, outro, select } from '@clack/prompts';
+import { cancel, confirm, intro, isCancel, log, outro, password, select } from '@clack/prompts';
 import {
   type Config,
   CURRENT_CONFIG_VERSION,
@@ -28,6 +28,7 @@ import { installUv, UV_INSTALL_COMMAND } from './uv.js';
 import { promptVaultPath, setupVault } from './vault.js';
 import { installVaultRag, resolveWatcherBinPath } from './vault-rag.js';
 import { installWatcher } from './watcher.js';
+import { resolveJudgeKey, storeJudgeKey } from '../judge/client.js';
 
 export interface RunWizardOptions {
   vaultPath?: string;
@@ -38,6 +39,8 @@ export interface RunWizardOptions {
   memoryRouting?: 'vault-only' | 'both';
   eodHook?: boolean;
   notifications?: boolean;
+  /** Jev judgments (TypeSafe): coverage refusal on scribe, judged recall order. Off unless asked. */
+  judge?: boolean;
   vaultGit?: boolean;
   autoInstallUv?: boolean;
   /** When set, skip the host multi-select and use this exact host set. */
@@ -263,6 +266,42 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     });
     checkCancelled(answer, 'Notifications prompt');
     notifications = answer;
+  }
+
+  let judge: boolean;
+  if (opts.judge !== undefined) {
+    judge = opts.judge;
+  } else {
+    const answer = await confirm({
+      message:
+        'Enable Jev judgments? (TypeSafe hosted API, needs a key: refuses a note an existing one already covers, reorders recall by relevance; without it metalmind works exactly as before)',
+      initialValue: false,
+    });
+    checkCancelled(answer, 'Judge prompt');
+    judge = answer;
+  }
+  if (judge) {
+    const existing = await resolveJudgeKey();
+    if (existing.key) {
+      log.info(`  TypeSafe key found (${existing.source})`);
+    } else {
+      const entered = await password({
+        message:
+          'TypeSafe API key (stored in the macOS Keychain as typesafe-api-key; leave empty to set TYPESAFE_API_KEY yourself later)',
+      });
+      checkCancelled(entered, 'Judge key prompt');
+      const key = (entered ?? '').trim();
+      if (key) {
+        const stored = await storeJudgeKey(key);
+        if (stored.stored === 'keychain') log.info('  key stored in the Keychain');
+        else
+          log.warn('  no Keychain on this platform: export TYPESAFE_API_KEY in your shell profile');
+      } else {
+        log.warn(
+          '  no key yet: judged commands print "unjudged: no-key" until TYPESAFE_API_KEY is set',
+        );
+      }
+    }
   }
 
   let vaultGit: boolean;
@@ -514,7 +553,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     hooks: { claudeCode: priorConfig?.hooks.claudeCode ?? false },
     forge: priorConfig?.forge ?? { groups: {} },
     skills: { eodHook, notifications },
-    judge: priorConfig?.judge ?? { enabled: false, model: 'jev-latest' },
+    judge: { enabled: judge, model: priorConfig?.judge.model ?? 'jev-latest' },
     hosts:
       chosenHosts.length > 0 ? (chosenHosts as [MetalmindHost, ...MetalmindHost[]]) : ['claude'],
     install: { profile: core ? 'core' : 'full', teams: enableTeams },

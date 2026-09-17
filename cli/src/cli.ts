@@ -89,6 +89,8 @@ program
   .option('--no-eod-hook', 'Skip end-of-day hook in /save')
   .option('--notifications', 'Enable macOS flare/notify commands in /save (default: prompt)')
   .option('--no-notifications', 'Disable macOS flare/notify commands in /save')
+  .option('--judge', 'Enable Jev judgments (TypeSafe key required; default: prompt)')
+  .option('--no-judge', 'Leave Jev judgments off')
   .option('--git', 'Track the vault in git (init + .gitignore + initial commit)')
   .option('--no-git', 'Skip vault git tracking')
   .option('--auto-install-uv', 'Auto-install uv via the official Astral installer if missing')

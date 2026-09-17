@@ -63,6 +63,31 @@ export async function resolveJudgeKey(
   return { key: null, source: 'none' };
 }
 
+export async function storeJudgeKey(
+  key: string,
+  opts: {
+    platform?: NodeJS.Platform;
+    user?: string;
+    exec?: (cmd: string, args: string[]) => Promise<unknown>;
+  } = {},
+): Promise<{ stored: 'keychain' | 'none' }> {
+  const platform = opts.platform ?? process.platform;
+  if (platform !== 'darwin') return { stored: 'none' };
+  const user = opts.user ?? process.env.USER ?? 'metalmind';
+  const exec = opts.exec ?? execFileAsync;
+  await exec('security', [
+    'add-generic-password',
+    '-a',
+    user,
+    '-s',
+    KEYCHAIN_SERVICE,
+    '-w',
+    key,
+    '-U',
+  ]);
+  return { stored: 'keychain' };
+}
+
 export function clipForState(body: string): string {
   const stripped = body.startsWith('---\n') ? body.replace(/^---\n[\s\S]*?\n---\n?/, '') : body;
   return stripped.slice(0, STATE_CAP_CHARS);

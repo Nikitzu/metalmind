@@ -18,6 +18,8 @@ export interface InitCliOptions {
   noEodHook?: boolean;
   notifications?: boolean;
   noNotifications?: boolean;
+  /** commander folds --judge / --no-judge into one boolean; undefined means prompt. */
+  judge?: boolean;
   git?: boolean;
   noGit?: boolean;
   autoInstallUv?: boolean;
@@ -90,6 +92,7 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     if (eodHook !== undefined) wizardOpts.eodHook = eodHook;
     const notifications = resolveBool(cliOpts.notifications, cliOpts.noNotifications);
     if (notifications !== undefined) wizardOpts.notifications = notifications;
+    if (cliOpts.judge !== undefined) wizardOpts.judge = cliOpts.judge;
     const vaultGit = resolveBool(cliOpts.git, cliOpts.noGit);
     if (vaultGit !== undefined) wizardOpts.vaultGit = vaultGit;
     const autoInstallUv = resolveBool(cliOpts.autoInstallUv, cliOpts.noAutoInstallUv);
@@ -118,6 +121,7 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
       wizardOpts.enableTeams ??= true;
       wizardOpts.eodHook ??= true;
       wizardOpts.notifications ??= process.platform === 'darwin';
+      wizardOpts.judge ??= false;
       wizardOpts.vaultGit ??= true;
       wizardOpts.autoInstallUv ??= true;
     }
