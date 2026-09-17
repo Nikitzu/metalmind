@@ -2,7 +2,6 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { log } from '@clack/prompts';
 import { type RecallMode, type RecallTier, recall } from '../backends/recall.js';
-import { ensureRerankExtra } from '../backends/rerank-bootstrap.js';
 import { listRecentNotes } from '../backends/vault-browse.js';
 import { readConfig } from '../config.js';
 import { judge as judgeCall, judgeEnabled } from '../judge/client.js';
@@ -11,7 +10,6 @@ import { formatJudgedTail, JUDGED_FETCH_K, judgeHits } from '../judge/rerank.js'
 export interface TapOptions {
   deep?: boolean;
   expand?: boolean;
-  rerank?: boolean;
   semanticOnly?: boolean;
   keywordOnly?: boolean;
   k?: number;
@@ -96,27 +94,12 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
       }
     : undefined;
 
-  if (opts.rerank && !judged) {
-    // One-time bootstrap: installs `metalmind-vault-rag[rerank]` and kicks the
-    // watcher so the new process picks up onnxruntime. No-op after the first
-    // successful call. Falls through silently if the watcher HTTP endpoint is
-    // unreachable (stdio MCP fallback still works without rerank).
-    const ready = await ensureRerankExtra({
-      httpEndpoint: config.recall.httpEndpoint,
-      onProgress: (msg) => log.info(msg),
-    });
-    if (!ready && showMeta) {
-      log.warn('rerank bootstrap incomplete - proceeding without rerank.');
-    }
-  }
-
   try {
     const result = await recall({
       vaultPath: config.vaultPath,
       query,
       tier,
       k: judged ? Math.max(k, JUDGED_FETCH_K) : opts.k,
-      rerank: judged ? false : opts.rerank,
       judgeHits: judgeHook,
       mode: resolveMode(opts),
       verbose: showMeta,

@@ -220,10 +220,7 @@ function attachTapFlags<T extends Command>(cmd: T): T {
   return cmd
     .option('--deep', 'Search + related_notes on top hit')
     .option('--expand', 'expand_search: hits + linked context in one call')
-    .option(
-      '--rerank',
-      'Alias for the judged order when the judge is enabled; cross-encoder tier otherwise (~500 MB download on first call)',
-    )
+    .option('--rerank', 'Alias: judged order (kept for muscle memory)')
     .option('--no-judge', 'Skip Jev reranking for this call')
     .option(
       '--semantic-only',
@@ -281,7 +278,6 @@ function normalizeTapOpts(cmdOpts: TapCliOpts): TapOptions {
   return {
     deep: cmdOpts.deep,
     expand: cmdOpts.expand,
-    rerank: cmdOpts.rerank,
     semanticOnly: cmdOpts.semanticOnly,
     keywordOnly: cmdOpts.keywordOnly,
     k: cmdOpts.k,
