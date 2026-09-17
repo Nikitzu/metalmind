@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { formatJudgedTail, judgeHits, RELEVANCE_LEVELS, relevanceQuestions } from './rerank.js';
+import {
+  excerptForJudge,
+  formatJudgedTail,
+  judgeHits,
+  RELEVANCE_LEVELS,
+  relevanceQuestions,
+} from './rerank.js';
 
 const hits = [
   { file: 'A.md', text: 'alpha', score: 0.5 },
@@ -53,6 +59,26 @@ describe('judgeHits', () => {
     expect(res.hits.map((h) => h.file)).toEqual(['A.md', 'B.md']);
     expect(res.judged).toBe(false);
     expect(res.unjudgedLine).toBe('unjudged: timeout');
+  });
+});
+
+describe('excerptForJudge', () => {
+  it('keeps the title from a frontmatter chunk and strips the rest', async () => {
+    const h = {
+      file: 'Work/x.md',
+      text: '---\nkind: work\ntitle: "The title"\ntags: []\n---\nBody here',
+    };
+    await expect(excerptForJudge(h)).resolves.toEqual({
+      file: 'Work/x.md',
+      title: 'The title',
+      heading: undefined,
+      text: 'Body here',
+    });
+  });
+  it('reads the note opening when the chunk is frontmatter only', async () => {
+    const h = { file: 'Work/x.md', text: '---\nkind: work\ntitle: T\n---' };
+    const readNote = async () => '---\nkind: work\ntitle: T\n---\nThe real body';
+    await expect(excerptForJudge(h, readNote)).resolves.toMatchObject({ text: 'The real body' });
   });
 });
 

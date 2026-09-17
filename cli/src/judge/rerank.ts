@@ -36,6 +36,21 @@ export function relevanceQuestions(hits: Hit[]): Record<string, Question> {
   return questions;
 }
 
+// A note's first chunk is mostly frontmatter; stripped bare it reads as empty and
+// scores off-topic, so the title travels with the text.
+export async function excerptForJudge(
+  h: Hit,
+  readNote?: (file: string) => Promise<string>,
+): Promise<{ file: unknown; title: string; heading: unknown; text: string }> {
+  const raw = String(h.text ?? '');
+  const title = /^title:\s*"?(.+?)"?\s*$/m.exec(raw)?.[1] ?? '';
+  let text = clipForState(raw);
+  if (!text.trim() && readNote && typeof h.file === 'string') {
+    text = clipForState(await readNote(h.file).catch(() => ''));
+  }
+  return { file: h.file, title, heading: h.heading, text };
+}
+
 function level(score: number): RelevanceLevel {
   if (score >= ANSWERS_AT) return 'answers';
   if (score >= KEEP_AT) return 'related';
@@ -47,16 +62,13 @@ export async function judgeHits(opts: {
   hits: Hit[];
   k: number;
   judge: (o: { state: unknown; questions: Record<string, Question> }) => Promise<JudgeResult>;
+  readNote?: (file: string) => Promise<string>;
 }): Promise<JudgedHits> {
   const fallback = opts.hits.slice(0, opts.k);
   if (opts.hits.length === 0) return { hits: fallback, kept: 0, total: 0, judged: true };
   const state = {
     query: opts.query,
-    hits: opts.hits.map((h) => ({
-      file: h.file,
-      heading: h.heading,
-      text: clipForState(String(h.text ?? '')),
-    })),
+    hits: await Promise.all(opts.hits.map((h) => excerptForJudge(h, opts.readNote))),
   };
   const res = await opts.judge({ state, questions: relevanceQuestions(opts.hits) });
   if (!res.answers) {

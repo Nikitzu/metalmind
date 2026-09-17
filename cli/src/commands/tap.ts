@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { log } from '@clack/prompts';
 import { type RecallMode, type RecallTier, recall } from '../backends/recall.js';
 import { ensureRerankExtra } from '../backends/rerank-bootstrap.js';
@@ -88,6 +90,7 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
           k,
           judge: ({ state, questions }) =>
             judgeCall({ state, questions, model: config.judge.model }),
+          readNote: (file) => readFile(join(config.vaultPath, file), 'utf8'),
         });
         return { hits: r.hits, tail: r.judged ? formatJudgedTail(r) : (r.unjudgedLine ?? '') };
       }
