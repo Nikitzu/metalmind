@@ -515,6 +515,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     hooks: { claudeCode: priorConfig?.hooks.claudeCode ?? false },
     forge: priorConfig?.forge ?? { groups: {} },
     skills: { eodHook, notifications },
+    judge: priorConfig?.judge ?? { enabled: false, model: 'jev-latest' },
     hosts:
       chosenHosts.length > 0 ? (chosenHosts as [MetalmindHost, ...MetalmindHost[]]) : ['claude'],
     install: { profile: core ? 'core' : 'full', teams: enableTeams },

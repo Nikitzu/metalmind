@@ -19,7 +19,12 @@ const ForgeGroupSchema = z.object({
   repos: z.array(z.string()),
 });
 
-export const CURRENT_CONFIG_VERSION = 5 as const;
+export const CURRENT_CONFIG_VERSION = 6 as const;
+
+const JudgeSchema = z.object({
+  enabled: z.boolean().default(false),
+  model: z.string().default('jev-latest'),
+});
 
 const InstallShapeSchema = z.object({
   profile: z.enum(['core', 'full']),
@@ -62,6 +67,7 @@ export const ConfigSchema = z.object({
       notifications: z.boolean().default(true),
     })
     .default({ eodHook: true, notifications: true }),
+  judge: JudgeSchema.default({ enabled: false, model: 'jev-latest' }),
   // Backwards-compat: configs predating v0.8.0 (Codex host integration)
   // had no notion of `hosts` because Claude Code was the only target.
   // .default(['claude']) means an existing config gets ['claude'] on read,
@@ -125,6 +131,11 @@ const MIGRATIONS: Record<number, Migration> = {
       outputStylePriorValue: typeof priorValue === 'string' ? priorValue : null,
     };
   },
+  5: (raw) => ({
+    ...raw,
+    version: 6,
+    judge: { enabled: false, model: 'jev-latest' },
+  }),
 };
 
 function migrate(raw: RawConfig): RawConfig {
