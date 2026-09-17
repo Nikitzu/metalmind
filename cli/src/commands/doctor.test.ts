@@ -15,10 +15,6 @@ function ok(stdout = ''): CommandResult {
   return { stdout, stderr: '', ok: true, exitCode: 0 };
 }
 
-function fail(stderr = 'fail'): CommandResult {
-  return { stdout: '', stderr, ok: false, exitCode: 1 };
-}
-
 describe('doctor deep checks', () => {
   let originalFetch: typeof globalThis.fetch;
 

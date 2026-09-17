@@ -23,9 +23,14 @@ describe('syncVault', () => {
       'GIT_AUTHOR_EMAIL',
       'GIT_COMMITTER_NAME',
       'GIT_COMMITTER_EMAIL',
+      'GIT_CONFIG_GLOBAL',
     ]) {
       savedEnv[key] = process.env[key];
     }
+    // A machine-wide excludes file can ignore the fixture's folders (a global
+    // `plans/` matches `Plans/` on a case-insensitive disk), so the suite runs
+    // without the developer's global git config.
+    process.env.GIT_CONFIG_GLOBAL = '/dev/null';
     process.env.GIT_AUTHOR_NAME = 'metalmind-test';
     process.env.GIT_AUTHOR_EMAIL = 'test@metalmind.local';
     process.env.GIT_COMMITTER_NAME = 'metalmind-test';

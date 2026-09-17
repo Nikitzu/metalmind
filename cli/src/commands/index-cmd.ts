@@ -100,7 +100,6 @@ export async function indexStatusCmd(): Promise<void> {
   process.stdout.write(`${renderIndexStatus(result.status)}\n`);
 }
 
-
 export async function indexRebuildCmd(): Promise<void> {
   const config = await readConfig();
   if (!config) {
@@ -124,7 +123,6 @@ export async function indexRebuildCmd(): Promise<void> {
   log.success('Index rebuilt, format recorded, confidence recalibrated.');
 }
 
-
 export async function awaitIndexStatus(attempts = 6): Promise<IndexStatus | null> {
   for (let i = 0; i < attempts; i += 1) {
     const result = await fetchIndexStatus();
@@ -139,7 +137,7 @@ export async function promptRebuildIfStale(
   status: IndexStatus | null,
   opts: { noPrompt?: boolean },
 ): Promise<void> {
-  if (!status || !status.stale) return;
+  if (!status?.stale) return;
 
   const summary =
     `Your index was built in format ${status.format_version} by ${status.embedder}; ` +

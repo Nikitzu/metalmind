@@ -37,9 +37,11 @@ import {
   forgeSpecList,
   forgeSpecRemove,
 } from './commands/forge.js';
+import { indexRebuildCmd, indexStatusCmd } from './commands/index-cmd.js';
 import { ingestAutoMemoryCmd } from './commands/ingest.js';
 import { init } from './commands/init.js';
 import { burnIron } from './commands/iron.js';
+import { judgeSetEnabledCmd, judgeStatusCmd } from './commands/judge.js';
 import { releaseCheck } from './commands/release-check.js';
 import { aluminumWipe, burnZinc, renameSymbol, toggleVerbose } from './commands/remaining-burns.js';
 import { retired } from './commands/retired.js';
@@ -55,8 +57,6 @@ import {
   scribeSupersedeCmd,
   scribeUpdateCmd,
 } from './commands/scribe.js';
-import { indexRebuildCmd, indexStatusCmd } from './commands/index-cmd.js';
-import { judgeSetEnabledCmd, judgeStatusCmd } from './commands/judge.js';
 import { stamp } from './commands/stamp.js';
 import { type StoreOptions, store } from './commands/store.js';
 import { type SyncCmdOptions, syncCmd } from './commands/sync.js';

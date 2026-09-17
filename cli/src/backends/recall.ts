@@ -1,10 +1,4 @@
-import { join } from 'node:path';
-import {
-  type CodeRefResult,
-  type ForgeGroups,
-  parseCodeRefsFromHead,
-  verifyCodeRefs,
-} from '../coderefs/coderefs.js';
+import { type CodeRefResult, type ForgeGroups, verifyCodeRefs } from '../coderefs/coderefs.js';
 import { extractText, type McpToolResult, StdioMcpClient } from './mcp-client.js';
 import { recallAuthHeaders } from './recall-token.js';
 
@@ -199,9 +193,7 @@ async function annotateTitles(
       const fm = await readNoteFrontmatter(resolveNotePath(h.file, vaultPath));
       const title = frontmatterString(fm, 'title');
       if (title) h.note_title = title;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 }
 

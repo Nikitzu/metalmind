@@ -36,7 +36,10 @@ export function resolveProfile(
   return 'prompt';
 }
 
-export function resolveTeams(flags: ProfileFlags, recorded: InstallShape | null): boolean | 'prompt' {
+export function resolveTeams(
+  flags: ProfileFlags,
+  recorded: InstallShape | null,
+): boolean | 'prompt' {
   if (flags.teams !== undefined) return flags.teams;
   if (flags.core === true) return false;
   if (recorded) return recorded.teams;

@@ -16,8 +16,7 @@ export async function findOverlappingNotes(opts: {
   httpEndpoint?: string | null;
   threshold?: number;
 }): Promise<DedupHit[]> {
-  const endpoint =
-    opts.httpEndpoint || process.env.METALMIND_RECALL_HTTP || DEFAULT_HTTP_ENDPOINT;
+  const endpoint = opts.httpEndpoint || process.env.METALMIND_RECALL_HTTP || DEFAULT_HTTP_ENDPOINT;
   const query = `${opts.title}\n${opts.body}`.slice(0, DEDUP_QUERY_CHARS).trim();
   if (!query) return [];
   const threshold = opts.threshold ?? DEDUP_THRESHOLD;

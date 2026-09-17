@@ -112,12 +112,7 @@ describe('archive moves', () => {
     // `metalmind gold` rewrites `status:` and `updated:` in the frontmatter, so
     // the archived blob never matches the deleted one by sha.
     const report = analyzeStagedChanges(
-      parseRawDiffZ(
-        raw(
-          D('old', 'Work/session.md'),
-          A('new', 'Archive/Work/session.md'),
-        ),
-      ),
+      parseRawDiffZ(raw(D('old', 'Work/session.md'), A('new', 'Archive/Work/session.md'))),
     );
 
     expect(report.safe).toBe(true);

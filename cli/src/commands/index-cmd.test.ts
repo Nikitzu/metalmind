@@ -163,7 +163,9 @@ describe('index rebuild', () => {
     expect(runCommand).toHaveBeenCalledWith(
       'metalmind-vault-rag-indexer',
       [],
-      expect.objectContaining({ env: expect.objectContaining({ VAULT_PATH: '/home/me/Knowledge' }) }),
+      expect.objectContaining({
+        env: expect.objectContaining({ VAULT_PATH: '/home/me/Knowledge' }),
+      }),
     );
   });
 

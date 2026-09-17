@@ -16,7 +16,6 @@ import { registerMcpServers } from './mcp.js';
 import { cleanupOutputStyle } from './output-style-cleanup.js';
 import { detectPrereqs, type PrereqResult } from './prereqs.js';
 import { resolveProfile, resolveTeams } from './profile.js';
-import { runPendingRepairs } from './repair.js';
 import { installSerena } from './serena.js';
 import { applyAgentTeams, applyMemoryRouting, applyMetalmindSessionStartHook } from './settings.js';
 import {
