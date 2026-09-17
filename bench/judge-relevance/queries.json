@@ -1,0 +1,81 @@
+[
+  {
+    "query": "why does oberth onboard keep an existing pipeline",
+    "answers": "Learnings/an-idempotent-command-must-not-regenerate-what-someone-tuned.md"
+  },
+  {
+    "query": "where does Jev sit in the tzmem MVP",
+    "answers": "Work/tzmem-mvp-a-cli-for-every-agent-jev-as-the-ci-judge.md"
+  },
+  {
+    "query": "tzcript token matcher versus noul accuracy",
+    "answers": "Learnings/typesafe-noul-vs-tzcript-token-matcher.md"
+  },
+  {
+    "query": "case-only branch names on APFS",
+    "answers": "Learnings/case-only-branch-names-collide-on-a-case-insensitive-filesystem.md"
+  },
+  {
+    "query": "wizard prints its flag equivalent",
+    "answers": "Learnings/an-interactive-wizard-should-print-its-own-flag-equivalent.md"
+  },
+  {
+    "query": "stopped docker container restarts after reboot",
+    "answers": "Learnings/a-stopped-container-is-not-a-deleted-one-docker-restarts-it-for-you.md"
+  },
+  {
+    "query": "shared document format hides missing features between engines",
+    "answers": "Learnings/a-shared-document-format-between-two-engines-hides-missing-features.md"
+  },
+  {
+    "query": "gate on system of record not self reported evidence",
+    "answers": "Learnings/gate-on-the-system-of-record-not-self-reported-evidence.md"
+  },
+  {
+    "query": "oci artifact prebuilt vault index",
+    "answers": "Work/shared-team-knowledge-base-on-a-git-backed-vault.md"
+  },
+  {
+    "query": "metalmind sync guards unexplained deletion",
+    "answers": "Work/metalmind-vault-sync-guards.md"
+  },
+  {
+    "query": "how to recover a drifted prisma dev database",
+    "answers": "Learnings/recovering-a-drifted-prisma-dev-database.md"
+  },
+  {
+    "query": "pipeline shape was never the slow part",
+    "answers": "Learnings/the-pipeline-shape-was-never-the-slow-part.md"
+  },
+  {
+    "query": "derived state in an idempotency digest",
+    "answers": "Learnings/derived-state-in-an-idempotency-digest-breaks-every-retry.md"
+  },
+  {
+    "query": "oberth install and onboard guide for devs",
+    "answers": "Work/oberth-install-and-onboard-guide.md"
+  },
+  {
+    "query": "tzcript patterns for local llm steps",
+    "answers": "Work/tzcript-patterns-for-local-llm-steps.md"
+  },
+  {
+    "query": "september talk three acts oberth tzmem together",
+    "answers": "Work/tzmem-and-oberth-talk-september-2026.md"
+  },
+  {
+    "query": "confidence calibration per vault bands",
+    "answers": "Plans/2026-08-13-metalmind-confidence-calibration-per-vault-bands.md"
+  },
+  { "query": "no em dash rule rationale", "answers": "Memory/feedback_no_em_dash.md" },
+  { "query": "a proposal has to propose", "answers": "Memory/a-proposal-has-to-propose.md" },
+  {
+    "query": "engine extraction three repo split pypi",
+    "answers": "Work/engine-extraction-and-the-three-repo-split.md"
+  },
+  { "query": "kubernetes ingress annotations for cert-manager on GKE", "answers": null },
+  { "query": "rust borrow checker lifetime elision rules", "answers": null },
+  { "query": "how to season a cast iron pan", "answers": null },
+  { "query": "postgres logical replication slot lag", "answers": null },
+  { "query": "swiftui navigation stack deep links", "answers": null }
+]
