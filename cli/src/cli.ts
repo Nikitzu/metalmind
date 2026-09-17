@@ -56,6 +56,7 @@ import {
   scribeUpdateCmd,
 } from './commands/scribe.js';
 import { indexRebuildCmd, indexStatusCmd } from './commands/index-cmd.js';
+import { judgeSetEnabledCmd, judgeStatusCmd } from './commands/judge.js';
 import { stamp } from './commands/stamp.js';
 import { type StoreOptions, store } from './commands/store.js';
 import { type SyncCmdOptions, syncCmd } from './commands/sync.js';
@@ -173,6 +174,19 @@ indexCmd
   .command('rebuild')
   .description('Rebuild the vault index from scratch, then recalibrate')
   .action(indexRebuildCmd);
+
+const judgeCmd = program
+  .command('judge')
+  .description('Jev judgments (TypeSafe): overlap refusal on scribe, relevance order on tap');
+judgeCmd.command('status').description('Enabled, key source, model').action(judgeStatusCmd);
+judgeCmd
+  .command('enable')
+  .description('Turn judgments on')
+  .action(() => judgeSetEnabledCmd(true));
+judgeCmd
+  .command('disable')
+  .description('Turn judgments off')
+  .action(() => judgeSetEnabledCmd(false));
 
 const storeCmd = program
   .command('store')
