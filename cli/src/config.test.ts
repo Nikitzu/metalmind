@@ -34,7 +34,7 @@ describe('config', () => {
 
     const cfg: Config = {
       version: 6,
-      judge: { enabled: false, model: 'jev-latest' },
+      judge: { enabled: false, model: 'jev-latest', logContent: false },
       flavor: 'scadrial',
       vaultPath: '/tmp/vault',
       outputStylePriorValue: null,
@@ -224,7 +224,7 @@ describe('config', () => {
     const { readConfig } = await import('./config.js');
     const loaded = await readConfig();
     expect(loaded?.version).toBe(6);
-    expect(loaded?.judge).toEqual({ enabled: false, model: 'jev-latest' });
+    expect(loaded?.judge).toEqual({ enabled: false, model: 'jev-latest', logContent: false });
     const onDisk = JSON.parse(await readFile(path, 'utf8'));
     expect(onDisk.version).toBe(6);
   });
@@ -237,7 +237,7 @@ describe('config', () => {
     const { readConfig, writeConfig } = await import('./config.js');
     const cfg: Config = {
       version: 6,
-      judge: { enabled: false, model: 'jev-latest' },
+      judge: { enabled: false, model: 'jev-latest', logContent: false },
       flavor: 'classic',
       vaultPath: '/tmp/vault',
       outputStylePriorValue: null,

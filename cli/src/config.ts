@@ -24,6 +24,7 @@ export const CURRENT_CONFIG_VERSION = 6 as const;
 const JudgeSchema = z.object({
   enabled: z.boolean().default(false),
   model: z.string().default('jev-latest'),
+  logContent: z.boolean().default(false),
 });
 
 const InstallShapeSchema = z.object({
@@ -67,7 +68,7 @@ export const ConfigSchema = z.object({
       notifications: z.boolean().default(true),
     })
     .default({ eodHook: true, notifications: true }),
-  judge: JudgeSchema.default({ enabled: false, model: 'jev-latest' }),
+  judge: JudgeSchema.default({ enabled: false, model: 'jev-latest', logContent: false }),
   // Backwards-compat: configs predating v0.8.0 (Codex host integration)
   // had no notion of `hosts` because Claude Code was the only target.
   // .default(['claude']) means an existing config gets ['claude'] on read,
@@ -134,7 +135,7 @@ const MIGRATIONS: Record<number, Migration> = {
   5: (raw) => ({
     ...raw,
     version: 6,
-    judge: { enabled: false, model: 'jev-latest' },
+    judge: { enabled: false, model: 'jev-latest', logContent: false },
   }),
 };
 

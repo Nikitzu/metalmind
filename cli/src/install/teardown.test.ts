@@ -22,7 +22,7 @@ function fail(stderr = 'fail'): CommandResult {
 function baseConfig(vaultPath: string): Config {
   return {
     version: 6,
-    judge: { enabled: false, model: 'jev-latest' },
+    judge: { enabled: false, model: 'jev-latest', logContent: false },
     flavor: 'scadrial',
     vaultPath,
     outputStylePriorValue: null,

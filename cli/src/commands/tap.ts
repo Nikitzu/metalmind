@@ -5,7 +5,7 @@ import { type RecallMode, type RecallTier, recall } from '../backends/recall.js'
 import { listRecentNotes } from '../backends/vault-browse.js';
 import { readConfig } from '../config.js';
 import { judge as judgeCall, judgeEnabled } from '../judge/client.js';
-import { appendJudgeLog, entryFromResult } from '../judge/log.js';
+import { appendJudgeLog, entryFromResult, head } from '../judge/log.js';
 import { formatJudgedTail, JUDGED_FETCH_K, judgeHits } from '../judge/rerank.js';
 
 export interface TapOptions {
@@ -111,8 +111,8 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
             { input_tokens: 0, output_tokens: 0 },
           ),
         };
-        await appendJudgeLog(
-          entryFromResult(
+        await appendJudgeLog({
+          ...entryFromResult(
             {
               command: 'tap',
               model: config.judge.model,
@@ -122,7 +122,19 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
             merged,
             files,
           ),
-        );
+          ...(config.judge.logContent
+            ? {
+                content: {
+                  query,
+                  candidates: hits.map((h, i) => ({
+                    id: `h${i}`,
+                    title: typeof h.file === 'string' ? h.file : '',
+                    head: head(String(h.text ?? '')),
+                  })),
+                },
+              }
+            : {}),
+        });
         return { hits: r.hits, tail: r.judged ? formatJudgedTail(r) : (r.unjudgedLine ?? '') };
       }
     : undefined;

@@ -43,7 +43,12 @@ import { indexRebuildCmd, indexStatusCmd } from './commands/index-cmd.js';
 import { ingestAutoMemoryCmd } from './commands/ingest.js';
 import { init } from './commands/init.js';
 import { burnIron } from './commands/iron.js';
-import { judgeReportCmd, judgeSetEnabledCmd, judgeStatusCmd } from './commands/judge.js';
+import {
+  judgeReportCmd,
+  judgeReviewCmd,
+  judgeSetEnabledCmd,
+  judgeStatusCmd,
+} from './commands/judge.js';
 import { releaseCheck } from './commands/release-check.js';
 import { aluminumWipe, burnZinc, renameSymbol, toggleVerbose } from './commands/remaining-burns.js';
 import { retired } from './commands/retired.js';
@@ -190,6 +195,15 @@ judgeCmd
   )
   .option('--days <n>', 'Window in days (default 7)', (v) => Number.parseInt(v, 10))
   .action((cmdOpts: { days?: number }) => judgeReportCmd(cmdOpts));
+judgeCmd
+  .command('review')
+  .description(
+    'Label recent judge decisions right or wrong; report turns labels into precision per band',
+  )
+  .option('--limit <n>', 'How many unlabelled entries to walk (default 20)', (v) =>
+    Number.parseInt(v, 10),
+  )
+  .action((cmdOpts: { limit?: number }) => judgeReviewCmd(cmdOpts));
 judgeCmd
   .command('enable')
   .description('Turn judgments on')

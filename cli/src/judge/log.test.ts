@@ -2,7 +2,13 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { appendJudgeLog, entryFromResult, readJudgeLog } from './log.js';
+import {
+  appendJudgeLog,
+  entryFromResult,
+  markOpenedAfterTap,
+  readJudgeLog,
+  updateJudgeLog,
+} from './log.js';
 
 describe('judge log', () => {
   it('records scores, confidence and files but never text', async () => {
@@ -40,5 +46,25 @@ describe('judge log', () => {
     );
     expect(entry.unjudged).toBe('rejected 401');
     expect(entry.answers).toEqual([]);
+  });
+});
+
+describe('labels and opened', () => {
+  it('updates entries in place and marks the last recent tap as opened', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'mm-judge-'));
+    const path = join(dir, 'judge-log.jsonl');
+    const tap = entryFromResult(
+      { command: 'tap', model: 'm', latency_ms: 1, decision: 'kept 1 of 2' },
+      { answers: { h0: { type: 'score', score: 1.8, confidence: 0.9, probabilities: {} } } },
+      { h0: 'Work/a.md' },
+    );
+    await appendJudgeLog(tap, path);
+    expect(await markOpenedAfterTap('Work/a.md', path)).toBe(true);
+    expect(await markOpenedAfterTap('Work/a.md', path)).toBe(false);
+    const changed = await updateJudgeLog((e) => ({ ...e, label: 'right' }), path);
+    expect(changed).toBe(1);
+    const [entry] = await readJudgeLog(path);
+    expect(entry?.opened).toEqual(['Work/a.md']);
+    expect(entry?.label).toBe('right');
   });
 });

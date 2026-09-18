@@ -1,4 +1,4 @@
-import { log } from '@clack/prompts';
+import { isCancel, log, select } from '@clack/prompts';
 import { readConfig, writeConfig } from '../config.js';
 import {
   type JudgeConfig,
@@ -7,7 +7,7 @@ import {
   PASS_ENTRY,
   resolveJudgeKey,
 } from '../judge/client.js';
-import { type JudgeLogEntry, judgeLogPath, readJudgeLog } from '../judge/log.js';
+import { type JudgeLogEntry, judgeLogPath, readJudgeLog, updateJudgeLog } from '../judge/log.js';
 
 export function renderJudgeStatus(
   cfg: JudgeConfig,
@@ -94,6 +94,32 @@ export function renderJudgeReport(entries: JudgeLogEntry[], days: number): strin
     .map((e) => /kept (\d+) of (\d+)/.exec(e.decision))
     .filter((m): m is RegExpExecArray => m !== null)
     .map((m) => Number(m[1]) / Math.max(1, Number(m[2])));
+  const labelled = recent.filter((e) => e.label);
+  const precision = (subset: JudgeLogEntry[]) => {
+    const l = subset.filter((e) => e.label);
+    if (l.length === 0) return 'no labels';
+    const right = l.filter((e) => e.label === 'right').length;
+    return `${right}/${l.length} right (${((right / l.length) * 100).toFixed(0)}%)`;
+  };
+  const band = (e: JudgeLogEntry) => {
+    const top = e.answers.reduce<{ score?: number; confidence?: number } | null>(
+      (best, a) => (a.score !== undefined && (best?.score ?? -1) < a.score ? a : best),
+      null,
+    );
+    if (!top || top.score === undefined) return 'n/a';
+    const c = top.confidence ?? 0;
+    return `${top.score >= 1.5 ? '1.5+' : top.score >= 1 ? '1-1.5' : '<1'} / conf ${c >= 0.8 ? '0.8+' : c >= 0.6 ? '0.6-0.8' : '<0.6'}`;
+  };
+  const byBand = new Map<string, JudgeLogEntry[]>();
+  for (const e of labelled) {
+    const b = band(e);
+    byBand.set(b, [...(byBand.get(b) ?? []), e]);
+  }
+  const opened = taps.filter((e) => e.opened && e.opened.length > 0);
+  const openedTop = opened.filter((e) => {
+    const top = e.answers.slice().sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
+    return top?.file !== undefined && (e.opened ?? []).includes(top.file);
+  });
   const lines = [
     `judge report, last ${days} day(s), ${recent.length} calls (${judgeLogPath()})`,
     `scribe: ${creates.length} judged, ${refused.length} refused, ${forcedAfter.length} forced through, ${uncertain.length} covered-but-uncertain`,
@@ -103,6 +129,9 @@ export function renderJudgeReport(entries: JudgeLogEntry[], days: number): strin
     `confidence: ${histogram(confidences, [0.4, 0.6, 0.8, 1.0])}`,
     `latency: p50 ${percentile(latencies, 0.5)} ms, p95 ${percentile(latencies, 0.95)} ms`,
     `input tokens: ${tokens}`,
+    `labels: ${labelled.length} of ${recent.length} reviewed; refusals ${precision(refused)}; uncertain ${precision(uncertain)}; recall ${precision(taps)}`,
+    ...[...byBand.entries()].map(([b, es]) => `  ${b}: ${precision(es)}`),
+    `opened after recall: ${opened.length} taps, top judged hit opened in ${openedTop.length}`,
   ];
   return lines.join('\n');
 }
@@ -110,4 +139,61 @@ export function renderJudgeReport(entries: JudgeLogEntry[], days: number): strin
 export async function judgeReportCmd(opts: { days?: number }): Promise<void> {
   const entries = await readJudgeLog();
   process.stdout.write(`${renderJudgeReport(entries, opts.days ?? 7)}\n`);
+}
+
+function describeEntry(e: JudgeLogEntry): string {
+  const lines = [
+    `${e.ts.slice(0, 16)}  ${e.command}  ${e.decision}${e.forced ? '  (--force)' : ''}`,
+  ];
+  if (e.content?.query) lines.push(`  query: ${e.content.query}`);
+  if (e.content?.draft) lines.push(`  draft: ${e.content.draft.title}: ${e.content.draft.head}`);
+  const byId = new Map(e.answers.map((a) => [a.id, a]));
+  for (const c of e.content?.candidates ?? []) {
+    const a = byId.get(c.id);
+    const score =
+      a?.score !== undefined
+        ? `${a.score.toFixed(2)}${a.confidence !== undefined ? ` c${a.confidence.toFixed(2)}` : ''}`
+        : '-';
+    lines.push(`  [${score}] ${c.title}: ${c.head}`);
+  }
+  if (!e.content) {
+    for (const a of e.answers) {
+      if (a.score !== undefined) lines.push(`  [${a.score.toFixed(2)}] ${a.file ?? a.id}`);
+    }
+  }
+  if (e.opened?.length) lines.push(`  opened: ${e.opened.join(', ')}`);
+  return lines.join('\n');
+}
+
+export async function judgeReviewCmd(opts: { limit?: number }): Promise<void> {
+  const entries = await readJudgeLog();
+  const pending = entries
+    .map((e, i) => ({ e, i }))
+    .filter(({ e }) => !e.label && !e.unjudged)
+    .reverse()
+    .slice(0, opts.limit ?? 20);
+  if (pending.length === 0) {
+    log.info('nothing to review');
+    return;
+  }
+  const labels = new Map<number, 'right' | 'wrong'>();
+  for (const { e, i } of pending) {
+    process.stdout.write(`\n${describeEntry(e)}\n`);
+    const answer = await select({
+      message: 'Was the judge right?',
+      options: [
+        { value: 'right', label: 'right' },
+        { value: 'wrong', label: 'wrong' },
+        { value: 'skip', label: 'skip' },
+        { value: 'stop', label: 'stop' },
+      ],
+    });
+    if (isCancel(answer) || answer === 'stop') break;
+    if (answer === 'right' || answer === 'wrong') labels.set(i, answer);
+  }
+  const changed = await updateJudgeLog((e, i) => {
+    const label = labels.get(i);
+    return label ? { ...e, label } : e;
+  });
+  log.success(`${changed} label(s) saved`);
 }

@@ -60,7 +60,7 @@ describe('doctor deep checks', () => {
       await mkdir(join(tmp, 'vault'), { recursive: true });
       config = {
         version: 6,
-        judge: { enabled: false, model: 'jev-latest' },
+        judge: { enabled: false, model: 'jev-latest', logContent: false },
         flavor: 'scadrial',
         vaultPath: join(tmp, 'vault'),
         outputStylePriorValue: null,
@@ -452,7 +452,7 @@ describe('checkInstallManifest', () => {
   function cfgWith(install: Config['install']): Config {
     return {
       version: 6,
-      judge: { enabled: false, model: 'jev-latest' },
+      judge: { enabled: false, model: 'jev-latest', logContent: false },
       flavor: 'scadrial',
       vaultPath: '/v',
       outputStylePriorValue: null,

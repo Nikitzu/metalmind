@@ -73,6 +73,51 @@ describe('renderJudgeReport', () => {
     expect(text).toContain('unjudged: 1 (offline)');
     expect(text).toContain('input tokens: 2000');
     expect(text).toContain('latency: p50');
+    expect(text).toContain('labels: 0 of 4 reviewed');
+  });
+  it('turns labels into precision per decision and band', () => {
+    const text = renderJudgeReport(
+      [
+        {
+          ts: now,
+          command: 'scribe-create',
+          model: 'm',
+          latency_ms: 1,
+          decision: 'refused Work/a.md',
+          label: 'right',
+          answers: [
+            { id: 'c0', file: 'Work/a.md', score: 1.8, confidence: 0.9, probabilities: {} },
+          ],
+        },
+        {
+          ts: now,
+          command: 'scribe-create',
+          model: 'm',
+          latency_ms: 1,
+          decision: 'refused Work/b.md',
+          label: 'wrong',
+          answers: [
+            { id: 'c0', file: 'Work/b.md', score: 1.6, confidence: 0.7, probabilities: {} },
+          ],
+        },
+        {
+          ts: now,
+          command: 'tap',
+          model: 'm',
+          latency_ms: 1,
+          decision: 'kept 2 of 10',
+          opened: ['Work/c.md'],
+          answers: [
+            { id: 'h0', file: 'Work/c.md', score: 1.9, confidence: 0.9, probabilities: {} },
+          ],
+        },
+      ],
+      7,
+    );
+    expect(text).toContain('refusals 1/2 right (50%)');
+    expect(text).toContain('1.5+ / conf 0.8+: 1/1 right');
+    expect(text).toContain('1.5+ / conf 0.6-0.8: 0/1 right');
+    expect(text).toContain('opened after recall: 1 taps, top judged hit opened in 1');
   });
   it('says so when the log is empty', () => {
     expect(renderJudgeReport([], 7)).toContain('no judge calls');

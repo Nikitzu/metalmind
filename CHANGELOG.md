@@ -6,6 +6,14 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.26.2 - 2026-09-18
+
+### Added
+
+- **Local judge observability, for the owner only.** `judge.logContent` (config, off by default) adds the query, the draft's title and first 300 characters, and each candidate's title and first 300 characters to `judge-log.jsonl`. `metalmind judge review [--limit N]` walks unlabelled decisions and stores right / wrong on each. `judge report` turns labels into precision for refusals, uncertain verdicts and recall, split by score and confidence band, and counts how often the top judged hit was the note opened with `scribe show` within ten minutes of the recall.
+
+---
+
 ## 0.26.1 - 2026-09-18
 
 ### Added

@@ -9,7 +9,7 @@ import {
   unjudgedLine,
 } from './client.js';
 import { type NoteContext, noteContext } from './context.js';
-import { appendJudgeLog, entryFromResult } from './log.js';
+import { appendJudgeLog, entryFromResult, head, type JudgeLogEntry } from './log.js';
 import {
   type Candidate,
   coverageQuestions,
@@ -37,6 +37,7 @@ export interface GateDeps {
     files: Record<string, string>,
     decision: string,
     latencyMs: number,
+    content: NonNullable<JudgeLogEntry['content']>,
   ) => Promise<void>;
 }
 
@@ -75,8 +76,16 @@ export async function gateDraft(
   });
   const latency = Date.now() - started;
   const files = Object.fromEntries(candidates.map((c, i) => [`c${i}`, c.file]));
+  const content = {
+    draft: { title: draft.title, head: head(draft.body) },
+    candidates: candidates.map((c, i) => ({
+      id: `c${i}`,
+      title: c.title || c.file,
+      head: head(c.body),
+    })),
+  };
   if (!res.answers) {
-    await opts.log?.(res, files, 'unjudged', latency);
+    await opts.log?.(res, files, 'unjudged', latency, content);
     return { refuse: null, lines: [unjudgedLine(res)], judged: false };
   }
   const verdicts = verdictsFromAnswers(candidates, res.answers);
@@ -89,7 +98,7 @@ export async function gateDraft(
       : decision.extends.length > 0
         ? `extends ${decision.extends.join(',')}`
         : 'distinct';
-  await opts.log?.(res, files, summary, latency);
+  await opts.log?.(res, files, summary, latency, content);
   return { refuse: decision.refuse, lines: text ? text.split('\n') : [], judged: true };
 }
 
@@ -99,6 +108,7 @@ export function realGateDeps(opts: {
   model: string;
   command: 'scribe-create' | 'scribe-update';
   forced?: boolean;
+  logContent?: boolean;
 }): GateDeps {
   return {
     search: (title, body) =>
@@ -110,9 +120,9 @@ export function realGateDeps(opts: {
       }),
     readNote: (file) => readFile(join(opts.vaultRoot, file), 'utf8'),
     judge: ({ state, questions }) => judgeCall({ state, questions, model: opts.model }),
-    log: (res, files, decision, latencyMs) =>
-      appendJudgeLog(
-        entryFromResult(
+    log: (res, files, decision, latencyMs, content) =>
+      appendJudgeLog({
+        ...entryFromResult(
           {
             command: opts.command,
             model: opts.model,
@@ -123,6 +133,7 @@ export function realGateDeps(opts: {
           res,
           files,
         ),
-      ),
+        ...(opts.logContent ? { content } : {}),
+      }),
   };
 }

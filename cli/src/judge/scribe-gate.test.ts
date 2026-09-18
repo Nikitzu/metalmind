@@ -41,6 +41,7 @@ describe('gateDraft', () => {
       { c0: 'Work/a.md' },
       'refused Work/a.md',
       expect.any(Number),
+      { draft: { title: 't', head: 'b' }, candidates: [{ id: 'c0', title: 'A', head: 'A body' }] },
     );
   });
 

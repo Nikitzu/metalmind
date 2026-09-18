@@ -1,4 +1,4 @@
-import { appendFile, mkdir, readFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { JudgeResult } from './client.js';
@@ -22,6 +22,22 @@ export interface JudgeLogEntry {
   }>;
   decision: string;
   forced?: boolean;
+  /** Opt-in (config.judge.logContent): what the judge actually saw, for later review. */
+  content?: {
+    query?: string;
+    draft?: { title: string; head: string };
+    candidates?: Array<{ id: string; title: string; head: string }>;
+  };
+  /** Human verdict from `judge review`. */
+  label?: 'right' | 'wrong';
+  /** Files the user opened with `scribe show` shortly after a judged tap. */
+  opened?: string[];
+}
+
+export const CONTENT_HEAD_CHARS = 300;
+
+export function head(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().slice(0, CONTENT_HEAD_CHARS);
 }
 
 export function judgeLogPath(): string {
@@ -60,6 +76,22 @@ export async function appendJudgeLog(entry: JudgeLogEntry, path = judgeLogPath()
   }
 }
 
+/** Rewrite the whole log with `update` applied to each entry. The log is
+ *  small (one line per call) and only the owner writes it, so a full rewrite
+ *  is simpler than an index. */
+export async function updateJudgeLog(
+  update: (entry: JudgeLogEntry, index: number) => JudgeLogEntry,
+  path = judgeLogPath(),
+): Promise<number> {
+  const entries = await readJudgeLog(path);
+  const next = entries.map(update);
+  const changed = next.filter((e, i) => e !== entries[i]).length;
+  if (changed > 0) {
+    await writeFile(path, `${next.map((e) => JSON.stringify(e)).join('\n')}\n`, 'utf8');
+  }
+  return changed;
+}
+
 export async function readJudgeLog(path = judgeLogPath()): Promise<JudgeLogEntry[]> {
   try {
     const text = await readFile(path, 'utf8');
@@ -76,4 +108,30 @@ export async function readJudgeLog(path = judgeLogPath()): Promise<JudgeLogEntry
   } catch {
     return [];
   }
+}
+
+// A note opened soon after a judged recall is the closest thing to a click:
+// it says which hit the reader actually wanted.
+export const OPENED_WINDOW_MS = 10 * 60_000;
+
+export async function markOpenedAfterTap(file: string, path = judgeLogPath()): Promise<boolean> {
+  const entries = await readJudgeLog(path);
+  const cutoff = Date.now() - OPENED_WINDOW_MS;
+  let target = -1;
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const e = entries[i] as JudgeLogEntry;
+    if (e.command !== 'tap') continue;
+    if (Date.parse(e.ts) < cutoff) break;
+    target = i;
+    break;
+  }
+  if (target === -1) return false;
+  const changed = await updateJudgeLog(
+    (e, i) =>
+      i === target && !(e.opened ?? []).includes(file)
+        ? { ...e, opened: [...(e.opened ?? []), file] }
+        : e,
+    path,
+  );
+  return changed > 0;
 }

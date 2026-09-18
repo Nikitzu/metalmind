@@ -2,6 +2,7 @@ import { relative } from 'node:path';
 import { log } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import { judgeEnabled } from '../judge/client.js';
+import { markOpenedAfterTap } from '../judge/log.js';
 import { gateDraft, realGateDeps } from '../judge/scribe-gate.js';
 import { findOverlappingNotes, formatOverlapWarning } from '../scribe/dedup.js';
 import {
@@ -85,6 +86,7 @@ export async function scribeCreateCmd(
           model: cfg.judge.model,
           command: 'scribe-create',
           forced: opts.force,
+          logContent: cfg.judge.logContent,
         }),
       });
       for (const line of gate.lines) log.warn(line);
@@ -159,6 +161,7 @@ export async function scribeUpdateCmd(
           model: cfg.judge.model,
           command: 'scribe-update',
           forced: opts.force,
+          logContent: cfg.judge.logContent,
         }),
       });
       for (const line of gate.lines) log.warn(line);
@@ -328,8 +331,10 @@ export async function scribeRenameCmd(
 
 export async function scribeShowCmd(notePath: string): Promise<void> {
   try {
-    const content = await scribeShow(notePath, await ctx());
+    const opts = await ctx();
+    const content = await scribeShow(notePath, opts);
     process.stdout.write(content);
+    await markOpenedAfterTap(relative(opts.vaultRoot, resolveNotePath(notePath, opts.vaultRoot)));
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
   }
