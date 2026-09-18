@@ -6,6 +6,17 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.26.0 - 2026-09-18
+
+### Added
+
+- **The judge sees what a reader would.** Drafts, overlap candidates and recall hits now carry title, kind, project, tags and dates beside the text, with instructions that they are context, not the answer.
+- **Refusal is gated on confidence.** A covered score with the probability mass spread across levels (confidence below 0.6) no longer refuses; the note is created with a `covered? ... low confidence` line. The threshold is what the log below is for.
+- **`~/.metalmind/judge-log.jsonl` and `metalmind judge report [--days N]`.** One line per judge call with scores, confidence, probabilities, files, decision, `--force` overrides, latency and tokens; never note or query text. The report prints refusal and override counts, kept ratio on recall, histograms, latency p50/p95 and input tokens.
+- **`METALMIND_JUDGE_MODE=each`** sends one request per hit instead of one batched request; the bench compares both (batched wins on the maintainer vault, 20/20 vs 17/20 top-1).
+
+---
+
 ## 0.25.2 - 2026-09-17
 
 ### Added

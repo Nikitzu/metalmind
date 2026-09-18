@@ -153,6 +153,16 @@ vitest, tests beside the module. Every failure class of the client is a unit tes
 6. No probe in `judge status`. Every judged command reports its own failure inline as `unjudged: <reason>`, which is where the user is when it matters.
 7. Replace, not add: the 0.80 warning, the cross-encoder rerank and the "low confidence" line are fallbacks for the unjudged path, never printed beside a verdict. The cross-encoder is deleted after the bench.
 
+## Round 2, 2026-09-18: full power and evidence
+
+Read against the TypeSafe docs (state, primitives, confidence, rerank cookbook).
+
+8. Refusal is gated on confidence: `coverage ≥ 1.5` refuses only when `confidence ≥ 0.6`; below that the note is created with a `covered? ... low confidence, creating anyway` line. The docs do not claim confidence is calibrated, so the log below is what tunes 0.6.
+9. State carries the facts a reader would glance at: for drafts and candidates, title, kind, project, tags, created and updated; for recall hits, the same plus heading. Instructions say these are context, not the answer.
+10. Request shape: batched (all candidates in one request) stays the default. Measured on the maintainer vault: batched top-1 20/20, MRR 1.000; one request per hit (`METALMIND_JUDGE_MODE=each`, the cookbook's shape) 17/20, MRR 0.917. Independent judgments lose the relative comparison a ranking needs.
+11. Every judge call appends one line to `~/.metalmind/judge-log.jsonl`: timestamp, command, model, latency, usage, per-answer score, confidence, probabilities and file, the decision, and `forced` when `--force` was passed. No note text, no query text. `metalmind judge report [--days N]` summarises refusals, forced overrides (the human saying "wrong"), kept ratio on recall, score and confidence histograms, latency percentiles and input tokens. `METALMIND_JUDGE_LOG` overrides the path.
+12. Unchanged: without a key, or with `METALMIND_JUDGE=0`, or with the judge disabled, every command behaves as before 0.25.0.
+
 ## Open Questions
 
 None.

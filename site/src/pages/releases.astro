@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.26.0',
+    date: '2026-09-18',
+    headline: 'The judge sees what a reader would, and keeps a log',
+    summary: "Drafts, overlap candidates and recall hits now reach the judge with title, kind, project, tags and dates beside the text. A covered verdict refuses only when the judge is confident (0.6 and up); a spread-out one creates the note with a covered? line. Every judged call appends one content-free line to ~/.metalmind/judge-log.jsonl (scores, confidence, probabilities, files, decision, --force overrides, latency, tokens), and metalmind judge report --days N turns a week of use into refusal and override counts, kept ratio, histograms and cost. METALMIND_JUDGE_MODE=each sends one request per hit for comparison; batched stays the default. Without a key nothing changes.",
+    tag_kind: 'added',
+  },
+  {
     tag: '0.25.2',
     date: '2026-09-17',
     headline: 'pass is the Linux key store for the judge',
@@ -26,7 +33,7 @@ const releases = [
     tag: '0.25.0',
     date: '2026-09-17',
     headline: 'An opt-in judge replaces the cross-encoder, and scribe refuses covered drafts',
-    summary: "metalmind judge status|enable|disable turns on Jev (TypeSafe) judgments; METALMIND_JUDGE=0 turns them off for one shell. tap copper sends the top 10 fused hits to the judge and shows them in judged relevance order with off-topic hits dropped and judged: N of M kept beneath; --no-judge per call. scribe create and scribe update score a draft against overlapping notes before writing and refuse one an existing note already covers, naming that note and the scribe update shortcut; --force overrides, and a partial overlap prints an extends line instead. Every judged command reports its own failure inline as unjudged: <reason> and keeps its exit code. The cross-encoder --rerank tier is removed: on the maintainer vault the judge beat it on top-1 (20 vs 18) and MRR (1.000 vs 0.950) and, unlike it, returns nothing on questions the vault cannot answer. --rerank survives as an alias of the judged order; the Python [rerank] extra stays one release for installs that already have it.",
+    summary: "metalmind judge status|enable|disable turns on Jev (TypeSafe) judgments; METALMIND_JUDGE=0 turns them off for one shell. tap copper sends the top 10 fused hits to the judge and shows them in judged relevance order with off-topic hits dropped and judged: N of M kept beneath; --no-judge per call. scribe create and scribe update score a draft against overlapping notes before writing and refuse one an existing note already covers, naming that note and the scribe update shortcut; --force overrides, and a partial overlap prints an extends line instead. Every judged command reports its own failure inline as unjudged: <reason> and keeps its exit code. The cross-encoder --rerank tier is removed: on the maintainer vault the judge matched or beat it on every query and, unlike it, returns nothing on questions the vault cannot answer. --rerank survives as an alias of the judged order; the Python [rerank] extra stays one release for installs that already have it.",
     tag_kind: 'added',
   },
   {
