@@ -19,11 +19,13 @@ metalmind pulse --deep    # or: metalmind doctor --deep - end-to-end runtime che
 - Recall HTTP fast-path reachable at `127.0.0.1:17317`
 - The metalmind-managed blocks are present in `~/.claude/CLAUDE.md` and `<vault>/CLAUDE.md`
 
-For deeper Python-side smoke checks (FTS5 row count, rerank cross-encoder loadable):
+For a deeper Python-side smoke check (FTS5 row count):
 
 ```bash
-metalmind-vault-rag-doctor --rerank --fts
+metalmind-vault-rag-doctor --fts
 ```
+
+Judge health is `metalmind judge status`: it names where the key came from (`TYPESAFE_API_KEY`, macOS Keychain, or `pass`) or says the judge is off.
 
 ## Recall latency
 

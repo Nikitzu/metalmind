@@ -47,7 +47,7 @@ const qmdRows = [
       <div class="proof-card">
         <div class="proof-eyebrow mono">- recall-at-scale</div>
         <h3 class="proof-h display">Recall quality at 50k notes</h3>
-        <p class="proof-sub">Hybrid retrieval, no rerank, on a corpus of 50,000 Hacker News comments. Zero misses at k=5, every scale.</p>
+        <p class="proof-sub">Hybrid retrieval alone, no judge, on a corpus of 50,000 Hacker News comments. Zero misses at k=5, every scale.</p>
         <table class="proof-table mono">
           <thead>
             <tr><th>vault</th><th>hit@1</th><th>hit@3</th><th>p95</th></tr>
@@ -64,7 +64,7 @@ const qmdRows = [
       <div class="proof-card">
         <div class="proof-eyebrow mono">- recall-v0</div>
         <h3 class="proof-h display">Head to head with qmd</h3>
-        <p class="proof-sub">hit@1 with rerank on the same fixture: hand-authored gold notes plus same-domain distractors.</p>
+        <p class="proof-sub">hit@1 with the cross-encoder tier that shipped through 0.24.1, on the same fixture: hand-authored gold notes plus same-domain distractors.</p>
         <table class="proof-table mono">
           <thead>
             <tr><th>notes</th><th>metalmind</th><th>qmd 2.1.0</th></tr>

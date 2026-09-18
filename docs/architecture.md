@@ -108,6 +108,7 @@ The Node ↔ Python boundary is **loopback HTTP only** - never imports. Protocol
                                                       │  • synod ...         │
                                                       │  • flare ...         │
                                                       │  • pulse / doctor    │
+                                                      │  • judge (opt-in)    │
                                                       └────┬────────┬────────┘
                                                            │        │
                                             loopback HTTP  │        │ stdio fallback
@@ -122,7 +123,6 @@ The Node ↔ Python boundary is **loopback HTTP only** - never imports. Protocol
                                                    │  • sqlite-vec store     │
                                                    │  • FTS5 keyword         │
                                                    │  • fastembed (ONNX)     │
-                                                   │  • optional rerank      │
                                                    └─────────────────────────┘
 ```
 
@@ -130,10 +130,10 @@ The Node ↔ Python boundary is **loopback HTTP only** - never imports. Protocol
 
 ### Memory
 
-- `tap copper` (recall) - RRF-fused semantic + BM25 hybrid retrieval, top-rank bonus, weighted lists, optional cross-encoder rerank. Fusion weights are adaptive: queries carrying exact-match tokens (UUIDs, numeric IDs, ticket IDs, hostnames, emails) raise the keyword-leg weight (disable with `METALMIND_RRF_ADAPTIVE=0`). Fused scores are folder-weighted: `Archive/` hits at 0.4x, `Inbox/` at 0.7x, so archived and unsorted notes re-rank below in-flight work without being excluded; notes marked `status: superseded` get the same treatment (0.4x, `METALMIND_SUPERSEDE_PENALTY`) and their hits carry `superseded_by` pointing at the successor. `--verify-code` (opt-in, HTTP path) validates `code: ["repo#symbol"]` frontmatter refs against forge-registered repos via rg/grep and flags hits whose code is gone; `doctor` runs the same validation vault-wide as `code-refs-integrity`. Returns hits as JSONL. `--compact` renders a lean per-hit form; `--semantic-only` / `--keyword-only` isolate one retriever leg for A/B (HTTP path only); `--list-recent N` browses without a query.
+- `tap copper` (recall) - RRF-fused semantic + BM25 hybrid retrieval, top-rank bonus, weighted lists. With the judge enabled (`metalmind judge enable`, TypeSafe key in `TYPESAFE_API_KEY`, the macOS Keychain or `pass`), the CLI sends the top 10 fused hits to Jev and shows them in judged relevance order with off-topic hits dropped and `judged: N of M kept`; `--no-judge` per call, `METALMIND_JUDGE=0` per shell. Judging lives in the CLI, not the watcher; a failed judgment prints one `unjudged: <reason>` line and falls back to the fused order. Fusion weights are adaptive: queries carrying exact-match tokens (UUIDs, numeric IDs, ticket IDs, hostnames, emails) raise the keyword-leg weight (disable with `METALMIND_RRF_ADAPTIVE=0`). Fused scores are folder-weighted: `Archive/` hits at 0.4x, `Inbox/` at 0.7x, so archived and unsorted notes re-rank below in-flight work without being excluded; notes marked `status: superseded` get the same treatment (0.4x, `METALMIND_SUPERSEDE_PENALTY`) and their hits carry `superseded_by` pointing at the successor. `--verify-code` (opt-in, HTTP path) validates `code: ["repo#symbol"]` frontmatter refs against forge-registered repos via rg/grep and flags hits whose code is gone; `doctor` runs the same validation vault-wide as `code-refs-integrity`. Returns hits as JSONL. `--compact` renders a lean per-hit form; `--semantic-only` / `--keyword-only` isolate one retriever leg for A/B (HTTP path only); `--list-recent N` browses without a query.
 - `store copper` (save) - proposes path + frontmatter + wikilinks, agent confirms, writes through `scribe create` (or `scribe update` if recall surfaced an existing note).
 - `ingest auto-memory` - imports `~/.claude/projects/*/memory/*.md` topic files as `Memory/auto-<project>-<topic>.md` with `source_path` + `imported_hash` provenance; re-runs skip unchanged sources, follow changed ones, and refuse to clobber locally-edited copies.
-- `scribe <create|update|patch|supersede|delete|archive|list|show|rename>` - vault CRUD. Stamps frontmatter, picks intent folder, auto-links the project MOC, rewrites `[[wikilinks]]` on rename. Daily-targeted writes for non-today dates require `--date` to acknowledge.
+- `scribe <create|update|patch|supersede|delete|archive|list|show|rename>` - vault CRUD. Stamps frontmatter, picks intent folder, auto-links the project MOC, rewrites `[[wikilinks]]` on rename. With the judge enabled, `create` and `update` score the draft against overlapping notes before writing (distinct / overlaps / covered) and refuse a covered draft naming the note to update; `--force` overrides. Daily-targeted writes for non-today dates require `--date` to acknowledge.
 - `gold <kind:slug>` - one-shot archive (move to `Archive/`, set `status: archived`).
 
 ### Vault sync

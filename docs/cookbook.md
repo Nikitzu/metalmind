@@ -105,12 +105,12 @@ the same pattern bit us in [[2026-04-30-metalmind-v0-4-0]].
 | *(none)* | Default. Fast semantic + BM25 hybrid. The right answer 90% of the time. | ~8 ms median |
 | `--deep` | One hit looks right but you want adjacent context. Walks backlinks one hop. | One extra round-trip; +1 hop of payload tokens. |
 | `--expand` | Researching a topic broadly - you want hits *and* the linked-context graph. | Heavier - every linked note loaded. Use sparingly on large vaults. |
-| `--rerank` | Top-of-list precision matters more than latency (cross-encoder rescore). | ~2 s per query; first call downloads ~150 MB ONNX weights. |
+| `--no-judge` | The judge is enabled (`metalmind judge enable`) and you want the raw fused order for one call, e.g. to A/B a query or when offline. | Saves one Jev round-trip. Without a key the judge is off anyway and `unjudged: <reason>` says why. |
 | `--list-recent N` | "What was I working on yesterday?" - no query, just the N most-recently-modified notes. | Cheap - pure file-mtime scan. |
 | `-k <n>` | Limit hits returned. Default is 10. | Smaller payload. |
 | `--json` | Scripted consumers. Tabular by default. | Same retrieval cost. |
 
-**Default rule of thumb:** start with no flag. Escalate to `--deep` if the top hit is right but lacking context. Escalate to `--expand` only when you're researching *broadly*, not when you have a specific question. `--rerank` is for moments when you'll quote the top hit verbatim.
+**Default rule of thumb:** start with no flag. Escalate to `--deep` if the top hit is right but lacking context. Escalate to `--expand` only when you're researching *broadly*, not when you have a specific question. With the judge on, hits arrive in judged relevance order with off-topic ones dropped and `judged: N of M kept` beneath; `judged: 0 of M answer this` means the vault probably does not hold the answer, so rephrase before trusting the unjudged hits it shows.
 
 ### The 2-3 rephrasings rule
 
