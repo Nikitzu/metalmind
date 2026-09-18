@@ -14,9 +14,9 @@ what has been ruled out.
 whether reranking should become the default. It did not.
 v0.25.0 removed the `--rerank` tier and added `metalmind judge enable`, which
 sends the top 10 fused hits to Jev (TypeSafe) and returns them in judged
-relevance order with off-topic hits dropped. On the maintainer vault it beat
-the cross-encoder on top-1 (20 vs 18) and MRR (1.000 vs 0.950), and unlike it
-returns nothing on questions the vault cannot answer (`bench/judge-relevance/`).
+relevance order with off-topic hits dropped. On the maintainer vault it matched
+or beat the cross-encoder on every query, and unlike it returns nothing on
+questions the vault cannot answer (`bench/judge-relevance/`, numbers stay private).
 The same judgment gates `scribe create` and `scribe update`, which now refuse a
 draft an existing note already covers. It stays opt-in because it needs a key
 and a network round-trip; without either, recall is exactly what it was.
