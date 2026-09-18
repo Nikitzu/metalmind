@@ -2,13 +2,24 @@
 
 > What's being worked on, what's next, and what isn't planned. Updated at each release.
 >
-> **Last updated:** 2026-08-16 · **Current release:** v0.21.0
+> **Last updated:** 2026-09-17 · **Current release:** v0.25.2
 
 metalmind is maintained by one person. This page exists so that's a known
 quantity rather than a guess: you can see what's coming, what's stalled, and
 what has been ruled out.
 
 ## Answered since this page last said otherwise
+
+**The cross-encoder is gone; an opt-in judge replaced it.** This page used to ask
+whether reranking should become the default. It did not.
+v0.25.0 removed the `--rerank` tier and added `metalmind judge enable`, which
+sends the top 10 fused hits to Jev (TypeSafe) and returns them in judged
+relevance order with off-topic hits dropped. On the maintainer vault it beat
+the cross-encoder on top-1 (20 vs 18) and MRR (1.000 vs 0.950), and unlike it
+returns nothing on questions the vault cannot answer (`bench/judge-relevance/`).
+The same judgment gates `scribe create` and `scribe update`, which now refuse a
+draft an existing note already covers. It stays opt-in because it needs a key
+and a network round-trip; without either, recall is exactly what it was.
 
 **Recall is now measured on data nobody here wrote.** This page used to name
 third-party measurement as the standing objection. `bench/longmemeval/`
@@ -62,7 +73,7 @@ the code they sit next to.
 
 ## Track record
 
-76 releases since 2026-04-20. `CHANGELOG.md` carries the reasoning for each
+83 releases since 2026-04-20. `CHANGELOG.md` carries the reasoning for each
 one, not just the diff. Every performance claim on the site traces to a
 harness in `bench/` you can run yourself.
 
@@ -71,13 +82,14 @@ history you can check.
 
 ## Now (next 90 days)
 
-**Decide whether reranking becomes the default.** The retrieval-quality
-argument against it is gone; what remains is cost. Reranking adds a
-cross-encoder pass to every query and needs the `[rerank]` extra plus a 150 MB
-model, so this is a latency and install-footprint decision rather than an
-accuracy one. Two small regressions are on the record against it: on
-LongMemEval, preference questions lose hit@5 and assistant questions lose one
-question, the only two types that move backwards.
+**Judge numbers on data nobody here wrote.** `bench/judge-relevance/` ran on
+the maintainer vault only. LongMemEval and the adversarial set have not been
+re-run under the judge, so the published third-party numbers still describe
+plain hybrid retrieval. Until that run exists the judge's gain is a
+single-vault claim.
+
+**Drop the Python `[rerank]` extra.** v0.25.0 kept it one release for installs
+that already had it. Nothing in the CLI calls it any more.
 
 **Recall precision follow-ups.** Intent reranking landed as temporal intent
 ordering. The branch-aware filter, deferred from the v0.9.0 external-repo-leverage

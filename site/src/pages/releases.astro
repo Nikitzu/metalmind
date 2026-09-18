@@ -9,6 +9,55 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.25.2',
+    date: '2026-09-17',
+    headline: 'pass is the Linux key store for the judge',
+    summary: "The judge key is resolved from TYPESAFE_API_KEY, then the macOS Keychain, then pass show typesafe-api-key; init and judge enable write to pass on Linux. judge status names which source answered, so a key that is set but not found is a one-line diagnosis rather than a silent unjudged.",
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.25.1',
+    date: '2026-09-17',
+    headline: 'init asks about Jev judgments',
+    summary: "Default no. On yes it finds an existing key or takes one and stores it in the macOS Keychain under typesafe-api-key; elsewhere it points at TYPESAFE_API_KEY. --judge and --no-judge cover scripted installs, and --yes leaves the judge off. Without a key metalmind behaves exactly as it did before 0.25.0.",
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.25.0',
+    date: '2026-09-17',
+    headline: 'An opt-in judge replaces the cross-encoder, and scribe refuses covered drafts',
+    summary: "metalmind judge status|enable|disable turns on Jev (TypeSafe) judgments; METALMIND_JUDGE=0 turns them off for one shell. tap copper sends the top 10 fused hits to the judge and shows them in judged relevance order with off-topic hits dropped and judged: N of M kept beneath; --no-judge per call. scribe create and scribe update score a draft against overlapping notes before writing and refuse one an existing note already covers, naming that note and the scribe update shortcut; --force overrides, and a partial overlap prints an extends line instead. Every judged command reports its own failure inline as unjudged: <reason> and keeps its exit code. The cross-encoder --rerank tier is removed: on the maintainer vault the judge beat it on top-1 (20 vs 18) and MRR (1.000 vs 0.950) and, unlike it, returns nothing on questions the vault cannot answer. --rerank survives as an alias of the judged order; the Python [rerank] extra stays one release for installs that already have it.",
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.24.1',
+    date: '2026-08-20',
+    headline: 'teardown swept the real ~/.claude instead of the directory it was given',
+    summary: "cleanupOutputStyle defaulted its four paths to the running user's home and teardown overrode only two of them. Uninstall was unaffected, since there the two directories are the same; running the test suite was not, and it deleted the developer's own output-styles/marsh.md and skills/marsh. Teardown now derives every path from its claudeDir, and a regression test pins the sweep inside the sandbox.",
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.24.0',
+    date: '2026-08-20',
+    headline: 'The marsh and telegraph output styles are gone',
+    summary: "Claude Code now ships its own brevity styles, so maintaining a competing pair stopped earning its keep. The whole subsystem goes with them: the style assets, the two self-triggering skill bundles, the SessionStart activation hook, the UserPromptSubmit re-anchor hook, and the outputStyle object in config. Deleting the code does not undo what earlier versions wrote into ~/.claude, so metalmind stamp now sweeps the style files, skill directories, hook scripts and settings registrations, and restores settings.outputStyle to whatever it held before metalmind first overwrote it. A style you chose yourself is never touched. Config schema v5 drops the outputStyle object. flavor: scadrial | classic still picks the verb set; it no longer picks a voice.",
+    tag_kind: 'changed',
+  },
+  {
+    tag: '0.23.0',
+    date: '2026-08-17',
+    headline: 'Reranking is 5.6x faster and ranks the same',
+    summary: "0.22.0 shipped the cross-encoder at 8.0s per query. That cost was almost entirely batch shape: scoring is one ONNX call over a candidates-by-tokens tensor, and the batch was 20 x 512. It is now 10 x 256 and the query takes 1.3s instead of 7.5s. Ten candidates because only 2 of 93 adversarial queries have the wanted note deeper than rank 10; 256 tokens because that is the knee of the length curve, with hit@1 holding at 62% and falling to 55% at 128. Measured identical on 593 queries, including LongMemEval hit@1 49% to 50% with MRR unchanged. Trading model size for sequence length is the wrong direction: the smallest cross-encoders rank worse than not reranking at all. METALMIND_RERANK_GATE (off by default) skips the pass when fusion already separated a winner, and METALMIND_RERANK_MIN_CANDIDATES exposes a floor that was hardcoded at 20.",
+    tag_kind: 'changed',
+  },
+  {
+    tag: '0.22.0',
+    date: '2026-08-16',
+    headline: 'The reranker informs the ranking instead of replacing it',
+    summary: "Reranking cost competing-near-duplicates 15 points of hit@1 and 0.21.0 called that a property of cross-encoders. Tracing all 20 regressions showed every one was a sibling swap caused by two defects: the cross-encoder was scored against chunk text with no note title attached, so it never saw what distinguished a note from its sibling, and it then sorted on its own score alone, discarding the fusion rank BM25 had earned by matching that title. The title is now supplied and the two rankings are fused with RRF (METALMIND_RERANK_ALPHA, default 0.5). Near-duplicates goes 65% to 85%, adversarial hit@1 58% to 63%, and LongMemEval 44% to 49% with MRR 0.54 to 0.59. Date ordering now shifts by bounded rank positions (METALMIND_TEMPORAL_MAX_SHIFT, default 8) instead of multiplying a score whose scale depended on the previous stage. Also fixed: the vector index is sized from the model rather than a hardcoded 384, and the LongMemEval harness refuses to benchmark a build that is not the checkout under test.",
+    tag_kind: 'changed',
+  },
+  {
     tag: '0.21.0',
     date: '2026-08-15',
     headline: 'Two chunks of one note are two documents, and the index says what built it',
