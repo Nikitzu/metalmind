@@ -68,17 +68,38 @@ describe('excerptForJudge', () => {
       file: 'Work/x.md',
       text: '---\nkind: work\ntitle: "The title"\ntags: []\n---\nBody here',
     };
-    await expect(excerptForJudge(h)).resolves.toEqual({
+    await expect(excerptForJudge(h)).resolves.toMatchObject({
       file: 'Work/x.md',
       title: 'The title',
-      heading: undefined,
       text: 'Body here',
     });
   });
   it('reads the note opening when the chunk is frontmatter only', async () => {
     const h = { file: 'Work/x.md', text: '---\nkind: work\ntitle: T\n---' };
-    const readNote = async () => '---\nkind: work\ntitle: T\n---\nThe real body';
-    await expect(excerptForJudge(h, readNote)).resolves.toMatchObject({ text: 'The real body' });
+    const readNote = async () =>
+      '---\nkind: work\ntitle: T\nproject: p\ntags: [q]\n---\nThe real body';
+    await expect(excerptForJudge(h, readNote)).resolves.toMatchObject({
+      text: 'The real body',
+      kind: 'work',
+      project: 'p',
+      tags: ['q'],
+    });
+  });
+});
+
+describe('judgeHits in each mode', () => {
+  it('sends one request per hit and reads each answer by its own id', async () => {
+    const judge = vi.fn(async ({ questions }: { questions: Record<string, unknown> }) => {
+      const id = Object.keys(questions)[0] as string;
+      const score = id === 'h1' ? 1.9 : 0.3;
+      return {
+        answers: { [id]: { type: 'score' as const, score, probabilities: {}, confidence: 0.9 } },
+      };
+    });
+    const res = await judgeHits({ query: 'q', hits, k: 5, judge, mode: 'each' });
+    expect(judge).toHaveBeenCalledTimes(3);
+    expect(res.hits.map((h) => h.file)).toEqual(['B.md']);
+    expect(res.results).toHaveLength(3);
   });
 });
 

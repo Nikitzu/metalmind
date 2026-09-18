@@ -6,6 +6,7 @@ import {
   readConfig,
   writeConfig,
 } from '../config.js';
+import { resolveJudgeKey, storeJudgeKey } from '../judge/client.js';
 import { describeAliasSourcing, installAliases } from './aliases.js';
 import { installCodex } from './codex.js';
 import { installCursor } from './cursor.js';
@@ -28,7 +29,6 @@ import { installUv, UV_INSTALL_COMMAND } from './uv.js';
 import { promptVaultPath, setupVault } from './vault.js';
 import { installVaultRag, resolveWatcherBinPath } from './vault-rag.js';
 import { installWatcher } from './watcher.js';
-import { resolveJudgeKey, storeJudgeKey } from '../judge/client.js';
 
 export interface RunWizardOptions {
   vaultPath?: string;

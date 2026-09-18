@@ -68,13 +68,23 @@ export async function scribeCreateCmd(
     const judged = judgeEnabled(cfg.judge) && kind !== 'daily';
     if (judged) {
       const gate = await gateDraft({
-        title,
-        body,
+        draft: {
+          title,
+          body,
+          kind,
+          project: opts.project,
+          tags: opts.tags
+            ?.split(',')
+            .map((t) => t.trim())
+            .filter(Boolean),
+        },
         exclude: [],
         ...realGateDeps({
           vaultRoot: cfg.vaultPath,
           httpEndpoint: cfg.recall.httpEndpoint,
           model: cfg.judge.model,
+          command: 'scribe-create',
+          forced: opts.force,
         }),
       });
       for (const line of gate.lines) log.warn(line);
@@ -141,13 +151,14 @@ export async function scribeUpdateCmd(
     if (judgeEnabled(cfg.judge) && body.trim()) {
       const target = relative(cfg.vaultPath, resolveNotePath(notePath, cfg.vaultPath));
       const gate = await gateDraft({
-        title: notePath,
-        body,
+        draft: { title: notePath, body },
         exclude: [target],
         ...realGateDeps({
           vaultRoot: cfg.vaultPath,
           httpEndpoint: cfg.recall.httpEndpoint,
           model: cfg.judge.model,
+          command: 'scribe-update',
+          forced: opts.force,
         }),
       });
       for (const line of gate.lines) log.warn(line);

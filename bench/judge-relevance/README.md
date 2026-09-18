@@ -1,6 +1,6 @@
 # judge-relevance bench
 
-Compares three recall orders on a real vault for the same queries: plain hybrid, the cross-encoder `--rerank`, and the Jev judge. Reports top-1 hits and MRR on answerable queries, and how many hits the judge keeps on unanswerable ones (fewer is better; plain always shows 5).
+Compares recall orders on a real vault for the same queries: plain hybrid, the cross-encoder `--rerank` (no-op since 0.25.0), and the Jev judge in both request shapes, batched (all hits in one request) and each (one request per hit, `METALMIND_JUDGE_MODE=each`). Reports top-1 hits and MRR on answerable queries, and how many hits the judge keeps on unanswerable ones (fewer is better; plain always shows 5).
 
 Run with the judge enabled and the watcher up:
 

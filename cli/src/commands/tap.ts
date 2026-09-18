@@ -5,6 +5,7 @@ import { type RecallMode, type RecallTier, recall } from '../backends/recall.js'
 import { listRecentNotes } from '../backends/vault-browse.js';
 import { readConfig } from '../config.js';
 import { judge as judgeCall, judgeEnabled } from '../judge/client.js';
+import { appendJudgeLog, entryFromResult } from '../judge/log.js';
 import { formatJudgedTail, JUDGED_FETCH_K, judgeHits } from '../judge/rerank.js';
 
 export interface TapOptions {
@@ -90,6 +91,38 @@ export async function tap(query: string | undefined, opts: TapOptions = {}): Pro
             judgeCall({ state, questions, model: config.judge.model }),
           readNote: (file) => readFile(join(config.vaultPath, file), 'utf8'),
         });
+        const files = Object.fromEntries(
+          hits.map((h, i) => [`h${i}`, typeof h.file === 'string' ? h.file : undefined]),
+        );
+        const merged = {
+          answers: r.results.some((x) => x.answers)
+            ? Object.assign({}, ...r.results.map((x) => x.answers ?? {}))
+            : null,
+          unjudged: r.results.find((x) => x.unjudged)?.unjudged,
+          status: r.results.find((x) => x.status)?.status,
+          usage: r.results.reduce(
+            (acc, x) =>
+              x.usage
+                ? {
+                    input_tokens: acc.input_tokens + x.usage.input_tokens,
+                    output_tokens: acc.output_tokens + x.usage.output_tokens,
+                  }
+                : acc,
+            { input_tokens: 0, output_tokens: 0 },
+          ),
+        };
+        await appendJudgeLog(
+          entryFromResult(
+            {
+              command: 'tap',
+              model: config.judge.model,
+              latency_ms: r.latency_ms,
+              decision: r.judged ? `kept ${r.kept} of ${r.total}` : 'unjudged',
+            },
+            merged,
+            files,
+          ),
+        );
         return { hits: r.hits, tail: r.judged ? formatJudgedTail(r) : (r.unjudgedLine ?? '') };
       }
     : undefined;

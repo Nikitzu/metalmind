@@ -7,6 +7,7 @@ import {
   PASS_ENTRY,
   resolveJudgeKey,
 } from '../judge/client.js';
+import { type JudgeLogEntry, judgeLogPath, readJudgeLog } from '../judge/log.js';
 
 export function renderJudgeStatus(
   cfg: JudgeConfig,
@@ -46,4 +47,67 @@ export async function judgeSetEnabledCmd(enabled: boolean): Promise<void> {
   }
   await writeConfig({ ...cfg, judge: { ...cfg.judge, enabled } });
   log.success(`judge ${enabled ? 'enabled' : 'disabled'}`);
+}
+
+function percentile(values: number[], p: number): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p))] ?? 0;
+}
+
+function histogram(values: number[], edges: number[]): string {
+  const counts = edges.map(() => 0);
+  for (const v of values) {
+    let idx = edges.findIndex((e) => v < e);
+    if (idx === -1) idx = edges.length - 1;
+    counts[idx] = (counts[idx] ?? 0) + 1;
+  }
+  return edges
+    .map((e, i) => {
+      const label =
+        i === 0 ? `<${e}` : i === edges.length - 1 ? `${edges[i - 1]}+` : `${edges[i - 1]}-${e}`;
+      return `${label}:${counts[i]}`;
+    })
+    .join('  ');
+}
+
+export function renderJudgeReport(entries: JudgeLogEntry[], days: number): string {
+  const since = Date.now() - days * 86_400_000;
+  const recent = entries.filter((e) => Date.parse(e.ts) >= since);
+  if (recent.length === 0) return `no judge calls in the last ${days} day(s) (${judgeLogPath()})`;
+  const byCommand = (c: JudgeLogEntry['command']) => recent.filter((e) => e.command === c);
+  const creates = [...byCommand('scribe-create'), ...byCommand('scribe-update')];
+  const refused = creates.filter((e) => e.decision.startsWith('refused'));
+  const forcedAfter = creates.filter((e) => e.forced && e.decision.startsWith('refused'));
+  const uncertain = creates.filter((e) => e.decision.startsWith('uncertain'));
+  const taps = byCommand('tap');
+  const unjudged = recent.filter((e) => e.unjudged);
+  const scores = recent.flatMap((e) =>
+    e.answers.map((a) => a.score).filter((x): x is number => x !== undefined),
+  );
+  const confidences = recent.flatMap((e) =>
+    e.answers.map((a) => a.confidence).filter((x): x is number => x !== undefined),
+  );
+  const latencies = recent.filter((e) => !e.unjudged).map((e) => e.latency_ms);
+  const tokens = recent.reduce((n, e) => n + (e.usage?.input_tokens ?? 0), 0);
+  const kept = taps
+    .map((e) => /kept (\d+) of (\d+)/.exec(e.decision))
+    .filter((m): m is RegExpExecArray => m !== null)
+    .map((m) => Number(m[1]) / Math.max(1, Number(m[2])));
+  const lines = [
+    `judge report, last ${days} day(s), ${recent.length} calls (${judgeLogPath()})`,
+    `scribe: ${creates.length} judged, ${refused.length} refused, ${forcedAfter.length} forced through, ${uncertain.length} covered-but-uncertain`,
+    `tap: ${taps.length} judged, mean kept ${kept.length ? ((kept.reduce((a, b) => a + b, 0) / kept.length) * 100).toFixed(0) : '-'}% of fetched hits`,
+    `unjudged: ${unjudged.length} (${[...new Set(unjudged.map((e) => e.unjudged))].join(', ') || 'none'})`,
+    `scores: ${histogram(scores, [0.5, 1.0, 1.5, 2.0])}`,
+    `confidence: ${histogram(confidences, [0.4, 0.6, 0.8, 1.0])}`,
+    `latency: p50 ${percentile(latencies, 0.5)} ms, p95 ${percentile(latencies, 0.95)} ms`,
+    `input tokens: ${tokens}`,
+  ];
+  return lines.join('\n');
+}
+
+export async function judgeReportCmd(opts: { days?: number }): Promise<void> {
+  const entries = await readJudgeLog();
+  process.stdout.write(`${renderJudgeReport(entries, opts.days ?? 7)}\n`);
 }

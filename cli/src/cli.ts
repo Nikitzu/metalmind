@@ -41,7 +41,7 @@ import { indexRebuildCmd, indexStatusCmd } from './commands/index-cmd.js';
 import { ingestAutoMemoryCmd } from './commands/ingest.js';
 import { init } from './commands/init.js';
 import { burnIron } from './commands/iron.js';
-import { judgeSetEnabledCmd, judgeStatusCmd } from './commands/judge.js';
+import { judgeReportCmd, judgeSetEnabledCmd, judgeStatusCmd } from './commands/judge.js';
 import { releaseCheck } from './commands/release-check.js';
 import { aluminumWipe, burnZinc, renameSymbol, toggleVerbose } from './commands/remaining-burns.js';
 import { retired } from './commands/retired.js';
@@ -181,6 +181,13 @@ const judgeCmd = program
   .command('judge')
   .description('Jev judgments (TypeSafe): overlap refusal on scribe, relevance order on tap');
 judgeCmd.command('status').description('Enabled, key source, model').action(judgeStatusCmd);
+judgeCmd
+  .command('report')
+  .description(
+    'Refusals, overrides, kept ratio, score and confidence histograms, latency, tokens from ~/.metalmind/judge-log.jsonl',
+  )
+  .option('--days <n>', 'Window in days (default 7)', (v) => Number.parseInt(v, 10))
+  .action((cmdOpts: { days?: number }) => judgeReportCmd(cmdOpts));
 judgeCmd
   .command('enable')
   .description('Turn judgments on')

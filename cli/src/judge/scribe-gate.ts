@@ -8,7 +8,10 @@ import {
   type Question,
   unjudgedLine,
 } from './client.js';
+import { type NoteContext, noteContext } from './context.js';
+import { appendJudgeLog, entryFromResult } from './log.js';
 import {
+  type Candidate,
   coverageQuestions,
   formatOverlapVerdicts,
   overlapDecision,
@@ -29,26 +32,64 @@ export interface GateDeps {
   search: (title: string, body: string) => Promise<DedupHit[]>;
   readNote: (file: string) => Promise<string>;
   judge: (opts: { state: unknown; questions: Record<string, Question> }) => Promise<JudgeResult>;
+  log?: (
+    res: JudgeResult,
+    files: Record<string, string>,
+    decision: string,
+    latencyMs: number,
+  ) => Promise<void>;
+}
+
+export interface Draft {
+  title: string;
+  body: string;
+  kind?: string;
+  project?: string;
+  tags?: string[];
 }
 
 export async function gateDraft(
-  opts: { title: string; body: string; exclude: string[] } & GateDeps,
+  opts: { draft: Draft; exclude: string[] } & GateDeps,
 ): Promise<GateResult> {
-  const hits = (await opts.search(opts.title, opts.body))
+  const { draft } = opts;
+  const hits = (await opts.search(draft.title, draft.body))
     .filter((h) => !opts.exclude.includes(h.file))
     .slice(0, MAX_CANDIDATES);
   if (hits.length === 0) return { refuse: null, lines: [], judged: true };
-  const candidates = await Promise.all(
-    hits.map(async (h) => ({ file: h.file, body: clipForState(await opts.readNote(h.file)) })),
+  const candidates: Candidate[] = await Promise.all(
+    hits.map(async (h) => ({ ...noteContext(await opts.readNote(h.file)), file: h.file })),
   );
+  const draftState: Omit<NoteContext, 'file'> = {
+    title: draft.title,
+    kind: draft.kind ?? '',
+    project: draft.project ?? null,
+    tags: draft.tags ?? [],
+    created: new Date().toISOString().slice(0, 10),
+    updated: null,
+    body: clipForState(draft.body),
+  };
+  const started = Date.now();
   const res = await opts.judge({
-    state: { draft: { title: opts.title, body: clipForState(opts.body) }, candidates },
+    state: { draft: draftState, candidates },
     questions: coverageQuestions(candidates),
   });
-  if (!res.answers) return { refuse: null, lines: [unjudgedLine(res)], judged: false };
+  const latency = Date.now() - started;
+  const files = Object.fromEntries(candidates.map((c, i) => [`c${i}`, c.file]));
+  if (!res.answers) {
+    await opts.log?.(res, files, 'unjudged', latency);
+    return { refuse: null, lines: [unjudgedLine(res)], judged: false };
+  }
   const verdicts = verdictsFromAnswers(candidates, res.answers);
   const decision = overlapDecision(verdicts);
   const text = formatOverlapVerdicts(decision, verdicts);
+  const summary = decision.refuse
+    ? `refused ${decision.refuse}`
+    : decision.uncertain.length > 0
+      ? `uncertain ${decision.uncertain.join(',')}`
+      : decision.extends.length > 0
+        ? `extends ${decision.extends.join(',')}`
+        : 'distinct';
+  await opts.log?.(res, files, summary, latency);
   return { refuse: decision.refuse, lines: text ? text.split('\n') : [], judged: true };
 }
 
@@ -56,6 +97,8 @@ export function realGateDeps(opts: {
   vaultRoot: string;
   httpEndpoint: string | null;
   model: string;
+  command: 'scribe-create' | 'scribe-update';
+  forced?: boolean;
 }): GateDeps {
   return {
     search: (title, body) =>
@@ -67,5 +110,19 @@ export function realGateDeps(opts: {
       }),
     readNote: (file) => readFile(join(opts.vaultRoot, file), 'utf8'),
     judge: ({ state, questions }) => judgeCall({ state, questions, model: opts.model }),
+    log: (res, files, decision, latencyMs) =>
+      appendJudgeLog(
+        entryFromResult(
+          {
+            command: opts.command,
+            model: opts.model,
+            latency_ms: latencyMs,
+            decision,
+            forced: opts.forced,
+          },
+          res,
+          files,
+        ),
+      ),
   };
 }
