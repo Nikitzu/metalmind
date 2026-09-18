@@ -20,6 +20,7 @@ describe('detectHosts', () => {
       claude: false,
       codex: false,
       cursor: false,
+      antigravity: false,
     });
   });
 
@@ -29,6 +30,7 @@ describe('detectHosts', () => {
       claude: true,
       codex: false,
       cursor: false,
+      antigravity: false,
     });
   });
 
@@ -38,6 +40,7 @@ describe('detectHosts', () => {
       claude: false,
       codex: true,
       cursor: false,
+      antigravity: false,
     });
   });
 
@@ -47,7 +50,16 @@ describe('detectHosts', () => {
       claude: false,
       codex: false,
       cursor: true,
+      antigravity: false,
     });
+  });
+
+  it('detects antigravity from ~/.gemini/antigravity, not from a bare ~/.gemini', async () => {
+    await mkdir(join(tmpHome, '.gemini'), { recursive: true });
+    expect(detectHosts({ home: tmpHome }).antigravity).toBe(false);
+    await mkdir(join(tmpHome, '.gemini', 'antigravity'), { recursive: true });
+    expect(detectHosts({ home: tmpHome }).antigravity).toBe(true);
+    expect(detectedAsList(detectHosts({ home: tmpHome }))).toEqual(['antigravity']);
   });
 
   it('detects all three', async () => {
@@ -58,22 +70,24 @@ describe('detectHosts', () => {
       claude: true,
       codex: true,
       cursor: true,
+      antigravity: false,
     });
   });
 });
 
 describe('detectedAsList', () => {
   it('preserves claude-then-codex-then-cursor ordering', () => {
-    expect(detectedAsList({ claude: true, codex: true, cursor: true })).toEqual([
-      'claude',
-      'codex',
-      'cursor',
-    ]);
-    expect(detectedAsList({ claude: false, codex: true, cursor: false })).toEqual(['codex']);
-    expect(detectedAsList({ claude: true, codex: false, cursor: true })).toEqual([
-      'claude',
-      'cursor',
-    ]);
-    expect(detectedAsList({ claude: false, codex: false, cursor: false })).toEqual([]);
+    expect(detectedAsList({ claude: true, codex: true, cursor: true, antigravity: false })).toEqual(
+      ['claude', 'codex', 'cursor'],
+    );
+    expect(
+      detectedAsList({ claude: false, codex: true, cursor: false, antigravity: false }),
+    ).toEqual(['codex']);
+    expect(
+      detectedAsList({ claude: true, codex: false, cursor: true, antigravity: false }),
+    ).toEqual(['claude', 'cursor']);
+    expect(
+      detectedAsList({ claude: false, codex: false, cursor: false, antigravity: false }),
+    ).toEqual([]);
   });
 });

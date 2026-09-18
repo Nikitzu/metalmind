@@ -31,9 +31,10 @@ const HOST_LABELS: Record<MetalmindHost, string> = {
   claude: 'Claude Code (~/.claude)',
   codex: 'Codex CLI (~/.codex)',
   cursor: 'Cursor (~/.cursor)',
+  antigravity: 'Antigravity (~/.gemini/AGENTS.md, ~/.gemini/config/skills)',
 };
 
-const HOST_ORDER: readonly MetalmindHost[] = ['claude', 'codex', 'cursor'];
+const HOST_ORDER: readonly MetalmindHost[] = ['claude', 'codex', 'cursor', 'antigravity'];
 
 function intersect(
   candidate: MetalmindHost[] | undefined,

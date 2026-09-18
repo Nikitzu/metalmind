@@ -11,7 +11,7 @@ const FlavorSchema = z.enum(['scadrial', 'classic']);
 const RecallTierSchema = z.enum(['fast', 'deep', 'expand']);
 const EmbeddingsProviderSchema = z.enum(['local', 'skip']);
 const MemoryRoutingSchema = z.enum(['vault-only', 'both']);
-const HostSchema = z.enum(['claude', 'codex', 'cursor']);
+const HostSchema = z.enum(['claude', 'codex', 'cursor', 'antigravity']);
 
 export type MetalmindHost = z.infer<typeof HostSchema>;
 

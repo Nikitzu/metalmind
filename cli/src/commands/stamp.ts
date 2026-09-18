@@ -1,6 +1,7 @@
 import { cancel, intro, log, outro } from '@clack/prompts';
 import { type MetalmindHost, readConfig, writeConfig } from '../config.js';
 import { describeAliasSourcing, installAliases } from '../install/aliases.js';
+import { installAntigravity } from '../install/antigravity.js';
 import { installCodex } from '../install/codex.js';
 import { installCursor } from '../install/cursor.js';
 import { promptHosts } from '../install/host-prompt.js';
@@ -149,6 +150,18 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
     log.info(`  agents: ${cursorResult.agents.length} copied`);
     log.info(`  hook script: ${cursorResult.hookScript}; hooks.json: ${cursorResult.hooksJson}`);
     log.info(`  MCP server: ${cursorResult.mcp}`);
+  }
+
+  if (chosenHosts.includes('antigravity')) {
+    log.step('Antigravity');
+    const agy = await installAntigravity({
+      vaultPath: config.vaultPath,
+      flavor: config.flavor,
+      eodHook: config.skills.eodHook,
+      notifications: config.skills.notifications,
+    });
+    log.info(`  ~/.gemini/AGENTS.md: ${agy.agentsMd}`);
+    log.info(`  skills (~/.gemini/config/skills): ${agy.skills.join(', ')}`);
   }
 
   log.step('Shell aliases');

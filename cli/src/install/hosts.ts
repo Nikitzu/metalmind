@@ -9,6 +9,7 @@ export interface HostsDetectionResult {
   claude: boolean;
   codex: boolean;
   cursor: boolean;
+  antigravity: boolean;
 }
 
 export interface DetectHostsOptions {
@@ -20,6 +21,7 @@ export const HOST_DIRS: Record<MetalmindHost, string> = {
   claude: '.claude',
   codex: '.codex',
   cursor: '.cursor',
+  antigravity: '.gemini',
 };
 
 export function detectHosts(opts: DetectHostsOptions = {}): HostsDetectionResult {
@@ -28,6 +30,7 @@ export function detectHosts(opts: DetectHostsOptions = {}): HostsDetectionResult
     claude: existsSync(join(home, HOST_DIRS.claude)),
     codex: existsSync(join(home, HOST_DIRS.codex)),
     cursor: existsSync(join(home, HOST_DIRS.cursor)),
+    antigravity: existsSync(join(home, HOST_DIRS.antigravity, 'antigravity')),
   };
 }
 
@@ -37,5 +40,6 @@ export function detectedAsList(detection: HostsDetectionResult): MetalmindHost[]
   if (detection.claude) out.push('claude');
   if (detection.codex) out.push('codex');
   if (detection.cursor) out.push('cursor');
+  if (detection.antigravity) out.push('antigravity');
   return out;
 }

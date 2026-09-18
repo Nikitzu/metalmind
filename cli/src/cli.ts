@@ -13,13 +13,15 @@ function parseHostFlag(value: string | undefined): MetalmindHost[] | undefined {
       return ['codex'];
     case 'cursor':
       return ['cursor'];
+    case 'antigravity':
+      return ['antigravity'];
     case 'both':
       return ['claude', 'codex'];
     case 'all':
-      return ['claude', 'codex', 'cursor'];
+      return ['claude', 'codex', 'cursor', 'antigravity'];
     default:
       throw new Error(
-        `--host must be "claude", "codex", "cursor", "both", or "all"; got "${value}"`,
+        `--host must be "claude", "codex", "cursor", "antigravity", "both", or "all"; got "${value}"`,
       );
   }
 }
@@ -106,7 +108,7 @@ program
   .option('--skip-watcher', 'Skip watcher plist/service install (CI / test harness only)')
   .option(
     '--host <host>',
-    '"claude" | "codex" | "cursor" | "both" | "all" - bypass the host multi-select prompt',
+    '"claude" | "codex" | "cursor" | "antigravity" | "both" | "all" - bypass the host multi-select prompt',
   )
   .option(
     '--with-mcp',
@@ -660,7 +662,7 @@ burnCmd
   .option('--skip-watcher', 'Skip refreshing the watcher unit file')
   .option(
     '--host <host>',
-    '"claude" | "codex" | "cursor" | "both" | "all" - bypass the host multi-select prompt',
+    '"claude" | "codex" | "cursor" | "antigravity" | "both" | "all" - bypass the host multi-select prompt',
   )
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')
@@ -714,7 +716,7 @@ program
   .option('--skip-watcher', 'Skip refreshing the watcher unit file')
   .option(
     '--host <host>',
-    '"claude" | "codex" | "cursor" | "both" | "all" - bypass the host multi-select prompt',
+    '"claude" | "codex" | "cursor" | "antigravity" | "both" | "all" - bypass the host multi-select prompt',
   )
   .option('--no-prompt', 'Use the previously-chosen host set; skip multi-select (CI / scripted)')
   .option('--with-mcp', 'Register metalmind MCP server in Codex (opt-in; off by default)')

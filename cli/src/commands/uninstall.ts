@@ -3,6 +3,11 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts';
 import { readConfig } from '../config.js';
+import {
+  antigravitySkillsRoot,
+  DEFAULT_GEMINI_DIR,
+  uninstallAntigravity,
+} from '../install/antigravity.js';
 import { DEFAULT_CODEX_DIR, uninstallCodex } from '../install/codex.js';
 import { DEFAULT_CURSOR_DIR, uninstallCursor } from '../install/cursor.js';
 import { teardown } from '../install/teardown.js';
@@ -49,6 +54,10 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
     existsSync(cursorSkillPath) ||
     existsSync(cursorHooksPath);
 
+  const antigravityInstalled =
+    (config?.hosts.includes('antigravity') ?? false) ||
+    existsSync(join(antigravitySkillsRoot(DEFAULT_GEMINI_DIR), 'metalmind-recall', 'SKILL.md'));
+
   log.warn('This will:');
   log.info(legacyStack ? '  - stop watcher and Docker stack' : '  - stop watcher');
   if (legacyStack) {
@@ -70,6 +79,11 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
   if (cursorInstalled) {
     log.info(
       '  - strip Cursor stamps from ~/.cursor/ (metalmind-recall skill, our subagents, hooks.json entry, hook script); also the metalmind entry in mcp.json if registered',
+    );
+  }
+  if (antigravityInstalled) {
+    log.info(
+      '  - strip Antigravity stamps (the metalmind block in ~/.gemini/AGENTS.md and our skills under ~/.gemini/config/skills)',
     );
   }
   log.info('  - optionally uninstall the metalmind-vault-rag uv tool (prompt)');
@@ -168,6 +182,13 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
       if (cursor.hookScript)
         log.success('Deleted ~/.cursor/hooks/metalmind-cursor-session-start.sh');
       if (cursor.mcp === 'removed') log.success('Removed metalmind entry from ~/.cursor/mcp.json');
+    }
+
+    if (antigravityInstalled) {
+      const agy = await uninstallAntigravity();
+      if (agy.agentsMd) log.success('Stripped metalmind block from ~/.gemini/AGENTS.md');
+      if (agy.skills.length > 0)
+        log.success(`Removed Antigravity skills: ${agy.skills.join(', ')}`);
     }
 
     const claudeDir = join(homedir(), '.claude');

@@ -6,6 +6,14 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.26.1 - 2026-09-18
+
+### Added
+
+- **Antigravity host.** `metalmind init` and `burn brass` offer Antigravity when `~/.gemini/antigravity` exists (`--host antigravity`, or `all`). It stamps the metalmind block into `~/.gemini/AGENTS.md`, which Antigravity reads as a global rule since 1.20.3, and copies the six skills into `~/.gemini/config/skills/`, the global customization root. Uninstall strips both and leaves the rest of the file alone.
+
+---
+
 ## 0.26.0 - 2026-09-18
 
 ### Added

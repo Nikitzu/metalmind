@@ -65,7 +65,7 @@ Temporal supersedes keeps the semantic layer honest (old truths re-rank below th
 
 - **Save once.** `metalmind store copper "<insight>"` (alias: `save`) deposits a decision into your local vault. metalmind proposes the path, wikilinks, and frontmatter; you approve; it writes.
 
-- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session - most memory tools silently inject a handful of tool schemas - often heavily over-specified - into every host session before you've typed a prompt (measured: [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/)). We stamp the command into your `CLAUDE.md` (and `~/.codex/AGENTS.md` when Codex is installed) so the model reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. With the judge enabled (`metalmind judge enable`, opt-in, needs a TypeSafe key) hits come back in judged relevance order with off-topic ones dropped and `judged: N of M kept` beneath; `--no-judge` skips it for one call, and without a key or network the plain order returns with one `unjudged:` line. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback for hosts that need it. Browser-origin requests to that port are always rejected, so a web page cannot poke it. The watcher also writes an auth token to `~/.metalmind/recall-token` (mode 0600) and the CLI sends it automatically, but the token is **not enforced by default**: on a single-user machine it would buy nothing, since anything running as you can read the vault directory anyway. Set `METALMIND_RECALL_REQUIRE_TOKEN=1` in the watcher env on a **shared machine**, where it stops other UNIX accounts from querying your vault. Scripting against the port under enforcement? Send the file's contents as `X-Metalmind-Token`.
+- **Recall without the MCP token tax.** `metalmind tap copper "<query>"` (alias: `recall`) is a Bash call, not an MCP tool. Zero schema bloat per session - most memory tools silently inject a handful of tool schemas - often heavily over-specified - into every host session before you've typed a prompt (measured: [`bench/mcp-tax-v0/`](bench/mcp-tax-v0/)). We stamp the command into your `CLAUDE.md` (and `~/.codex/AGENTS.md`, `~/.cursor/skills`, `~/.gemini/AGENTS.md` for Codex, Cursor and Antigravity when they are installed) so the model reaches for it naturally. `--deep` escalates with backlink-walks; `--expand` returns hits plus the surrounding graph; `--list-recent N` browses the N most-recently-modified notes without a query. With the judge enabled (`metalmind judge enable`, opt-in, needs a TypeSafe key) hits come back in judged relevance order with off-topic ones dropped and `judged: N of M kept` beneath; `--no-judge` skips it for one call, and without a key or network the plain order returns with one `unjudged:` line. A co-hosted loopback HTTP server (`127.0.0.1:17317`) inside the watcher process handles recall calls sub-100ms, with stdio MCP as the always-available fallback for hosts that need it. Browser-origin requests to that port are always rejected, so a web page cannot poke it. The watcher also writes an auth token to `~/.metalmind/recall-token` (mode 0600) and the CLI sends it automatically, but the token is **not enforced by default**: on a single-user machine it would buy nothing, since anything running as you can read the vault directory anyway. Set `METALMIND_RECALL_REQUIRE_TOKEN=1` in the watcher env on a **shared machine**, where it stops other UNIX accounts from querying your vault. Scripting against the port under enforcement? Send the file's contents as `X-Metalmind-Token`.
   <br><sub>**Measured** on the 12-note fake vault in [`bench/recall-v0/`](bench/recall-v0/): **hit@5 = 100%**, **hit@3 = 95%**, **hit@1 = 95%**, latency **median 7 ms / p95 15 ms**. Hit payloads are billed like any other bash output; the MCP tax we avoid is the standing tool-schema cost, not the result tokens.</sub>
 
 - **Session-start awareness without nagging.** metalmind installs a Claude Code SessionStart hook plus a top-of-file block in `~/.claude/CLAUDE.md` with explicit WHEN→DO triggers, so every new Claude session discovers the vault on its own - no "did you check memory?" prompting. Re-stamp anytime with `metalmind burn brass` (alias: `stamp`) after an upgrade.
@@ -208,7 +208,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.26.0`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.26.1`.
 
 **From source (for hacking on metalmind itself):**
 
@@ -219,12 +219,13 @@ pnpm install && pnpm build && pnpm link --global
 metalmind init
 ```
 
-`metalmind init` detects `~/.claude/`, `~/.codex/`, and `~/.cursor/` and shows a multi-select prompt - stamps only the hosts you choose. Skip the prompt with `--host`:
+`metalmind init` detects `~/.claude/`, `~/.codex/`, `~/.cursor/` and `~/.gemini/antigravity/` and shows a multi-select prompt - stamps only the hosts you choose. Skip the prompt with `--host`:
 
 ```bash
 metalmind init --host claude          # Claude Code only
 metalmind init --host codex           # Codex CLI only
 metalmind init --host cursor          # Cursor only
+metalmind init --host antigravity     # Antigravity only (~/.gemini/AGENTS.md + ~/.gemini/config/skills)
 metalmind init --host both            # Claude Code + Codex (when both are detected)
 metalmind init --host all             # every detected host
 metalmind init --host codex --with-mcp   # Codex + opt-in MCP server
