@@ -26,6 +26,7 @@ export interface GateResult {
   refuse: string | null;
   lines: string[];
   judged: boolean;
+  supersedes: string[];
 }
 
 export interface GateDeps {
@@ -56,7 +57,7 @@ export async function gateDraft(
   const hits = (await opts.search(draft.title, draft.body))
     .filter((h) => !opts.exclude.includes(h.file))
     .slice(0, MAX_CANDIDATES);
-  if (hits.length === 0) return { refuse: null, lines: [], judged: true };
+  if (hits.length === 0) return { refuse: null, lines: [], judged: true, supersedes: [] };
   const candidates: Candidate[] = await Promise.all(
     hits.map(async (h) => ({ ...noteContext(await opts.readNote(h.file)), file: h.file })),
   );
@@ -86,7 +87,7 @@ export async function gateDraft(
   };
   if (!res.answers) {
     await opts.log?.(res, files, 'unjudged', latency, content);
-    return { refuse: null, lines: [unjudgedLine(res)], judged: false };
+    return { refuse: null, lines: [unjudgedLine(res)], judged: false, supersedes: [] };
   }
   const verdicts = verdictsFromAnswers(candidates, res.answers);
   const decision = overlapDecision(verdicts);
@@ -95,11 +96,18 @@ export async function gateDraft(
     ? `refused ${decision.refuse}`
     : decision.uncertain.length > 0
       ? `uncertain ${decision.uncertain.join(',')}`
-      : decision.extends.length > 0
-        ? `extends ${decision.extends.join(',')}`
-        : 'distinct';
+      : decision.supersedes.length > 0
+        ? `supersedes ${decision.supersedes.join(',')}`
+        : decision.extends.length > 0
+          ? `extends ${decision.extends.join(',')}`
+          : 'distinct';
   await opts.log?.(res, files, summary, latency, content);
-  return { refuse: decision.refuse, lines: text ? text.split('\n') : [], judged: true };
+  return {
+    refuse: decision.refuse,
+    lines: text ? text.split('\n') : [],
+    judged: true,
+    supersedes: decision.supersedes,
+  };
 }
 
 export function realGateDeps(opts: {

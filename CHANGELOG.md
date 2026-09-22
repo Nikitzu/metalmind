@@ -6,6 +6,15 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.27.0 - 2026-09-22
+
+### Added
+
+- **Supersede hint on save.** The judged `scribe create` and `scribe update` gate now also asks, per candidate and in the same request, whether the draft changes, retracts or replaces a decision, number or condition the existing note states. At 0.70 or above it prints `supersedes <note> (p)` and, after the note exists, the exact `metalmind scribe supersede <old> <new>` line to run. Nothing is written automatically; the human still runs the supersede. No extra request and about 150 more input tokens per candidate.
+- **Bench overrides.** `METALMIND_JUDGE_ENDPOINT` and `METALMIND_JUDGE_TIMEOUT_MS` point the judge at another System One server and lift the 4 s cap for benchmarks. Defaults unchanged.
+
+---
+
 ## 0.26.2 - 2026-09-18
 
 ### Added

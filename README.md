@@ -208,7 +208,7 @@ npm install -g metalmind
 metalmind init
 ```
 
-Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.26.2`.
+Published at [npmjs.com/package/metalmind](https://www.npmjs.com/package/metalmind) · current release `v0.27.0`.
 
 **From source (for hacking on metalmind itself):**
 
@@ -259,7 +259,7 @@ Every themed (Scadrial) verb has a classic alias. Both always resolve - theming 
 | `metalmind burn steel <old> <new>` | `metalmind rename <old> <new>` | Coordinated rename |
 | `metalmind burn zinc "<bug>"` | `metalmind debug "<bug>"` | Dispatch `/team-debug` |
 | `metalmind forge <…>` | `metalmind group <…>` | Cross-repo graph groups; `forge capture-spec` seeds OpenAPI shelf |
-| `metalmind judge status\|enable\|disable` | | Opt-in Jev judgments: coverage refusal on scribe, judged order on tap |
+| `metalmind judge status\|enable\|disable` | | Opt-in Jev judgments: coverage refusal and supersede hint on scribe, judged order on tap |
 | `metalmind scribe <verb>` | `metalmind note <verb>` | Vault CRUD: `create \| update \| patch \| supersede \| delete \| archive \| rename \| list \| show` |
 | `metalmind atium new \| add` | `metalmind daily new \| add` | Future daily notes - `--date today\|tomorrow\|next-workday\|YYYY-MM-DD`, `--from` carries unchecked items |
 | `metalmind gold <note>` | `metalmind scribe archive <note>` | One-shot archive - move note to `Archive/` |

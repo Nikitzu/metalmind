@@ -7,6 +7,34 @@ const readNote = vi.fn(
 );
 
 describe('gateDraft', () => {
+  it('returns the candidates the draft supersedes and logs the summary', async () => {
+    const judge = vi.fn(async () => ({
+      answers: {
+        c0: { type: 'score' as const, score: 0.9, probabilities: {}, confidence: 0.8 },
+        s0: { type: 'noul' as const, noul: 0.84 },
+      },
+    }));
+    const log = vi.fn(async () => undefined);
+    const res = await gateDraft({
+      draft: { title: 't', body: 'b', kind: 'work' },
+      exclude: [],
+      search,
+      readNote,
+      judge,
+      log,
+    });
+    expect(res.refuse).toBeNull();
+    expect(res.supersedes).toEqual(['Work/a.md']);
+    expect(res.lines).toContain('supersedes Work/a.md (0.84)');
+    expect(log).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'supersedes Work/a.md',
+      expect.any(Number),
+      expect.anything(),
+    );
+  });
+
   it('refuses when a candidate covers the draft', async () => {
     const judge = vi.fn(async () => ({
       answers: { c0: { type: 'score' as const, score: 1.8, probabilities: {}, confidence: 0.9 } },
@@ -70,7 +98,7 @@ describe('gateDraft', () => {
       judge,
     });
     expect(judge).not.toHaveBeenCalled();
-    expect(res).toEqual({ refuse: null, lines: [], judged: true });
+    expect(res).toEqual({ refuse: null, lines: [], judged: true, supersedes: [] });
   });
 
   it('reports unjudged and never refuses when the judge fails', async () => {
@@ -82,7 +110,12 @@ describe('gateDraft', () => {
       readNote,
       judge,
     });
-    expect(res).toEqual({ refuse: null, lines: ['unjudged: offline'], judged: false });
+    expect(res).toEqual({
+      refuse: null,
+      lines: ['unjudged: offline'],
+      judged: false,
+      supersedes: [],
+    });
   });
 
   it('skips the judge when the search returns nothing', async () => {
@@ -95,6 +128,6 @@ describe('gateDraft', () => {
       judge,
     });
     expect(judge).not.toHaveBeenCalled();
-    expect(res).toEqual({ refuse: null, lines: [], judged: true });
+    expect(res).toEqual({ refuse: null, lines: [], judged: true, supersedes: [] });
   });
 });

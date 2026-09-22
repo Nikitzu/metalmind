@@ -3,10 +3,11 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
-export const JUDGE_ENDPOINT = 'https://api.typesafe.ai/v1/systemone';
+export const JUDGE_ENDPOINT =
+  process.env.METALMIND_JUDGE_ENDPOINT?.trim() || 'https://api.typesafe.ai/v1/systemone';
 export const KEYCHAIN_SERVICE = 'typesafe-api-key';
 // A judgment decorates a local command; past this it costs more attention than it saves.
-export const JUDGE_TIMEOUT_MS = 4_000;
+export const JUDGE_TIMEOUT_MS = Number(process.env.METALMIND_JUDGE_TIMEOUT_MS) || 4_000;
 // Enough for the lede and first sections of a note; the whole body would cost tokens for no better verdict.
 export const STATE_CAP_CHARS = 2_000;
 

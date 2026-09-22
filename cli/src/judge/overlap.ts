@@ -9,6 +9,7 @@ export const EXTENDS_AT = 0.5;
 // A covered verdict with the probability mass spread across levels is a guess;
 // the docs route those to a human, here that means create and say so.
 export const REFUSE_CONFIDENCE = 0.6;
+export const SUPERSEDES_AT = 0.7;
 
 export type Candidate = NoteContext & { file: string };
 
@@ -17,12 +18,14 @@ export interface Verdict {
   score: number;
   confidence: number;
   probabilities: Record<string, number>;
+  supersedes: number | null;
 }
 
 export interface OverlapDecision {
   refuse: string | null;
   uncertain: string[];
   extends: string[];
+  supersedes: string[];
 }
 
 const CRITERIA = [
@@ -39,6 +42,15 @@ export function coverageQuestions(candidates: Candidate[]): Record<string, Quest
       instructions: `How far does existing note ${i} (state.candidates[${i}]) already cover the draft (state.draft)? Judge substance, not wording; kind, project, tags and dates are context, not the answer.`,
       criteria: CRITERIA,
     };
+    questions[`s${i}`] = {
+      type: 'noul',
+      instructions: `Does the draft (state.draft) change, retract or replace a decision, number, rule or condition that existing note ${i} (state.candidates[${i}]) states, so that a reader should now follow the draft instead of note ${i}?`,
+      criteria: {
+        true: 'Yes: the draft states a different decision, value or rule on the same matter, or says the earlier one no longer holds.',
+        false:
+          'No: the draft adds to, repeats, or is unrelated to what the existing note states; nothing in it is contradicted.',
+      },
+    };
   });
   return questions;
 }
@@ -49,8 +61,17 @@ export function verdictsFromAnswers(
 ): Verdict[] {
   return candidates.flatMap((c, i) => {
     const a = answers[`c${i}`];
+    const n = answers[`s${i}`];
     return a && a.type === 'score'
-      ? [{ file: c.file, score: a.score, confidence: a.confidence, probabilities: a.probabilities }]
+      ? [
+          {
+            file: c.file,
+            score: a.score,
+            confidence: a.confidence,
+            probabilities: a.probabilities,
+            supersedes: n && n.type === 'noul' ? n.noul : null,
+          },
+        ]
       : [];
   });
 }
@@ -62,10 +83,16 @@ export function overlapDecision(verdicts: Verdict[]): OverlapDecision {
   const extendsList = verdicts
     .filter((v) => v.score >= EXTENDS_AT && v.score < REFUSE_AT)
     .map((v) => v.file);
-  return { refuse: sure[0]?.file ?? null, uncertain, extends: extendsList };
+  const supersedes = verdicts
+    .filter(
+      (v) => v.supersedes !== null && v.supersedes >= SUPERSEDES_AT && v.file !== sure[0]?.file,
+    )
+    .sort((a, b) => (b.supersedes ?? 0) - (a.supersedes ?? 0))
+    .map((v) => v.file);
+  return { refuse: sure[0]?.file ?? null, uncertain, extends: extendsList, supersedes };
 }
 
-function shortcut(file: string): string {
+export function shortcut(file: string): string {
   const match = Object.entries(KIND_DIRS)
     .filter(([, dir]) => file.startsWith(`${dir}/`))
     .sort((a, b) => b[1].length - a[1].length)[0];
@@ -88,5 +115,11 @@ export function formatOverlapVerdicts(decision: OverlapDecision, verdicts: Verdi
   for (const f of decision.uncertain)
     lines.push(`covered? ${f} (${show(f)}), low confidence, creating anyway`);
   for (const f of decision.extends) lines.push(`extends ${f} (${show(f)})`);
+  for (const f of decision.supersedes)
+    lines.push(`supersedes ${f} (${(find(f)?.supersedes ?? 0).toFixed(2)})`);
   return lines.join('\n');
+}
+
+export function supersedeHint(oldFile: string, newFile: string): string {
+  return `  metalmind scribe supersede ${shortcut(oldFile)} ${shortcut(newFile)}`;
 }

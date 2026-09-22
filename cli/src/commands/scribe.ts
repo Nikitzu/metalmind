@@ -3,6 +3,7 @@ import { log } from '@clack/prompts';
 import { readConfig } from '../config.js';
 import { judgeEnabled } from '../judge/client.js';
 import { markOpenedAfterTap } from '../judge/log.js';
+import { supersedeHint } from '../judge/overlap.js';
 import { gateDraft, realGateDeps } from '../judge/scribe-gate.js';
 import { findOverlappingNotes, formatOverlapWarning } from '../scribe/dedup.js';
 import {
@@ -67,6 +68,7 @@ export async function scribeCreateCmd(
     const body = opts.body ?? (await readStdin());
     const kind = assertKind(opts.kind);
     const judged = judgeEnabled(cfg.judge) && kind !== 'daily';
+    let supersedes: string[] = [];
     if (judged) {
       const gate = await gateDraft({
         draft: {
@@ -95,6 +97,7 @@ export async function scribeCreateCmd(
         return;
       }
       if (gate.refuse && opts.force) log.warn(`--force: creating despite ${gate.refuse}`);
+      supersedes = gate.supersedes;
     }
     const res = await scribeCreate(
       {
@@ -118,6 +121,7 @@ export async function scribeCreateCmd(
       { vaultRoot: cfg.vaultPath },
     );
     log.success(`${opts.dryRun ? 'would create' : 'created'} ${res.relPath}`);
+    for (const old of supersedes) log.warn(supersedeHint(old, res.relPath));
     if (!judged && res.created && kind !== 'daily') {
       const overlaps = await findOverlappingNotes({
         title,
@@ -169,6 +173,7 @@ export async function scribeUpdateCmd(
         fail(`not updated: ${gate.refuse} already covers this (--force to append anyway)`);
         return;
       }
+      for (const old of gate.supersedes) log.warn(supersedeHint(old, target));
       if (gate.refuse && opts.force) log.warn(`--force: appending despite ${gate.refuse}`);
     }
     const res = await scribeUpdate(
