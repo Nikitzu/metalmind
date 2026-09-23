@@ -19,11 +19,13 @@ const ForgeGroupSchema = z.object({
   repos: z.array(z.string()),
 });
 
-export const CURRENT_CONFIG_VERSION = 6 as const;
+export const CURRENT_CONFIG_VERSION = 7 as const;
+
+export const JUDGE_MODEL = 'jev-1.13.0';
 
 const JudgeSchema = z.object({
   enabled: z.boolean().default(false),
-  model: z.string().default('jev-latest'),
+  model: z.string().default(JUDGE_MODEL),
   logContent: z.boolean().default(false),
 });
 
@@ -68,7 +70,7 @@ export const ConfigSchema = z.object({
       notifications: z.boolean().default(true),
     })
     .default({ eodHook: true, notifications: true }),
-  judge: JudgeSchema.default({ enabled: false, model: 'jev-latest', logContent: false }),
+  judge: JudgeSchema.default({ enabled: false, model: JUDGE_MODEL, logContent: false }),
   // Backwards-compat: configs predating v0.8.0 (Codex host integration)
   // had no notion of `hosts` because Claude Code was the only target.
   // .default(['claude']) means an existing config gets ['claude'] on read,
@@ -137,6 +139,14 @@ const MIGRATIONS: Record<number, Migration> = {
     version: 6,
     judge: { enabled: false, model: 'jev-latest', logContent: false },
   }),
+  6: (raw) => {
+    const judge = raw.judge as { model?: unknown } | undefined;
+    return {
+      ...raw,
+      version: 7,
+      judge: judge?.model === 'jev-latest' ? { ...judge, model: JUDGE_MODEL } : judge,
+    };
+  },
 };
 
 function migrate(raw: RawConfig): RawConfig {

@@ -33,8 +33,8 @@ describe('config', () => {
     const { readConfig, writeConfig } = await import('./config.js');
 
     const cfg: Config = {
-      version: 6,
-      judge: { enabled: false, model: 'jev-latest', logContent: false },
+      version: 7,
+      judge: { enabled: false, model: 'jev-1.13.0', logContent: false },
       flavor: 'scadrial',
       vaultPath: '/tmp/vault',
       outputStylePriorValue: null,
@@ -112,13 +112,13 @@ describe('config', () => {
 
     const { readConfig } = await import('./config.js');
     const loaded = await readConfig();
-    expect(loaded?.version).toBe(6);
+    expect(loaded?.version).toBe(7);
     expect(loaded?.mcp.registered).toEqual(['serena']);
     expect(loaded?.hooks.claudeCode).toBe(false);
     expect(loaded).not.toHaveProperty('graphifyCmd');
 
     const onDisk = JSON.parse(await readFile(path, 'utf8'));
-    expect(onDisk.version).toBe(6);
+    expect(onDisk.version).toBe(7);
     expect(onDisk).not.toHaveProperty('graphifyCmd');
     expect(onDisk.mcp.registered).toEqual(['serena']);
   });
@@ -160,7 +160,7 @@ describe('config', () => {
     expect(loaded?.verbose).toBe(true);
     // v4 to v5 drops the retired output-style object but keeps the value the
     // cleanup needs to put settings.outputStyle back where it found it.
-    expect(loaded?.version).toBe(6);
+    expect(loaded?.version).toBe(7);
     expect(loaded?.outputStylePriorValue).toBe('explanatory');
     expect((loaded as unknown as Record<string, unknown>).outputStyle).toBeUndefined();
   });
@@ -191,12 +191,12 @@ describe('config', () => {
 
     const { readConfig } = await import('./config.js');
     const loaded = await readConfig();
-    expect(loaded?.version).toBe(6);
+    expect(loaded?.version).toBe(7);
     expect(loaded?.outputStylePriorValue).toBeNull();
     expect((loaded as unknown as Record<string, unknown>).outputStyle).toBeUndefined();
   });
 
-  it('a v5 config gains judge disabled with jev-latest at v6', async () => {
+  it('a v5 config gains judge disabled with the pinned model at v7', async () => {
     vi.doMock('node:os', async (orig) => ({
       ...(await orig<typeof import('node:os')>()),
       homedir: () => tmp,
@@ -223,10 +223,51 @@ describe('config', () => {
 
     const { readConfig } = await import('./config.js');
     const loaded = await readConfig();
-    expect(loaded?.version).toBe(6);
-    expect(loaded?.judge).toEqual({ enabled: false, model: 'jev-latest', logContent: false });
+    expect(loaded?.version).toBe(7);
+    expect(loaded?.judge).toEqual({ enabled: false, model: 'jev-1.13.0', logContent: false });
     const onDisk = JSON.parse(await readFile(path, 'utf8'));
-    expect(onDisk.version).toBe(6);
+    expect(onDisk.version).toBe(7);
+  });
+
+  it('a v6 config pins jev-latest to the model the thresholds were tuned on, and keeps any other model', async () => {
+    vi.doMock('node:os', async (orig) => ({
+      ...(await orig<typeof import('node:os')>()),
+      homedir: () => tmp,
+    }));
+    await mkdir(join(tmp, '.metalmind'), { recursive: true });
+    const v6 = {
+      version: 6,
+      flavor: 'scadrial',
+      vaultPath: '/tmp/vault',
+      outputStylePriorValue: null,
+      embeddings: { provider: 'local', baseURL: null },
+      recall: { defaultTier: 'fast', httpEndpoint: null },
+      verbose: false,
+      mcp: { registered: [] },
+      hooks: { claudeCode: false },
+      memoryRouting: 'vault-only',
+      forge: { groups: {} },
+      skills: { eodHook: true, notifications: true },
+      hosts: ['claude'],
+      install: { profile: 'core', teams: false },
+      judge: { enabled: true, model: 'jev-1.13.0', logContent: true },
+    };
+    const path = join(tmp, '.metalmind', 'config.json');
+    const { readConfig } = await import('./config.js');
+
+    await writeFile(path, JSON.stringify(v6), 'utf8');
+    const pinned = await readConfig();
+    expect(pinned?.version).toBe(7);
+    expect(pinned?.judge).toEqual({ enabled: true, model: 'jev-1.13.0', logContent: true });
+    expect(JSON.parse(await readFile(path, 'utf8')).judge.model).toBe('jev-1.13.0');
+
+    await writeFile(
+      path,
+      JSON.stringify({ ...v6, judge: { ...v6.judge, model: 'jev-preview' } }),
+      'utf8',
+    );
+    const kept = await readConfig();
+    expect(kept?.judge.model).toBe('jev-preview');
   });
 
   it('round-trips hosts ["claude", "codex"]', async () => {
@@ -236,8 +277,8 @@ describe('config', () => {
     }));
     const { readConfig, writeConfig } = await import('./config.js');
     const cfg: Config = {
-      version: 6,
-      judge: { enabled: false, model: 'jev-latest', logContent: false },
+      version: 7,
+      judge: { enabled: false, model: 'jev-1.13.0', logContent: false },
       flavor: 'classic',
       vaultPath: '/tmp/vault',
       outputStylePriorValue: null,
@@ -372,7 +413,7 @@ describe('config v3 → v4 install manifest migration', () => {
     const { readConfig } = await loadWithHome();
     const cfg = await readConfig();
 
-    expect(cfg?.version).toBe(6);
+    expect(cfg?.version).toBe(7);
     expect(cfg?.install).toEqual({ profile: 'full', teams: true });
   });
 
@@ -395,7 +436,7 @@ describe('config v3 → v4 install manifest migration', () => {
     await readConfig();
 
     const onDisk = JSON.parse(await readFile(join(tmp, '.metalmind', 'config.json'), 'utf8'));
-    expect(onDisk.version).toBe(6);
+    expect(onDisk.version).toBe(7);
     expect(onDisk.install).toBeDefined();
   });
 });

@@ -6,6 +6,14 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.27.1 - 2026-09-23
+
+### Changed
+
+- **The judge pins `jev-1.13.0`.** The default model was the `jev-latest` alias, which moves when TypeSafe ships a release and would shift the probabilities under the tuned thresholds. Config v7 rewrites a stored `jev-latest` to `jev-1.13.0` on first load; any other model a config names is kept.
+
+---
+
 ## 0.27.0 - 2026-09-22
 
 ### Added

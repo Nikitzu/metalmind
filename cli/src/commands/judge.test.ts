@@ -4,17 +4,17 @@ import { renderJudgeReport, renderJudgeStatus } from './judge.js';
 describe('renderJudgeStatus', () => {
   it('reports enabled, key source and model without the key', () => {
     const text = renderJudgeStatus(
-      { enabled: true, model: 'jev-latest' },
+      { enabled: true, model: 'jev-1.13.0' },
       { key: 'secret-value', source: 'keychain' },
     );
     expect(text).toContain('enabled: yes');
     expect(text).toContain('key: keychain (typesafe-api-key)');
-    expect(text).toContain('model: jev-latest');
+    expect(text).toContain('model: jev-1.13.0');
     expect(text).not.toContain('secret-value');
   });
   it('says how to enable when off', () => {
     const text = renderJudgeStatus(
-      { enabled: false, model: 'jev-latest' },
+      { enabled: false, model: 'jev-1.13.0' },
       { key: null, source: 'none' },
     );
     expect(text).toContain('enabled: no');
@@ -31,7 +31,7 @@ describe('renderJudgeReport', () => {
         {
           ts: now,
           command: 'scribe-create',
-          model: 'jev-latest',
+          model: 'jev-1.13.0',
           latency_ms: 300,
           decision: 'refused Work/a.md',
           answers: [{ id: 'c0', score: 1.8, confidence: 0.9, probabilities: {} }],
@@ -40,7 +40,7 @@ describe('renderJudgeReport', () => {
         {
           ts: now,
           command: 'scribe-create',
-          model: 'jev-latest',
+          model: 'jev-1.13.0',
           latency_ms: 200,
           decision: 'refused Work/a.md',
           forced: true,
@@ -49,7 +49,7 @@ describe('renderJudgeReport', () => {
         {
           ts: now,
           command: 'tap',
-          model: 'jev-latest',
+          model: 'jev-1.13.0',
           latency_ms: 400,
           decision: 'kept 4 of 10',
           answers: [],
@@ -58,7 +58,7 @@ describe('renderJudgeReport', () => {
         {
           ts: now,
           command: 'tap',
-          model: 'jev-latest',
+          model: 'jev-1.13.0',
           latency_ms: 5,
           decision: 'unjudged',
           unjudged: 'offline',

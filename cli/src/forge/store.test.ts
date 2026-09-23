@@ -6,8 +6,8 @@ import type { Config } from '../config.js';
 
 function baseConfig(): Config {
   return {
-    version: 6,
-    judge: { enabled: false, model: 'jev-latest', logContent: false },
+    version: 7,
+    judge: { enabled: false, model: 'jev-1.13.0', logContent: false },
     flavor: 'scadrial',
     vaultPath: '/v',
     outputStylePriorValue: null,

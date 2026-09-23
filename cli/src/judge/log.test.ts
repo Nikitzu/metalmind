@@ -15,7 +15,7 @@ describe('judge log', () => {
     const entry = entryFromResult(
       {
         command: 'scribe-create',
-        model: 'jev-latest',
+        model: 'jev-1.13.0',
         latency_ms: 321,
         decision: 'refused Work/a.md',
       },
@@ -40,7 +40,7 @@ describe('judge log', () => {
   });
   it('keeps the unjudged reason with its status', () => {
     const entry = entryFromResult(
-      { command: 'tap', model: 'jev-latest', latency_ms: 10, decision: 'unjudged' },
+      { command: 'tap', model: 'jev-1.13.0', latency_ms: 10, decision: 'unjudged' },
       { answers: null, unjudged: 'rejected', status: 401 },
       {},
     );

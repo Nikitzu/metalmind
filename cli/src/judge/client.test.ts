@@ -51,15 +51,15 @@ describe('judgeEnabled', () => {
   });
 
   it('is false when config disables it', () => {
-    expect(judgeEnabled({ enabled: false, model: 'jev-latest' })).toBe(false);
+    expect(judgeEnabled({ enabled: false, model: 'jev-1.13.0' })).toBe(false);
   });
   it('is false when METALMIND_JUDGE=0 even if config enables it', () => {
     process.env.METALMIND_JUDGE = '0';
-    expect(judgeEnabled({ enabled: true, model: 'jev-latest' })).toBe(false);
+    expect(judgeEnabled({ enabled: true, model: 'jev-1.13.0' })).toBe(false);
   });
   it('is true when config enables it and the env is unset', () => {
     delete process.env.METALMIND_JUDGE;
-    expect(judgeEnabled({ enabled: true, model: 'jev-latest' })).toBe(true);
+    expect(judgeEnabled({ enabled: true, model: 'jev-1.13.0' })).toBe(true);
   });
 });
 
@@ -95,7 +95,7 @@ describe('judge', () => {
     const res = await judge({
       state: 's',
       questions,
-      model: 'jev-latest',
+      model: 'jev-1.13.0',
       keychain: async () => '',
     });
     expect(res).toEqual({ answers: null, unjudged: 'no-key' });
@@ -113,13 +113,13 @@ describe('judge', () => {
       }),
     }));
     globalThis.fetch = fetchMock as unknown as typeof fetch;
-    const res = await judge({ state: 's', questions, model: 'jev-latest' });
+    const res = await judge({ state: 's', questions, model: 'jev-1.13.0' });
     expect(res.answers).toEqual({ q: { type: 'noul', noul: 0.8 } });
     expect(res.usage).toEqual({ input_tokens: 12, output_tokens: 1 });
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://api.typesafe.ai/v1/systemone');
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer k');
-    expect(JSON.parse(init.body as string)).toEqual({ model: 'jev-latest', state: 's', questions });
+    expect(JSON.parse(init.body as string)).toEqual({ model: 'jev-1.13.0', state: 's', questions });
   });
 
   it.each([
@@ -133,7 +133,7 @@ describe('judge', () => {
       status,
       json: async () => ({}),
     })) as unknown as typeof fetch;
-    const res = await judge({ state: 's', questions, model: 'jev-latest' });
+    const res = await judge({ state: 's', questions, model: 'jev-1.13.0' });
     expect(res).toEqual({ answers: null, unjudged: reason, status });
   });
 
@@ -141,7 +141,7 @@ describe('judge', () => {
     globalThis.fetch = vi.fn(async () => {
       throw new TypeError('fetch failed');
     }) as unknown as typeof fetch;
-    const res = await judge({ state: 's', questions, model: 'jev-latest' });
+    const res = await judge({ state: 's', questions, model: 'jev-1.13.0' });
     expect(res).toEqual({ answers: null, unjudged: 'offline' });
   });
 
@@ -151,7 +151,7 @@ describe('judge', () => {
       err.name = 'AbortError';
       throw err;
     }) as unknown as typeof fetch;
-    const res = await judge({ state: 's', questions, model: 'jev-latest' });
+    const res = await judge({ state: 's', questions, model: 'jev-1.13.0' });
     expect(res).toEqual({ answers: null, unjudged: 'timeout' });
   });
 });

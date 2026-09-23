@@ -2,6 +2,7 @@ import { cancel, confirm, intro, isCancel, log, outro, password, select } from '
 import {
   type Config,
   CURRENT_CONFIG_VERSION,
+  JUDGE_MODEL,
   type MetalmindHost,
   readConfig,
   writeConfig,
@@ -555,7 +556,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     skills: { eodHook, notifications },
     judge: {
       enabled: judge,
-      model: priorConfig?.judge.model ?? 'jev-latest',
+      model: priorConfig?.judge.model ?? JUDGE_MODEL,
       logContent: priorConfig?.judge.logContent ?? false,
     },
     hosts:
