@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { basename, join } from 'node:path';
 import { intro, log, outro } from '@clack/prompts';
+import pkg from '../../package.json' with { type: 'json' };
 import { recallTokenPath } from '../backends/recall-token.js';
 import {
   type CodeRefStatus,
@@ -11,6 +12,7 @@ import {
   verifyCodeRefs,
 } from '../coderefs/coderefs.js';
 import { CONFIG_PATH, type Config, readConfig } from '../config.js';
+import { AUTO_STAMP_PATHS, readStampedVersion } from '../install/auto-stamp.js';
 import {
   DEFAULT_CODEX_DIR,
   DEFAULT_CODEX_MCP_NAME,
@@ -32,6 +34,7 @@ import {
   looksLikeNoteStem,
   readNoteFrontmatter,
 } from '../scribe/frontmatter.js';
+import { scribeBackfillType } from '../scribe/scribe.js';
 import { runCommand } from '../util/exec.js';
 import { detectObsidian } from '../util/obsidian.js';
 import { detectTolaria } from '../util/tolaria.js';
@@ -762,6 +765,45 @@ export async function checkSupersedeIntegrity(vaultPath: string): Promise<DeepCh
   };
 }
 
+export async function checkUpgradeState(
+  config: Config,
+  opts: { markerFile?: string; current?: string } = {},
+): Promise<DeepCheck[]> {
+  const current = opts.current ?? pkg.version;
+  const stamped = await readStampedVersion(opts.markerFile ?? AUTO_STAMP_PATHS.marker);
+  const agentsMd = join(config.vaultPath, 'AGENTS.md');
+  const hasAgentsBlock =
+    existsSync(agentsMd) &&
+    (await readFile(agentsMd, 'utf8')).includes('<!-- metalmind:managed:begin -->');
+  const untyped = (await scribeBackfillType({ vaultRoot: config.vaultPath }, { dryRun: true }))
+    .changed.length;
+  return [
+    {
+      name: 'stamped-version',
+      ok: stamped === current,
+      detail:
+        stamped === current
+          ? `managed files stamped by ${current}`
+          : `managed files stamped by ${stamped ?? 'an unrecorded version'}, CLI is ${current}`,
+      remediation: stamped === current ? undefined : 'Run `metalmind stamp`.',
+    },
+    {
+      name: 'vault-agents-md',
+      ok: hasAgentsBlock,
+      detail: hasAgentsBlock ? 'sentinel block present' : 'sentinel block missing',
+      remediation: hasAgentsBlock ? undefined : 'Run `metalmind stamp`.',
+    },
+    {
+      name: 'note-types',
+      ok: true,
+      detail:
+        untyped === 0
+          ? 'every note with kind: also has type:'
+          : `${untyped} note${untyped === 1 ? '' : 's'} with kind: but no type: - run \`metalmind scribe backfill-type\``,
+    },
+  ];
+}
+
 export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
   const installClaude = config.hosts.includes('claude');
   const installCodex = config.hosts.includes('codex');
@@ -792,6 +834,7 @@ export async function runDeepChecks(config: Config): Promise<DeepCheck[]> {
     intentSkills,
     graphifyResidue,
     ...stamps,
+    ...(await checkUpgradeState(config)),
     ...codexChecks,
     ...cursorChecks,
   ];

@@ -495,3 +495,76 @@ describe('checkInstallManifest', () => {
     );
   });
 });
+
+describe('checkUpgradeState', () => {
+  let tmp: string;
+  let config: Config;
+  const block = '<!-- metalmind:managed:begin -->\nrules\n<!-- metalmind:managed:end -->\n';
+
+  beforeEach(async () => {
+    tmp = await mkdtemp(join(tmpdir(), 'metalmind-upgrade-'));
+    await mkdir(join(tmp, 'vault', 'Learnings'), { recursive: true });
+    config = {
+      version: 7,
+      judge: { enabled: false, model: 'jev-1.13.0', logContent: false },
+      flavor: 'scadrial',
+      vaultPath: join(tmp, 'vault'),
+      outputStylePriorValue: null,
+      embeddings: { provider: 'local', baseURL: null },
+      recall: { defaultTier: 'fast', httpEndpoint: null },
+      verbose: false,
+      mcp: { registered: [] },
+      hooks: { claudeCode: false },
+      memoryRouting: 'vault-only',
+      skills: { eodHook: true, notifications: true },
+      forge: { groups: {} },
+      hosts: ['claude'],
+      install: { profile: 'full', teams: false },
+    };
+  });
+
+  afterEach(async () => {
+    await rm(tmp, { recursive: true, force: true });
+  });
+
+  it('passes when the stamp matches the CLI, AGENTS.md has the block, and notes are typed', async () => {
+    await writeFile(join(tmp, 'stamped-version'), '0.29.0\n', 'utf8');
+    await writeFile(join(tmp, 'vault', 'AGENTS.md'), block, 'utf8');
+    await writeFile(
+      join(tmp, 'vault', 'Learnings', 'a.md'),
+      '---\nkind: learning\ntype: learning\n---\n# A\n',
+      'utf8',
+    );
+    const { checkUpgradeState } = await import('./doctor.js');
+    const res = await checkUpgradeState(config, {
+      markerFile: join(tmp, 'stamped-version'),
+      current: '0.29.0',
+    });
+    expect(res.map((c) => [c.name, c.ok])).toEqual([
+      ['stamped-version', true],
+      ['vault-agents-md', true],
+      ['note-types', true],
+    ]);
+  });
+
+  it('flags an older stamp and a missing AGENTS.md block, and hints at untyped notes', async () => {
+    await writeFile(join(tmp, 'stamped-version'), '0.27.1\n', 'utf8');
+    await writeFile(
+      join(tmp, 'vault', 'Learnings', 'a.md'),
+      '---\nkind: learning\n---\n# A\n',
+      'utf8',
+    );
+    const { checkUpgradeState } = await import('./doctor.js');
+    const res = await checkUpgradeState(config, {
+      markerFile: join(tmp, 'stamped-version'),
+      current: '0.29.0',
+    });
+    const byName = Object.fromEntries(res.map((c) => [c.name, c]));
+    expect(byName['stamped-version']?.ok).toBe(false);
+    expect(byName['stamped-version']?.detail).toContain('0.27.1');
+    expect(byName['vault-agents-md']?.ok).toBe(false);
+    expect(byName['note-types']?.ok).toBe(true);
+    expect(byName['note-types']?.detail).toContain('1 note');
+    expect(byName['note-types']?.detail).toContain('backfill-type');
+  });
+});

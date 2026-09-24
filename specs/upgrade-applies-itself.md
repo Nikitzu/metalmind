@@ -22,7 +22,7 @@ Auto-stamp:
 Hints, not rewrites:
 
 - WHEN `stamp` finishes and notes carry `kind:` without `type:` THE SYSTEM SHALL print the count and `metalmind scribe backfill-type`.
-- `doctor --deep` SHALL report: the recorded stamp version against the CLI version; whether `<vault>/AGENTS.md` carries the managed block; how many notes lack `type:`. Each with its remediation. None of them fails the run.
+- `doctor --deep` SHALL report the recorded stamp version against the CLI version and whether `<vault>/AGENTS.md` carries the managed block, each failing with `metalmind stamp` as the remediation, and how many notes lack `type:` as a passing check whose detail names `metalmind scribe backfill-type`.
 
 Watcher catch-up (metalmind-vault-rag):
 
