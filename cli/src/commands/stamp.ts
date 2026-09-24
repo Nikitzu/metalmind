@@ -1,7 +1,9 @@
 import { cancel, intro, log, outro } from '@clack/prompts';
+import pkg from '../../package.json' with { type: 'json' };
 import { type MetalmindHost, readConfig, writeConfig } from '../config.js';
 import { describeAliasSourcing, installAliases } from '../install/aliases.js';
 import { installAntigravity } from '../install/antigravity.js';
+import { writeStampedVersion } from '../install/auto-stamp.js';
 import { installCodex } from '../install/codex.js';
 import { installCursor } from '../install/cursor.js';
 import { promptHosts } from '../install/host-prompt.js';
@@ -229,5 +231,6 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
 
   await promptRebuildIfStale(await awaitIndexStatus(), { noPrompt: opts.noPrompt });
 
+  await writeStampedVersion(pkg.version);
   outro('Stamp complete. Run `metalmind pulse` to verify.');
 }

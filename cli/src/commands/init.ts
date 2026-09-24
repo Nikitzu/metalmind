@@ -1,5 +1,7 @@
 import { log } from '@clack/prompts';
+import pkg from '../../package.json' with { type: 'json' };
 import type { MetalmindHost } from '../config.js';
+import { writeStampedVersion } from '../install/auto-stamp.js';
 import { type RunWizardOptions, runWizard } from '../install/wizard.js';
 
 export interface InitCliOptions {
@@ -129,6 +131,7 @@ export async function init(cliOpts: InitCliOptions = {}): Promise<void> {
     }
 
     await runWizard(wizardOpts);
+    await writeStampedVersion(pkg.version);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     log.error(`init failed: ${message}`);

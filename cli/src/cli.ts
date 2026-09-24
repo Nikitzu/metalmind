@@ -71,6 +71,7 @@ import { type SyncCmdOptions, syncCmd } from './commands/sync.js';
 import { synod } from './commands/synod.js';
 import { type TapOptions, tap } from './commands/tap.js';
 import { uninstall } from './commands/uninstall.js';
+import { runAutoStamp } from './install/auto-stamp.js';
 import { runPendingRepairs } from './install/repair.js';
 
 const program = new Command();
@@ -756,7 +757,21 @@ program
     },
   );
 
-program.hook('preAction', async () => {
+program.hook('preAction', async (_program, actionCommand) => {
+  const commands: string[] = [];
+  for (let c: Command | null = actionCommand; c && c !== program; c = c.parent) {
+    commands.push(c.name());
+  }
+  const autoStamp = await runAutoStamp({ current: pkg.version, commands });
+  if (autoStamp === 'stamped') {
+    process.stderr.write(
+      `metalmind: applied ${pkg.version} to this install (re-stamped; log: ~/.metalmind/logs/auto-stamp.log)\n`,
+    );
+  } else if (autoStamp === 'failed') {
+    process.stderr.write(
+      `metalmind: could not apply ${pkg.version} automatically - run \`metalmind stamp\` (log: ~/.metalmind/logs/auto-stamp.log)\n`,
+    );
+  }
   const applied = (await runPendingRepairs()).filter((r) => r.applied);
   for (const r of applied) {
     process.stderr.write(`metalmind: repaired ${r.name} - ${r.detail}\n`);
