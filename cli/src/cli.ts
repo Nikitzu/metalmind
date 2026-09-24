@@ -55,6 +55,7 @@ import { retired } from './commands/retired.js';
 import { routineInstallEodCmd, routineRemoveEodCmd } from './commands/routine.js';
 import {
   scribeArchiveCmd,
+  scribeBackfillTypeCmd,
   scribeCreateCmd,
   scribeDeleteCmd,
   scribeListCmd,
@@ -498,6 +499,11 @@ function attachScribeSubcommands(parent: Command): void {
     .action((from: string, to: string, cmdOpts: { date?: string; dryRun?: boolean }) =>
       scribeRenameCmd(from, to, cmdOpts),
     );
+  parent
+    .command('backfill-type')
+    .description('Add type: (mirrors kind:) to notes missing it, so Tolaria groups them.')
+    .option('--dry-run', 'Preview only')
+    .action((cmdOpts: { dryRun?: boolean }) => scribeBackfillTypeCmd(cmdOpts));
 }
 
 const scribeCmd = program

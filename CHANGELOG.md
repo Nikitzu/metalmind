@@ -6,6 +6,12 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.28.0 - 2026-09-24
+
+### Added
+
+- **Tolaria compatibility.** Notes now carry `type:` next to `kind:` with the same value, since Tolaria groups notes by `type:` and Obsidian ignores it. `metalmind scribe backfill-type [--dry-run]` adds the line to existing notes, leaves any note that already has a `type:` alone, and skips notes whose frontmatter does not parse. `stamp` also writes the vault block to `<vault>/AGENTS.md`, which Tolaria hands to connected agents, and `uninstall` removes it. `doctor` reports whether Tolaria is installed.
+
 ## 0.27.1 - 2026-09-23
 
 ### Changed

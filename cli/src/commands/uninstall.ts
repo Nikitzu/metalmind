@@ -223,6 +223,8 @@ export async function uninstall(opts: UninstallOptions = {}): Promise<void> {
       log.success('Stripped metalmind block from ~/.claude/CLAUDE.md');
     if (result.claudeMdBlocks.vault === 'removed' || result.claudeMdBlocks.vault === 'file-empty')
       log.success('Stripped metalmind block from vault CLAUDE.md');
+    if (result.agentsMdBlock === 'removed' || result.agentsMdBlock === 'file-empty')
+      log.success('Stripped metalmind block from vault AGENTS.md');
     if (result.sessionStartHook.registrationCleared)
       log.success('SessionStart hook entry removed from settings.json');
     if (result.sessionStartHook.scriptRemoved)

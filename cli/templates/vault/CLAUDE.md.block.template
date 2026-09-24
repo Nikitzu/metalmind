@@ -12,7 +12,7 @@ MOCs live at `Work/MOCs/<project>.md` and index all notes on that project. Proje
 
 - **Filename**: `kebab-case.md`. H1 matches.
 - **One note = one topic.** Before creating, `{{RECALL_CMD}} "<topic>"` first; if a close match exists, edit it.
-- **Frontmatter** (every note): `tags:`, `created:`, `updated:`, `project:` (opt), `status: active|draft|archived`.
+- **Frontmatter** (every note): `kind:` and `type:` (same value; Tolaria reads `type:`), `tags:`, `created:`, `updated:`, `project:` (opt), `status: active|draft|archived`.
 - **Link aggressively** with `[[wikilinks]]`. No orphans - every note has ≥1 in/out link.
 - **No secrets** in any note.
 
@@ -29,7 +29,7 @@ MOCs live at `Work/MOCs/<project>.md` and index all notes on that project. Proje
 
 **Writing** (full contract lives in the global stamped block - this section names the vault-local rules only):
 
-- Every vault write goes through `metalmind scribe <verb>` / `metalmind atium` / `metalmind gold` - **never raw `Write`/`Edit`** on vault files. If no metalmind command fits, stop and surface the gap.
+- Every vault write goes through `metalmind scribe <verb>` / `metalmind atium` / `metalmind gold` - **never raw `Write`/`Edit`** on vault files, and never Tolaria's MCP write tools (`create_note`, `update_note`, `append_to_note`). If no metalmind command fits, stop and surface the gap.
 - Propose the note (path + draft) before writing - never save silently.
 - Daily notes for non-today dates require `--date <YYYY-MM-DD>` (scribe) or live under `metalmind atium` (canonical for daily action items).
 - Never touch `Welcome.md` or `.obsidian/`.

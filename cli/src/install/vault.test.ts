@@ -50,12 +50,33 @@ describe('setupVault', () => {
     expect(rendered).not.toContain('tap copper');
   });
 
+  it('writes the same sentinel block into AGENTS.md', async () => {
+    const vaultPath = join(tmp, 'vault');
+    const result = await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
+    expect(result.agentsMdAction).toBe('created');
+    const agents = await readFile(join(vaultPath, 'AGENTS.md'), 'utf8');
+    const claude = await readFile(join(vaultPath, 'CLAUDE.md'), 'utf8');
+    expect(agents).toBe(claude);
+  });
+
+  it('preserves user content outside the AGENTS.md sentinels', async () => {
+    const vaultPath = join(tmp, 'vault');
+    await mkdir(vaultPath, { recursive: true });
+    await writeFile(join(vaultPath, 'AGENTS.md'), '# My own rules\n', 'utf8');
+    const result = await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
+    expect(result.agentsMdAction).toBe('inserted');
+    const agents = await readFile(join(vaultPath, 'AGENTS.md'), 'utf8');
+    expect(agents).toContain('# My own rules');
+    expect(agents).toContain(DEFAULT_METALMIND_MARKERS.begin);
+  });
+
   it('is idempotent: second run reports unchanged', async () => {
     const vaultPath = join(tmp, 'vault');
     await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
     const second = await setupVault({ vaultPath, templatesDir, flavor: 'scadrial' });
     expect(second.createdFolders).toEqual([]);
     expect(second.claudeMdAction).toBe('unchanged');
+    expect(second.agentsMdAction).toBe('unchanged');
   });
 
   it('inserts block into existing user CLAUDE.md without stomping user content', async () => {

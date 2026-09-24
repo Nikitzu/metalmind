@@ -20,6 +20,7 @@ export interface SetupVaultResult {
   vaultPath: string;
   createdFolders: string[];
   claudeMdAction: SentinelUpsertAction;
+  agentsMdAction: SentinelUpsertAction;
 }
 
 export interface SetupVaultOptions {
@@ -66,6 +67,10 @@ export async function setupVault(opts: SetupVaultOptions): Promise<SetupVaultRes
     path: join(vaultPath, 'CLAUDE.md'),
     content: rendered,
   });
+  const agents = await upsertSentinelBlock({
+    path: join(vaultPath, 'AGENTS.md'),
+    content: rendered,
+  });
 
-  return { vaultPath, createdFolders, claudeMdAction: action };
+  return { vaultPath, createdFolders, claudeMdAction: action, agentsMdAction: agents.action };
 }

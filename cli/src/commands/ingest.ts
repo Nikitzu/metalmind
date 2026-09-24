@@ -129,6 +129,7 @@ export async function ingestAutoMemory(opts: IngestOptions): Promise<IngestResul
         if (opts.dryRun) continue;
         const frontmatter = buildFrontmatter({
           kind: 'memory',
+          type: 'memory',
           title: file.replace(/\.md$/, ''),
           tags: ['auto-memory'],
           source_path: tildeHome(sourcePath),

@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Config } from '../config.js';
 import type { CommandResult } from '../util/exec.js';
+import { upsertSentinelBlock } from '../util/sentinel.js';
 
 const runCommand = vi.hoisted(() =>
   vi.fn<(cmd: string, args?: string[], opts?: { timeoutMs?: number }) => Promise<CommandResult>>(),
@@ -128,6 +129,25 @@ describe('teardown', () => {
     expect(existsSync(stackDir)).toBe(false);
     expect(existsSync(aliasesPath)).toBe(false);
     expect(existsSync(configPath)).toBe(false);
+  });
+
+  it('strips the vault AGENTS.md block and deletes the file when nothing else is left', async () => {
+    runCommand.mockResolvedValue(ok());
+    await upsertSentinelBlock({ path: join(vaultPath, 'AGENTS.md'), content: 'ours\n' });
+    const { teardown } = await import('./teardown.js');
+    const result = await teardown({
+      config: baseConfig(vaultPath),
+      launchAgentsDir,
+      claudeJsonPath,
+      aliasesPath,
+      zshrcPath,
+      claudeDir,
+      platformOverride: 'darwin',
+      settingsPath,
+      configPath,
+    });
+    expect(result.agentsMdBlock).toBe('file-empty');
+    expect(existsSync(join(vaultPath, 'AGENTS.md'))).toBe(false);
   });
 
   it('continues when docker compose down fails (daemon not running)', async () => {

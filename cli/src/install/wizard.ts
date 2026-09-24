@@ -326,6 +326,7 @@ export async function runWizard(opts: RunWizardOptions = {}): Promise<Config> {
     log.info('  inserted metalmind block into vault CLAUDE.md');
   else if (vault.claudeMdAction === 'updated')
     log.info('  refreshed metalmind block in vault CLAUDE.md');
+  if (vault.agentsMdAction !== 'unchanged') log.info(`  vault AGENTS.md ${vault.agentsMdAction}`);
   if (vault.createdFolders.length > 0) log.info(`  created: ${vault.createdFolders.join(', ')}`);
 
   if (vaultGit) {

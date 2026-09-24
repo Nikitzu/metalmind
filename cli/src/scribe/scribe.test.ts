@@ -3,8 +3,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  insertTypeAfterKind,
   resolveNotePath,
   scribeArchive,
+  scribeBackfillType,
   scribeCreate,
   scribeDelete,
   scribeList,
@@ -800,5 +802,117 @@ describe('daily-date guard', () => {
     await scribeUpdate(path, 'tail', ctx);
     const raw = await readFile(path, 'utf8');
     expect(raw).toContain('tail');
+  });
+});
+
+describe('type: mirrors kind: for Tolaria', () => {
+  let vault: string;
+
+  beforeEach(async () => {
+    vault = await mkdtemp(join(tmpdir(), 'mm-type-'));
+  });
+
+  afterEach(async () => {
+    await rm(vault, { recursive: true, force: true });
+  });
+
+  it('writes type: mirroring kind: on create', async () => {
+    const res = await scribeCreate(
+      { kind: 'learning', title: 'Type mirror', body: 'b' },
+      { vaultRoot: vault, now: fixedNow },
+    );
+    const raw = await readFile(res.path, 'utf8');
+    expect(raw).toContain('kind: learning\ntype: learning\n');
+  });
+
+  it('writes type: moc on an auto-created MOC', async () => {
+    await scribeCreate(
+      { kind: 'learning', title: 'With project', body: 'b', project: 'tolaria-test' },
+      { vaultRoot: vault, now: fixedNow },
+    );
+    const moc = await readFile(join(vault, 'Work/MOCs/tolaria-test.md'), 'utf8');
+    expect(moc).toContain('kind: moc\ntype: moc\n');
+  });
+
+  it('leaves an existing type: untouched on update', async () => {
+    const res = await scribeCreate(
+      { kind: 'memory', title: 'Keep type', body: 'b' },
+      { vaultRoot: vault, now: fixedNow },
+    );
+    const before = await readFile(res.path, 'utf8');
+    await writeFile(res.path, before.replace('type: memory', 'type: feedback'), 'utf8');
+    await scribeUpdate(res.path, 'more', { vaultRoot: vault, now: fixedNow });
+    expect(await readFile(res.path, 'utf8')).toContain('type: feedback');
+  });
+});
+
+describe('insertTypeAfterKind', () => {
+  it('inserts type: right after kind: and changes nothing else', () => {
+    const src = '---\nproject: x\nkind: learning\ntitle: T\n---\n# T\n\nbody\n';
+    expect(insertTypeAfterKind(src)).toBe(
+      '---\nproject: x\nkind: learning\ntype: learning\ntitle: T\n---\n# T\n\nbody\n',
+    );
+  });
+
+  it('returns null when type: already exists, whatever its value', () => {
+    expect(insertTypeAfterKind('---\nkind: memory\ntype: feedback\n---\nb\n')).toBeNull();
+    expect(insertTypeAfterKind('---\nkind: memory\ntype:\n---\nb\n')).toBeNull();
+  });
+
+  it('returns null without kind: or without frontmatter', () => {
+    expect(insertTypeAfterKind('---\ntitle: T\n---\nb\n')).toBeNull();
+    expect(insertTypeAfterKind('# no frontmatter\n')).toBeNull();
+  });
+
+  it('keeps CRLF line endings', () => {
+    const src = '---\nkind: work\r\ntitle: T\r\n---\r\nb\r\n';
+    expect(insertTypeAfterKind(src)).toBe(
+      '---\nkind: work\r\ntype: work\r\ntitle: T\r\n---\r\nb\r\n',
+    );
+  });
+});
+
+describe('scribeBackfillType', () => {
+  let vault: string;
+
+  beforeEach(async () => {
+    vault = await mkdtemp(join(tmpdir(), 'mm-backfill-'));
+    await mkdir(join(vault, 'Learnings'), { recursive: true });
+    await mkdir(join(vault, 'Memory'), { recursive: true });
+    await mkdir(join(vault, '.obsidian'), { recursive: true });
+    await writeFile(join(vault, 'Learnings/a.md'), '---\nkind: learning\n---\n# A\n', 'utf8');
+    await writeFile(
+      join(vault, 'Memory/b.md'),
+      '---\nkind: memory\ntype: feedback\n---\n# B\n',
+      'utf8',
+    );
+    await writeFile(join(vault, 'plain.md'), '# no fm\n', 'utf8');
+    await writeFile(join(vault, '.obsidian/c.md'), '---\nkind: learning\n---\n', 'utf8');
+  });
+
+  afterEach(async () => {
+    await rm(vault, { recursive: true, force: true });
+  });
+
+  it('dry-run reports without writing', async () => {
+    const res = await scribeBackfillType({ vaultRoot: vault }, { dryRun: true });
+    expect(res.changed).toEqual(['Learnings/a.md']);
+    expect(await readFile(join(vault, 'Learnings/a.md'), 'utf8')).not.toContain('type:');
+  });
+
+  it('adds type: only where missing and skips ignored dirs', async () => {
+    const res = await scribeBackfillType({ vaultRoot: vault }, {});
+    expect(res.changed).toEqual(['Learnings/a.md']);
+    expect(await readFile(join(vault, 'Learnings/a.md'), 'utf8')).toBe(
+      '---\nkind: learning\ntype: learning\n---\n# A\n',
+    );
+    expect(await readFile(join(vault, 'Memory/b.md'), 'utf8')).toContain('type: feedback');
+    expect(await readFile(join(vault, '.obsidian/c.md'), 'utf8')).not.toContain('type:');
+  });
+
+  it('changes nothing on a second run', async () => {
+    await scribeBackfillType({ vaultRoot: vault }, {});
+    const second = await scribeBackfillType({ vaultRoot: vault }, {});
+    expect(second.changed).toEqual([]);
   });
 });

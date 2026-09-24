@@ -48,6 +48,7 @@ describe('ingestAutoMemory', () => {
     expect(res.skipped).toEqual([]);
     const raw = await readFile(join(vault, 'Memory', 'auto-home-user-myproj--topic.md'), 'utf8');
     expect(raw).toContain('kind: memory');
+    expect(raw).toContain('kind: memory\ntype: memory\n');
     expect(raw).toContain('tags: ["auto-memory"]');
     expect(raw).toContain('source_path:');
     expect(raw).toMatch(/imported_hash: [0-9a-f]{40}/);

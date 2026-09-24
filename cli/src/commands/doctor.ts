@@ -34,6 +34,7 @@ import {
 } from '../scribe/frontmatter.js';
 import { runCommand } from '../util/exec.js';
 import { detectObsidian } from '../util/obsidian.js';
+import { detectTolaria } from '../util/tolaria.js';
 
 export interface DoctorOptions {
   deep?: boolean;
@@ -946,6 +947,14 @@ export async function doctor(invokedAs = 'doctor', opts: DoctorOptions = {}): Pr
     } else {
       log.info('obsidian:       not detected - vault works without it');
       log.info(`  install hint: ${obsidian.installHint}`);
+    }
+
+    const tolaria = await detectTolaria();
+    if (tolaria.found) {
+      log.info(`tolaria:        detected (${tolaria.location})`);
+    } else {
+      log.info('tolaria:        not detected - vault works without it');
+      log.info(`  install hint: ${tolaria.installHint}`);
     }
   }
 

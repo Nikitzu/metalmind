@@ -58,9 +58,10 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
   }
   log.success(`  ${chosenHosts.join(', ')}`);
 
-  log.step('Vault CLAUDE.md');
+  log.step('Vault CLAUDE.md + AGENTS.md');
   const vault = await setupVault({ vaultPath: config.vaultPath, flavor: config.flavor });
-  log.info(`  ${vault.claudeMdAction}`);
+  log.info(`  CLAUDE.md ${vault.claudeMdAction}`);
+  log.info(`  AGENTS.md ${vault.agentsMdAction}`);
 
   if (chosenHosts.includes('claude')) {
     log.step('Global CLAUDE.md block + rules/agents/commands');

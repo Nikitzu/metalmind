@@ -13,7 +13,12 @@ import {
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { parseCodeRef } from '../coderefs/coderefs.js';
 import { type DateArg, resolveDate } from './daily.js';
-import { frontmatterString, looksLikeNoteStem, parseFrontmatter } from './frontmatter.js';
+import {
+  frontmatterString,
+  looksLikeNoteStem,
+  parseFrontmatter,
+  splitFrontmatter,
+} from './frontmatter.js';
 
 export type ScribeKind =
   | 'plan'
@@ -199,6 +204,54 @@ export function rewriteFrontmatterField(source: string, key: string, value: stri
   return `${head}\n${key}: ${value}${tail}`;
 }
 
+export function insertTypeAfterKind(source: string): string | null {
+  const { raw, bodyStart } = splitFrontmatter(source);
+  if (bodyStart === 0) return null;
+  const { fm } = parseFrontmatter(source);
+  const kind = frontmatterString(fm, 'kind');
+  if (!kind || 'type' in fm) return null;
+  const kindLine = /^kind:[^\r\n]*/m.exec(raw);
+  if (!kindLine) return null;
+  const at = 4 + kindLine.index + kindLine[0].length;
+  const eol = source.slice(at, at + 2) === '\r\n' ? '\r\n' : '\n';
+  return `${source.slice(0, at)}${eol}type: ${yamlScalar(kind)}${source.slice(at)}`;
+}
+
+const BACKFILL_SKIP_DIRS = new Set([
+  '.obsidian',
+  '.git',
+  '.trash',
+  '.metalmind-stack',
+  'node_modules',
+]);
+
+async function markdownFiles(dir: string): Promise<string[]> {
+  const out: string[] = [];
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const abs = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (!BACKFILL_SKIP_DIRS.has(entry.name)) out.push(...(await markdownFiles(abs)));
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      out.push(abs);
+    }
+  }
+  return out;
+}
+
+export async function scribeBackfillType(
+  ctx: ScribeOpts,
+  opts: { dryRun?: boolean },
+): Promise<{ changed: string[] }> {
+  const changed: string[] = [];
+  for (const abs of await markdownFiles(ctx.vaultRoot)) {
+    const next = insertTypeAfterKind(await readFile(abs, 'utf8'));
+    if (next === null) continue;
+    changed.push(relative(ctx.vaultRoot, abs));
+    if (!opts.dryRun) await writeFile(abs, next, 'utf8');
+  }
+  return { changed: changed.sort() };
+}
+
 function removeFrontmatterField(source: string, key: string): string {
   const { bodyStart } = parseFrontmatter(source);
   if (bodyStart === 0) return source;
@@ -230,7 +283,7 @@ async function appendMocLink(
   const link = `- [[${relPath.replace(/\.md$/, '')}]] - ${title}`;
   if (!(await exists(moc))) {
     const scaffold =
-      buildFrontmatter({ project, kind: 'moc', created: isoDate(new Date()) }) +
+      buildFrontmatter({ project, kind: 'moc', type: 'moc', created: isoDate(new Date()) }) +
       `\n# ${project} - MOC\n\n${LINKED_NOTES_HEADING}\n\n${link}\n`;
     await mkdir(dirname(moc), { recursive: true });
     await writeFile(moc, scaffold, 'utf8');
@@ -296,6 +349,7 @@ export async function scribeCreate(
   const frontmatter = buildFrontmatter({
     project: opts.project,
     kind: opts.kind,
+    type: opts.kind,
     title: opts.title,
     tags: opts.tags,
     created: isoDate(now),

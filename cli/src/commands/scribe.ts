@@ -12,6 +12,7 @@ import {
   type ScribeKind,
   type ScribeOpts,
   scribeArchive,
+  scribeBackfillType,
   scribeCreate,
   scribeDelete,
   scribeList,
@@ -340,6 +341,16 @@ export async function scribeShowCmd(notePath: string): Promise<void> {
     const content = await scribeShow(notePath, opts);
     process.stdout.write(content);
     await markOpenedAfterTap(relative(opts.vaultRoot, resolveNotePath(notePath, opts.vaultRoot)));
+  } catch (err) {
+    fail(err instanceof Error ? err.message : String(err));
+  }
+}
+
+export async function scribeBackfillTypeCmd(opts: { dryRun?: boolean }): Promise<void> {
+  try {
+    const res = await scribeBackfillType(await ctx(), { dryRun: opts.dryRun });
+    if (opts.dryRun) for (const path of res.changed) log.info(`  ${path}`);
+    log.success(`${opts.dryRun ? 'would add' : 'added'} type: to ${res.changed.length} note(s)`);
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
   }

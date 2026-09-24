@@ -64,6 +64,7 @@ export interface TeardownResult {
   agentTeamsCleared: boolean;
   sessionStartHook: { registrationCleared: boolean; scriptRemoved: boolean };
   claudeMdBlocks: { global: SentinelRemoveAction; vault: SentinelRemoveAction };
+  agentsMdBlock: SentinelRemoveAction;
 }
 
 export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
@@ -94,6 +95,7 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
     agentTeamsCleared: false,
     sessionStartHook: { registrationCleared: false, scriptRemoved: false },
     claudeMdBlocks: { global: 'no-file', vault: 'no-file' },
+    agentsMdBlock: 'no-file',
   };
 
   const watcher = await uninstallWatcher({
@@ -170,11 +172,17 @@ export async function teardown(opts: TeardownOptions): Promise<TeardownResult> {
 
   const globalClaudeMd = join(claudeDir, 'CLAUDE.md');
   const vaultClaudeMd = config?.vaultPath ? join(config.vaultPath, 'CLAUDE.md') : null;
+  const vaultAgentsMd = config?.vaultPath ? join(config.vaultPath, 'AGENTS.md') : null;
 
   result.claudeMdBlocks.global = (await removeSentinelBlock({ path: globalClaudeMd })).action;
   if (vaultClaudeMd) {
     result.claudeMdBlocks.vault = (
       await removeSentinelBlock({ path: vaultClaudeMd, deleteIfEmpty: true })
+    ).action;
+  }
+  if (vaultAgentsMd) {
+    result.agentsMdBlock = (
+      await removeSentinelBlock({ path: vaultAgentsMd, deleteIfEmpty: true })
     ).action;
   }
 
