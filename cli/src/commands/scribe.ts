@@ -203,6 +203,7 @@ export async function scribePatchCmd(
     occurrence?: string;
     date?: string;
     dryRun?: boolean;
+    frontmatter?: boolean;
   },
 ): Promise<void> {
   try {
@@ -217,10 +218,13 @@ export async function scribePatchCmd(
           occurrence,
           date: opts.date,
           dryRun: opts.dryRun,
+          frontmatter: opts.frontmatter,
         },
         await ctx(),
       );
-      log.success(`${opts.dryRun ? 'would replace' : 'replaced'} text in ${res.path}`);
+      log.success(
+        `${opts.dryRun ? 'would replace' : 'replaced'} text in ${opts.frontmatter ? 'frontmatter of ' : ''}${res.path}`,
+      );
       return;
     }
     if (!opts.section) throw new Error('pass --section <heading> or --find/--replace');
@@ -228,7 +232,14 @@ export async function scribePatchCmd(
     if (!body.trim()) throw new Error('empty body - pipe content on stdin or pass --body');
     const res = await scribePatch(
       notePath,
-      { section: opts.section, body, occurrence, date: opts.date, dryRun: opts.dryRun },
+      {
+        section: opts.section,
+        body,
+        occurrence,
+        date: opts.date,
+        dryRun: opts.dryRun,
+        frontmatter: opts.frontmatter,
+      },
       await ctx(),
     );
     log.success(`${opts.dryRun ? 'would patch' : 'patched'} ## ${opts.section} in ${res.path}`);

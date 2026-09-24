@@ -916,3 +916,98 @@ describe('scribeBackfillType', () => {
     expect(second.changed).toEqual([]);
   });
 });
+
+describe('scribePatch --frontmatter', () => {
+  let vault: string;
+  const broken =
+    '---\nkind: learning\ntitle: Carve-out PRs: fork everything\nupdated: 2026-05-06\n---\n# Carve-out PRs\n\nbody title: stays\n';
+
+  beforeEach(async () => {
+    vault = await mkdtemp(join(tmpdir(), 'mm-fmpatch-'));
+    await mkdir(join(vault, 'Learnings'), { recursive: true });
+    await writeFile(join(vault, 'Learnings/carve.md'), broken, 'utf8');
+  });
+
+  afterEach(async () => {
+    await rm(vault, { recursive: true, force: true });
+  });
+
+  it('repairs frontmatter that does not parse and leaves the body alone', async () => {
+    await scribePatch(
+      'Learnings/carve.md',
+      {
+        frontmatter: true,
+        find: 'title: Carve-out PRs: fork everything',
+        replace: 'title: "Carve-out PRs: fork everything"',
+      },
+      { vaultRoot: vault, now: fixedNow },
+    );
+    const raw = await readFile(join(vault, 'Learnings/carve.md'), 'utf8');
+    expect(raw).toContain('title: "Carve-out PRs: fork everything"\n');
+    expect(raw).toContain('updated: 2026-04-21\n');
+    expect(raw).toContain('\nbody title: stays\n');
+  });
+
+  it('refuses a replacement that leaves invalid YAML and writes nothing', async () => {
+    await expect(
+      scribePatch(
+        'Learnings/carve.md',
+        { frontmatter: true, find: 'kind: learning', replace: 'kind: a: b' },
+        { vaultRoot: vault, now: fixedNow },
+      ),
+    ).rejects.toThrow(/frontmatter would not parse/);
+    expect(await readFile(join(vault, 'Learnings/carve.md'), 'utf8')).toBe(broken);
+  });
+
+  it('dry-run validates but writes nothing', async () => {
+    await expect(
+      scribePatch(
+        'Learnings/carve.md',
+        { frontmatter: true, find: 'kind: learning', replace: 'kind: a: b', dryRun: true },
+        { vaultRoot: vault, now: fixedNow },
+      ),
+    ).rejects.toThrow(/frontmatter would not parse/);
+    await scribePatch(
+      'Learnings/carve.md',
+      {
+        frontmatter: true,
+        find: 'title: Carve-out PRs: fork everything',
+        replace: 'title: "Carve-out PRs: fork everything"',
+        dryRun: true,
+      },
+      { vaultRoot: vault, now: fixedNow },
+    );
+    expect(await readFile(join(vault, 'Learnings/carve.md'), 'utf8')).toBe(broken);
+  });
+
+  it('does not match text that only appears in the body', async () => {
+    await expect(
+      scribePatch(
+        'Learnings/carve.md',
+        { frontmatter: true, find: 'body title: stays', replace: 'x' },
+        { vaultRoot: vault, now: fixedNow },
+      ),
+    ).rejects.toThrow(/not found in frontmatter/);
+  });
+
+  it('refuses a note without frontmatter', async () => {
+    await writeFile(join(vault, 'Learnings/plain.md'), '# Plain\n', 'utf8');
+    await expect(
+      scribePatch(
+        'Learnings/plain.md',
+        { frontmatter: true, find: 'Plain', replace: 'x' },
+        { vaultRoot: vault, now: fixedNow },
+      ),
+    ).rejects.toThrow(/no frontmatter/);
+  });
+
+  it('refuses --frontmatter with --section', async () => {
+    await expect(
+      scribePatch(
+        'Learnings/carve.md',
+        { frontmatter: true, section: 'X', body: 'y' },
+        { vaultRoot: vault, now: fixedNow },
+      ),
+    ).rejects.toThrow(/--frontmatter/);
+  });
+});

@@ -11,6 +11,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+import { parse as parseYaml } from 'yaml';
 import { parseCodeRef } from '../coderefs/coderefs.js';
 import { type DateArg, resolveDate } from './daily.js';
 import {
@@ -78,6 +79,7 @@ export interface PatchOpts {
   occurrence?: number;
   date?: DateArg;
   dryRun?: boolean;
+  frontmatter?: boolean;
 }
 
 export function slugify(s: string): string {
@@ -432,6 +434,44 @@ export async function scribePatch(
   const now = ctx.now ? ctx.now() : new Date();
   assertDailyDateAck(abs, opts.date, now, 'patch');
   const raw = await readFile(abs, 'utf8');
+
+  if (opts.frontmatter) {
+    if (opts.section !== undefined) {
+      throw new Error('--frontmatter works with --find/--replace, not --section');
+    }
+    if (opts.find === undefined || opts.find === '') throw new Error('--find requires text');
+    if (opts.replace === undefined) throw new Error('--find requires --replace (may be empty)');
+    const { raw: fmText, bodyStart } = splitFrontmatter(raw);
+    if (bodyStart === 0) throw new Error(`note has no frontmatter: ${abs}`);
+    const indices: number[] = [];
+    for (let i = fmText.indexOf(opts.find); i !== -1; i = fmText.indexOf(opts.find, i + 1)) {
+      indices.push(i);
+    }
+    if (indices.length === 0) throw new Error(`text not found in frontmatter: ${opts.find}`);
+    if (indices.length > 1 && opts.occurrence === undefined) {
+      throw new Error(
+        `--find matches ${indices.length} occurrences - pass --occurrence N (1-indexed)`,
+      );
+    }
+    const at = indices[(opts.occurrence ?? 1) - 1];
+    if (at === undefined)
+      throw new Error(`--occurrence ${opts.occurrence} out of range (1..${indices.length})`);
+    const nextFm = fmText.slice(0, at) + opts.replace + fmText.slice(at + opts.find.length);
+    let parsed: unknown;
+    try {
+      parsed = parseYaml(nextFm);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message.split('\n')[0] : String(err);
+      throw new Error(`frontmatter would not parse after the replacement: ${reason}`);
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('frontmatter would not parse after the replacement: not a key/value map');
+    }
+    if (opts.dryRun) return { path: abs };
+    const next = raw.slice(0, 4) + nextFm + raw.slice(4 + fmText.length);
+    await writeFile(abs, rewriteFrontmatterField(next, 'updated', isoDate(now)), 'utf8');
+    return { path: abs };
+  }
 
   if (findMode) {
     if (opts.find === undefined || opts.find === '') throw new Error('--find requires text');

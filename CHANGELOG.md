@@ -6,6 +6,12 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.28.2 - 2026-09-24
+
+### Added
+
+- **`scribe patch --frontmatter`.** `--find/--replace` can now edit the frontmatter instead of the body, including frontmatter that does not parse today, which is how a note with an unquoted `title: a: b` gets repaired without a raw write. The result must parse as a YAML key/value map or nothing is written, and `--dry-run` runs the same check. Before this no scribe verb could touch frontmatter, so such notes were stuck, and `backfill-type` skipped them.
+
 ## 0.28.1 - 2026-09-24
 
 ### Changed

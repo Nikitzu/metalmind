@@ -451,6 +451,10 @@ function attachScribeSubcommands(parent: Command): void {
     .option('--find <text>', 'Literal text to replace in the note body (frontmatter untouched)')
     .option('--replace <text>', 'Replacement for --find (empty string deletes)')
     .option(
+      '--frontmatter',
+      'Apply --find/--replace to the frontmatter instead of the body; refuses a result that is not valid YAML',
+    )
+    .option(
       '--occurrence <n>',
       '1-indexed occurrence when the section or --find text matches multiple times',
     )
