@@ -112,6 +112,19 @@ def fts_file_count() -> int:
         return int(cur.fetchone()[0])
 
 
+def fts_files() -> set[str]:
+    with fts_conn() as conn:
+        return {row[0] for row in conn.execute("SELECT DISTINCT file FROM chunks")}
+
+
+def fts_written_at() -> float:
+    """Last write to the FTS index. Writes land in the -wal file before a
+    checkpoint moves them into the database, so both mtimes count."""
+    wal = FTS_DB_PATH.with_name(FTS_DB_PATH.name + "-wal")
+    stamps = [p.stat().st_mtime for p in (FTS_DB_PATH, wal) if p.exists()]
+    return max(stamps) if stamps else 0.0
+
+
 def chunk_markdown(text: str) -> list[tuple[str, str]]:
     lines = text.split("\n")
     chunks: list[tuple[str, str]] = []

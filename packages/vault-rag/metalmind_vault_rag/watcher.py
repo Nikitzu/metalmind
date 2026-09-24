@@ -31,7 +31,9 @@ from .core import (
     embedding_backend,
     files_to_index,
     fts_file_count,
+    fts_files,
     fts_row_count,
+    fts_written_at,
     in_skip_dir,
     vector_store,
 )
@@ -152,6 +154,36 @@ def _maybe_backfill() -> None:
         )
 
 
+def _catch_up() -> None:
+    """Reindex what changed while the watcher was not running.
+
+    Events only arrive while the watcher runs, so a note pulled, written or
+    deleted while it was stopped stays wrong in the index until it changes
+    again. A note counts as changed when it is missing from the index or was
+    modified after the index was last written."""
+    try:
+        indexed = fts_files()
+        written_at = fts_written_at()
+    except Exception as e:
+        print(f"catch-up: could not read the index ({e}); skipping", flush=True)
+        return
+    stale: list[Path] = []
+    on_disk: set[str] = set()
+    for path in files_to_index():
+        rel = str(path.relative_to(VAULT))
+        on_disk.add(rel)
+        if rel not in indexed or path.stat().st_mtime > written_at:
+            stale.append(path)
+    stale.extend(VAULT / rel for rel in sorted(indexed - on_disk))
+    if not stale:
+        return
+    print(f"catch-up: reindexing {len(stale)} file(s) changed while stopped", flush=True)
+    try:
+        reindex_paths(stale)
+    except Exception as e:
+        print(f"catch-up failed: {e}", flush=True)
+
+
 def _maybe_stamp_index() -> None:
     """Record the format of an index built before stamping existed, or report
     one built by something else.
@@ -224,6 +256,7 @@ def main() -> None:
     _install_log_rotation()
     print(f"watching {VAULT}", flush=True)
     _maybe_backfill()
+    _catch_up()
     # Fire up the co-hosted HTTP recall endpoint (127.0.0.1 only). If the port
     # is busy or binding fails, watcher keeps working - CLI falls back to stdio.
     http_server.serve_forever()
