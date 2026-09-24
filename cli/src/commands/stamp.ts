@@ -17,7 +17,7 @@ import {
   resolveWatcherBinPath,
 } from '../install/vault-rag.js';
 import { installWatcher } from '../install/watcher.js';
-import { scribeBackfillType } from '../scribe/scribe.js';
+import { scribeBackfillType, typeGapSummary } from '../scribe/scribe.js';
 import { awaitIndexStatus, promptRebuildIfStale } from './index-cmd.js';
 
 export interface StampOptions {
@@ -65,13 +65,10 @@ export async function stamp(opts: StampOptions = {}): Promise<void> {
   const vault = await setupVault({ vaultPath: config.vaultPath, flavor: config.flavor });
   log.info(`  CLAUDE.md ${vault.claudeMdAction}`);
   log.info(`  AGENTS.md ${vault.agentsMdAction}`);
-  const untyped = (await scribeBackfillType({ vaultRoot: config.vaultPath }, { dryRun: true }))
-    .changed.length;
-  if (untyped > 0) {
-    log.warn(
-      `  ${untyped} note(s) have kind: but no type: - run \`metalmind scribe backfill-type\``,
-    );
-  }
+  const typeGaps = typeGapSummary(
+    await scribeBackfillType({ vaultRoot: config.vaultPath }, { dryRun: true, fromFolder: true }),
+  );
+  if (typeGaps) log.warn(`  ${typeGaps}`);
 
   if (chosenHosts.includes('claude')) {
     log.step('Global CLAUDE.md block + rules/agents/commands');

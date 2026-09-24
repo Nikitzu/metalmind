@@ -3,7 +3,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  insertKindAndType,
   insertTypeAfterKind,
+  kindFromFolder,
   resolveNotePath,
   scribeArchive,
   scribeBackfillType,
@@ -1009,5 +1011,103 @@ describe('scribePatch --frontmatter', () => {
         { vaultRoot: vault, now: fixedNow },
       ),
     ).rejects.toThrow(/--frontmatter/);
+  });
+});
+
+describe('kindFromFolder', () => {
+  it('maps a folder to its kind, preferring the longest match', () => {
+    expect(kindFromFolder('Work/MOCs/metalmind.md')).toBe('moc');
+    expect(kindFromFolder('Work/overview.md')).toBe('work');
+    expect(kindFromFolder('Learnings/a.md')).toBe('learning');
+  });
+
+  it('reads Archive/<folder>/ as <folder>/', () => {
+    expect(kindFromFolder('Archive/Plans/2026-05-04-x.md')).toBe('plan');
+    expect(kindFromFolder('Archive/Work/y.md')).toBe('work');
+  });
+
+  it('returns null outside the table', () => {
+    expect(kindFromFolder('loose.md')).toBeNull();
+    expect(kindFromFolder('Archive/loose.md')).toBeNull();
+    expect(kindFromFolder('Attachments/x.md')).toBeNull();
+  });
+});
+
+describe('insertKindAndType', () => {
+  it('appends both lines at the end of the frontmatter and changes nothing else', () => {
+    const src = '---\ntags: [moc]\nproject: metalmind\n---\n# metalmind\n\nbody\n';
+    expect(insertKindAndType(src, 'moc')).toBe(
+      '---\ntags: [moc]\nproject: metalmind\nkind: moc\ntype: moc\n---\n# metalmind\n\nbody\n',
+    );
+  });
+
+  it('prepends a block when the note has no frontmatter', () => {
+    expect(insertKindAndType('# Overview\n\ntext\n', 'work')).toBe(
+      '---\nkind: work\ntype: work\n---\n# Overview\n\ntext\n',
+    );
+  });
+
+  it('fills an empty frontmatter block', () => {
+    expect(insertKindAndType('---\n---\n# T\n', 'plan')).toBe(
+      '---\nkind: plan\ntype: plan\n---\n# T\n',
+    );
+  });
+
+  it('returns null when kind: or type: exists, or the frontmatter does not parse', () => {
+    expect(insertKindAndType('---\nkind: work\n---\nb\n', 'work')).toBeNull();
+    expect(insertKindAndType('---\ntype: feedback\n---\nb\n', 'work')).toBeNull();
+    expect(insertKindAndType('---\ntitle: a: b\n---\nb\n', 'work')).toBeNull();
+  });
+});
+
+describe('scribeBackfillType --from-folder', () => {
+  let vault: string;
+
+  beforeEach(async () => {
+    vault = await mkdtemp(join(tmpdir(), 'mm-fromfolder-'));
+    await mkdir(join(vault, 'Work/MOCs'), { recursive: true });
+    await mkdir(join(vault, 'Archive/Plans'), { recursive: true });
+    await mkdir(join(vault, 'Learnings'), { recursive: true });
+    await writeFile(join(vault, 'Work/MOCs/m.md'), '---\nproject: x\n---\n# M\n', 'utf8');
+    await writeFile(join(vault, 'Archive/Plans/p.md'), '# Plan with no frontmatter\n', 'utf8');
+    await writeFile(join(vault, 'Learnings/k.md'), '---\nkind: learning\n---\n# K\n', 'utf8');
+    await writeFile(join(vault, 'loose.md'), '---\ntitle: T\n---\n# T\n', 'utf8');
+    await writeFile(join(vault, 'Learnings/broken.md'), '---\ntitle: a: b\n---\n# B\n', 'utf8');
+    await writeFile(join(vault, 'CLAUDE.md'), '# Knowledge Vault\n', 'utf8');
+    await writeFile(join(vault, 'AGENTS.md'), '# Knowledge Vault\n', 'utf8');
+  });
+
+  afterEach(async () => {
+    await rm(vault, { recursive: true, force: true });
+  });
+
+  it('without the flag only copies an existing kind:', async () => {
+    const res = await scribeBackfillType({ vaultRoot: vault }, { dryRun: true });
+    expect(res.changed).toEqual(['Learnings/k.md']);
+  });
+
+  it('dry-run lists inferred kinds and skipped notes without writing', async () => {
+    const res = await scribeBackfillType({ vaultRoot: vault }, { dryRun: true, fromFolder: true });
+    expect(res.changed).toEqual(['Archive/Plans/p.md', 'Learnings/k.md', 'Work/MOCs/m.md']);
+    expect(res.inferred).toEqual([
+      { path: 'Archive/Plans/p.md', kind: 'plan' },
+      { path: 'Work/MOCs/m.md', kind: 'moc' },
+    ]);
+    expect(res.skipped).toEqual(['Learnings/broken.md', 'loose.md']);
+    expect(await readFile(join(vault, 'Work/MOCs/m.md'), 'utf8')).toBe(
+      '---\nproject: x\n---\n# M\n',
+    );
+  });
+
+  it('writes the lines and changes nothing on a second run', async () => {
+    await scribeBackfillType({ vaultRoot: vault }, { fromFolder: true });
+    expect(await readFile(join(vault, 'Work/MOCs/m.md'), 'utf8')).toBe(
+      '---\nproject: x\nkind: moc\ntype: moc\n---\n# M\n',
+    );
+    expect(await readFile(join(vault, 'Archive/Plans/p.md'), 'utf8')).toBe(
+      '---\nkind: plan\ntype: plan\n---\n# Plan with no frontmatter\n',
+    );
+    const second = await scribeBackfillType({ vaultRoot: vault }, { fromFolder: true });
+    expect(second.changed).toEqual([]);
   });
 });

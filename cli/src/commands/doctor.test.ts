@@ -567,4 +567,18 @@ describe('checkUpgradeState', () => {
     expect(byName['note-types']?.detail).toContain('1 note');
     expect(byName['note-types']?.detail).toContain('backfill-type');
   });
+
+  it('counts notes with no kind: and points at --from-folder', async () => {
+    await writeFile(join(tmp, 'stamped-version'), '0.29.0\n', 'utf8');
+    await writeFile(join(tmp, 'vault', 'Learnings', 'b.md'), '---\ntitle: B\n---\n# B\n', 'utf8');
+    const { checkUpgradeState } = await import('./doctor.js');
+    const res = await checkUpgradeState(config, {
+      markerFile: join(tmp, 'stamped-version'),
+      current: '0.29.0',
+    });
+    const types = res.find((c) => c.name === 'note-types');
+    expect(types?.ok).toBe(true);
+    expect(types?.detail).toContain('1 note without kind:');
+    expect(types?.detail).toContain('backfill-type --from-folder');
+  });
 });

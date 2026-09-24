@@ -34,7 +34,7 @@ import {
   looksLikeNoteStem,
   readNoteFrontmatter,
 } from '../scribe/frontmatter.js';
-import { scribeBackfillType } from '../scribe/scribe.js';
+import { scribeBackfillType, typeGapSummary } from '../scribe/scribe.js';
 import { runCommand } from '../util/exec.js';
 import { detectObsidian } from '../util/obsidian.js';
 import { detectTolaria } from '../util/tolaria.js';
@@ -775,8 +775,9 @@ export async function checkUpgradeState(
   const hasAgentsBlock =
     existsSync(agentsMd) &&
     (await readFile(agentsMd, 'utf8')).includes('<!-- metalmind:managed:begin -->');
-  const untyped = (await scribeBackfillType({ vaultRoot: config.vaultPath }, { dryRun: true }))
-    .changed.length;
+  const typeGaps = typeGapSummary(
+    await scribeBackfillType({ vaultRoot: config.vaultPath }, { dryRun: true, fromFolder: true }),
+  );
   return [
     {
       name: 'stamped-version',
@@ -796,10 +797,7 @@ export async function checkUpgradeState(
     {
       name: 'note-types',
       ok: true,
-      detail:
-        untyped === 0
-          ? 'every note with kind: also has type:'
-          : `${untyped} note${untyped === 1 ? '' : 's'} with kind: but no type: - run \`metalmind scribe backfill-type\``,
+      detail: typeGaps ?? 'every note has kind: and type:',
     },
   ];
 }

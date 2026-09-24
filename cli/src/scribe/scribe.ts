@@ -240,18 +240,92 @@ async function markdownFiles(dir: string): Promise<string[]> {
   return out;
 }
 
+export function kindFromFolder(relPath: string): ScribeKind | null {
+  const dir = dirname(relPath)
+    .split(sep)
+    .join('/')
+    .replace(/^Archive(\/|$)/, '');
+  let best: ScribeKind | null = null;
+  let bestLength = -1;
+  for (const [kind, folder] of Object.entries(KIND_DIRS) as [ScribeKind, string][]) {
+    const inside = dir === folder || dir.startsWith(`${folder}/`);
+    if (inside && folder.length > bestLength) {
+      best = kind;
+      bestLength = folder.length;
+    }
+  }
+  return best;
+}
+
+export function insertKindAndType(source: string, kind: ScribeKind): string | null {
+  const { raw, bodyStart } = splitFrontmatter(source);
+  if (bodyStart === 0) {
+    if (source.startsWith('---\n')) return null;
+    return `---\nkind: ${kind}\ntype: ${kind}\n---\n${source}`;
+  }
+  const { fm } = parseFrontmatter(source);
+  if (raw.trim() !== '' && Object.keys(fm).length === 0) return null;
+  if ('kind' in fm || 'type' in fm) return null;
+  const at = raw === '' ? 3 : 4 + raw.length;
+  const eol = source.slice(at, at + 2) === '\r\n' ? '\r\n' : '\n';
+  return `${source.slice(0, at)}${eol}kind: ${kind}${eol}type: ${kind}${source.slice(at)}`;
+}
+
+function lacksKindAndType(source: string): boolean {
+  const { raw } = splitFrontmatter(source);
+  return !/^(kind|type):/m.test(raw);
+}
+
+const VAULT_INSTRUCTION_FILES = new Set(['CLAUDE.md', 'AGENTS.md']);
+
+export interface BackfillTypeResult {
+  changed: string[];
+  inferred: { path: string; kind: ScribeKind }[];
+  skipped: string[];
+}
+
+export function typeGapSummary(res: BackfillTypeResult): string | null {
+  const withoutType = res.changed.length - res.inferred.length;
+  const withoutKind = res.inferred.length + res.skipped.length;
+  if (withoutType === 0 && withoutKind === 0) return null;
+  const notes = (n: number) => `${n} note${n === 1 ? '' : 's'}`;
+  const parts: string[] = [];
+  if (withoutType > 0) parts.push(`${notes(withoutType)} with kind: but no type:`);
+  if (withoutKind > 0) parts.push(`${notes(withoutKind)} without kind:`);
+  const command =
+    withoutKind > 0
+      ? 'metalmind scribe backfill-type --from-folder'
+      : 'metalmind scribe backfill-type';
+  return `${parts.join(', ')} - run \`${command}\``;
+}
+
 export async function scribeBackfillType(
   ctx: ScribeOpts,
-  opts: { dryRun?: boolean },
-): Promise<{ changed: string[] }> {
-  const changed: string[] = [];
+  opts: { dryRun?: boolean; fromFolder?: boolean },
+): Promise<BackfillTypeResult> {
+  const result: BackfillTypeResult = { changed: [], inferred: [], skipped: [] };
   for (const abs of await markdownFiles(ctx.vaultRoot)) {
-    const next = insertTypeAfterKind(await readFile(abs, 'utf8'));
+    const rel = relative(ctx.vaultRoot, abs);
+    if (VAULT_INSTRUCTION_FILES.has(rel)) continue;
+    const source = await readFile(abs, 'utf8');
+    let next = insertTypeAfterKind(source);
+    if (next === null && opts.fromFolder && lacksKindAndType(source)) {
+      const kind = kindFromFolder(rel);
+      next = kind ? insertKindAndType(source, kind) : null;
+      if (next === null || kind === null) {
+        result.skipped.push(rel);
+        continue;
+      }
+      result.inferred.push({ path: rel, kind });
+    }
     if (next === null) continue;
-    changed.push(relative(ctx.vaultRoot, abs));
+    result.changed.push(rel);
     if (!opts.dryRun) await writeFile(abs, next, 'utf8');
   }
-  return { changed: changed.sort() };
+  result.changed.sort();
+  result.inferred.sort((a, b) => a.path.localeCompare(b.path));
+  result.skipped.sort();
+  return result;
 }
 
 function removeFrontmatterField(source: string, key: string): string {

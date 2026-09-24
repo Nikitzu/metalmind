@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.30.0',
+    date: '2026-09-24',
+    headline: 'Type the oldest notes from their folder',
+    summary: "scribe backfill-type --from-folder gives notes with neither kind: nor type: the kind of their folder, written as both, so notes from before scribe stamped kind: stop showing untyped in Tolaria. Work/MOCs/ is moc, Archive/Plans/ is plan. Two lines are added to an existing block, or a two-line block is prepended; folders outside the table and unparseable frontmatter are listed and left alone. doctor --deep and stamp count what is left.",
+    tag_kind: 'added',
+  },
+  {
     tag: '0.29.0',
     date: '2026-09-24',
     headline: 'An upgrade applies itself',

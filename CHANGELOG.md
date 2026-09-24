@@ -6,6 +6,14 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.30.0 - 2026-09-24
+
+### Added
+
+- **`scribe backfill-type --from-folder`.** `backfill-type` copies an existing `kind:` into `type:`, so notes written before scribe stamped `kind:` stayed untyped in Tolaria. With `--from-folder`, a note that has neither key gets the kind of its folder, written as both, using the same folder table as `scribe create` with the longest match first (`Work/MOCs/` is `moc`, not `work`) and `Archive/<folder>/` read as `<folder>/`. A note with frontmatter gains two lines at the end of the block and is otherwise unchanged; a note with none gains a block holding only those two lines. Notes in folders outside the table, or with frontmatter that does not parse, are listed and left alone, and the vault's own `CLAUDE.md` and `AGENTS.md` are never touched. `doctor --deep` and `stamp` now also count notes without `kind:` and name the flag.
+
+---
+
 ## 0.29.0 - 2026-09-24
 
 ### Added

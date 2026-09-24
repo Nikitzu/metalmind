@@ -59,7 +59,7 @@ metalmind scribe patch learning:carve-out-prs --frontmatter \
   --replace 'title: "Carve-out PRs: fork everything"' --dry-run
 ```
 
-`--frontmatter` points `--find/--replace` at the frontmatter instead of the body, and it refuses a result that is not valid YAML, dry run included. Notes written before scribe stamped `type:` get it from `metalmind scribe backfill-type`, which adds one line per note and skips any note that already has a `type:` or does not parse.
+`--frontmatter` points `--find/--replace` at the frontmatter instead of the body, and it refuses a result that is not valid YAML, dry run included. Notes written before scribe stamped `type:` get it from `metalmind scribe backfill-type`, which adds one line per note and skips any note that already has a `type:` or does not parse. Notes older still, with no `kind:` either, get both from their folder with `metalmind scribe backfill-type --from-folder` (`Archive/Plans/` counts as `Plans/`); notes in folders outside the kind table are listed and left alone.
 
 ### Title and first line
 

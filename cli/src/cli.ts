@@ -508,7 +508,13 @@ function attachScribeSubcommands(parent: Command): void {
     .command('backfill-type')
     .description('Add type: (mirrors kind:) to notes missing it, so Tolaria groups them.')
     .option('--dry-run', 'Preview only')
-    .action((cmdOpts: { dryRun?: boolean }) => scribeBackfillTypeCmd(cmdOpts));
+    .option(
+      '--from-folder',
+      'Also give notes with neither kind: nor type: the kind of their folder (Archive/<folder>/ counts as <folder>/)',
+    )
+    .action((cmdOpts: { dryRun?: boolean; fromFolder?: boolean }) =>
+      scribeBackfillTypeCmd(cmdOpts),
+    );
 }
 
 const scribeCmd = program

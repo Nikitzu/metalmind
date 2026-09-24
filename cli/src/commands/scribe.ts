@@ -357,11 +357,30 @@ export async function scribeShowCmd(notePath: string): Promise<void> {
   }
 }
 
-export async function scribeBackfillTypeCmd(opts: { dryRun?: boolean }): Promise<void> {
+export async function scribeBackfillTypeCmd(opts: {
+  dryRun?: boolean;
+  fromFolder?: boolean;
+}): Promise<void> {
   try {
-    const res = await scribeBackfillType(await ctx(), { dryRun: opts.dryRun });
-    if (opts.dryRun) for (const path of res.changed) log.info(`  ${path}`);
+    const res = await scribeBackfillType(await ctx(), {
+      dryRun: opts.dryRun,
+      fromFolder: opts.fromFolder,
+    });
+    if (opts.dryRun) {
+      const inferred = new Map(res.inferred.map((i) => [i.path, i.kind]));
+      for (const path of res.changed) {
+        const kind = inferred.get(path);
+        log.info(`  ${path}${kind ? `  (kind from folder: ${kind})` : ''}`);
+      }
+    }
     log.success(`${opts.dryRun ? 'would add' : 'added'} type: to ${res.changed.length} note(s)`);
+    if (res.inferred.length > 0) {
+      log.info(`  ${res.inferred.length} of them also get kind: from their folder`);
+    }
+    if (res.skipped.length > 0) {
+      log.warn(`  skipped ${res.skipped.length} note(s) with no kind: that could not be typed:`);
+      for (const path of res.skipped) log.warn(`    ${path}`);
+    }
   } catch (err) {
     fail(err instanceof Error ? err.message : String(err));
   }

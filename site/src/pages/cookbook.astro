@@ -34,7 +34,7 @@ const description = 'Opinionated patterns for using metalmind well - writing not
 
       <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Repairing frontmatter</h3>
       <p style="color: var(--ink-mute); max-width: 64ch;">
-        A value with <span class="kbd">: </span> in it, or one starting with <span class="kbd">@</span>, must be quoted, or the whole frontmatter stops parsing. Fix it with <span class="kbd">metalmind scribe patch &lt;note&gt; --frontmatter --find '…' --replace '…'</span>, which refuses a result that is not valid YAML. <span class="kbd">metalmind scribe backfill-type</span> adds <span class="kbd">type:</span> to notes written before scribe stamped it.
+        A value with <span class="kbd">: </span> in it, or one starting with <span class="kbd">@</span>, must be quoted, or the whole frontmatter stops parsing. Fix it with <span class="kbd">metalmind scribe patch &lt;note&gt; --frontmatter --find '…' --replace '…'</span>, which refuses a result that is not valid YAML. <span class="kbd">metalmind scribe backfill-type</span> adds <span class="kbd">type:</span> to notes written before scribe stamped it. Add <span class="kbd">--from-folder</span> to also give notes with no <span class="kbd">kind:</span> the kind of their folder.
       </p>
 
       <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Title and first line</h3>
