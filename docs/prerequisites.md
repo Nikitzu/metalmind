@@ -6,9 +6,9 @@ The installer fails fast if anything is missing. Install these first.
 
 Tested on macOS 14+ (Apple Silicon; Intel Macs should work) and Ubuntu 22.04+ / Debian 12+ via WSL2 or native. Native Windows is not supported - WSL2 works via the Linux path.
 
-## Obsidian (optional but recommended)
+## A markdown editor (optional but recommended)
 
-[obsidian.md](https://obsidian.md/). On first launch, open or create a vault at your chosen path (default `~/Knowledge/`). The installer will add the expected folder structure and a managed block in `CLAUDE.md`.
+[obsidian.md](https://obsidian.md/) or [Tolaria](https://tolaria.md/). Open or create a vault at your chosen path (default `~/Knowledge/`). The installer adds the expected folder structure and a managed block in the vault `CLAUDE.md` and `AGENTS.md`. Notes carry both `kind:` and `type:`, so either editor shows them typed, and `metalmind doctor` reports which of the two it finds.
 
 ## uv
 

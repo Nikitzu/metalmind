@@ -22,7 +22,7 @@ Every module reads or writes through these - never bypassing them. The integrati
 
 ### 1. The vault (`~/Knowledge/` by default)
 
-Plain-markdown vault with frontmatter (Obsidian-compatible, not required). Owned by the user, never by metalmind. Folder layout:
+Plain-markdown vault with frontmatter (Obsidian- and Tolaria-compatible, neither required). Every note carries `kind:` for metalmind and a matching `type:` for Tolaria, which groups notes by that key. Owned by the user, never by metalmind. Folder layout:
 
 ```
 <vault>/
@@ -55,6 +55,7 @@ metalmind writes blocks into user-owned files between sentinels:
 Stamped files (per host, only the hosts you chose at `init`):
 - `~/.claude/CLAUDE.md` - global rule for every Claude Code session
 - `<vault>/CLAUDE.md` - vault-local rules (folders, lookup ladder, daily-date contract)
+- `<vault>/AGENTS.md` - the same vault block, for Tolaria, Codex and other agents that read `AGENTS.md` (v0.28.0)
 - `~/.claude/settings.json` - env vars + SessionStart hook entry (sentinel keys, not text)
 - `~/.codex/AGENTS.md` + `~/.codex/config.toml` - Codex CLI rules and config (v0.8.0)
 - `~/.cursor/skills/`, `~/.cursor/agents/`, `~/.cursor/hooks.json` - Cursor recall skill, subagents, and the latent sessionStart hook (v0.9.0)

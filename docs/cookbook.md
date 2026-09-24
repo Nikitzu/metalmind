@@ -22,7 +22,7 @@ A note that recall can find quickly is one that's *aligned* on three axes: title
 
 - **`--project <slug>`** - the strongest discoverability signal. Notes with `project: foo` automatically link to `Work/MOCs/foo.md` and surface together. Use a slug, not a label (`metalmind` not `metalmind project`). One project per note.
 - **`--tags a,b,c`** - for cross-cutting *themes*, not categories. `caching`, `auth`, `regression-postmortem` are tags. `metalmind` would be a tag if it weren't already the project - don't double-encode. Three focused tags beat ten generic ones.
-- **`--kind <plan|learning|work|moc|daily|inbox|memory|personal>`** - the folder. See [What lives where](#what-lives-where).
+- **`--kind <plan|learning|work|moc|daily|inbox|memory|personal>`** - the folder. See [What lives where](#what-lives-where). scribe also writes the same value as `type:`, because Tolaria groups notes by `type:` and Obsidian ignores it.
 
 A frontmatter that looks right:
 
@@ -30,6 +30,7 @@ A frontmatter that looks right:
 ---
 project: metalmind
 kind: learning
+type: learning
 tags: [retrieval, caching, regression]
 created: 2026-04-21
 updated: 2026-04-21
@@ -47,6 +48,18 @@ status: maybe
 ```
 
 Generic tags are noise. No project = no MOC = orphan in the graph.
+
+### Repairing frontmatter
+
+A value with `: ` in it, or one that starts with `@`, has to be quoted. Unquoted, the whole frontmatter stops parsing, and recall, `scribe list` and `backfill-type` all treat the note as having none. Fix it through scribe rather than a raw edit:
+
+```bash
+metalmind scribe patch learning:carve-out-prs --frontmatter \
+  --find 'title: Carve-out PRs: fork everything' \
+  --replace 'title: "Carve-out PRs: fork everything"' --dry-run
+```
+
+`--frontmatter` points `--find/--replace` at the frontmatter instead of the body, and it refuses a result that is not valid YAML, dry run included. Notes written before scribe stamped `type:` get it from `metalmind scribe backfill-type`, which adds one line per note and skips any note that already has a `type:` or does not parse.
 
 ### Title and first line
 

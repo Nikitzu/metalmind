@@ -9,6 +9,48 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.28.3',
+    date: '2026-09-24',
+    headline: 'pnpm dev passes arguments literally',
+    summary: "The repo pinned pnpm 9.12.0, whose pnpm run pasted extra arguments into a shell command inside double quotes, so a backtick or $ in an argument ran as a command or expanded. The pin is now pnpm 12.5.1, and a test holds it at 12 or later. It also ends the trap where a global install run from inside the repo landed in pnpm 9's global directory. The published CLI was never affected.",
+    tag_kind: 'fixed',
+  },
+  {
+    tag: '0.28.2',
+    date: '2026-09-24',
+    headline: 'Repair frontmatter through scribe',
+    summary: "scribe patch --frontmatter applies --find/--replace to the frontmatter instead of the body, including frontmatter that does not parse today, and refuses a result that is not valid YAML, dry run included. Before this no scribe verb could touch frontmatter, so a note with an unquoted title: a: b was stuck and backfill-type skipped it.",
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.28.1',
+    date: '2026-09-24',
+    headline: 'Agents know how to use Tolaria',
+    summary: "The vault block says what to do when the Tolaria MCP is connected: read with search_notes, get_note and get_vault_context, drive the app with open_note, highlight_editor and refresh_vault, and keep recall and every write on the metalmind CLI. The section is the same on every machine, so a vault synced between machines does not churn its CLAUDE.md and AGENTS.md.",
+    tag_kind: 'changed',
+  },
+  {
+    tag: '0.28.0',
+    date: '2026-09-24',
+    headline: 'One vault, Obsidian or Tolaria',
+    summary: "Notes carry type: next to kind:, since Tolaria groups notes by type: and Obsidian ignores it. scribe backfill-type adds the line to existing notes, one line per file, and skips any note that already has a type: or does not parse. stamp writes the vault block to AGENTS.md as well, which Tolaria hands to connected agents, and uninstall strips it. doctor reports Tolaria beside Obsidian.",
+    tag_kind: 'added',
+  },
+  {
+    tag: '0.27.1',
+    date: '2026-09-23',
+    headline: 'The judge pins its model',
+    summary: "The default model was the jev-latest alias, which moves when TypeSafe ships a release and would shift the probabilities under the tuned thresholds. The judge now pins jev-1.13.0, and config v7 rewrites a stored jev-latest on first load. Any other model a config names is kept.",
+    tag_kind: 'changed',
+  },
+  {
+    tag: '0.27.0',
+    date: '2026-09-22',
+    headline: 'Supersede hint on save',
+    summary: "The judged scribe create and scribe update gate also asks, per candidate and in the same request, whether the draft changes, retracts or replaces a decision, number or condition the existing note states. At 0.70 or above it prints the note and, once the new one exists, the exact scribe supersede line to run. Nothing is superseded automatically.",
+    tag_kind: 'added',
+  },
+  {
     tag: '0.26.2',
     date: '2026-09-18',
     headline: 'Label the judge, then measure it',

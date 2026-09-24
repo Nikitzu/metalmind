@@ -29,8 +29,13 @@ const description = 'Opinionated patterns for using metalmind well - writing not
       <ul class="anti-list" style="margin-top: var(--space-4)">
         <li><strong>--project &lt;slug&gt;</strong> is the strongest discoverability signal. Notes with <span class="kbd">project: foo</span> auto-link to <span class="kbd">Work/MOCs/foo.md</span> and surface together. Use a slug, not a label. One project per note.</li>
         <li><strong>--tags a,b,c</strong> for cross-cutting <em>themes</em>, not categories. <span class="kbd">caching</span>, <span class="kbd">auth</span>, <span class="kbd">regression-postmortem</span> are tags. Three focused tags beat ten generic ones.</li>
-        <li><strong>--kind</strong> picks the folder. See <a class="inline" href="#what-lives-where">What lives where</a>.</li>
+        <li><strong>--kind</strong> picks the folder. See <a class="inline" href="#what-lives-where">What lives where</a>. scribe also writes it as <span class="kbd">type:</span>, which Tolaria groups notes by and Obsidian ignores.</li>
       </ul>
+
+      <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Repairing frontmatter</h3>
+      <p style="color: var(--ink-mute); max-width: 64ch;">
+        A value with <span class="kbd">: </span> in it, or one starting with <span class="kbd">@</span>, must be quoted, or the whole frontmatter stops parsing. Fix it with <span class="kbd">metalmind scribe patch &lt;note&gt; --frontmatter --find '…' --replace '…'</span>, which refuses a result that is not valid YAML. <span class="kbd">metalmind scribe backfill-type</span> adds <span class="kbd">type:</span> to notes written before scribe stamped it.
+      </p>
 
       <h3 class="display" style="font-size: 22px; margin-top: var(--space-6); margin-bottom: var(--space-3);">Title and first line</h3>
       <p style="color: var(--ink-mute); max-width: 64ch;">The title is the H1. The first sentence is the highest-weighted text the embedder sees. Both should carry the topic.</p>
