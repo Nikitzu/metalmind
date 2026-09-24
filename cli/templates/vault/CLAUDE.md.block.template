@@ -34,4 +34,11 @@ MOCs live at `Work/MOCs/<project>.md` and index all notes on that project. Proje
 - Daily notes for non-today dates require `--date <YYYY-MM-DD>` (scribe) or live under `metalmind atium` (canonical for daily action items).
 - Never touch `Welcome.md` or `.obsidian/`.
 
+**Tolaria** (only when `mcp__tolaria__*` tools are connected; the vault may be open in the Tolaria app):
+
+- Recall and every write stay on the `metalmind` CLI above. Tolaria's MCP is for reading and for driving the app.
+- Read with `search_notes`, `get_note` and `get_vault_context`.
+- Show the user a note with `open_note`, point at part of the app with `highlight_editor`, and call `refresh_vault` if a note metalmind just wrote does not appear in Tolaria.
+- Never use `create_note`, `update_note`, `append_to_note`, `attach_vault` or `clone_vault`.
+
 **Inbox/ files untouched >14 days** → propose triage on next `/save`.

@@ -6,6 +6,12 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.28.1 - 2026-09-24
+
+### Changed
+
+- **The vault block tells agents how to use Tolaria.** When the Tolaria MCP is connected, agents read with `search_notes`, `get_note` and `get_vault_context`, drive the app with `open_note`, `highlight_editor` and `refresh_vault`, and keep recall and every write on the metalmind CLI. The section is the same on every machine rather than stamped only where Tolaria is installed, because the vault syncs between machines and a per-machine block would rewrite `CLAUDE.md` and `AGENTS.md` on every sync.
+
 ## 0.28.0 - 2026-09-24
 
 ### Added
