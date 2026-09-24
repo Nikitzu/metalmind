@@ -6,6 +6,20 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.29.0 - 2026-09-24
+
+### Added
+
+- **An upgrade applies itself.** `pnpm add -g metalmind@<new>` used to change nothing until you ran `metalmind stamp`, and nothing said so; tested on clean containers, an install upgraded from 0.27.1 kept its old stamped block and had no vault `AGENTS.md`. `stamp` and `init` now record the version in `~/.metalmind/stamped-version`, and the first other command after a version change runs `metalmind stamp --no-prompt` once in a child process, logging to `~/.metalmind/logs/auto-stamp.log` and printing one line to stderr, so `--json` output stays clean. An install with no recorded version counts as out of date, which covers every upgrade from before this release. A lock keeps parallel commands from stamping twice. `METALMIND_NO_AUTO_STAMP=1` turns it off.
+- **Upgrade state in `doctor --deep` and `stamp`.** doctor fails when the stamp is older than the CLI or the vault `AGENTS.md` lacks the managed block, and both `doctor --deep` and `stamp` name how many notes carry `kind:` without `type:` and the command that fixes them. Nothing rewrites notes on its own.
+
+### Fixed
+
+- **`init` ignored every `--no-…` flag.** Commander parses `--no-serena` as `serena: false`, which the option resolver read as "not given", so `--yes --no-serena --no-git` still installed Serena and ran `git init`. Affected `--no-serena`, `--no-teams`, `--no-eod-hook`, `--no-notifications`, `--no-git` and `--no-auto-install-uv`; `--no-judge` was handled separately and worked.
+- **The watcher catches up after downtime (metalmind-vault-rag 0.11.0).** It only indexed files that changed while it ran, so notes pulled, written or deleted while it was stopped stayed wrong in the index until they changed again. On a Linux box without lingering, where the watcher stops at logout, a whole pull went unindexed. On start it now reindexes notes missing from the index or modified after its last write, and drops notes gone from disk.
+
+---
+
 ## 0.28.3 - 2026-09-24
 
 ### Fixed

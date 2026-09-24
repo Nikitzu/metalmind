@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.29.0',
+    date: '2026-09-24',
+    headline: 'An upgrade applies itself',
+    summary: "pnpm add -g metalmind@<new> used to change nothing until you ran metalmind stamp. Now the first command after a version change runs stamp --no-prompt once in the background of that command, logged to ~/.metalmind/logs/auto-stamp.log, and doctor --deep fails on a stamp older than the CLI or a vault AGENTS.md without its block. Also fixed: init ignored every --no- flag, and the watcher (metalmind-vault-rag 0.11.0) now reindexes notes that changed or vanished while it was stopped.",
+    tag_kind: 'added',
+  },
+  {
     tag: '0.28.3',
     date: '2026-09-24',
     headline: 'pnpm dev passes arguments literally',

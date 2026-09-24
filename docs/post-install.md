@@ -59,11 +59,14 @@ Sourced from `~/.metalmind/aliases.sh` via `~/.zshrc` and `~/.bashrc`.
 ## Upgrading metalmind
 
 ```bash
-npm update -g metalmind
-metalmind burn brass        # or: metalmind stamp
+pnpm add -g metalmind@latest     # or: npm install -g metalmind@latest
 ```
 
-`metalmind burn brass` (Soother) re-imprints every metalmind-managed file on your system: rules, agents, commands, the sentinel blocks in both CLAUDE.md files, shell aliases, launchd/systemd unit, and memory-routing settings. User content outside the managed sentinel markers is preserved. Use this instead of re-running the full `metalmind init` wizard.
+That is the whole upgrade since 0.29.0. The next metalmind command notices the new version and runs `metalmind stamp --no-prompt` once before doing its own work, logging to `~/.metalmind/logs/auto-stamp.log` and printing one line to stderr. Set `METALMIND_NO_AUTO_STAMP=1` to turn that off and stamp by hand. Upgrading from an older release applies the same way, because no recorded version counts as out of date.
+
+`metalmind burn brass` (Soother, alias `metalmind stamp`) re-imprints every metalmind-managed file on your system: rules, agents, commands, the sentinel blocks in the global and vault `CLAUDE.md` and the vault `AGENTS.md`, shell aliases, launchd/systemd unit, the watcher's Python package, and memory-routing settings. User content outside the managed sentinel markers is preserved. Run it yourself to change hosts, or instead of re-running the full `metalmind init` wizard.
+
+A stamp never rewrites your notes. When notes carry `kind:` without `type:`, it prints how many and the command that adds it: `metalmind scribe backfill-type`. `metalmind doctor --deep` reports the same, plus whether the stamp matches the installed version.
 
 ## Serena: activating repos
 
