@@ -6,6 +6,12 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.28.3 - 2026-09-24
+
+### Fixed
+
+- **`pnpm dev` passes arguments through literally.** The repo pinned pnpm 9.12.0, whose `pnpm run` pastes extra arguments into a shell command inside double quotes, so a backtick or `$` in an argument ran as a command or expanded. The pin is now pnpm 12.5.1 in `package.json` and the publish workflow, which single-quotes them, and a test holds the pin at 12 or later. It also ends the trap where a global `pnpm add -g` run from inside the repo used pnpm 9 and landed in the wrong global directory. The published CLI was never affected.
+
 ## 0.28.2 - 2026-09-24
 
 ### Added

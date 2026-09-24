@@ -1,3 +1,6 @@
 packages:
   - 'cli'
   - 'site'
+allowBuilds:
+  esbuild: true
+  sharp: true
