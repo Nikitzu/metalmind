@@ -60,8 +60,8 @@ function parseHostFlag(value: string | undefined): MetalmindHost[] | undefined {
   }
 }
 
-function resolveBool(affirmative?: boolean, negative?: boolean): boolean | undefined {
-  if (negative) return false;
+export function resolveBool(affirmative?: boolean, negative?: boolean): boolean | undefined {
+  if (negative || affirmative === false) return false;
   if (affirmative) return true;
   return undefined;
 }
