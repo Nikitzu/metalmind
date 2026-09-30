@@ -28,6 +28,8 @@ from typing import Any
 DEFAULT_MODEL = "BAAI/bge-small-en-v1.5"
 DEFAULT_DIM = 384
 
+EMBED_BATCH_SIZE = 16
+
 
 def model_dimension(model_name: str) -> int | None:
     """Vector width fastembed reports for a model, or None if it lists none.
@@ -139,7 +141,9 @@ class FastEmbedBackend:
             return []
         model = self._ensure_model()
         fn = getattr(model, method, None) or model.embed
-        return [list(map(float, vec)) for vec in fn(texts)]
+        return [
+            list(map(float, vec)) for vec in fn(texts, batch_size=EMBED_BATCH_SIZE)
+        ]
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         return self._run("passage_embed", texts)

@@ -34,7 +34,7 @@ class _FakeTextEmbedding:
         self.model_name = model_name
         self._dim = dim
 
-    def embed(self, texts):  # noqa: ANN001
+    def embed(self, texts, batch_size=256):  # noqa: ANN001
         for idx, _t in enumerate(texts):
             yield [1.0 if i == idx % self._dim else 0.0 for i in range(self._dim)]
 

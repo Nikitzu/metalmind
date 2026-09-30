@@ -6,6 +6,14 @@ The single source of truth for a release is the git tag and the published [npm p
 
 ---
 
+## 0.30.1 - 2026-09-30
+
+### Fixed
+
+- **The watcher no longer grows to gigabytes of memory.** Each changed note was embedded in a single call, and fastembed's default batch is 1024, so a note with 281 chunks went through the model as one 281-row tensor. onnxruntime keeps the memory it grew for the largest input, and one watcher reached 8.5 GB after six days. The backend now embeds 16 texts per batch: the same workload that reached 4.9 to 7.4 GB stays flat at about 740 MB. Turning off onnxruntime's memory arena instead was measured and does not help (2.9 to 6.6 GB). Ships in metalmind-vault-rag 0.11.1.
+
+---
+
 ## 0.30.0 - 2026-09-24
 
 ### Added

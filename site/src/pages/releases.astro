@@ -9,6 +9,13 @@ const description = 'Release notes and changelog for metalmind - one entry per t
 // Highlights of the most recent releases. Full CHANGELOG lives on GitHub.
 const releases = [
   {
+    tag: '0.30.1',
+    date: '2026-09-30',
+    headline: 'The watcher stays under a gigabyte',
+    summary: "The watcher embedded each changed note in one call, and fastembed batches up to 1024 texts, so a large note went through the model as one tensor and onnxruntime kept the memory it grew for it. One watcher reached 8.5 GB after six days. Embedding now runs 16 texts per batch, and the same workload stays flat at about 740 MB (metalmind-vault-rag 0.11.1).",
+    tag_kind: 'fixed',
+  },
+  {
     tag: '0.30.0',
     date: '2026-09-24',
     headline: 'Type the oldest notes from their folder',

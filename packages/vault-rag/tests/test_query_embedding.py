@@ -17,7 +17,10 @@ against 35% for the default. Nothing anywhere said a word.
 
 import pytest
 
-from metalmind_vault_rag.backends.fastembed_backend import FastEmbedBackend
+from metalmind_vault_rag.backends.fastembed_backend import (
+    EMBED_BATCH_SIZE,
+    FastEmbedBackend,
+)
 
 
 class FakeModel:
@@ -25,17 +28,21 @@ class FakeModel:
 
     def __init__(self) -> None:
         self.calls: list[tuple[str, list[str]]] = []
+        self.batch_sizes: list[int | None] = []
 
-    def embed(self, texts):
+    def embed(self, texts, batch_size=None):
         self.calls.append(("embed", list(texts)))
+        self.batch_sizes.append(batch_size)
         return [[0.0] for _ in texts]
 
-    def query_embed(self, texts):
+    def query_embed(self, texts, batch_size=None):
         self.calls.append(("query_embed", list(texts)))
+        self.batch_sizes.append(batch_size)
         return [[1.0] for _ in texts]
 
-    def passage_embed(self, texts):
+    def passage_embed(self, texts, batch_size=None):
         self.calls.append(("passage_embed", list(texts)))
+        self.batch_sizes.append(batch_size)
         return [[2.0] for _ in texts]
 
 
@@ -74,6 +81,17 @@ class TestBackendPaths:
 
         assert len(b.embed_query(["one", "two", "three"])) == 3
 
+    def test_batches_are_capped(self, backend):
+        """fastembed's default batch is 1024, so a 281-chunk note went through
+        the model as one 281 x 512 tensor. The memory for that stays with the
+        process, and the watcher reached 8.5 GB over six days."""
+        b, fake = backend
+
+        b.embed(["chunk"] * 281)
+        b.embed_query(["q"])
+
+        assert fake.batch_sizes == [EMBED_BATCH_SIZE, EMBED_BATCH_SIZE]
+
 
 class TestOlderFastembed:
     """fastembed gained the asymmetric entry points after the version this
@@ -84,7 +102,7 @@ class TestOlderFastembed:
         def __init__(self):
             self.calls = []
 
-        def embed(self, texts):
+        def embed(self, texts, batch_size=None):
             self.calls.append("embed")
             return [[0.0] for _ in texts]
 
